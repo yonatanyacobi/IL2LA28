@@ -51,13 +51,13 @@ def due(data, quotas, today, days=4):
             continue
         sid, name = it.get("sportId"), nqe.get("name")
         # Same order as quotaEventEnd() in site/app.js: own end, else the containing competition, else start.
-        end, key = as_date(nqe.get("end")), None
-        if not end:
-            comp = next((c for c in comps if c.get("sportId") == sid and as_date(c["start"]) <= start <= comp_end(c)
-                         and (comp_end(c) - as_date(c["start"])).days + 1 <= SERIES_DAYS), None)
-            if comp:
-                end, key, name = comp_end(comp), comp_key(comp), comp.get("name") or name
-        end = end or start
+        own, key = as_date(nqe.get("end")), None
+        comp = next((c for c in comps if c.get("sportId") == sid and as_date(c["start"]) <= start <= comp_end(c)
+                     and (comp_end(c) - as_date(c["start"])).days + 1 <= SERIES_DAYS), None)
+        end = own or (comp_end(comp) if comp else None) or start
+        # Group under the competition when both end together, so a qualifying competition and its items give one line.
+        if comp and comp_end(comp) == end:
+            key, name = comp_key(comp), comp.get("name") or name
         key = key or ("item", sid, nqe["start"], end.isoformat(), str(name))
         if first <= end < today:
             ev = events.setdefault(key, {"sportId": sid, "name": name, "end": end, "items": []})
