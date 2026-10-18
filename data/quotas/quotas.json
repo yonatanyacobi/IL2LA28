@@ -1145,6 +1145,38 @@
     "by": "tamar",
     "at": "2026-10-18"
    }
+  },
+  {
+   "sportId": "tennis",
+   "event": "יחידים נשים",
+   "totalQuotas": 64,
+   "maxPerNOC": 4,
+   "allocation": "לפי דירוגי WTA ב־12 ביוני 2028: 56 ישירים (עד 4 למדינה), מקום למארחת, 6 מקומות ITF (4 יבשתיים – אף אחד לא לאירופה – ו־2 לאלופי אולימפיאדה/גרנד סלאם, רק בטופ 500) ומקום אוניברסליות.",
+   "israelStatus": "outside",
+   "israelNote": "לינה גלושקו מדורגת 528 (WTA, 12 באוק׳ 2026), מחוץ לטופ 500 שנדרש גם למקומות ITF",
+   "nextQuotaEvent": null,
+   "source": "https://www.itftennis.com/media/15928/tennis-la28-qualification-system.pdf",
+   "review": {
+    "status": "partial",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "tennis",
+   "event": "יחידים גברים",
+   "totalQuotas": 64,
+   "maxPerNOC": 4,
+   "allocation": "לפי דירוגי ATP ב־12 ביוני 2028: 56 ישירים (עד 4 למדינה), מקום למארחת, 6 מקומות ITF (4 יבשתיים – אף אחד לא לאירופה – ו־2 לאלופי אולימפיאדה/גרנד סלאם, רק בטופ 500) ומקום אוניברסליות.",
+   "israelStatus": "unknown",
+   "israelNote": "עמית ולס הוא הישראלי המוביל; דירוג ATP רשמי לא נקרא (האתר חוסם גישה)",
+   "nextQuotaEvent": null,
+   "source": "https://www.itftennis.com/media/15928/tennis-la28-qualification-system.pdf",
+   "review": {
+    "status": "partial",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
   }
  ]
 }
