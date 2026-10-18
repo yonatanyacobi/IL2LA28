@@ -1,0 +1,453 @@
+[
+  {
+    "id": "alexandra-dan-audit-20261018",
+    "kind": "update",
+    "target": "alexandra-dan",
+    "patch": {
+      "notes": "מקום 5 באליפות אירופה מינכן 2026; זהב באוסטריאן אופן (G-1, פבר׳ 2026). דירוג לא נמצא"
+    },
+    "summary": "תוקן שם התחרות שבה זכתה בזהב בפברואר 2026 (אוסטריאן אופן)",
+    "evidence": [
+      {
+        "url": "https://www.olympicsil.co.il/en/news-en/bronze-medal-for-rivka-bayech-at-the-european-taekwondo-championships-in-munich/",
+        "label": "הוועד האולימפי"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "alexey-glivinskiy-audit-20261018",
+    "kind": "update",
+    "target": "alexey-glivinskiy",
+    "patch": {
+      "rank": "חצי גמר 200 מ' מעורב ומוקדמות שליחות 4x200 חופשי, אליפות אירופה 2026 (מיקום, לא דירוג)",
+      "notes": "מוקדמות 200 מ' חופשי וחצי גמר 200 מ' מעורב באליפות העולם 2025; שליחות 4x200 חופשי – מקום 8 בגמר העולם 2025. אליפות אירופה 2026: חצי גמר 200 מעורב, שחה במוקדמות שליחות 4x200 שעלתה לגמר מהמקום ה-4 (לא שחה בגמר)."
+    },
+    "summary": "תוקן: באליפות העולם 2025 שחה ב-200 חופשי במוקדמות בלבד, ובאליפות אירופה 2026 שחה רק במוקדמות השליחות",
+    "evidence": [
+      {
+        "url": "https://en.wikipedia.org/wiki/Israel_at_the_2025_World_Aquatics_Championships",
+        "label": "Wikipedia"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Swimming_at_the_2026_European_Aquatics_Championships_%E2%80%93_Men%27s_4_%C3%97_200_metre_freestyle_relay",
+        "label": "Wikipedia"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "ariel-vigdor-audit-20261018",
+    "kind": "update",
+    "target": "ariel-vigdor",
+    "patch": {
+      "notes": "מקום 5 באליפות אירופה 2026 במשקל 53- (לא אולימפי). דירוג לא נמצא"
+    },
+    "summary": "תוקן משקל התחרות באליפות אירופה 2026 (53-)",
+    "evidence": [
+      {
+        "url": "https://mundotaekwondo.com/europes-elite-return-to-action-day-2-ignites-the-2026-european-taekwondo-and-paratkd-championships-in-munich-draws/",
+        "label": "Mundo Taekwondo"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "ashlee-bond-audit-20261018",
+    "kind": "update",
+    "target": "ashlee-bond",
+    "patch": {
+      "notes": "חלק מהנבחרת בפריז 2024 (4 נקודות עונשין במוקדמות הקבוצתיות; הנבחרת סיימה 9 ועלתה לגמר)"
+    },
+    "summary": "תוקן: נקודות העונשין הן מפריז 2024 ולא מאאכן 2026",
+    "evidence": [
+      {
+        "url": "https://www.timesofisrael.com/liveblog_entry/israels-equestrian-team-finishes-9th-overall-in-team-jumping-qualification-advancing-to-final/",
+        "label": "Times of Israel"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "bukayawe-malede-audit-20261018",
+    "kind": "update",
+    "target": "bukayawe-malede",
+    "patch": {
+      "notes": "שיא אישי 2:07:38 (סביליה, 15.2.2026, מקום 9); מקום 35 באליפות אירופה 2026 (2:18:37). איות השם בעברית לא אומת"
+    },
+    "summary": "תוקנו השיא האישי (2:07:38) והתוצאה באליפות אירופה 2026",
+    "evidence": [
+      {
+        "url": "https://en.wikipedia.org/wiki/2026_European_Athletics_Championships_%E2%80%93_Men%27s_marathon",
+        "label": "Wikipedia"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "celia-gold-audit-20261018",
+    "kind": "update",
+    "target": "celia-gold",
+    "patch": {
+      "name": "סיליה גולד",
+      "notes": "ארד בטוטאל (230 ק״ג) באליפות אירופה 2025 בקישינב (76 ק״ג); מחזיקת שיאי ישראל. לא נמצא מידע על 2026"
+    },
+    "summary": "תוקן כתיב השם (סיליה גולד) והוסרה מדליה שלא אומתה",
+    "evidence": [
+      {
+        "url": "https://www.srugim.co.il/741477-%D7%9E%D7%A8%D7%99%D7%9E%D7%AA-%D7%94%D7%9E%D7%A9%D7%A7%D7%95%D7%9C%D7%95%D7%AA-%D7%A9%D7%91%D7%A8%D7%94-%D7%A9%D7%99%D7%90-%D7%99%D7%A9%D7%A8%D7%90%D7%9C%D7%99-%D7%91%D7%90%D7%9C%D7%99%D7%A4%D7%95",
+        "label": "סרוגים"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/2025_European_Weightlifting_Championships",
+        "label": "Wikipedia"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "daniel-bluman-audit-20261018",
+    "kind": "update",
+    "target": "daniel-bluman",
+    "patch": {
+      "notes": "באליפות העולם באאכן 2026 ישראל (עם מארק ודניאל בלומן) הייתה במקום 9 אחרי הסיבוב הראשון של התחרות הקבוצתית ולא זכתה בקווטה. זכייה בגביע האומות טרוורס סיטי 2026"
+    },
+    "summary": "תוקן הרכב הנבחרת והתוצאה באאכן 2026",
+    "evidence": [
+      {
+        "url": "https://tumundoecuestre.com/31683/2026/08/19/germany-leads-teams-fei-world-championship-aachen-2026/?lang=en",
+        "label": "Tu Mundo Ecuestre"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "eitan-ben-shitrit-audit-20261018",
+    "kind": "update",
+    "target": "eitan-ben-shitrit",
+    "patch": {
+      "rank": "מקום 10 בחצי גמר 200 מ' מעורב, אליפות אירופה 2026 (מיקום, לא דירוג)",
+      "notes": "אליפות אירופה 2026: מקום 9 במוקדמות ומקום 10 בחצי הגמר של 200 מ' מעורב (1:59.31), חבר בשליחות 4x200 חופשי שסיימה 7 בגמר."
+    },
+    "summary": "עודכן: עלה לחצי גמר 200 מ׳ מעורב באליפות אירופה 2026 וסיים 10",
+    "evidence": [
+      {
+        "url": "https://en.wikipedia.org/wiki/Swimming_at_the_2026_European_Aquatics_Championships_%E2%80%93_Men%27s_200_metre_individual_medley",
+        "label": "Wikipedia"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "ili-wright-yuval-barnon-audit-20261018",
+    "kind": "update",
+    "target": "ili-wright-yuval-barnon",
+    "patch": {
+      "name_en": "Illy Wureit & Yuval Barnoon",
+      "notes": "כסף בשבוע קיל (יוני 2026), מדליה בינלאומית ראשונה לצמד."
+    },
+    "summary": "תוקנו האיות באנגלית ושם התחרות בקיל",
+    "evidence": [
+      {
+        "url": "https://49er.org/?p=48856",
+        "label": "49er class"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "inbal-shemesh-audit-20261018",
+    "kind": "update",
+    "target": "inbal-shemesh",
+    "patch": {
+      "notes": "כסף ג״ס טביליסי 2026 (57-), כסף ג״ס טשקנט 2025 (63-). חזרה למשקל 57-. הודחה מוקדם באליפות העולם 2026."
+    },
+    "summary": "הוסרה הערה שסתרה את הדירוג",
+    "evidence": [
+      {
+        "url": "https://www.ijf.org/judoka/13716",
+        "label": "IJF"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "inbar-lanir-audit-20261018",
+    "kind": "update",
+    "target": "inbar-lanir",
+    "patch": {
+      "notes": "כסף פריז 2024, אלופת עולם 2023. פצועה – לא השתתפה באליפות העולם 2026, צפויה לחזור בתחילת 2027 (ynet)."
+    },
+    "summary": "הוסרה הערה שסתרה את הדירוג",
+    "evidence": [
+      {
+        "url": "https://www.ijf.org/judoka/20209",
+        "label": "IJF"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "israel-baseball-men-audit-20261018",
+    "kind": "update",
+    "target": "israel-baseball-men",
+    "patch": {
+      "notes": "WBC 2026: מאזן 2-2, שיפור לעומת 1-3 ב-2023 (ניצחונות על ניקרגואה 5-0 והולנד 6-2), לא העפילה הלאה; ה-WBC מסמיך רק נבחרות מהאמריקות. אליפות אירופה 2027 בגרמניה – בית C עם ספרד, שווייץ ובלגיה; שתי הראשונות לטורניר המוקדמות האחרון. כוכבים ב-WBC: הריסון ביידר, דין קרמר. דירוג ממקור משני (yagoonara)."
+    },
+    "summary": "תוקן: 2-2 אינו המאזן הטוב ביותר בהיסטוריה (4-2 ב-2017)",
+    "evidence": [
+      {
+        "url": "https://worldbaseball.com/news/2026-world-baseball-classic-israel-tops-the-netherlands-to-finish-500",
+        "label": "World Baseball Classic"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "israel-basketball-men-audit-20261018",
+    "kind": "update",
+    "target": "israel-basketball-men",
+    "patch": {
+      "notes": "מוקדמות מונדיאל 2027, סיבוב שני: מקום 6 (אחרון) בבית K במאזן 2-6 לאחר חלון אוגוסט (הפסדים לפולין 86-106 ולטביה 70-85). המונדיאל מסמיך 7 ישירות; 19 הבאות במונדיאל + 5 זוכות טרום-מוקדמות 2027 לטורנירי ה-OQT ב-2028."
+    },
+    "summary": "תוקן המיקום בבית K (מקום 6, מאזן 2-6)",
+    "evidence": [
+      {
+        "url": "https://www.sportschau.de/live-und-ergebnisse/basketball/fiba-wm-quali/ma12339193/niederlande_israel/blitztabelle",
+        "label": "Sportschau"
+      },
+      {
+        "url": "https://www.fiba.basketball/en/news/european-qualifiers-august-30-recap-wceq-2027",
+        "label": "FIBA"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "israel-basketball-women-audit-20261018",
+    "kind": "update",
+    "target": "israel-basketball-women",
+    "patch": {
+      "notes": "מוקדמות יורובאסקט 2027, סיבוב שני: בית I עם טורקיה, מונטנגרו ופולין (חלונות נובמבר 2026 ופברואר 2027; שתיים ראשונות עולות). 6 הראשונות ביורובאסקט 2027 לטורנירי OQT ב-2028. בסיבוב הראשון ניצחה את אירלנד 90-54."
+    },
+    "summary": "הוסרה הערה שסתרה את הדירוג",
+    "evidence": [
+      {
+        "url": "https://www.fiba.basketball/en/ranking/women",
+        "label": "FIBA"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "israel-flag-football-men-audit-20261018",
+    "kind": "update",
+    "target": "israel-flag-football-men",
+    "patch": {
+      "notes": "מקום 11 מתוך 16 באליפות העולם בדיסלדורף (13–16.8.2026): הפסד לארה\"ב 38-50, הפסד לאוסטרליה 26-36, ניצחון על סמואה האמריקנית 40-24. הכרטיסים הישירים הלכו לאיטליה וקנדה. המסלול: אליפות אירופה 2027 (שתי הראשונות לסדרת Q) ואז Olympic Q-Series ביוני 2028. קפטן: דניאל איסטמן. מקום 5 באליפות אירופה 2025."
+    },
+    "summary": "תוקנו תוצאות שלב הבתים באליפות העולם 2026",
+    "evidence": [
+      {
+        "url": "https://en.wikipedia.org/wiki/2026_IFAF_Men%27s_Flag_Football_World_Championship",
+        "label": "Wikipedia"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "lonah-chemtai-salpeter-audit-20261018",
+    "kind": "update",
+    "target": "lonah-chemtai-salpeter",
+    "patch": {
+      "notes": "שיא ישראלי 2:17:45 (מרתון טוקיו, 1.3.2020); ארד עולם 2022; פריז 2024 2:26:08; לא סיימה באליפות העולם 2025; נבחרה לספורטאית השנה 2025. לא נמצאה תוצאה ב-2026"
+    },
+    "summary": "הובהר שהשיא הישראלי נקבע במרתון טוקיו 2020 ולא במשחקים האולימפיים",
+    "evidence": [
+      {
+        "url": "https://worldathletics.org/athletes/israel/lonah-chemtai-salpeter-14523502",
+        "label": "World Athletics"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "maru-teferi-audit-20261018",
+    "kind": "update",
+    "target": "maru-teferi",
+    "patch": {
+      "notes": "שיא ישראלי 2:04:44 (ולנסיה, דצמבר 2024); אולימפיאן פריז (26, 2:10:42); לא סיים באליפות העולם 2025; מקום 22 באליפות אירופה 2026 (2:13:36). לא נמצאה הודעת פרישה"
+    },
+    "summary": "נוספה התוצאה באליפות אירופה 2026 (מקום 22)",
+    "evidence": [
+      {
+        "url": "https://en.wikipedia.org/wiki/2026_European_Athletics_Championships_%E2%80%93_Men%27s_marathon",
+        "label": "Wikipedia"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "nimrod-krivitsky-audit-20261018",
+    "kind": "update",
+    "target": "nimrod-krivitsky",
+    "patch": {
+      "name": "נמרוד קרביצקי",
+      "name_en": "Nimrod Krivitzky"
+    },
+    "summary": "תוקן כתיב השם (קרביצקי)",
+    "evidence": [
+      {
+        "url": "https://www.sport5.co.il/Tags/%D7%A0%D7%9E%D7%A8%D7%95%D7%93_%D7%A7%D7%A8%D7%91%D7%99%D7%A6%D7%A7%D7%99",
+        "label": "ספורט 5"
+      },
+      {
+        "url": "https://www.olympicsil.co.il/en/news-en/bronze-medal-for-rivka-bayech-at-the-european-taekwondo-championships-in-munich/",
+        "label": "הוועד האולימפי"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "noam-berkovich-audit-20261018",
+    "kind": "update",
+    "target": "noam-berkovich",
+    "patch": {
+      "notes": "בנבחרת הגברים לאליפות העולם ברוטרדם 2026."
+    },
+    "summary": "הוסרה הערה שסתרה את התוצאה באליפות אירופה 2026",
+    "evidence": [
+      {
+        "url": "https://isport.co.il/%D7%A9%D7%A0%D7%99-%D7%92%D7%9E%D7%A8%D7%99%D7%9D-%D7%9C%D7%99%D7%A9%D7%A8%D7%90%D7%9C-%D7%95%D7%A7%D7%A8%D7%99%D7%98%D7%A8%D7%99%D7%95%D7%9F-%D7%A7%D7%91%D7%95%D7%A6%D7%AA%D7%99-%D7%9C%D7%90%D7%9C/",
+        "label": "iSport"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "omer-vered-vilenchik-audit-20261018",
+    "kind": "update",
+    "target": "omer-vered-vilenchik",
+    "patch": {
+      "notes": "השתתף בפריז 2024 (הנציג הישראלי הראשון בדגם); אלוף העולם עד 19 ב-2025 (מקום 10 באליפות העולם עד 21); בטופ 10 באליפות העולם עד 21 בינואר 2026"
+    },
+    "summary": "תוקן התואר מ-2025: אלוף העולם עד 19, לא עד 21",
+    "evidence": [
+      {
+        "url": "https://ilcasailing.org/2025-ilca-under-21-worlds-final-results/",
+        "label": "ILCA"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "selamawit-teferi-audit-20261018",
+    "kind": "update",
+    "target": "selamawit-teferi",
+    "patch": {
+      "name": "סלאמוויט באיולין-טפרי",
+      "notes": "מקום 11 באליפות אירופה 2026 (2:28:26), הישראלית הטובה במרוץ."
+    },
+    "summary": "תוקן כתיב השם בעברית",
+    "evidence": [
+      {
+        "url": "https://sport1.maariv.co.il/Tags/%D7%A1%D7%9C%D7%90%D7%9E%D7%95%D7%95%D7%99%D7%98-%D7%91%D7%90%D7%99%D7%95%D7%9C%D7%99%D7%9F-%D7%98%D7%A4%D7%A8%D7%99/",
+        "label": "מעריב ספורט"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "tomer-zaltsman-audit-20261018",
+    "kind": "update",
+    "target": "tomer-zaltsman",
+    "patch": {
+      "notes": "אולימפיאן פריז ב-XCO; אלוף ישראל 2024. זכייה ב-Serbia Epic בפוז׳ארבאץ (XCO, 17.5.2026)"
+    },
+    "summary": "נוספה הזכייה ב-Serbia Epic (מאי 2026)",
+    "evidence": [
+      {
+        "url": "https://cyclingflash.com/profile/tomer-zaltsman/wins",
+        "label": "CyclingFlash"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "yali-shoshani-audit-20261018",
+    "kind": "update",
+    "target": "yali-shoshani",
+    "patch": {
+      "event": "מקבילים מדורגים",
+      "next": "אליפות העולם בהתעמלות מכשירים, רוטרדם – מוקדמות נשים (מקבילים מדורגים)",
+      "notes": "הועפלה לאליפות העולם ברוטרדם 2026 כמומחית מקבילים מדורגים."
+    },
+    "summary": "תוקן המכשיר: מקבילים מדורגים ולא קורה",
+    "evidence": [
+      {
+        "url": "https://www.sport5.co.il/articles.aspx?FolderID=8008&docID=564098",
+        "label": "ספורט 5"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "yonatan-elbaz-audit-20261018",
+    "kind": "update",
+    "target": "yonatan-elbaz",
+    "patch": {
+      "name": "יהונתן אלבז",
+      "name_en": "Yehonatan Elbaz",
+      "notes": "מקום 5 באליפות העולם באקו 2026 (הפסיד בקרב על הארד)."
+    },
+    "summary": "תוקן כתיב השם (יהונתן אלבז) והוסרה הערה שסתרה את הדירוג",
+    "evidence": [
+      {
+        "url": "https://www.ijf.org/judoka/24088",
+        "label": "IJF"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  },
+  {
+    "id": "yuli-alma-mishiner-audit-20261018",
+    "kind": "update",
+    "target": "yuli-alma-mishiner",
+    "patch": {
+      "notes": "מתחרה באותו משקל כמו רז הרשקו; אלופת אירופה עד גיל 23 (2024)"
+    },
+    "summary": "נוספה שנת התואר: אלופת אירופה עד גיל 23 ב-2024",
+    "evidence": [
+      {
+        "url": "https://www.ijf.org/judoka/64647/results?results_rank_group=all",
+        "label": "IJF"
+      }
+    ],
+    "status": "pending",
+    "createdAt": "2026-10-18T14:00:00Z"
+  }
+]
