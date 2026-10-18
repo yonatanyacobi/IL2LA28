@@ -43,10 +43,32 @@ pass `athlete_patch.result_entry()` unchanged and are 95–111 characters long (
 | Outcome | `result.text` | session `result` | `next` / `nextDate` |
 |---|---|---|---|
 | Q to the all-around final | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב` | `מקום <N> בקרב־רב, עלתה לגמר` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים` / `2026-10-23` |
+| Reserve (R1–R3) | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקרב־רב` | `מקום <N> בקרב־רב, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים (מחליפה)` / `2026-10-23` |
 | Not qualified | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר הקרב־רב` | `מקום <N> בקרב־רב, לא עלתה לגמר` | `""` / `""`, unless an editor knows the next competition |
 
-- **Apparatus final as well** (for example Shamai on bars): a second, separate write, with the bars row below and its
-  own `source`. Each update gets one history entry, so the two can't share one write.
+- **Apparatus final as well**: a second, separate write, with its own `source` (the Official PDF for that
+  apparatus). Each update gets one history entry, so the two can't share one write.
+
+#### Raz / Shamai: apparatus finals (24–25.10)
+One write per apparatus. `<R>` = ראשונה/שנייה/שלישית. A plain "not qualified" on an apparatus isn't recorded: the
+all-around entry already covers the day.
+
+| Apparatus (final date) | Q: `result.text` | Reserve: `result.text` | session `result` | `next` / `nextDate` if this is her nearest final |
+|---|---|---|---|---|
+| Vault (24.10) | `מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקפיצות` | `מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקפיצות` | `מקום <N> בקפיצות, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קפיצות נשים` / `2026-10-24` |
+| Uneven bars (24.10) | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר המקבילים` | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר המקבילים` | `מקום <N> במקבילים, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים` / `2026-10-24` |
+| Beam (25.10) | `מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקורה` | `מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקורה` | `מקום <N> בקורה, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קורה נשים` / `2026-10-25` |
+| Floor (25.10) | `מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרקע` | `מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקרקע` | `מקום <N> בקרקע, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרקע נשים` / `2026-10-25` |
+
+- **`next` order:**
+  - all-around final 23.10 → vault and bars 24.10 → beam and floor 25.10;
+  - `next` names only the nearest one;
+  - a reserve spot counts only if she has no final as a qualifier;
+  - add "(מחליפה)" to the `next` text for a reserve, as in the all-around table.
+- **Sessions:** a Q moves the matching block from `pendingFinalBlocks` to a session (24.10 or 25.10 at 14:00 Europe/Amsterdam,
+  the FIG Work Plan block), with only that athlete's id. A reserve gets no session until she is confirmed in the
+  final's start list.
+- All 9 texts were checked with `athlete_patch.result_entry()` (91–111 characters).
 - If she reaches both finals, `next` points to the nearest one: the all-around final on 23.10 comes before 24–25.10.
 
 ### Shoshani (`yali-shoshani`), uneven bars
