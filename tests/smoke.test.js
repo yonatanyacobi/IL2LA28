@@ -799,6 +799,32 @@ test("#following review fixes (#138): per-tab empty states, updatedAt fallback r
   assert.ok(page.includes('<a href="#a-raz-hershko">רז הרשקו</a><small>הפרטים עודכנו</small>') && page.includes("18 באוק׳ 2026"), "dated by updatedAt");
 });
 
+test("followed first: sports page, today strip and chances panel put followed sports and athletes first", async () => {
+  const firstSport = html => html.split('<ul class="sports">')[1]?.match(/href="#sport-([^"]+)"/)?.[1];
+  const plain = await boot({now: "2026-10-29T08:00:00Z", quotas: REAL_QUOTAS});
+  const base = firstSport(plain.view("sports"));
+  const other = plain.run(`JSON.stringify(S.sports.filter(s => athletesOf(s.id).length).map(s => s.id))`);
+  const target = JSON.parse(other).find(id => id !== base);
+  const followed = await boot({now: "2026-10-29T08:00:00Z", quotas: REAL_QUOTAS, storage: {"la28.followSports": JSON.stringify([target])}});
+  assert.strictEqual(firstSport(followed.view("sports")), target, "followed sport first on #sports");
+
+  // 29.10: Abu Dhabi (judo) is running; athletics (אתלטיקה) sorts before judo (ג׳ודו) by name.
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  Object.assign(data.athletes.find(a => a.id === "adva-cohen"), {nextDate: "2026-10-29", next: "מרוץ"});
+  const rowsAt = async storage => rowsOf(stripOf((await boot({data, now: "2026-10-29T08:00:00Z", storage})).view("home")));
+  assert.ok((await rowsAt({}))[0].includes("adva-cohen"), "no follows: by sport name");
+  assert.ok((await rowsAt({"la28.followSports": '["judo"]'}))[0].includes("גרנד סלאם אבו דאבי"), "followed sport's row first");
+
+  const closest = async storage => {
+    const home = (await boot({now: "2026-10-18T08:00:00Z", quotas: REAL_QUOTAS, storage})).view("home");
+    return rowsOf(home.split('class="rows closest"')[1]?.split("</ul>")[0] || "").map(r => r.match(/href="#sport-([^"]+)"/)?.[1]);
+  };
+  const order = await closest({});
+  assert.ok(order.length > 1 && order[0] !== "judo" && order.includes("judo"), `fixture premise: ${order}`);
+  assert.strictEqual((await closest({"la28.followSports": '["judo"]'}))[0], "judo", "followed sport first in the chances panel");
+  assert.strictEqual((await closest({"la28.follows": '["raz-hershko"]'}))[0], "judo", "followed athlete's group first");
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));

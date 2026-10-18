@@ -70,6 +70,8 @@ const quotasOf = sid => S.quotas.filter(q => q.sportId === sid);
 const upcoming = () => S.comps.filter(c => (c.end || c.start) >= today()).sort((a, b) => a.start.localeCompare(b.start));
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
+// Per-viewer follows: athletes in S.follows, sports in S.followSports (following.js; absent before it loads).
+const followsSport = id => !!S.followSports?.has(id);
 // Compared as instants: the job and the page write ISO strings with different precision.
 const trustOf = a => { const v = Date.parse(str(a.verifiedAt)), u = Date.parse(str(a.updatedAt)); return isNaN(v) ? "auto" : isNaN(u) || v >= u ? "ok" : "stale"; };
 
@@ -273,7 +275,7 @@ function todayRows(){
     if (c) rows.get(c).athletes.push(a);
     else if (a.nextDate === t) rows.set(a, {comp: null, sportId: a.sportId, athletes: [a]});
   }
-  const fav = r => r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1;
+  const fav = r => r.athletes.some(a => S.follows.has(a.id)) || followsSport(r.sportId) ? 0 : 1;
   return [...rows.values()].sort((x, y) => fav(x) - fav(y) || heCmp(sportName(x.sportId), sportName(y.sportId))
     || heCmp(x.comp?.name || x.athletes[0].name, y.comp?.name || y.athletes[0].name));
 }
@@ -354,10 +356,11 @@ function closestGroups(rows, t = today()){
     if (!groups.has(k)) groups.set(k, {sportId: q.sportId, start: q.nextQuotaEvent.start, name: q.nextQuotaEvent.name, items: []});
     groups.get(k).items.push({q, as: quotaAthletes(q)});
   }
-  const fav = g => g.items.some(i => i.as.some(a => S.follows.has(a.id))) ? 0 : 1;
+  const fav = g => followsSport(g.sportId) || g.items.some(i => i.as.some(a => S.follows.has(a.id))) ? 0 : 1;
   const matched = g => g.items.some(i => i.as.length) ? 0 : 1;
   for (const g of groups.values()) g.items.sort((x, y) => (y.as.length > 0) - (x.as.length > 0) || heCmp(x.q.event, y.q.event));
-  return [...groups.values()].sort((x, y) => x.start.localeCompare(y.start) || fav(x) - fav(y) || matched(x) - matched(y)
+  // Followed first (also so the cap never drops them), then by date.
+  return [...groups.values()].sort((x, y) => fav(x) - fav(y) || x.start.localeCompare(y.start) || matched(x) - matched(y)
     || heCmp(sportName(x.sportId), sportName(y.sportId))).slice(0, CLOSE_MAX);
 }
 
@@ -479,7 +482,7 @@ function viewSports(){
   const withA = S.sports.filter(s => athletesOf(s.id).length);
   const without = S.sports.filter(s => !athletesOf(s.id).length).sort((a, b) => heCmp(a.he, b.he));
   const nextStart = s => upcomingIn(s.id)[0]?.start || "9999";
-  withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
+  withA.sort((a, b) => followsSport(b.id) - followsSport(a.id) || nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
   <p class="muted">${withA.length === 1 ? "ענף אחד עם ספורטאים ונבחרות מישראל במעקב." : `${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.`}${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
