@@ -380,3 +380,4 @@ div.track{background:none}
 .sess-day{scroll-margin-top:64px}   /* scrolled to on arrival: clear the sticky nav (two rows on mobile) */
 @media (max-width:640px){.sess-day{scroll-margin-top:110px}}
 .sess-day h3 a[aria-current="date"]{color:var(--ink);text-decoration-thickness:3px;text-decoration-color:var(--sun)}
+.ath-rows li{grid-template-columns:1fr auto}   /* #c- athletes: name and event, then the chip; no date column */

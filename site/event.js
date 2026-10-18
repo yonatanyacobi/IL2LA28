@@ -66,7 +66,7 @@ function viewEvent(id){
   // Counted per athlete in each session, not per session.
   const count = k => flat.reduce((n, [s, d]) => n + s.athletes.filter(a => athleteStatus(s, d, a) === k).length, 0);
   const who = n => plural(n, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות");
-  const kpi = [who(athletes.length), ...[["result", n => plural(n, "תוצאה אחת", "תוצאות")], ["wait", n => `${n} בהמתנה לתוצאה`], ["before", n => `${n} לפני התחרות`]]
+  const kpi = [who(athletes.length), ...[["live", n => `מתחרים היום: ${n}`], ["result", n => plural(n, "תוצאה אחת", "תוצאות")], ["wait", n => `${n} בהמתנה לתוצאה`], ["before", n => `${n} לפני התחרות`]]
     .map(([k, label]) => (n => n ? label(n) : "")(count(k)))].filter(Boolean).join(" · ");
   const stakes = eventStakes(c);
   const tracked = athletesOf(c.sportId).length;
@@ -96,11 +96,11 @@ function viewEvent(id){
     <div class="stack">
       ${stakes}
       ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH">הישראלים בתחרות (${athletes.length})</h2>
-        <div class="stack">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
+        <ul class="rows ath-rows">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
           const st = last ? athleteStatus(last[0], last[1], a) : "";
           // A result is shown only in the schedule row, next to its source.
-          const line = st === "result" ? `<span class="muted">תוצאה בלוח הסשנים</span>` : statusChip(st);
-          return `<div class="stack">${athleteCard(a)}${line ? `<p>${line}</p>` : ""}</div>`; }).join("")}</div></section>` : ""}
+          const chip = st === "result" ? `<span class="muted">תוצאה בלוח הסשנים</span>` : statusChip(st);
+          return `<li><span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${a.event ? `<small><bdi>${esc(a.event)}</bdi></small>` : ""}</span><span>${chip}</span></li>`; }).join("")}</ul></section>` : ""}
     </div>
   </div>
   <p class="foot">${[tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)}` : "", CADENCE, safeUrl(c.source) ? `<bdi>${linkOut(c.source, host(c.source))}</bdi>` : ""].filter(Boolean).join(" · ")}</p>

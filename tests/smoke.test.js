@@ -912,7 +912,7 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   shared.athletes.find(a => a.id === "timna-nelson-levy").history = [{at: "2026-10-29", kind: "result", text: "ארד"}];
   const sh = (await eventAt(AD, "2026-10-30T08:00:00Z", {data: shared})).out;
   assert.ok(sh.includes("תוצאה אחת") && !sh.includes("2 תוצאות"), "results counted per athlete");
-  const inbal = sh.split('id="evAthH"')[1].split('<div class="stack"><a class="card" href="#a-').find(x => x.startsWith("inbal-shemesh")) || "";
+  const inbal = sh.split('id="evAthH"')[1].split("</section>")[0].split("<li>").find(x => x.includes('href="#a-inbal-shemesh"')) || "";
   assert.ok(inbal.includes("pill s-wait") && !inbal.includes("ארד"), "Inbal: her own chip, not Timna's result");
 
   const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z")).out;
@@ -968,8 +968,25 @@ test("#c-: arrival scrolls today's day into view once; the athletes panel points
   const data = JSON.parse(JSON.stringify(FIXTURE));
   data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-10-29", kind: "result", text: "ארד"}];
   const out = (await boot({data, now: "2026-10-30T08:00:00Z"})).run(`viewEvent("judo-gs-abu-dhabi-2026")`);
-  const raz = out.split('id="evAthH"')[1].split('<div class="stack"><a class="card" href="#a-').find(x => x.startsWith("raz-hershko")) || "";
+  const raz = out.split('id="evAthH"')[1].split("</section>")[0].split("<li>").find(x => x.includes('href="#a-raz-hershko"')) || "";
   assert.ok(raz.includes('<span class="muted">תוצאה בלוח הסשנים</span>') && !raz.includes("ארד"), "Gil nit: result points to the schedule");
+});
+
+test("UX v45: #c- athletes as compact rows with the chip inside; \"מתחרים היום\"; #following next-up chips", async () => {
+  const {run} = await boot({now: "2026-10-29T08:00:00Z"});
+  const out = run(`viewEvent("judo-gs-abu-dhabi-2026")`);
+  const panel = out.split('id="evAthH"')[1].split("</section>")[0];
+  assert.ok(panel.includes('<ul class="rows ath-rows">') && !panel.includes('class="card"'), "compact rows, not cards");
+  const raz = panel.split("<li>").find(x => x.includes('href="#a-raz-hershko"'));
+  assert.ok(raz.includes("<small><bdi>") && raz.includes('<span><span class="pill s-live">מתחרה היום</span></span></li>'), "name, event, chip in the row");
+  assert.ok(out.includes("5 ספורטאים ונבחרות · מתחרים היום: 5"), "label-first count of those competing today");
+  const f = await boot({now: "2026-10-29T08:00:00Z", follows: ["raz-hershko"], storage: {"la28.followSports": '["judo"]'}});
+  const next = f.view("following").split('id="nextH"')[1].split("</section>")[0];
+  const razRow = next.split("<li>").find(x => x.includes('href="#a-raz-hershko"'));
+  assert.ok(razRow.includes('<span class="d">') && razRow.includes("מתחרה היום"), "today's athlete: date column and chip");
+  const doha = await boot({now: "2026-11-02T08:00:00Z", storage: {"la28.followSports": '["shooting"]'}});
+  const dohaRow = doha.view("following").split('id="nextH"')[1].split("</section>")[0].split("<li>").find(x => x.includes("#c-issf-wch-doha-2026"));
+  assert.ok(dohaRow && dohaRow.includes("מתקיימת עכשיו"), "running competition: linked, with \"מתקיימת עכשיו\"");
 });
 
 test("fetch failure shows the retry view", async () => {
