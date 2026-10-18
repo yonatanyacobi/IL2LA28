@@ -207,33 +207,42 @@ test("fetch failure shows the retry view", async () => {
   assert.ok(view("home").includes("data-retry"));
 });
 
-// The quotas.json loader is a separate story; these tests set S.quotas directly.
-const QUOTAS = [
-  {sportId: "judo", event: "עד 57 ק״ג", israelStatus: "earned", israelNote: "<img src=x onerror=alert(1)>", nextQuotaEvent: null, source: "javascript:alert(1)"},
-  {sportId: "judo", event: "עד 78 ק״ג", israelStatus: "in-contention", nextQuotaEvent: {name: "אירוע עבר", start: "2000-01-01"}},
-  ...[1, 2, 3, 4, 5, 6].map(i => ({sportId: "judo", event: `מקצה ${i}`, israelStatus: "outside", nextQuotaEvent: {name: `אירוע ${i}`, start: `2099-0${i}-01`}})),
-  {sportId: "judo", event: "סטטוס זר", israelStatus: "bogus", nextQuotaEvent: null},
-];
-
-test("#quotas groups by status, lists the next 5 future events and escapes", async () => {
-  const {run, view} = await boot();
-  assert.ok(view("quotas").includes("טוען נתוני מכסות"), "not-loaded state");
-  assert.ok(!view("home").includes("href=\"#quotas\""), "no quota link without items");
-  run(`S.quotas = ${JSON.stringify(QUOTAS)}; S.quotasLoaded = true; S.quotasAt = "2026-10-18"`);
+test("#quotas renders the fixture grouped by status, with links and the as-of date", async () => {
+  const {view} = await boot({quotas: QUOTAS, now: "2026-10-18T08:00:00Z"});
   const out = view("quotas");
-  assert.ok(!out.includes(NOT_FOUND));
+  assert.ok(!out.includes(NOT_FOUND) && !out.includes("טוען"), "page should be loaded");
   const pos = ["qH-earned", "qH-in-contention", "qH-outside", "qH-unknown"].map(id => out.indexOf(`id="${id}"`));
   assert.ok(pos.every((p, i) => p > 0 && (i === 0 || p > pos[i - 1])), "status group order: " + pos);
-  assert.ok(out.includes("<b>1</b> מכסה הושגה") && out.includes("<b>1</b> אין מידע עדיין"), "summary counts (bogus → unknown)");
-  const upcoming = out.slice(out.indexOf("qNextH"), out.indexOf("qH-earned"));
-  assert.deepStrictEqual([...upcoming.matchAll(/אירוע (\d|עבר)/g)].map(m => m[1]), ["1", "2", "3", "4", "5"]);
-  assert.ok(!/<img/i.test(out) && out.includes("&lt;img"), "israelNote escaped");
-  assert.ok(out.includes('href="#sport-judo"'));
-  assert.ok(view("home").includes("href=\"#quotas\"") && view("home").includes("מקצים עם מכסה לישראל"));
-  const sports = view("sports");
-  assert.ok(sports.includes("href=\"#quotas\"") && sports.includes("✓ 1 הושגה") && sports.includes("◐ 1 במרוץ"));
-  run(`S.quotasFailed = true`);
-  assert.ok(view("quotas").includes("לא נטענו") && !view("home").includes("data-retry"));
+  assert.ok(out.includes("<b>1</b> מכסה הושגה") && out.includes("<b>1</b> אין מידע עדיין"), "summary counts");
+  assert.ok(!out.includes("fixture: dropped"), "invalid item must not render");
+  for (const sid of ["judo", "sailing", "athletics", "swimming"]) assert.ok(out.includes(`href="#sport-${sid}"`), sid);
+  const next = out.slice(out.indexOf("qNextH"), out.indexOf("qH-earned"));
+  assert.ok(next.indexOf("fixture: worlds") > 0 && next.indexOf("fixture: worlds") < next.indexOf("fixture: meet"), "upcoming sorted by date");
+  assert.ok(out.includes("נכון ל־"), "as-of date");
+  const home = view("home"), sports = view("sports");
+  assert.ok(home.includes('href="#quotas"') && home.includes("מקצים עם מכסה לישראל"));
+  assert.ok(sports.includes('href="#quotas"') && sports.includes("✓ 1 הושגה"));
+});
+
+test("#quotas: upcoming list keeps the next 5 future events and escapes item text", async () => {
+  const base = QUOTAS.items[2];
+  const items = [1, 2, 3, 4, 5, 6].map(i => ({...base, event: `מקצה ${i}`, nextQuotaEvent: {name: `אירוע ${i}`, start: `2027-0${i}-01`}}));
+  items.push({...base, event: "<img src=x onerror=alert(1)>", israelNote: "<b>x</b>", nextQuotaEvent: {name: "אירוע עבר", start: "2026-01-01"}});
+  const {view} = await boot({quotas: {updatedAt: "2026-10-18", items}, now: "2026-10-18T08:00:00Z"});
+  const out = view("quotas");
+  const next = out.slice(out.indexOf("qNextH"), out.indexOf("qH-outside"));
+  assert.deepStrictEqual([...next.matchAll(/אירוע (\d|עבר)/g)].map(m => m[1]), ["1", "2", "3", "4", "5"]);
+  assert.ok(!/<img|<b>x/i.test(out) && out.includes("&lt;img"), "escaped");
+});
+
+test("#quotas: missing file shows the failure note; site keeps working", async () => {
+  for (const quotas of [undefined, "fail", {items: "nope"}]) {
+    const {view, run} = await boot({quotas});
+    assert.ok(run("S.quotasLoaded") && view("quotas").includes("לא נטענו"), JSON.stringify(quotas));
+    assert.ok(!view("home").includes('href="#quotas"') && !run("S.failed"));
+  }
+  const {view} = await boot({quotas: {updatedAt: "2026-10-18", items: []}});
+  assert.ok(view("quotas").includes("עוד לא נאספו נתוני מכסות"));
 });
 
 (async () => {

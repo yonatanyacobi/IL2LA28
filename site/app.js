@@ -39,7 +39,7 @@ const store = {
 const S = {
   loaded: false, live: false, failed: false, liveLost: false, generatedAt: "", lastRun: "",
   sports: [], athletes: [], comps: [], changes: [], proposals: [],
-  quotas: [], quotasUpdatedAt: "",   // empty when quotas.json is missing or bad: quota UI must not render
+  quotas: [], quotasUpdatedAt: "", quotasLoaded: false, quotasError: false,   // empty when quotas.json is missing or bad: quota UI must not render
   db: null, uid: null, isAdmin: false,
   cal: {sport: "", qual: false, past: false},
   q: "",
@@ -60,27 +60,25 @@ const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
 const trustOf = a => { const v = Date.parse(str(a.verifiedAt)), u = Date.parse(str(a.updatedAt)); return isNaN(v) ? "auto" : isNaN(u) || v >= u ? "ok" : "stale"; };
 
 // ---------- quotas (shared by #quotas, the sport page, #sports cards and home) ----------
-// S.quotas is filled by the quotas.json loader; until then every quota fragment renders nothing.
-const Q_ORDER = ["earned", "in-contention", "outside", "unknown"];
+// Statuses render in QUOTA_STATUSES order; S.quotas holds only validated items (see applyQuotas).
 const Q_LABEL = {earned: ["✓", "מכסה הושגה"], "in-contention": ["◐", "במרוץ למכסה"],
                  outside: ["○", "מחוץ למכסות כרגע"], unknown: ["?", "אין מידע עדיין"]};
 const qStatus = s => Q_LABEL[s] ? s : "unknown";
-const quotaItems = () => Array.isArray(S.quotas) ? S.quotas : [];
-const quotaCounts = list => Object.fromEntries(Q_ORDER.map(k => [k, list.filter(q => qStatus(q.israelStatus) === k).length]));
+const quotaCounts = list => Object.fromEntries(QUOTA_STATUSES.map(k => [k, list.filter(q => qStatus(q.israelStatus) === k).length]));
 // Symbol + text so status never depends on colour; `text` overrides the label (e.g. "1 הושגה").
 const quotaStatusPill = (status, text) => { const k = qStatus(status); return `<span class="pill q-${k}">${Q_LABEL[k][0]} ${esc(text ?? Q_LABEL[k][1])}</span>`; };
 
 function quotaCardSummary(sid){
-  const list = quotaItems().filter(q => q.sportId === sid);
+  const list = quotasOf(sid);
   if (!list.length) return "";
   const n = quotaCounts(list), short = {earned: "הושגה", "in-contention": "במרוץ", outside: "מחוץ"};
-  const shown = Q_ORDER.filter(k => k !== "unknown" && n[k]);
+  const shown = QUOTA_STATUSES.filter(k => k !== "unknown" && n[k]);
   return shown.length ? `<span class="qsum"><span class="sr">מכסות: </span>${shown.map(k => quotaStatusPill(k, `${n[k]} ${short[k]}`)).join("")}</span>`
     : `<span class="qsum">מכסות: אין מידע עדיין</span>`;
 }
 
 function quotaKpi(){
-  const list = quotaItems();
+  const list = S.quotas;
   if (!list.length) return "";
   const n = quotaCounts(list), k = new Set(list.filter(q => ["earned", "in-contention"].includes(qStatus(q.israelStatus))).map(q => q.sportId)).size;
   const link = `<a href="#quotas">תמונת המכסות</a>`;
@@ -239,7 +237,7 @@ function viewSports(){
   withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
-  <p class="muted">${withA.length} ענפים עם ספורטאים ישראלים במעקב, לפי התחרות הקרובה.${quotaItems().length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
+  <p class="muted">${withA.length} ענפים עם ספורטאים ישראלים במעקב, לפי התחרות הקרובה.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
   <ul class="sports">${withA.map(s => {
     const list = athletesOf(s.id), ws = winStatus(s.window), nc = upcomingIn(s.id)[0], fresh = list.filter(isNew).length;
     return `<li><a class="sport" href="#sport-${esc(s.id)}">
@@ -691,6 +689,7 @@ async function loadPublic(){
   }
   await quotas;
   applyQuotas();
+  S.quotasLoaded = true; S.quotasError = !Array.isArray(quotaFile?.items);
   if (S.loaded) refresh();
 }
 
