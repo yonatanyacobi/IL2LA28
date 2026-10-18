@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T14:12:46Z",
+ "updatedAt": "2026-10-18T14:14:54Z",
  "sessions": [
   {
    "id": "issf-wch-doha-2026-20261103-arm-q",
@@ -64,6 +64,40 @@
     "by": "yael",
     "at": "2026-10-18"
    }
+  },
+  {
+   "id": "lacrosse-european-sixes-2026-women-20261102-group",
+   "competitionId": "lacrosse-european-sixes-2026-women",
+   "date": "2026-11-02",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "israel-lacrosse-women-sixes"
+   ],
+   "phase": "אליפות אירופה בלקרוס סיקסס – נשים, שלב הבתים",
+   "source": "https://www.lacrosse.co.il/about/updates/kara-mupo-israel-womens-sixes-head-coach/",
+   "result": "",
+   "resultSource": "",
+   "resultAt": "",
+   "notes": "HOLD: apply only once the ELF/World Lacrosse game schedule is published. Israel's participation is confirmed by the Israel Lacrosse Association (team to Salou, 2-9.11.2026), but no group or game times are out as of 2026-10-18. Then set date to Israel's first game day, timeLocal as printed and tz Europe/Madrid, and add one session per game day. Recheck 2026-10-26.",
+   "review": {
+    "status": "unchecked",
+    "by": "yael",
+    "at": "2026-10-18"
+   }
+  }
+ ],
+ "pendingFinalBlocks": [
+  {
+   "competitionId": "wl-worlds-2026",
+   "athleteIds": [
+    "celia-gold"
+   ],
+   "phase": "אליפות העולם בהרמת משקולות – נשים 77 ק״ג (לא אומת)",
+   "date": "",
+   "timeLocal": "",
+   "tz": "Asia/Shanghai",
+   "notes": "HOLD, not a session: no Israeli entrant is confirmed for Ningbo (27.10-8.11.2026). The IWF entry list (download.php?id=2956) and Start Book (id=3004) are behind a bot-check. Gold's category lead (77 kg) is secondary (Weightlifting House, Batumi 2026). Add a session only after an editor reads the Start Book: the W77 (or her) session date and time, tz Asia/Shanghai."
   }
  ]
 }
