@@ -15,9 +15,10 @@ One entry per **result**, from two sources:
    e.g. a team). A merged text like `{name}: ארד · {name}: …` is never shown as this athlete's result.
 2. **History:** `a.history` entries with `kind:"result"`, a valid `at`, non-empty `text` and an https `source`.
    The competition is `compOn(a.sportId, at)` (≤ 31-day competitions); none matched leaves the competition empty.
+   A result without an https source stays in the history timeline instead (Maya on #268).
 
-- **Dedupe:** a session result and a history result of the same athlete on the same day count once, and the session
-  wins (the `#following` rule).
+- **Dedupe:** a session result and a history result of the same athlete on the same day in the same competition count
+  once, and the session wins (the `#following` rule). No cap beyond the history's own (`RESULTS_MAX`).
 - **Grouping:** entries of the same competition form one row (prelims and final together). Entries with no
   competition are one row each.
 - **Order:** rows by their latest day, newest first. Inside a row, by day, then `startUtc`, oldest first.
@@ -39,7 +40,7 @@ A new section between the facts panel and "היסטוריה":
   `<ul class="rows">`, one `<li>` per row.
 - **`.d`:** `fmtShort(day)` for one day, `fmtRange(first, last)` for several (`29–30 באוק׳`); with the year when it isn't
   the current year. Wrapped in `<time datetime="{day}">`.
-- **`.t`:** `<a href="#c-{id}">{comp.name}</a>` (no competition: `<span class="muted">תחרות שאינה במאגר</span>`), then per
+- **`.t`:** `<a href="#c-{id}">{comp.name}</a>` (no competition: `<span class="muted">תחרות שאינה ברשימה</span>`), then per
   entry `<span class="res">{phase ? "<bdi>{phase}</bdi>: " : ""}{result} · {linkOut(src, "מקור: " + host)}</span>`.
   - **Same source** for every entry in a row: shown once, on the last entry.
   - `עודכן ב־{whenIL(resultAt)}` is **not** shown here: in a log, the competition day is the date that matters.
@@ -53,7 +54,7 @@ A new section between the facts panel and "היסטוריה":
 | h2 | `תוצאות בתחרויות` |
 | summary | `{plural(n, "תוצאה אחת", "תוצאות")} בתחרות אחת` / `… ב־{m} תחרויות` (maqaf only before a digit) |
 | row | `{phase}: {result} · מקור: {host}` |
-| no competition | `תחרות שאינה במאגר` |
+| no competition | `תחרות שאינה ברשימה` |
 | more | `הצגת עוד {k} תוצאות` (k = 1: `הצגת עוד תוצאה אחת`); k counts results, not rows |
 | empty | `עוד לא תועדו תוצאות של {name} בתחרויות.` (the athlete or team name; no gendered verb) |
 | footer (`.foot`) | `כל תוצאה מופיעה עם המקור שלה · {CADENCE}` |
@@ -67,10 +68,12 @@ Never: "חי", "בזמן אמת", "עכשיו", a verdict ("ניצחון", "הד
 ## 5. Tests (fixture + injected sessions and history)
 - Two sessions in one competition and one history result elsewhere: 2 rows, the competition linked to `#c-<id>`,
   newest row first, entries oldest first inside it.
-- A session result and a history result on the same day show once (the session's text).
+- A session result and a history result on the same day show once (the session's text) when the competition is the
+  same; in different competitions both show.
 - A shared session's merged text never shows on one athlete's log; a team result with `resultAt` does.
-- A history result without an https source is dropped; one outside every competition shows `תחרות שאינה במאגר`.
-- 12 rows: 10 visible plus a `<details>` with `הצגת עוד {k} תוצאות`, k = the results in the 2 hidden rows. The history timeline has no result entries.
+- A history result without an https source stays in the timeline, not the log; one outside every competition shows
+  `תחרות שאינה ברשימה`.
+- 12 rows: 10 visible plus a `<details>` with `הצגת עוד {k} תוצאות`, k = the results in the 2 hidden rows. The history timeline has no logged result entries.
 - `<b>` in a result renders as text. No output contains "חי" or "בזמן אמת".
 
 ## Asks
