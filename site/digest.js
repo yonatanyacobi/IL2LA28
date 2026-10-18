@@ -107,7 +107,7 @@ function digestText(t = today()){
   const sections = [["תוצאות השבוע", results], ["מה התעדכן", changes], ["ישראלים מתחרים השבוע", competing], ["אירועי מכסה בשבועיים הקרובים", quotas]]
     .filter(([, items]) => items.length).map(([title, items]) => ({title, items, cut: 0}));
   // Results always get a heading once anything else is said, so "no results" is explicit rather than missing.
-  if (sections.length && !results.length) sections.unshift({title: "תוצאות השבוע", items: [], none: "לא הסתיימו השבוע תחרויות בענפים שבמעקב.", cut: 0});
+  if (sections.length && !results.length) sections.unshift({title: "תוצאות השבוע", items: [], none: "לא הסתיימו השבוע תחרויות בענפים שברשימה.", cut: 0});
   const head = [`*הדרך ללוס אנג׳לס 28 · תקציר שבועי*`, `${fmtRange(from, t)}${isDate(dataTs) ? ` · נכון ל־${fmt(dataTs)}` : ""}`,
     ...(isDate(dataTs) && dataTs < addDays(t, -2) ? [`שימו לב: הנתונים לא עודכנו מאז ${fmt(dataTs)}.`] : [])];
   const foot = ["", `לכל הפרטים: ${SITE_URL}`, "אתר לא רשמי. הנתונים ממקורות פומביים, כדאי לבדוק מול המקור."];
