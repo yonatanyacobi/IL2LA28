@@ -55,9 +55,14 @@ function gameLogRow({comp, entries, first, last}, id){
   // One source for the whole row is shown once, on its last entry.
   const shared = entries.every(e => e.source === entries[0].source);
   const src = e => linkOut(e.source, `מקור: ${host(e.source)}`);
+  // Each entry is tracked for "השתנה ב־", but the row shows one mark (the latest): the marks sit out of the flow,
+  // so two in one row would overlap (Gil on #268).
+  const keys = entries.map(e => `log|${id}|${e.date}|${e.phase}|${e.result}`);
+  keys.forEach(k => rowMark(k, k));
+  const latest = keys.filter(k => changedRows.has(k)).sort((x, y) => changedRows.get(y).localeCompare(changedRows.get(x)))[0];
   return `<li><span class="d">${logDays(first, last)}</span>
     <span class="t">${comp ? compLink(comp, esc(comp.name)) : `<span class="muted">תחרות שאינה ברשימה</span>`}${entries.map((e, i) =>
-      `<span class="res">${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${(k => rowMark(k, k))(`log|${id}|${e.date}|${e.phase}|${e.result}`)}</span>`).join("")}</span></li>`;
+      `<span class="res">${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${latest && i === entries.length - 1 ? rowMark(latest, latest) : ""}</span>`).join("")}</span></li>`;
 }
 
 function gameLogSection(a){

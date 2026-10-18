@@ -1004,6 +1004,21 @@ test("game log: a same-day history result dedupes only against her session in th
   assert.strictEqual(log.length, 62, "60 history results plus 2: nothing cut");
 });
 
+test("game log: two results added to one row by an auto-refresh show one change mark (Gil on #268)", async () => {
+  const b = await boot({now: "2026-11-01T08:00:00Z"});
+  const {ctx, run, els} = b;
+  const next = glBase();
+  next.generatedAt = "2099-01-01T00:00:00Z";
+  next.sessions = [glSess("2026-10-29", "2026-10-29T06:00:00Z", "מוקדמות", "עלתה"), glSess("2026-10-29", "2026-10-29T12:00:00Z", "גמר", "ארד")];
+  ctx.location.hash = "#a-raz-hershko"; run("navigate()");
+  ctx.fetch = async () => ({ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(next))});
+  await run("checkForUpdate()");
+  const rows = glRows(els.view.innerHTML);
+  assert.ok(rows[0].includes("עלתה") && rows[0].includes("ארד"), "both results in one row");
+  assert.strictEqual(rows[0].split("השתנה ב־").length - 1, 1, "one mark per row");
+  assert.ok(rows[0].lastIndexOf("השתנה ב־") > rows[0].indexOf("ארד"), "on the row's last line");
+});
+
 test("game log: 12 rows show 10 and a details with the rest's result count", async () => {
   const data = glBase();
   data.athletes.find(a => a.id === "raz-hershko").history = Array.from({length: 12}, (_, i) =>
