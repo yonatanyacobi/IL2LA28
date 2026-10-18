@@ -449,6 +449,11 @@ function nextUpLine(rows){
   return `<p class="next-up"><b>הבא בתור:</b> <a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLink(c, esc(c.name))} · ${fmtRange(c.start, c.end)} · ${names}${c.qualifying ? ` · <span class="pill open">העפלה</span>` : ""}</p>`;
 }
 
+// F3 (first-visitor audit): the hero's line also says where the data comes from and how much was checked by hand,
+// in place of the cadence; when stale or with no check time, those parts stay after freshLine()'s own wording.
+const heroFresh = (hasToday, verified) => freshLine(hasToday, ["ממקורות רשמיים",
+  verified ? `${verified} מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית` : "", `<a href="#about-trust">איך אנחנו בודקים</a>`]);
+
 // ---------- views ----------
 function viewHome(){
   const {counts, html: bar} = stageBar(S.athletes);
@@ -472,9 +477,9 @@ function viewHome(){
   return `
   <section class="hero">
     <div>
-      <div class="hero-title"><h1 tabindex="-1">הדרך ללוס אנג׳לס 28</h1><span class="tag">מעקב לא רשמי</span></div>
+      <div class="hero-title"><h1 tabindex="-1">הדרך ללוס אנג׳לס 28</h1><a class="tag" href="#about">מעקב לא רשמי · מה זה?</a></div>
       <p class="muted hero-sub">מעקב אחרי מסלול ההעפלה של ספורטאיות, ספורטאים ונבחרות מישראל לאולימפיאדת לוס אנג׳לס, 14–30 ביולי 2028.</p>
-      ${hub ? freshLine(inToday.size > 0) : freshness()}
+      ${hub ? heroFresh(inToday.size > 0, verified) : freshness()}
       ${nextUpLine(rows)}
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
@@ -492,7 +497,7 @@ function viewHome(){
   ${closestPanel(rows)}
   ${reviewPanel()}
   <section class="panel" aria-label="התקדמות בהעפלה">
-    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} ברשימה · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה${verified ? ` · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית עד כה · <a href="#about-trust">איך אנחנו בודקים</a>` : ""}</p>
+    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} ברשימה · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה</p>
     ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>

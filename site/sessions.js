@@ -139,12 +139,15 @@ function sessionDetail(s, state){
 }
 
 // Page line under the h1 (§3). Stale only when the page shows something happening today.
-function freshLine(hasToday){
-  const ts = checkTime();
-  if (!ts) return `<p class="fresh"><i></i><span>${CADENCE}</span></p>`;
+// `tail`: what follows the check time (CADENCE by default). A stale line keeps it after the warning, minus CADENCE,
+// which a stale page would contradict; the home hero passes its sources and hand checks (F3).
+function freshLine(hasToday, tail = [CADENCE]){
+  const ts = checkTime(), line = (stale, parts) =>
+    `<p class="fresh${stale ? " stale" : ""}"><i></i><span>${parts.filter(Boolean).join(" · ")}</span></p>`;
+  if (!ts) return line(false, tail);
   return hasToday && Date.now() - Date.parse(ts) > STALE_H * 36e5
-    ? `<p class="fresh stale"><i></i><span>הנתונים לא עודכנו מאז ${whenIL(ts)} · ייתכן שיש תוצאות שעוד לא מופיעות כאן</span></p>`
-    : `<p class="fresh"><i></i><span>נכון ל־${whenIL(ts)} · ${CADENCE}</span></p>`;
+    ? line(true, [`הנתונים לא עודכנו מאז ${whenIL(ts)}`, "ייתכן שיש תוצאות שעוד לא מופיעות כאן", ...tail.filter(x => x !== CADENCE)])
+    : line(false, [`נכון ל־${whenIL(ts)}`, ...tail]);
 }
 
 // A group in which no session has a time says "תאריך בלבד" once, in its heading, instead of on every row
