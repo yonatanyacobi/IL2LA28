@@ -106,6 +106,9 @@ main{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .toolbar select{background:var(--surface);border:1px solid var(--line-ui);border-radius:8px;padding:8px 10px}
 .chk{display:flex;gap:6px;align-items:center;font-size:14px}
+.fix-set{border:1px solid var(--line);border-radius:10px;padding:8px 12px 10px;margin:0;display:grid;gap:8px;min-width:0}
+.fix-set legend{padding:0 4px;font-weight:700}
+.fix-set > div{display:grid;gap:8px}
 
 /* sports index */
 .sports{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}

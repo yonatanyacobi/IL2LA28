@@ -756,7 +756,44 @@ function openForm(a, sportId){
   $("fNotes").value = str(a?.notes); $("fSource").value = str(a?.source);
   $("archBtn").hidden = !a; $("archBtn").textContent = "הסרה מהרשימה";
   $("frmErr").hidden = true; $("frmWarn").hidden = true;
+  // A correction only exists for a published record, so the fieldset is hidden for new athletes.
+  $("fixSet").hidden = !a; $("fIsFix").checked = false; $("fixRows").hidden = true;
+  $("fFixBy").value = "reader"; $("fFixAt").value = today(); $("fFixSrc").value = "";
   $("dlg").showModal();
+}
+
+async function logCorrection(fix){
+  try {
+    await S.db.collection("corrections").doc(fix.id).set({...fix, createdBy: S.uid || "manual"});
+    editing.pendingFix = null;
+    return true;
+  } catch (e) {
+    editing.pendingFix = fix;
+    showFormErr("הרשומה עודכנה, אבל התיקון לא נרשם ביומן. לחצו שוב על „שמירה” כדי לרשום אותו.");
+    return false;
+  }
+}
+
+// The corrections/<id> doc for an edit marked as a correction (shape: docs/design/corrections-log.md §1),
+// or a Hebrew error message. Values are stored raw; the log renders stage and sportId labels.
+function correctionDoc(cur, v, patch){
+  const src = $("fFixSrc").value.trim(), day = $("fFixAt").value, by = $("fFixBy").value;
+  if (!safeUrl(src)) return "לתיקון חייב להיות מקור שמתחיל ב־https://";
+  if (!isDate(day) || day > today()) return "תאריך קבלת הדיווח חסר או עתידי";
+  const fields = FIX_FIELDS.filter(k => k in patch);
+  if (!fields.length) return "התיקון צריך לשנות לפחות שדה אחד שמוצג באתר (לא רק קישור או שם באנגלית)";
+  if (fields.length > 5) return "אפשר לתעד עד 5 שדות בתיקון אחד";
+  const now = new Date().toISOString(), raw = (o, k) => k === "stage" ? String(stageOf(o)) : str(o[k]);
+  return {
+    // id: target, day and fields, plus the minute so two fixes on one day don't collide.
+    id: `${cur.id}-${now.slice(0, 16).replace(/\D/g, "")}-${fields.join("-")}`.slice(0, 120),
+    at: now,
+    // A date-only report counts from the start of that day (UTC), so the 48-hour figure is never flattered.
+    reportedAt: day === today() ? now : `${day}T00:00:00Z`,
+    target: {kind: "athlete", id: cur.id, name: v.name || cur.name},
+    changes: fields.map(k => ({field: k, wrong: raw(cur, k), right: raw(v, k)})),
+    source: src, by,
+  };
 }
 
 function formValues(){
@@ -784,6 +821,10 @@ async function saveForm(ev){
   const col = S.db.collection("athletes");
   $("saveBtn").disabled = true;
   try {
+    if (editing.pendingFix) {   // the record was saved; only its log entry failed
+      if (await logCorrection(editing.pendingFix)) $("dlg").close();
+      return;
+    }
     if (editing.id) {
       // Only changed fields, so a concurrent automatic update to other fields survives.
       const patch = {};
@@ -796,11 +837,17 @@ async function saveForm(ev){
         $("frmWarn").hidden = false;
         return;
       }
+      const fix = $("fIsFix").checked ? correctionDoc({...editing, ...(cur || {})}, v, patch) : null;
+      if (typeof fix === "string") return showFormErr(fix);
       if (patch.sportId) patch.sport = sportName(patch.sportId);
       const src = safeUrl(v.source) ? {source: v.source} : {};
       if ("stage" in patch) patch.history = historyWith(cur, {at: today(), kind: "stage", text: STAGES[v.stage], ...src});
       else if ("rank" in patch && v.rank) patch.history = historyWith(cur, {at: today(), kind: "rank", text: v.rank, ...src});
+      if (fix) patch.history = historyWith({history: patch.history || cur?.history}, {at: today(), kind: "correction",
+        text: "תוקן: " + fix.changes.map(c => FIELD_LABELS[c.field] || c.field).join(", "), source: fix.source});
       await col.doc(editing.id).update({...patch, ...stamp});
+      // Written after the record, so the public log never shows a fix that didn't land.
+      if (fix && !(await logCorrection(fix))) return;
     } else {
       let id = slug(v.name_en) || col.doc().id;
       while (S.athletes.some(a => a.id === id) || (await col.doc(id).get()).exists) id += "-2";
@@ -926,6 +973,7 @@ document.addEventListener("click", e => {
   }
 });
 $("frm").addEventListener("submit", saveForm);
+$("fIsFix").addEventListener("change", e => { $("fixRows").hidden = !e.target.checked; });
 $("visitorBtn").addEventListener("click", () => setVisitorView(true));
 $("editModeBtn").addEventListener("click", () => setVisitorView(false));
 $("archBtn").addEventListener("click", archive);
