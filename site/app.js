@@ -10,9 +10,7 @@ const SITE_NAME = "הדרך ללוס אנג׳לס 28";
 const SITE_URL ="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
 const CONTACT_EMAIL = "yacobiyonatan@gmail.com";
 // Corrections log (docs/design/corrections-log.md). The launch date comes only from data.json.launchAt
-// (export_data.py LAUNCH_AT). REPORT_EMAIL is the dedicated reports inbox (backlog D2): a placeholder
-// until the owner sends the address.
-const REPORT_EMAIL = "{REPORT_EMAIL}";
+// (export_data.py LAUNCH_AT); reports go to CONTACT_EMAIL.
 const FIX_FIELDS = ["name", "event", "rank", "next", "nextDate", "notes", "stage", "sportId", "quota"];
 const FIX_MAX = 300;
 const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "rankNum", "rankList", "rankAsOf", "next", "nextDate", "notes", "source"];
@@ -944,8 +942,10 @@ function applySnapshot(d){
   S.athletes = Array.isArray(d.athletes) ? d.athletes : [];
   S.comps = (Array.isArray(d.competitions) ? d.competitions : []).filter(c => isDate(c.start));
   S.changes = Array.isArray(d.changes) ? d.changes : [];
-  S.corrections = correctionsFrom(d.corrections);
   S.launchAt = isDate(str(d.launchAt).slice(0, 10)) ? str(d.launchAt) : "";
+  // The export already drops pre-launch entries; this keeps the page right if an older export slips through.
+  // Before launch (editors' preview) nothing is filtered.
+  S.corrections = correctionsFrom(d.corrections).filter(c => !S.launchAt || Date.parse(c.at) >= Date.parse(S.launchAt));
   S.loaded = true;
   applyQuotas();
 }

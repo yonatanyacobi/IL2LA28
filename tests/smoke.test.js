@@ -608,13 +608,12 @@ test("#corrections: 48-hour stat from 5 timed entries", async () => {
   assert.ok(out.includes("עד עכשיו, 1 מתוך 5 התיקונים בוצעו תוך 48 שעות."), out.split("היעד:")[1]?.slice(0, 120));
 });
 
-test("#corrections-<id>: one record's entries; no entries -> filtered empty state; unknown id -> not found", async () => {
+test("#corrections-<id>: one record's entries; no entries or unknown id -> not found", async () => {
   const {view} = await bootFixes();
   const raz = view("corrections-raz-hershko");
   assert.strictEqual(entriesOf(raz).length, 2);
   assert.ok(raz.includes("מוצגים התיקונים של <b>רז הרשקו</b>") && raz.includes('<a href="#corrections">לכל התיקונים</a>') && !raz.includes("ענבר לניר"));
-  const none = view("corrections-yonatan-elbaz");
-  assert.ok(!none.includes(NOT_FOUND) && none.includes("אין תיקונים מתועדים לרשומה הזאת.") && none.includes(`מוצגים התיקונים של <b>${FIXTURE.athletes.find(a => a.id === "yonatan-elbaz").name}</b>`));
+  assert.ok(view("corrections-yonatan-elbaz").includes(NOT_FOUND), "athlete without entries");
   assert.ok(view("corrections-nope").includes(NOT_FOUND), "unknown id");
   assert.ok(entriesOf(view("corrections-gone-athlete")).length === 1, "archived athlete with entries still has a log");
 });
@@ -622,7 +621,7 @@ test("#corrections-<id>: one record's entries; no entries -> filtered empty stat
 test("#corrections empty state (launch day) and entry points", async () => {
   const empty = (await bootFixes([])).view("corrections");
   assert.ok(empty.includes("מטעות לתיקון") && empty.includes("עוד אין תיקונים מאז ההשקה.") && !empty.includes('class="month"'));
-  const {view, els} = await bootFixes();
+  const {view, els, run} = await bootFixes();
   const raz = view("a-raz-hershko"), lanir = view("a-inbar-lanir");
   assert.ok(raz.includes('<dt>תיקונים</dt><dd><a href="#corrections-raz-hershko">2 תיקונים</a></dd>'));
   assert.ok(lanir.includes('<a href="#corrections-inbar-lanir">תיקון אחד</a>'));
@@ -630,6 +629,16 @@ test("#corrections empty state (launch day) and entry points", async () => {
   for (const page of [raz, view("about")]) assert.ok(page.includes('ב<a href="#corrections">יומן התיקונים</a>, והיעד הוא תוך 48 שעות.'), "report box line");
   assert.ok(!view("updates").includes("2 בעולם"), "#updates stays news only");
   assert.ok(els.fixLink.innerHTML.includes('href="#corrections"'), "footer link once live");
+  assert.ok(empty.includes(`<span dir="ltr">${run("CONTACT_EMAIL")}</span>`) && !empty.includes("{REPORT_EMAIL}"), "one contact address");
+});
+
+test("corrections before launchAt are not shown, even if an export includes them", async () => {
+  const early = fix({at: "2026-10-21T08:00:00Z", target: {kind: "athlete", id: "raz-hershko", name: "רז הרשקו"}}, [{field: "rank", wrong: "לפני", right: "ההשקה"}]);
+  const {view} = await bootFixes([early, ...CORRECTIONS]);
+  assert.ok(!view("corrections").includes("ההשקה</ins>") && entriesOf(view("corrections")).length === 5);
+  const {run, view: preview} = await boot({data: {...JSON.parse(JSON.stringify(FIXTURE)), corrections: [early], launchAt: null}});
+  run("S.isAdmin = true");
+  assert.strictEqual(entriesOf(preview("corrections")).length, 1, "editors' preview before launch shows everything");
 });
 
 test("corrections log before launch (launchAt null): not found for visitors, no links; preview for editors", async () => {

@@ -40,15 +40,14 @@ function viewCorrections(id = ""){
   const V = S.athletes.filter(a => trustOf(a) === "ok").length;
   const timed = all.filter(c => !isNaN(fixHours(c)));
   const stat = timed.length >= FIX_STAT_MIN ? ` עד עכשיו, ${timed.filter(c => fixHours(c) <= 48).length} מתוך ${timed.length} התיקונים בוצעו תוך 48 שעות.` : "";
-  const name = id && (S.athletes.find(a => a.id === id)?.name || list[0]?.target.name);
-  if (id && !name) return notFound();   // neither a current athlete nor one with entries
+  if (id && !list.length) return notFound();   // a record with no entries has no log page (and no link to one)
+  const name = id && (S.athletes.find(a => a.id === id)?.name || list[0].target.name);
   const months = {};
   list.forEach(c => (months[c.at.slice(0, 7)] ??= []).push(c));
-  const mail = `<span dir="ltr">${esc(REPORT_EMAIL)}</span>`;
+  const mail = `<span dir="ltr">${esc(CONTACT_EMAIL)}</span>`;
   const body = list.length ? Object.keys(months).sort().reverse().map(m => `<section class="month" aria-labelledby="m-${m}">
       <h2 id="m-${m}">${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})} <span>${months[m].length}<span class="sr"> תיקונים</span></span></h2>
       ${months[m].map(fixEntry).join("")}</section>`).join("")
-    : id ? `<div class="empty"><p>אין תיקונים מתועדים לרשומה הזאת.</p><p><a href="#corrections">לכל התיקונים</a></p></div>`
     : `<div class="empty"><p>עוד אין תיקונים מאז ההשקה.</p>
       <p>מצאתם טעות? שלחו קישור ומקור ל־${mail}, והתיקון יופיע כאן.</p></div>`;
   return `${S.launchAt ? "" : `<div class="banner">תצוגה מקדימה לעורכים: היומן יתפרסם לציבור אחרי שייקבע מועד ההשקה.</div>`}
