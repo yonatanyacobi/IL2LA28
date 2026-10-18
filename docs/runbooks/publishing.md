@@ -1,0 +1,173 @@
+# Runbook: publishing
+
+Owner: **Omer (Publisher)**. Covers everything from the fact-checker's sign-off until the change is live, the
+digest text that goes out after it, and the Sunday digest. How a quota result is verified, edited and signed off
+is in [result-night.md](result-night.md) (steps 1–4). This file picks up from there.
+
+Roles: **Publisher** runs this checklist. **Lead** merges. **Coordinator** presses publish.
+**Owner** posts the digest text. **Fact-checker** (Dana) signs off.
+
+Paths are relative to the repo root (`~/workspace/IL2LA28`). The artifact is
+https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT.
+
+## Hard rules
+
+- Publish only from `main`, after the lead has merged. Never publish from a branch or a dirty tree.
+- Never publish `site/data.json`. It is a local preview copy and may be the test fixture. The public `data.json`
+  comes only from the export (step 3).
+- `data.json` with the stage change goes live **before** a `quotas.json` that says `earned` (the validator enforces
+  this, step 4).
+- A failed check stops the run. Don't skip it, don't weaken it, and don't publish "just the safe part".
+- Never pass `force`, `capabilities`, `icon` or `contract` to the publish call.
+
+## Checklist
+
+Copy this list into the PR thread and tick the items as you go.
+
+```
+[ ] 0. Sign-off: review.status "ok"/"fixed" by dana on every changed item; stage approved (earned only)
+[ ] 1. Merged by the lead; local main == origin/main; tree clean
+[ ] 2. build_quotas on main: no diff in site/quotas.json
+[ ] 3. Export: data.json published by the daily task, copied to /tmp/la28-data.json, stage visible
+[ ] 4. Validators: data, quotas, quota_due, unit, smoke, node --check, all green
+[ ] 5. Republish: call prepared, coordinator published, main SHA noted in the PR
+[ ] 6. Live check at 400px, light and dark, signed out
+[ ] 7. Digest text copied from #digest, checked, handed to the owner
+```
+
+### 0. Sign-off (before merge)
+
+On the PR branch, every item that changed in `data/quotas/quotas.json` has
+`"review": {"status": "ok" | "fixed", "by": "dana", …}`:
+
+```sh
+git diff origin/main -- data/quotas/quotas.json | grep '"review"'
+```
+
+For an `earned` item, the athletes' stage-2 proposals have been approved in the page (result-night.md, step 4).
+On the branch, before asking for review, the author runs steps 2 and 4 below and commits `site/quotas.json`.
+
+### 1. Merge (lead)
+
+The lead merges with `git merge --no-ff`. Then the Publisher runs:
+
+```sh
+git checkout main && git pull --ff-only
+git status --short          # must print nothing
+git log --oneline -1        # note this SHA: it is what goes live
+```
+
+### 2. Build quotas on main
+
+```sh
+python3 job/build_quotas.py data/quotas/quotas.json site/quotas.json
+git diff --exit-code site/quotas.json && echo "quotas.json in sync"
+```
+
+If there is a diff, the branch was merged without its build. Don't commit it on main. Stop, and ask the author for a
+follow-up PR with the built file.
+
+### 3. Export data.json
+
+The daily task exports the database, validates the export and publishes `data.json` (job/SKILL.md, step 5). Use it
+instead of a hand export, so that the export has a single code path.
+
+1. Claude Code → Scheduled tasks → `la28-israel-daily-update` → **Run now**. Wait for its 3-line summary and check
+   it says `published yes`. If it says no, read `errors` in `runs/<today>` (page → `#admin`) and stop.
+2. Fetch what is live, in a Claude Code session at the repo root:
+   > Read the artifact https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT with path "data.json" and copy the saved
+   > file to /tmp/la28-data.json.
+3. For an `earned` item, check that the stage is in the published data:
+   ```sh
+   python3 -c "import json,sys;d=json.load(open('/tmp/la28-data.json'));print([a['id'] for a in d['athletes'] if a['sportId']==sys.argv[1] and a['stage']>=2])" artistic-gymnastics
+   ```
+   Expect the athletes' ids. An empty list means the approval hasn't been exported yet: run the task again.
+
+### 4. Validators
+
+```sh
+python3 job/validate_data.py /tmp/la28-data.json
+python3 job/validate_data.py --quotas site/quotas.json /tmp/la28-data.json
+python3 job/quota_due.py /tmp/la28-data.json site/quotas.json --days 4
+for f in site/*.js; do node --check "$f"; done
+python3 -m unittest discover -s tests
+node tests/smoke.test.js
+```
+
+- The two `validate_data.py` runs must exit 0. `INVALID: … "earned" but no athlete … has stage >= 2` means step 3
+  isn't done yet.
+- `quota_due.py` is informational. Every `לעדכן quotas.json: …` line it prints should be explained by this
+  release, or already be on someone's list. Paste the output into the PR thread.
+
+### 5. Republish (coordinator presses publish)
+
+The Publisher prepares the call and the coordinator runs it. The page itself is published only when
+`site/index.html` changed:
+
+1. In a Claude Code session at the repo root, have Claude read the artifact (no path) and diff the saved page file
+   against `site/index.html`.
+   - If they are identical, or differ only by changes in this merge (`git log -p -1 -- site/index.html`), use
+     `file_path = site/index.html`.
+   - If the live page has anything that isn't in git, **stop** and ask the lead. Someone published outside this
+     process.
+2. Hand the coordinator this call (main checked out at the SHA from step 1):
+   > Publish to https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT with file_path = site/index.html and
+   > files = {"app.js": "site/app.js", "admin.js": "site/admin.js", "quotas.js": "site/quotas.js",
+   > "digest.js": "site/digest.js", "styles.css": "site/styles.css", "quotas.json": "site/quotas.json"}.
+   > Don't pass force, capabilities, icon or contract.
+
+   `data.json` is not in the list. It was published in step 3, and files left out are kept. If a new `site/*.js` or
+   asset was added in the merge, add it to the map, and also check it has a `<script>` tag in `index.html`.
+3. Note in the PR thread: the published SHA and the time.
+
+### 6. Live check at 400px
+
+Open the artifact signed out (a private window). Set the width to 400px (DevTools device toolbar, or a narrow
+window). Check in light, then in dark (DevTools → Rendering → `prefers-color-scheme`).
+
+| Route | Expect |
+|---|---|
+| Home | No horizontal scroll. Header is two short rows, and the current tab is visible. The freshness line shows the time of step 3. On an event day the today strip shows the competition. A newly `earned` item appears in "מכסה חדשה לישראל" with its date. |
+| `#sport-<id>` of the release | The new status pill and note. The quota footnote date matches `updatedAt`. |
+| `#quotas` | The item is in the right group, and the summary counts it. |
+| `#a-<athlete>` (earned only) | Stage shows "מכסה הושגה" with the official source. |
+| `#digest` | Opens, and the text includes this release (step 7). |
+| Console | No errors. |
+
+If anything is wrong, roll back (below). Don't fix forward on the live site.
+
+### 7. Digest text to send out
+
+1. Open `#digest` on the live site (signed out) and press **העתקת התקציר**. If the clipboard is refused, the text
+   is selected in the box, so copy it by hand.
+2. Check before handing it over:
+   - The release is in it: under "תוצאות השבוע" (a competition that ended) or "מה התעדכן" (the approved change).
+     A competition with "התוצאות עוד לא עודכנו באתר." means the approval summary hasn't reached `meta/status`. Wait
+     for the next export rather than editing the text.
+   - The text has no outcome that isn't on the site, and no "בטוח" or "כנראה".
+   - The counter shows at most 3,500 characters, and the text ends with the site link and the disclaimer.
+3. Give the text to the owner, who posts it. For a single-result night, the owner may post only the relevant
+   section plus the last two lines (site link and disclaimer). The Publisher doesn't edit the facts in the text.
+   If a fact is wrong, it's wrong on the site too: roll back.
+
+## Rollback
+
+Republish the previous build. Don't hand-edit published files.
+
+```sh
+git show <previous published SHA>:site/quotas.json > /tmp/quotas-prev.json
+```
+
+Give the coordinator the step 5 call with `files = {"quotas.json": "/tmp/quotas-prev.json"}` (add the code files from
+the same SHA if code changed). A wrong stage is reverted by an editor in the page and reaches the public with the
+next export (step 3). Then fix it on a branch and run this checklist again.
+
+## Sunday digest
+
+Every Sunday by 10:00 Israel time. The digest covers the 7 days before Sunday plus the coming week.
+
+1. Check that the morning daily run published (the `#home` freshness line shows today). If not, run step 3 first.
+2. Do step 7 for the whole text, then hand it to the owner.
+3. Before a big weekend (a world championship or a quota event), draft the accompanying message in
+   `docs/runbooks/digest-<event>.md` during the week, with a variant for each possible outcome, so that Sunday is
+   copy, check and send. For example, see [digest-rotterdam.md](digest-rotterdam.md).

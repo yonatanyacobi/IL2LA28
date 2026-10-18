@@ -37,7 +37,7 @@
   (קריטריונים 4–5). מציעים `israelStatus: "outside"` ואת הנוסח
   `לא רלוונטי – ישראל העפילה כנבחרת ב-20.10.2026`.
 - `review` (בשני הפריטים): `{"status": "unchecked", "by": "<you>", "at": "<date>"}` עד שדנה חותמת (result-night.md, שלבים 2–3)
-- הסדר: `earned` מתפרסם רק אחרי שינוי השלב של הספורטאים. מבצעים את docs/runbooks/result-night.md, שלבים 4–6.
+- הסדר: `earned` מתפרסם רק אחרי שינוי השלב של הספורטאים. מבצעים את docs/runbooks/result-night.md, שלבים 4–5, ואז את docs/runbooks/publishing.md.
 
 ## (ב) ישראל לא במקום 1–3, או לא עלתה לגמר: המסלול הבא
 
