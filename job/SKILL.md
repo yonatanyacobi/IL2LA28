@@ -19,13 +19,13 @@ DATA MODEL (display text in Hebrew):
 
 EACH RUN:
 0. Immediately set runs/<today> = {status: "started", started: now} (overwrite if it exists).
-1. Read: list athletes (with out_dir = <scratchpad>/db), competitions, sports (query.limit 1000), meta/status, proposals where status == "pending", and runs/<yesterday> if present (T_prev = its "started", else meta.lastRun).
+1. Read: list athletes and competitions (each with out_dir = <scratchpad>/db), sports (query.limit 1000), meta/status, proposals where status == "pending", and runs/<yesterday> if present (T_prev = its "started", else meta.lastRun).
 2. Research:
    a. Competitions that ended in the last 4 days or are running now → Israeli results (federation sites, IJF/FIG/World Aquatics/World Athletics/World Sailing etc., olympicsil.co.il, ynet, sport5, one.co.il, Times of Israel, Jerusalem Post).
    b. General news: Israeli athletes + LA 2028 qualification / Olympic quota, last few days.
    c. Rotation: sort sport ids alphabetically; pick 5 starting at index (dayOfYear * 5) mod count. For their athletes refresh rank (official ranking site) and fill next/nextDate where empty or in the past — only athlete-specific confirmed entries (entry lists, announcements). Refresh that sport's window if the official system changed.
-   d. Triathlon results (World Triathlon API): Artifact action "read" with the URL and path "data.json" → copy to <scratchpad>/pub.json, then run: python3 ~/.claude/scheduled-tasks/la28-israel-daily-update/tri_results.py <scratchpad>/pub.json --db <scratchpad>/db
-      (--db is the athletes dump from step 1, so notes and history come from the DB, not the published copy.) It prints a JSON plan for triathlon competitions with Israeli entrants that ended in the last 4 days (final lists only). Never print or log anything from ~/.config/il2la28. For each "updates" entry: send {"result": <its result>} as new.json through athlete_patch.py (rule 3, DIRECT writes; it counts as a write). For each "proposals" entry: create proposals/<id> with the doc plus createdAt=now, only if that id doesn't exist. Add each "warnings" line to runs/<today>.warnings. Never turn a result into a stage or quota change yourself; the result-night runbook covers quotas.json.
+   d. Triathlon results (World Triathlon API): run: python3 ~/.claude/scheduled-tasks/la28-israel-daily-update/tri_results.py <scratchpad>/db
+      (<scratchpad>/db is the step-1 dump of athletes and competitions, so a competition, entrant or result added after the last publish counts. Don't pass the published data.json.) It prints a JSON plan for triathlon competitions with Israeli entrants that ended in the last 4 days (final lists only). Never print or log anything from ~/.config/il2la28. For each "updates" entry: send {"result": <its result>} as new.json through athlete_patch.py (rule 3, DIRECT writes; it counts as a write). For each "proposals" entry: create proposals/<id> with the doc plus createdAt=now, only if that id doesn't exist. Add each "warnings" line to runs/<today>.warnings. Never turn a result into a stage or quota change yourself; the result-night runbook covers quotas.json.
 3. Writing rules:
    - NEVER set, change or clear verifiedAt/verifiedBy (use "update", never "set", on existing athletes so they survive). A direct write that bumps updatedAt past verifiedAt is expected only when a visible field really changed: the page then shows the record as changed since checked. Rewriting the same values would wipe human verification.
    - YOUR OWN ERRORS: when a source shows that a value you published earlier was wrong (not merely outdated), don't fix it directly. File a proposal (kind "update", the corrected patch, ≥1 evidence URL) with correction: {by: "job", reportedAt: now}; approving it in the page writes the correction entry.
@@ -40,7 +40,7 @@ EACH RUN:
 4. meta/status (update with if_version from your read; on version mismatch re-read and merge, never drop entries written by others): lastRun = now; prepend one short Hebrew line per meaningful direct change, with athleteId when about one athlete. No lines for proposals. No duplicate lines. Keep 30.
 5. PUBLISH (every run, even if nothing changed, so approved proposals and human edits reach the public):
    a. Artifact action "read" with the URL and path "data.json" → saves the currently published data.json; copy it to <scratchpad>/prev.json.
-   b. ArtifactData list athletes, competitions, sports, corrections (limit 1000) and get meta/status, each with out_dir = <scratchpad>/dump (fresh dir).
+   b. ArtifactData list athletes, competitions, sports, corrections, sessions (limit 1000) and get meta/status, each with out_dir = <scratchpad>/dump (fresh dir).
    c. Run: python3 ~/.claude/scheduled-tasks/la28-israel-daily-update/export_data.py <scratchpad>/dump <scratchpad>/data.json <scratchpad>/prev.json
       If it exits non-zero (it refuses when a collection shrinks >20%), DO NOT publish; record the error.
       Then run: python3 ~/.claude/scheduled-tasks/la28-israel-daily-update/validate_data.py <scratchpad>/data.json
