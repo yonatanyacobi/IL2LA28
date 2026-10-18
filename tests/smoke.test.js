@@ -1935,6 +1935,7 @@ test("changed rows: marked after auto-refresh on #a- and #day, one announcement,
   assert.strictEqual(marks(), 2, "rank and the new history row");
   assert.strictEqual(run(`$("updateNote").textContent`), "הנתונים עודכנו ב־02:00 · 2 פריטים השתנו בדף הזה", "one announcement with the count");
   assert.ok(els.view.innerHTML.includes(`השתנה ב־<time datetime="2099-01-01T00:00:00Z">02:00</time>`), "the export's Israel time");
+  assert.ok(els.view.innerHTML.includes(`מקום 5 במקבילים<span class="pill chg"><span class="sr"> · </span>השתנה ב־`), "sr separator: the rank and the mark aren't read as one word");
 
   // A later export that doesn't touch her keeps the marks and announces no new rows.
   next = exportWith("2099-01-02T00:00:00Z", d => { const a = ath(d, "yali-shoshani");
