@@ -30,7 +30,7 @@ go to the Olympic qualifying tournaments (Feb 2028). The quota item stays as it 
 |---|---|---|
 | ~21:30 (game + 2h) | Final score from the FIBA game page (game id above). Box scores elsewhere and news are not sources | Yael |
 | + 30 min | Values → Dana | Yael |
-| after Dana, before the 23:45 run | Steps 1–2 | coordinator |
+| after Dana, before the next morning's 07:13 daily run | Steps 1–2 | coordinator |
 
 1. **Team write** through `job/athlete_patch.py`: `"result": {"at": "<game day>", "text": …, "source": <FIBA game page>}`,
    and `next`/`nextDate` = the next game in the table (after 17.11: `""` until the next window is official).

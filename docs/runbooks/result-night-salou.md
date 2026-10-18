@@ -28,7 +28,7 @@ decided. Salou gives **no Olympic quota**: the quota item stays `in-contention`,
 |---|---|---|
 | after each Israeli game | Final score from the official source | Yael |
 | + 30 min | Session `result` → Dana | Yael |
-| after Dana, before the 23:45 run | Session `result`, `resultSource`, `resultAt` (`date -u +%Y-%m-%dT%H:%M:%SZ`); all three | coordinator |
+| after Dana, before the next morning's 07:13 daily run | Session `result`, `resultSource`, `resultAt` (`date -u +%Y-%m-%dT%H:%M:%SZ`); all three | coordinator |
 
 ## End of the tournament (9.11 women, 18.11 men)
 
