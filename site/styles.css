@@ -287,6 +287,8 @@ div.track{background:none}
 .stakes{font-size:14px;color:var(--ink);border-inline-start:3px solid var(--sun);padding-inline-start:8px;overflow-wrap:anywhere}
 .stakes b{color:var(--sun-ink)}
 .rows .t small.stakes{color:var(--ink);margin-top:4px}
+.pill.q-awaiting{background:var(--blue-soft);color:var(--blue)}
+.stakes.awaiting{border-inline-start-color:var(--blue)} .stakes.awaiting b{color:var(--blue)}
 
 /* weekly digest (#digest); the stakes-line rules of the same spec come with §1 */
 .digest textarea{width:100%;min-height:22em;resize:vertical;border:1px solid var(--line-ui,var(--stage0));border-radius:8px;
@@ -303,3 +305,8 @@ div.track{background:none}
 .rn-steps .chk{align-items:flex-start;font-weight:400;overflow-wrap:anywhere}
 .rn-steps .chk input{margin-top:4px;flex:none}
 .rn-steps code{font-size:12.5px;overflow-wrap:anywhere}
+/* home: "הבא בתור" (round3 §5b) */
+.next-up{margin-top:8px;font-size:15px;overflow-wrap:anywhere}
+.next-up b{color:var(--sun-ink)}
+/* editors' "view as visitor" preview */
+.visitor-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:center;background:var(--blue-soft);color:var(--ink);border-bottom:1px solid var(--line);padding:6px 16px;font-size:14px}

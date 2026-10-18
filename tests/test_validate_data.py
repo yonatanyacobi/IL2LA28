@@ -34,6 +34,28 @@ class ValidateTest(unittest.TestCase):
         self.assertEqual(bad.returncode, 1)
         self.assertIn("schemaVersion", bad.stdout)
 
+    def test_rank_fields(self):
+        def setr(**kw):
+            return lambda d: d["athletes"][0].update(kw)
+        L, D = "IJF World Ranking List", "2026-10-13"
+        for ok in [{}, dict(rankNum=1, rankList=L, rankAsOf=D), dict(rankNum=None, rankList="", rankAsOf=""),
+                   dict(rankNum=None, rankList=L, rankAsOf=D)]:
+            self.assertEqual(self.broken(setr(**ok)), [], ok)
+        for bad, needle in [(dict(rankNum=0, rankList=L, rankAsOf=D), "rankNum"),
+                            (dict(rankNum="3", rankList=L, rankAsOf=D), "rankNum"),
+                            (dict(rankNum=True, rankList=L, rankAsOf=D), "rankNum"),
+                            (dict(rankNum=2.0, rankList=L, rankAsOf=D), "rankNum"),
+                            (dict(rankNum=4, rankAsOf=D), "rankList: required"),
+                            (dict(rankNum=4, rankList=" ", rankAsOf=D), "rankList: required"),
+                            (dict(rankNum=4, rankList=L), "rankAsOf: YYYY-MM-DD required"),
+                            (dict(rankNum=4, rankList=L, rankAsOf="2026-13-01"), "rankAsOf"),
+                            (dict(rankList="x" * 81), "rankList"),
+                            (dict(rankList=7), "rankList"),
+                            (dict(rankAsOf="13.10.2026"), "rankAsOf")]:
+            errors = self.broken(setr(**bad))
+            self.assertTrue(errors, bad)
+            self.assertIn(needle, "\n".join(errors), bad)
+
     def test_verified_at_optional_iso(self):
         def setv(v):
             return lambda d: d["athletes"][0].__setitem__("verifiedAt", v)
