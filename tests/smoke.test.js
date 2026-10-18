@@ -312,6 +312,36 @@ test("fetch failure shows the retry view", async () => {
   assert.ok(view("home").includes("data-retry"));
 });
 
+test("#admin quota health: stale file, past/soon events, earned without a stage-2 athlete", async () => {
+  const base = QUOTAS.items[0];   // judo, valid
+  const item = (sportId, event, israelStatus, start) => ({...base, sportId, event, israelStatus,
+    nextQuotaEvent: start ? {name: `אירוע ${event}`, start} : null});
+  const quotas = {updatedAt: "2026-10-01", items: [
+    item("judo", "עבר<b>", "in-contention", "2026-10-17"),
+    item("sailing", "בקרוב", "in-contention", "2026-10-21"),
+    item("sailing", "רחוק", "in-contention", "2026-10-22"),
+    item("athletics", "הושגה-בלי", "earned", null),
+    item("judo", "הושגה-עם", "earned", null),
+  ]};
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.find(a => a.sportId === "judo").stage = 2;
+  const {run, view} = await boot({data, quotas, now: "2026-10-18T08:00:00Z"});
+  run("S.isAdmin = true; S.live = true");
+  const out = view("admin");
+  const flag = k => out.split(`data-flag="${k}"`)[1]?.split("</div>")[0] || "";
+  const panel = out.split('id="quotaHealth"')[1].split("</section>")[0];
+  assert.ok(panel.includes("ישן מ־14 ימים") && out.includes('class="panel adm-alert" id="quotaHealth"'), "17-day-old file flagged");
+  assert.ok(flag("past").includes("עבר&lt;b&gt;") && !flag("past").includes("עבר<b>"), "past event listed and escaped");
+  assert.ok(flag("past").includes('href="#sport-judo"'));
+  assert.ok(flag("soon").includes("בקרוב") && flag("soon").includes("לעדכן אחרי התחרות") && !flag("soon").includes("רחוק"), "soon = within 3 days only");
+  assert.ok(flag("earned").includes("הושגה-בלי") && !flag("earned").includes("הושגה-עם"), "earned needs a stage ≥ 2 athlete in the sport");
+
+  const fresh = await boot({quotas: {updatedAt: "2026-10-17", items: [item("sailing", "רחוק", "in-contention", "2026-12-01")]}, now: "2026-10-18T08:00:00Z"});
+  fresh.run("S.isAdmin = true; S.live = true");
+  const ok = fresh.view("admin").split('id="quotaHealth"')[1].split("</section>")[0];
+  assert.ok(ok.includes("תקין") && !ok.includes("data-flag"), "healthy file has no flags");
+});
+
 test("#quotas renders the fixture grouped by status, with links and the as-of date", async () => {
   const {view} = await boot({quotas: QUOTAS, now: "2026-10-18T08:00:00Z"});
   const out = view("quotas");

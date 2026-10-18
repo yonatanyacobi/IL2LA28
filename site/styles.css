@@ -265,3 +265,5 @@ div.track{background:none}
   .links::-webkit-scrollbar{display:none}
   .links a{padding-block:10px}
 }
+.adm-bad{color:var(--bad);font-weight:700}
+#quotaHealth h3{font-family:var(--f-body);font-size:16px;font-weight:700}

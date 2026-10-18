@@ -64,6 +64,35 @@ function runPanel(){
   </section>`;
 }
 
+// quotas.json is hand-curated (data/quotas → job/build_quotas.py); nothing refreshes it, so editors get reminders here.
+const QUOTA_MAX_AGE_D = 14, QUOTA_SOON_D = 3;
+function quotaHealthPanel(){
+  const h = `<h2>בריאות נתוני המכסות</h2>`;
+  if (!S.quotasLoaded) return `<section class="panel">${h}<p class="muted">טוען…</p></section>`;
+  if (S.quotasError) return `<section class="panel adm-alert">${h}<p>quotas.json לא נטען או שאינו תקין.</p></section>`;
+  if (!S.quotas.length) return `<section class="panel">${h}<p class="muted">אין פריטי מכסות מפורסמים.</p></section>`;
+  const t = today(), soon = addDays(t, QUOTA_SOON_D), start = q => q.nextQuotaEvent?.start || "";
+  const age = daysSince(S.quotasUpdatedAt);
+  const evt = q => `${esc(q.nextQuotaEvent.name)} · ${fmt(start(q))}`;
+  const flags = [
+    {key: "past", alert: true, label: "אירוע המכסה הבא כבר עבר", items: S.quotas.filter(q => start(q) && start(q) < t), why: evt},
+    {key: "earned", alert: true, label: "„מכסה הושגה” בלי ספורטאי/ת בשלב מכסה ומעלה בענף",
+      items: S.quotas.filter(q => q.israelStatus === "earned" && !athletesOf(q.sportId).some(a => stageOf(a) >= 2)), why: () => "לבדוק את הפריט או את שלב הספורטאי/ת"},
+    {key: "soon", alert: false, label: `אירוע מכסה ב־${QUOTA_SOON_D} הימים הקרובים: לעדכן אחרי התחרות`,
+      items: S.quotas.filter(q => start(q) >= t && start(q) <= soon), why: evt},
+  ].filter(f => f.items.length);
+  const stale = !(age <= QUOTA_MAX_AGE_D);
+  const alert = stale || flags.some(f => f.alert);
+  const sorted = list => list.slice().sort((a, b) => start(a).localeCompare(start(b)) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
+  return `<section class="panel ${alert ? "adm-alert" : ""}" id="quotaHealth">
+    <div class="sec-head">${h}<span class="pill ${alert ? "bad" : flags.length ? "soon" : "open"}">${alert ? "דורש בדיקה" : flags.length ? "תזכורת" : "תקין"}</span></div>
+    <p class="${stale ? "adm-bad" : "muted"}">${S.quotas.length} פריטים · quotas.json עודכן ${isDate(str(S.quotasUpdatedAt).slice(0, 10)) ? `ב־${fmt(str(S.quotasUpdatedAt).slice(0, 10))}` : "בתאריך לא ידוע"}${stale ? ` · ישן מ־${QUOTA_MAX_AGE_D} ימים` : ""}</p>
+    ${flags.map(f => `<div class="stack" data-flag="${f.key}"><h3 class="${f.alert ? "adm-bad" : ""}">${esc(f.label)} (${f.items.length})</h3>
+      <ul class="rows">${sorted(f.items).map(q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
+        <span class="t">${esc(q.event)}<small>${f.why(q)}</small></span><span></span></li>`).join("")}</ul></div>`).join("")}
+  </section>`;
+}
+
 function admList(key, sportId){
   const c = CHECKS[key];
   if (!c || (sportId && !sportById(sportId))) return notFound();
@@ -87,6 +116,7 @@ function viewAdmin(sub){
   return `<h1 tabindex="-1">בקרת נתונים</h1>
   <p class="muted">לעורכים בלבד. ${S.athletes.length} רשומות פעילות במאגר החי.</p>
   ${runPanel()}
+  ${quotaHealthPanel()}
   <div class="adm-tiles">
     ${tile("#home", pend, "הצעות ממתינות לאישור")}
     ${Object.keys(CHECKS).map(k => tile(`#admin-${k}`, n(k), CHECKS[k].label)).join("")}
