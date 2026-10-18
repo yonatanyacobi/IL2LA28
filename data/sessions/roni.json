@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T15:25:20Z",
+ "updatedAt": "2026-10-18T15:26:48Z",
  "sessions": [
   {
    "id": "ag-worlds-2026-20261019-wag-q-sub7",
@@ -74,14 +74,15 @@
    "timeLocal": "",
    "tz": "",
    "athleteIds": [
-    "yonatan-elbaz"
+    "yonatan-elbaz",
+    "maya-goshen"
    ],
-   "phase": "מוקדמות, יום 2: גברים 73-",
+   "phase": "מוקדמות, יום 2: גברים 73-, נשים 70-",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "result": "",
    "resultSource": "",
    "resultAt": "",
-   "notes": "Outlines סעיף 8: מוקדמות \"TBC\" – שעת ההתחלה תפורסם כשמספר המתחרים סופי; בלוק הגמרים 17:00. משתתפים: רשימת הרשומים של IJF (competition/3157), נבדקה ב־2026-10-18. סשן בלוק הגמרים נרשם רק אחרי שישראלי/ת עולה אליו (חוזה #144).",
+   "notes": "Outlines סעיף 8: מוקדמות \"TBC\" – שעת ההתחלה תפורסם כשמספר המתחרים סופי; בלוק הגמרים 17:00. משתתפים: רשימת הרשומים של IJF (competition/3157), נבדקה ב־2026-10-18. סשן בלוק הגמרים נרשם רק אחרי שישראלי/ת עולה אליו (חוזה #144). maya-goshen נוסף/ה אחרי יצירת הרשומה (#207); רשום/ה ברשימת IJF. השעה תיקבע אחרי ההגרלה ב־28.10.",
    "review": {
     "status": "unchecked",
     "by": "roni",
@@ -95,14 +96,15 @@
    "timeLocal": "",
    "tz": "",
    "athleteIds": [
-    "raz-hershko"
+    "raz-hershko",
+    "iosif-simin"
    ],
-   "phase": "מוקדמות, יום 3: נשים 78+",
+   "phase": "מוקדמות, יום 3: נשים 78+, גברים 100-",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "result": "",
    "resultSource": "",
    "resultAt": "",
-   "notes": "Outlines סעיף 8: מוקדמות \"TBC\" – שעת ההתחלה תפורסם כשמספר המתחרים סופי; בלוק הגמרים 17:00. משתתפים: רשימת הרשומים של IJF (competition/3157), נבדקה ב־2026-10-18. סשן בלוק הגמרים נרשם רק אחרי שישראלי/ת עולה אליו (חוזה #144).",
+   "notes": "Outlines סעיף 8: מוקדמות \"TBC\" – שעת ההתחלה תפורסם כשמספר המתחרים סופי; בלוק הגמרים 17:00. משתתפים: רשימת הרשומים של IJF (competition/3157), נבדקה ב־2026-10-18. סשן בלוק הגמרים נרשם רק אחרי שישראלי/ת עולה אליו (חוזה #144). iosif-simin נוסף/ה אחרי יצירת הרשומה (#207); רשום/ה ברשימת IJF. השעה תיקבע אחרי ההגרלה ב־28.10.",
    "review": {
     "status": "unchecked",
     "by": "roni",
@@ -177,32 +179,6 @@
    "phase": "גמרי מכשירים, יום 2 (קורה/קרקע נשים)",
    "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
    "addWhen": "אם רז או שמאי עולות לגמר קורה או קרקע לפי התוצאות הרשמיות"
-  },
-  {
-   "competitionId": "judo-gs-abu-dhabi-2026",
-   "date": "2026-10-30",
-   "timeLocal": "",
-   "tz": "",
-   "athleteIds": [
-    "maya-goshen"
-   ],
-   "phase": "מוקדמות, יום 2: גברים 73-, נשים 70-",
-   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
-   "status": "HOLD",
-   "addWhen": "אחרי אישור יצירת maya-goshen (#207): להוסיף את ה־id לסשן judo-gs-abu-dhabi-2026-20261030-prelims, לעדכן את ה־phase לנוסח הזה ולהחזיר את review ל־unchecked. כניסה: רשימת IJF, 70- (WRL 57)."
-  },
-  {
-   "competitionId": "judo-gs-abu-dhabi-2026",
-   "date": "2026-10-31",
-   "timeLocal": "",
-   "tz": "",
-   "athleteIds": [
-    "iosif-simin"
-   ],
-   "phase": "מוקדמות, יום 3: נשים 78+, גברים 100-",
-   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
-   "status": "HOLD",
-   "addWhen": "אחרי אישור יצירת iosif-simin (#207): להוסיף את ה־id לסשן judo-gs-abu-dhabi-2026-20261031-prelims, לעדכן את ה־phase לנוסח הזה ולהחזיר את review ל־unchecked. כניסה: רשימת IJF, 100- (WRL 23)."
   }
  ]
 }
