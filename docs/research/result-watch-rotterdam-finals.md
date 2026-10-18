@@ -32,20 +32,22 @@ Move the matching block from `pendingFinalBlocks` in `data/sessions/roni.json` t
 - `source`: the FIG Work Plan (fidb_23944).
 
 ## Values to enter, from the Official final PDF only
-Use `job/athlete_patch.py` with `"result": {"at": <day>, "text": …, "source": <Official PDF>}`. Every text is the output of
-`gym_results.result_text("final", …)` from #219, the one wording the job uses too (with `tri_results.he_date()`
-and the data.json competition name). Each passes `athlete_patch.result_entry()`.
+Use `job/athlete_patch.py` with `"result": {"at": <day>, "text": …, "source": <Official PDF>}`. Wording:
+the texts are in the gendered house style with the definite article (for example "זהב בגמר הקרקע"), the same
+style as #173 and #184 for 19.10 (coordinator decision, 18.10). Maya is adding the matching option to
+`gym_results.result_text()` (#219) so that the job produces the same strings. Each uses `tri_results.he_date()`
+and the data.json competition name, and passes `athlete_patch.result_entry()`.
 
 | Final (Rotterdam time) | Medal: `result.text` | Place `<N>`: `result.text` | Places | Official PDF (Longines → …) |
 |---|---|---|---|---|
-| קרב־רב גברים, 22.10, 19:30 (20:30 IL) | `<זהב / כסף / ארד> בגמר קרב־רב באליפות העולם בהתעמלות מכשירים 2026 (22 באוק׳ 2026)` | `מקום <N> בגמר קרב־רב באליפות העולם בהתעמלות מכשירים 2026 (22 באוק׳ 2026)` | 4–24 | Men's All-Around Final → Results |
-| קרב־רב נשים, 23.10, 19:30 (20:30 IL) | `<זהב / כסף / ארד> בגמר קרב־רב באליפות העולם בהתעמלות מכשירים 2026 (23 באוק׳ 2026)` | `מקום <N> בגמר קרב־רב באליפות העולם בהתעמלות מכשירים 2026 (23 באוק׳ 2026)` | 4–24 | Women's All-Around Final → Results |
-| קפיצות נשים, 24.10, 14:37 (15:37 IL) | `<זהב / כסף / ארד> בגמר קפיצות באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `מקום <N> בגמר קפיצות באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | 4–8 | Apparatus Finals → Vault Results |
-| מקבילים מדורגים נשים, 24.10, 16:30 (17:30 IL) | `<זהב / כסף / ארד> בגמר מקבילים מדורגים באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `מקום <N> בגמר מקבילים מדורגים באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | 4–8 | Apparatus Finals → Uneven Bars Results |
-| קורה נשים, 25.10, 14:42 (15:42 IL) | `<זהב / כסף / ארד> בגמר קורה באליפות העולם בהתעמלות מכשירים 2026 (25 באוק׳ 2026)` | `מקום <N> בגמר קורה באליפות העולם בהתעמלות מכשירים 2026 (25 באוק׳ 2026)` | 4–8 | Apparatus Finals → Balance Beam Results |
-| קרקע נשים, 25.10, 16:30 (17:30 IL) | `<זהב / כסף / ארד> בגמר קרקע באליפות העולם בהתעמלות מכשירים 2026 (25 באוק׳ 2026)` | `מקום <N> בגמר קרקע באליפות העולם בהתעמלות מכשירים 2026 (25 באוק׳ 2026)` | 4–8 | Apparatus Finals → Floor Exercise Results |
+| קרב־רב גברים, 22.10, 19:30 (20:30 IL) | `<זהב / כסף / ארד> בגמר הקרב־רב באליפות העולם בהתעמלות מכשירים 2026 (22 באוק׳ 2026)` | `מקום <N> בגמר הקרב־רב באליפות העולם בהתעמלות מכשירים 2026 (22 באוק׳ 2026)` | 4–24 | Men's All-Around Final → Results |
+| קרב־רב נשים, 23.10, 19:30 (20:30 IL) | `<זהב / כסף / ארד> בגמר הקרב־רב באליפות העולם בהתעמלות מכשירים 2026 (23 באוק׳ 2026)` | `מקום <N> בגמר הקרב־רב באליפות העולם בהתעמלות מכשירים 2026 (23 באוק׳ 2026)` | 4–24 | Women's All-Around Final → Results |
+| קפיצות נשים, 24.10, 14:37 (15:37 IL) | `<זהב / כסף / ארד> בגמר הקפיצות באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `מקום <N> בגמר הקפיצות באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | 4–8 | Apparatus Finals → Vault Results |
+| מקבילים מדורגים נשים, 24.10, 16:30 (17:30 IL) | `<זהב / כסף / ארד> בגמר המקבילים המדורגים באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `מקום <N> בגמר המקבילים המדורגים באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | 4–8 | Apparatus Finals → Uneven Bars Results |
+| קורה נשים, 25.10, 14:42 (15:42 IL) | `<זהב / כסף / ארד> בגמר הקורה באליפות העולם בהתעמלות מכשירים 2026 (25 באוק׳ 2026)` | `מקום <N> בגמר הקורה באליפות העולם בהתעמלות מכשירים 2026 (25 באוק׳ 2026)` | 4–8 | Apparatus Finals → Balance Beam Results |
+| קרקע נשים, 25.10, 16:30 (17:30 IL) | `<זהב / כסף / ארד> בגמר הקרקע באליפות העולם בהתעמלות מכשירים 2026 (25 באוק׳ 2026)` | `מקום <N> בגמר הקרקע באליפות העולם בהתעמלות מכשירים 2026 (25 באוק׳ 2026)` | 4–8 | Apparatus Finals → Floor Exercise Results |
 
-- Write a medal as one word, for example `ארד בגמר קורה ב…`. This is the result_text wording, without ה.
+- Write a medal as one word, for example `ארד בגמר הקורה ב…`.
 - `<N>` is the official place.
 
 **Other fields in the same write:**
