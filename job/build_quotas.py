@@ -26,4 +26,6 @@ def main(master_file, out_file):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        sys.exit("usage: python3 build_quotas.py <master.json> <out.json>")
     main(*sys.argv[1:3])
