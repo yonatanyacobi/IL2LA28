@@ -51,6 +51,7 @@ The job follows the same rule (`job/SKILL.md`, #85). The export normalises `data
 | Concept | Use | Not |
 |---|---|---|
 | manual verification | `בדיקה ידנית`, `נבדק/ה ידנית` | `אימות ידני`, `אישור ידני`, `בדיקת עובדות` |
+| the quota sign-off step (editors only, #admin) | `בדיקת עובדות`: the fact-checker's sign-off on a quota item, a separate process from a record's manual check. Never in public copy. | `בדיקה ידנית` for this step |
 | qualification window | `חלון העפלה` | `חלון` alone |
 | the Games | `אולימפיאדת לוס אנג׳לס 2028` | `LA28` in public text |
 | next competition | `התחרות הבאה` | `התחרות הבאה שלו/ה` |
