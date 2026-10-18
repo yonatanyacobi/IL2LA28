@@ -9,7 +9,8 @@ const PARIS_ATHLETES = 88;
 const SITE_NAME = "הדרך ללוס אנג׳לס 28";
 const SITE_URL ="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
 const CONTACT_EMAIL = "yacobiyonatan@gmail.com";
-const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "next", "nextDate", "notes", "source"];
+const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "rankNum", "rankList", "rankAsOf", "next", "nextDate", "notes", "source"];
+const RANK_MAX_AGE_D = 60;
 const HISTORY_MAX = 20;
 const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
 
@@ -129,6 +130,8 @@ function quotaEventEnd(q){
   const c = S.comps.find(c => c.sportId === q.sportId && c.start <= e.start && e.start <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS);
   return c ? c.end || c.start : e.start;
 }
+// Last fact-check of an item (build_quotas.py publishes review.at); older files only have the file date.
+const checkedOf = q => q.checkedAt || str(S.quotasUpdatedAt).slice(0, 10);
 // Past quota events are hidden in the UI; the loader keeps them for #admin checks.
 const nxt = (q, t = today()) => q.nextQuotaEvent?.name && quotaEventEnd(q) >= t ? q.nextQuotaEvent : null;
 // The quota event is over but quotas.json predates its end: the item still shows the pre-event state.
@@ -137,7 +140,7 @@ const AWAIT_DAYS = 14;
 const awaitingOf = (q, t = today()) => {
   const e = q.nextQuotaEvent, end = quotaEventEnd(q);
   if (!e?.name || !end || end >= t || q.israelStatus === "earned") return null;
-  if (str(S.quotasUpdatedAt).slice(0, 10) > end) return null;
+  if (checkedOf(q) > end) return null;   // re-checked after the event: trust the status
   return dayNo(end, t) - 1 <= AWAIT_DAYS ? {...e, end} : null;
 };
 const AWAITING = `<span aria-hidden="true">◷</span> בהמתנה לתוצאות`;
@@ -145,7 +148,8 @@ const AWAIT_PILL = `<span class="pill q-awaiting">${AWAITING}</span>`;
 // No verb: event names are both masculine and feminine ("גרנד סלאם", "אליפות").
 const awaitingLine = w => `${esc(w.name)} (${fmtRange(w.start, w.end)}). עדכון המכסות יפורסם אחרי ההודעה הרשמית.`;
 // "What it means" for Israel at the next quota event; meaningless once that event is past.
-const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
+// An earned item's stakes describe the pre-event state, so they go once it is earned.
+const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) && q.israelStatus !== "earned" ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
 
 function quotaSection(id){
   const items = quotasOf(id);
@@ -215,6 +219,11 @@ function weightKey(s){
 }
 const quotaAthletes = q => athletesOf(q.sportId).filter(a => (a.name && (q.israelNote.includes(a.name) || q.stakes.includes(a.name)))
   || (weightKey(a.event) && weightKey(a.event) === weightKey(q.event)));
+// Tie-break only (docs/product/spec-rank-tiebreak.md): rankNum counts while its list is at most 60 days old.
+// Compared only within one sport, so different lists never meet.
+const rankOf = (a, t = today()) => Number.isInteger(a.rankNum) && a.rankNum >= 1 && isDate(a.rankAsOf) && a.rankAsOf <= t
+  && dayNo(a.rankAsOf, t) - 1 <= RANK_MAX_AGE_D ? a.rankNum : Infinity;
+const byRank = (x, y) => rankOf(x) - rankOf(y) || 0;
 // Athlete page (round3.md §3). The matcher is heuristic, so the copy never says the quota is the athlete's.
 function athleteQuotaFacts(a){
   const items = S.quotas.filter(q => q.sportId === a.sportId && quotaAthletes(q).includes(a))
@@ -254,6 +263,22 @@ function todayRows(){
     || heCmp(x.comp?.name || x.athletes[0].name, y.comp?.name || y.athletes[0].name));
 }
 
+const WON_DAYS = 14;
+// Quotas earned in the last two weeks (round3.md §2). Items without earnedAt are earned but never "new".
+function wonPanel(){
+  const t = today(), from = addDays(t, -(WON_DAYS - 1));
+  const list = S.quotas.filter(q => q.israelStatus === "earned" && q.earnedAt && q.earnedAt >= from && q.earnedAt <= t)
+    .sort((a, b) => b.earnedAt.localeCompare(a.earnedAt) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
+  if (!list.length) return "";
+  return `<section class="panel won" aria-labelledby="wonH">
+    <h2 id="wonH">${list.length === 1 ? "מכסה חדשה לישראל" : "מכסות חדשות לישראל"}</h2>
+    <ul class="rows">${list.map(q => `<li><span class="d">${fmtShort(q.earnedAt)}</span>
+      <span class="t"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · ${esc(q.event)}${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
+      ${quotaStatusPill("earned")}</li>`).join("")}</ul>
+    <p class="foot">ברוב הענפים המכסה שייכת למדינה; הוועד האולימפי בישראל יחליט בהמשך מי ישתמש בה.</p>
+  </section>`;
+}
+
 function todayStrip(rows){
   if (!rows.length) return "";
   const t = today();
@@ -268,11 +293,17 @@ function todayStrip(rows){
     // Matched by sport + date (names are free text). Not via stakesLine: the event may have started before today.
     // Followed athletes' items first, then items of athletes listed in this row, then file order (stable sort).
     const rank = q => { const as = quotaAthletes(q); return as.some(a => S.follows.has(a.id)) ? 0 : as.some(a => athletes.includes(a)) ? 1 : 2; };
-    // An item whose own event already ended inside this still-running competition (a team final in a 9-day
-    // Worlds) shows "awaiting" instead of its stale stakes.
-    const stakes = quotasOf(sportId).filter(q => (q.stakes && nxt(q) || awaitingOf(q)) && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
-      .sort((x, y) => rank(x) - rank(y));
-    const onLine = stakes.slice(0, STAKES_MAX).map(q => awaitingOf(q)
+    const best = q => Math.min(Infinity, ...quotaAthletes(q).map(a => rankOf(a, t)));
+    // An earned item shows "earned" (only with earnedAt; otherwise nothing, as its stakes are stale). An item whose
+    // own event already ended inside this still-running competition (a team final in a 9-day Worlds) shows
+    // "awaiting" instead of its stale stakes.
+    const won = q => q.israelStatus === "earned";
+    const stakes = quotasOf(sportId).filter(q => (won(q) ? q.earnedAt : q.stakes && nxt(q) || awaitingOf(q))
+        && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
+      .sort((x, y) => rank(x) - rank(y) || (best(x) - best(y) || 0));   // || 0: Infinity - Infinity is NaN
+    const onLine = stakes.slice(0, STAKES_MAX).map(q => won(q)
+      ? `<small class="stakes won-line"><b>✓ מכסה הושגה:</b> <bdi>${esc(q.event)}</bdi></small>`
+      : awaitingOf(q)
       ? (w => `<small class="stakes awaiting"><b>${AWAITING}:</b> <bdi>${esc(q.event)}</bdi> · ${fmtRange(w.start, w.end)}</small>`)(awaitingOf(q))
       : `<small class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</small>`).join("")
       + (stakes.length > STAKES_MAX ? `<small>ועוד ${stakes.length - STAKES_MAX} מקצים — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
@@ -374,6 +405,7 @@ function viewHome(){
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
   ${todayStrip(rows)}
+  ${wonPanel()}
   ${closestPanel(rows)}
   ${reviewPanel()}
   <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
@@ -696,6 +728,8 @@ function openForm(a, sportId){
   $("dlgTitle").textContent = a ? "עריכת " + a.name : "ספורטאי/ת חדש/ה";
   $("fName").value = str(a?.name); $("fNameEn").value = str(a?.name_en); $("fSportIn").value = str(editing.sportId);
   $("fEvent").value = str(a?.event); $("fStageIn").value = String(a ? stageOf(a) : 0); $("fRank").value = str(a?.rank);
+  $("fRankNum").value = Number.isInteger(a?.rankNum) ? String(a.rankNum) : ""; $("fRankList").value = str(a?.rankList);
+  $("fRankAsOf").value = isDate(a?.rankAsOf) ? a.rankAsOf : "";
   $("fNext").value = str(a?.next); $("fNextDate").value = isDate(a?.nextDate) ? a.nextDate : "";
   $("fNotes").value = str(a?.notes); $("fSource").value = str(a?.source);
   $("archBtn").hidden = !a; $("archBtn").textContent = "הסרה מהרשימה";
@@ -707,6 +741,8 @@ function formValues(){
   return {
     name: $("fName").value.trim(), name_en: $("fNameEn").value.trim(), sportId: $("fSportIn").value,
     event: $("fEvent").value.trim(), stage: +$("fStageIn").value, rank: $("fRank").value.trim(),
+    rankNum: $("fRankNum").value.trim() === "" ? null : Number($("fRankNum").value), rankList: $("fRankList").value.trim(),
+    rankAsOf: $("fRankAsOf").value,
     next: $("fNext").value.trim(), nextDate: $("fNextDate").value, notes: $("fNotes").value.trim(),
     source: $("fSource").value.trim(),
   };
@@ -720,6 +756,8 @@ async function saveForm(ev){
   const v = formValues();
   if (!v.name || !v.sportId) return;
   if (v.source && !safeUrl(v.source)) return showFormErr("קישור המקור חייב להתחיל ב־https://");
+  if (v.rankNum !== null && !(Number.isInteger(v.rankNum) && v.rankNum >= 1 && v.rankList && isDate(v.rankAsOf)))
+    return showFormErr("מיקום בדירוג הוא מספר שלם מ־1 ומעלה, ונשמר רק יחד עם שם הרשימה ותאריך הפרסום שלה.");
   const stamp = {updatedAt: new Date().toISOString(), updatedBy: S.uid || "manual"};
   const col = S.db.collection("athletes");
   $("saveBtn").disabled = true;
@@ -890,6 +928,8 @@ function applyQuotas(){
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
       allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
+      checkedAt: isDate(q.checkedAt) ? q.checkedAt : "",
+      earnedAt: isDate(q.earnedAt) ? q.earnedAt : "",
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
         ...(isDate(q.nextQuotaEvent.end) && q.nextQuotaEvent.end >= q.nextQuotaEvent.start ? {end: q.nextQuotaEvent.end} : {})} : null}));
   S.quotasUpdatedAt = S.quotas.length ? str(quotaFile.updatedAt) : "";

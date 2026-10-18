@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:23:14Z",
+ "updatedAt": "2026-10-18T12:25:05Z",
  "items": [
   {
    "sportId": "judo",
@@ -15,7 +15,8 @@
     "start": "2026-10-29",
     "end": "2026-10-31"
    },
-   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf"
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "judo",
@@ -31,7 +32,8 @@
     "start": "2026-10-29",
     "end": "2026-10-31"
    },
-   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf"
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "judo",
@@ -47,7 +49,8 @@
     "start": "2026-10-29",
     "end": "2026-10-31"
    },
-   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf"
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "judo",
@@ -63,7 +66,8 @@
     "start": "2026-10-29",
     "end": "2026-10-31"
    },
-   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf"
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "judo",
@@ -79,7 +83,8 @@
     "start": "2026-10-29",
     "end": "2026-10-31"
    },
-   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf"
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "judo",
@@ -95,7 +100,8 @@
     "start": "2026-10-29",
     "end": "2026-10-31"
    },
-   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf"
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "judo",
@@ -111,7 +117,8 @@
     "start": "2026-10-29",
     "end": "2026-10-31"
    },
-   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf"
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "taekwondo",
@@ -125,7 +132,8 @@
     "name": "גמר הגרנד פרי",
     "start": "2026-11-28"
    },
-   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "taekwondo",
@@ -139,7 +147,8 @@
     "name": "גמר הגרנד פרי",
     "start": "2026-11-28"
    },
-   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "taekwondo",
@@ -153,7 +162,8 @@
     "name": "גמר הגרנד פרי",
     "start": "2026-11-28"
    },
-   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "fencing",
@@ -164,7 +174,8 @@
    "israelStatus": "unknown",
    "israelNote": "תקופת הדירוג טרם נפתחה (מתחילה ב-1.4.2027)",
    "nextQuotaEvent": null,
-   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "fencing",
@@ -175,7 +186,8 @@
    "israelStatus": "unknown",
    "israelNote": "יובל פרייליך מדורג 262 בעולם (FIE, אוק׳ 2026); תקופת הדירוג נפתחת ב-1.4.2027",
    "nextQuotaEvent": null,
-   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "weightlifting",
@@ -190,21 +202,23 @@
     "name": "אליפות העולם",
     "start": "2026-10-27"
    },
-   "source": "https://cdn.nocnsf.nl/media/nlsj0xsh/wlf-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/nlsj0xsh/wlf-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "wrestling",
    "event": "כל המשקלים",
    "totalQuotas": 288,
    "maxPerNOC": 18,
-   "allocation": "מדליסטים באליפות העולם 2027, 3 הראשונים בדירוג UWW, ואז 2 לכל משקל בטורנירי מוקדמות יבשתיים ב-2028; אחד/ת לכל משקל למדינה.",
+   "allocation": "מדליסטים באליפות העולם 2027, 3 הראשונים בדירוג UWW, 2 לכל משקל בכל אחד מ-4 טורנירים יבשתיים ו-1 בטורניר עולמי ב-2028; אחד/ת לכל משקל למדינה.",
    "israelStatus": "unknown",
    "israelNote": "אין מתאבק/ת ישראלי/ת במעקב",
    "nextQuotaEvent": {
     "name": "אליפות אירופה",
     "start": "2027-04-05"
    },
-   "source": "https://cdn.uww.org/2026-08/260825_wre_la28_qualification-system.pdf"
+   "source": "https://cdn.uww.org/2026-08/260825_wre_la28_qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "boxing",
@@ -215,7 +229,8 @@
    "israelStatus": "unknown",
    "israelNote": "אין מתאגרף/ת ישראלי/ת במעקב",
    "nextQuotaEvent": null,
-   "source": "https://worldboxing.org/wp-content/uploads/2026/05/Qualification-System-LA28-Boxing.pdf"
+   "source": "https://worldboxing.org/wp-content/uploads/2026/05/Qualification-System-LA28-Boxing.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "artistic-gymnastics",
@@ -231,35 +246,38 @@
     "end": "2026-10-20"
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
-   "stakes": "גמר קבוצתי ב־20 באוק׳ 2026: רק 3 הנבחרות הראשונות זוכות במכסת נבחרת (5 מתעמלים) ל־LA28"
+   "stakes": "גמר קבוצתי ב־20 באוק׳ 2026: רק 3 הנבחרות הראשונות זוכות במכסת נבחרת (5 מתעמלים) ל־LA28",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "artistic-gymnastics",
    "event": "אישי גברים (קרב-רב ומכשירים)",
-   "totalQuotas": null,
+   "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "למדינות בלי נבחרת: 8 בקרב-רב באליפות העולם 2027, מדליסט מוביל בכל מכשיר ב-2027, ו-12 דרך גביעי העולם במכשירים 2028.",
+   "allocation": "למדינות בלי נבחרת: 3 לנבחרות הבאות במוקדמות 2027, 8 בקרב-רב ו-6 במכשירים באליפות העולם 2027, 12 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארח ואוניברסלי.",
    "israelStatus": "in-contention",
    "israelNote": "ארטיום דולגופיאט (זהב בקרקע, אירופה 2026); זמין רק אם הנבחרת לא תעפיל",
    "nextQuotaEvent": {
     "name": "אליפות העולם 2027",
     "start": "2027-09-28"
    },
-   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf"
+   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "artistic-gymnastics",
    "event": "אישי נשים (קרב-רב ומכשירים)",
-   "totalQuotas": null,
+   "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "14 בקרב-רב באליפות העולם 2027 (אחת לכל מדינה), מדליסטית מובילה בכל מכשיר ב-2027, ו-8 דרך גביעי העולם במכשירים 2028.",
+   "allocation": "3 לנבחרות הבאות במוקדמות 2027, 14 בקרב-רב ו-4 במכשירים באליפות העולם 2027 (אחת לכל מדינה בקרב-רב), 8 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארחת ואוניברסלית.",
    "israelStatus": "unknown",
    "israelNote": "ליהיא רז, רוני שמאי ויהלי שושני; אין נבחרת נשים ישראלית ברוטרדם",
    "nextQuotaEvent": {
     "name": "אליפות העולם 2027",
     "start": "2027-09-28"
    },
-   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf"
+   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "rhythmic-gymnastics",
@@ -273,7 +291,8 @@
     "name": "אליפות העולם באקו",
     "start": "2027-09-15"
    },
-   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf"
+   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "rhythmic-gymnastics",
@@ -287,7 +306,8 @@
     "name": "אליפות העולם באקו",
     "start": "2027-09-15"
    },
-   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf"
+   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "trampoline",
@@ -298,7 +318,8 @@
    "israelStatus": "unknown",
    "israelNote": "בן ננדזה ושם טוב עמיאל; לא נמצאו תוצאות",
    "nextQuotaEvent": null,
-   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.3%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Trampoline.pdf"
+   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.3%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Trampoline.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "swimming",
@@ -312,7 +333,8 @@
     "name": "אליפות העולם באקווטיקה בודפשט",
     "start": "2027-06-26"
    },
-   "source": "https://cdn.nocnsf.nl/media/vqxbcoln/swm-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/vqxbcoln/swm-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "swimming",
@@ -326,7 +348,8 @@
     "name": "אליפות העולם באקווטיקה בודפשט",
     "start": "2027-06-26"
    },
-   "source": "https://cdn.nocnsf.nl/media/vqxbcoln/swm-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/vqxbcoln/swm-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "open-water-swimming",
@@ -340,7 +363,8 @@
     "name": "אליפות העולם באקווטיקה בודפשט",
     "start": "2027-06-26"
    },
-   "source": "https://cdn.nocnsf.nl/media/hcvbaw55/ows-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/hcvbaw55/ows-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "open-water-swimming",
@@ -354,14 +378,15 @@
     "name": "אליפות העולם באקווטיקה בודפשט",
     "start": "2027-06-26"
    },
-   "source": "https://cdn.nocnsf.nl/media/hcvbaw55/ows-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/hcvbaw55/ows-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "artistic-swimming",
    "event": "קבוצתי",
    "totalQuotas": 10,
    "maxPerNOC": 1,
-   "allocation": "3 הנבחרות המובילות באליפות העולם בודפשט 2027, המארחת, ועד 4 באליפויות יבשתיות 2027 (אירופה – רק אם אף נבחרת אירופית לא בשלוש הראשונות).",
+   "allocation": "3 באליפות העולם בודפשט 2027, המארחת, עד 4 באליפויות יבשתיות 2027 (אירופה – רק אם אין אירופית בשלוש הראשונות), והשאר בגמר העל של גביע העולם 2028.",
    "israelStatus": "unknown",
    "israelNote": "מקום 6 בקבוצתי טכני, גביע העולם פריז 2026; יוגב דגן בסגל",
    "nextQuotaEvent": {
@@ -369,7 +394,8 @@
     "start": "2027-07-10",
     "end": "2027-07-17"
    },
-   "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "artistic-swimming",
@@ -384,7 +410,8 @@
     "start": "2027-07-10",
     "end": "2027-07-17"
    },
-   "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "diving",
@@ -398,7 +425,8 @@
     "name": "אליפות העולם באקווטיקה בודפשט",
     "start": "2027-06-26"
    },
-   "source": "https://cdn.nocnsf.nl/media/bo3jgm3a/div-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/bo3jgm3a/div-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "athletics",
@@ -409,7 +437,8 @@
    "israelStatus": "unknown",
    "israelNote": "סלאמוויט באיולין-טפרי מקום 11 ומאור טיורי מקום 12 באליפות אירופה 2026",
    "nextQuotaEvent": null,
-   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/"
+   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "cycling",
@@ -423,7 +452,8 @@
     "name": "אליפות העולם המאוחדת באופניים UCI, הוט-סבואה",
     "start": "2027-08-24"
    },
-   "source": "https://cdn.nocnsf.nl/media/fonnjcqq/crd-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/fonnjcqq/crd-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "cycling",
@@ -437,7 +467,8 @@
     "name": "אליפות אירופה במסלול, ברלין",
     "start": "2027-02-10"
    },
-   "source": "https://cdn.nocnsf.nl/media/1esjfvfx/ctr-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/1esjfvfx/ctr-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "cycling",
@@ -451,7 +482,8 @@
     "name": "אליפות העולם המאוחדת באופניים UCI, הוט-סבואה",
     "start": "2027-08-24"
    },
-   "source": "https://cdn.nocnsf.nl/media/i1vehl3t/mtb-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/i1vehl3t/mtb-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "triathlon",
@@ -466,7 +498,8 @@
     "name": "גביע העולם בטריאתלון, טונגיונג",
     "start": "2026-10-24"
    },
-   "source": "https://triathlon.org/news/the-ioc-approves-the-olympic-qualification-criteria-for-la28-olympics"
+   "source": "https://triathlon.org/news/the-ioc-approves-the-olympic-qualification-criteria-for-la28-olympics",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "sailing",
@@ -480,7 +513,8 @@
     "name": "אליפות העולם בשייט – מקצי יחיד, פורטלזה",
     "start": "2027-01-15"
    },
-   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "sailing",
@@ -494,7 +528,8 @@
     "name": "אליפות העולם בשייט – מקצי יחיד, פורטלזה",
     "start": "2027-01-15"
    },
-   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "sailing",
@@ -508,7 +543,8 @@
     "name": "אליפות העולם בשייט – מקצי יחיד, פורטלזה",
     "start": "2027-01-15"
    },
-   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "sailing",
@@ -522,7 +558,8 @@
     "name": "אליפות העולם בשייט – מקצי זוגות, גדיניה",
     "start": "2027-07-22"
    },
-   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "surfing",
@@ -537,7 +574,8 @@
     "name": "משחקי הגלישה העולמיים של ISA, פונטה רוקאס",
     "start": "2026-11-06"
    },
-   "source": "https://cdn.nocnsf.nl/media/lr1mdnmn/srf-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/lr1mdnmn/srf-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "beach-volleyball",
@@ -551,7 +589,8 @@
     "name": "אליפות העולם בכדורעף חופים, הולנד",
     "start": "2027-08-13"
    },
-   "source": "https://cdn.nocnsf.nl/media/wjah2oeb/vbv-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/wjah2oeb/vbv-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "shooting",
@@ -566,7 +605,8 @@
     "name": "אליפות העולם בקליעה, דוחא",
     "start": "2026-11-01"
    },
-   "source": "https://www.asia-shooting.org/wp-content/uploads/2026/07/Qualification-System-01Jul26-ISSF.pdf"
+   "source": "https://www.asia-shooting.org/wp-content/uploads/2026/07/Qualification-System-01Jul26-ISSF.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "archery",
@@ -580,7 +620,8 @@
     "name": "אליפות העולם בחץ וקשת, מדיין",
     "start": "2027-09-20"
    },
-   "source": "https://www.worldarchery.sport/news/202304/"
+   "source": "https://www.worldarchery.sport/news/202304/",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "golf",
@@ -591,7 +632,8 @@
    "israelStatus": "unknown",
    "israelNote": "לטיציה בק: T14 בשופרייט 2026; מיקומה בדירוג האולימפי לא אומת",
    "nextQuotaEvent": null,
-   "source": "https://www.igfgolf.org/news/2026/06/09/olympic-golf-qualification-process-officially-underway-for-la28-olympic-games"
+   "source": "https://www.igfgolf.org/news/2026/06/09/olympic-golf-qualification-process-officially-underway-for-la28-olympic-games",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "equestrian",
@@ -602,7 +644,8 @@
    "israelStatus": "in-contention",
    "israelNote": "ישראל הייתה 9 אחרי הסיבוב הראשון של התחרות הקבוצתית באאכן 2026 ולא זכתה בקווטה; הסיכוי הבא – אירוע קבוצה C ב-2027",
    "nextQuotaEvent": null,
-   "source": "https://inside.fei.org/system/files/LA2028%20Qualification%20System_final.pdf"
+   "source": "https://inside.fei.org/system/files/LA2028%20Qualification%20System_final.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "climbing",
@@ -616,7 +659,8 @@
     "name": "המשחקים האירופיים, איסטנבול",
     "start": "2027-06-16"
    },
-   "source": "https://www.worldclimbing.com/news/qualification-system-for-la28-released"
+   "source": "https://www.worldclimbing.com/news/qualification-system-for-la28-released",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "badminton",
@@ -630,7 +674,8 @@
     "name": "פתיחת חלון הדירוג האולימפי של BWF",
     "start": "2027-05-03"
    },
-   "source": "https://olympics.bwfbadminton.com/news-single/2025/12/15/la28-badminton-qualification-regulations-approved/"
+   "source": "https://olympics.bwfbadminton.com/news-single/2025/12/15/la28-badminton-qualification-regulations-approved/",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "basketball",
@@ -644,7 +689,8 @@
     "name": "טורנירי טרום-מוקדמות אולימפיים FIBA",
     "start": "2027-08-14"
    },
-   "source": "https://cdn.nocnsf.nl/media/kcgkdtvi/bkb-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/kcgkdtvi/bkb-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "basketball",
@@ -658,7 +704,8 @@
     "name": "יורובאסקט נשים 2027",
     "start": "2027-06-16"
    },
-   "source": "https://about.fiba.basketball/en/our-sport/basketball/national-team-competition-systems/olympic-womens-basketball-tournaments"
+   "source": "https://about.fiba.basketball/en/our-sport/basketball/national-team-competition-systems/olympic-womens-basketball-tournaments",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "basketball-3x3",
@@ -669,7 +716,8 @@
    "israelStatus": "unknown",
    "israelNote": "ישראל לא העפילה לאליפות אירופה 3x3 האחרונה בשני המגדרים; כנראה זכאית ל-OQT האוניברסליות",
    "nextQuotaEvent": null,
-   "source": "https://cdn.dosb.de/Relaunch_2024/Athletenservice/Games/LA_2028/Internationale_Qualikriterien/Updates_21072026/BK3-LA28-Qualification-System_20260710.pdf"
+   "source": "https://cdn.dosb.de/Relaunch_2024/Athletenservice/Games/LA_2028/Internationale_Qualikriterien/Updates_21072026/BK3-LA28-Qualification-System_20260710.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "flag-football",
@@ -680,7 +728,8 @@
    "israelStatus": "in-contention",
    "israelNote": "גברים: מקום 11 מ-16 באליפות העולם 2026, בלי מקום; נשים לא השתתפו. מועד אליפות אירופה 2027 טרם פורסם",
    "nextQuotaEvent": null,
-   "source": "https://cdn.dosb.de/Relaunch_2024/Athletenservice/Games/LA_2028/Internationale_Qualikriterien/Updates_21072026/FFB-LA28-Qualification-System_20260710.pdf"
+   "source": "https://cdn.dosb.de/Relaunch_2024/Athletenservice/Games/LA_2028/Internationale_Qualikriterien/Updates_21072026/FFB-LA28-Qualification-System_20260710.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "lacrosse",
@@ -695,7 +744,8 @@
     "name": "אליפות אירופה בלקרוס סיקסס – נשים, סאלו",
     "start": "2026-11-02"
    },
-   "source": "https://worldlacrosse.sport/lacrosse-qualification-set-for-olympic-games-los-angeles-2028/"
+   "source": "https://worldlacrosse.sport/lacrosse-qualification-set-for-olympic-games-los-angeles-2028/",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "baseball",
@@ -706,7 +756,8 @@
    "israelStatus": "in-contention",
    "israelNote": "מאזן 2-2 ב-WBC 2026; הדרך עוברת באליפות אירופה 2027 (תאריכים טרם פורסמו)",
    "nextQuotaEvent": null,
-   "source": "https://www.worldbaseball.com/news/2027-european-championship-groups-revealed-mu6trz2s"
+   "source": "https://www.worldbaseball.com/news/2027-european-championship-groups-revealed-mu6trz2s",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "water-polo",
@@ -717,7 +768,8 @@
    "israelStatus": "unknown",
    "israelNote": "מקום 8 באליפות אירופה 2026; לא אומת אם ישראל תשתתף באליפות העולם 2027 ואיזה אירוע הוא היבשתי לאירופה",
    "nextQuotaEvent": null,
-   "source": "https://www.worldaquatics.com/news/4498571/la28-olympic-games-angeles-2028-water-polo-qualification-system-finalised-ioc-world-aquatics"
+   "source": "https://www.worldaquatics.com/news/4498571/la28-olympic-games-angeles-2028-water-polo-qualification-system-finalised-ioc-world-aquatics",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "rowing",
@@ -732,7 +784,8 @@
     "start": "2027-08-23",
     "end": "2027-08-29"
    },
-   "source": "https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf"
+   "source": "https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "canoe",
@@ -743,7 +796,8 @@
    "israelStatus": "unknown",
    "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו ספרינט במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
    "nextQuotaEvent": null,
-   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/"
+   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
+   "checkedAt": "2026-10-18"
   },
   {
    "sportId": "canoe",
@@ -758,7 +812,8 @@
     "start": "2027-09-07",
     "end": "2027-09-12"
    },
-   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/"
+   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
+   "checkedAt": "2026-10-18"
   }
  ],
  "unpublished": 5

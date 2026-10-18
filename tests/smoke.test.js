@@ -354,7 +354,8 @@ test("quota stakes in the today strip: matched by sport + date, at most 2", asyn
   // Abu Dhabi Grand Slam runs 29–31 Oct in the fixture; only items whose next quota event falls inside it show.
   const q = JSON.parse(JSON.stringify(SPORT_QUOTAS));
   const judo = q.items.filter(i => i.sportId === "judo");
-  judo.forEach((i, n) => Object.assign(i, {stakes: `stake ${n} <b>`, nextQuotaEvent: {name: "שם אחר לגמרי", start: "2026-10-29"}}));
+  // Not earned: an earned item shows "מכסה הושגה" instead (tested separately).
+  judo.forEach((i, n) => Object.assign(i, {israelStatus: "in-contention", stakes: `stake ${n} <b>`, nextQuotaEvent: {name: "שם אחר לגמרי", start: "2026-10-29"}}));
   judo[3].nextQuotaEvent.start = "2026-11-13";
   const strip = stripOf((await boot({quotas: q, now: "2026-10-30T08:00:00Z"})).view("home"));
   const row = rowsOf(strip).find(r => r.includes("גרנד סלאם אבו דאבי"));
@@ -363,6 +364,35 @@ test("quota stakes in the today strip: matched by sport + date, at most 2", asyn
   assert.ok(row.includes('ועוד 1 מקצים — <a href="#sport-judo">בדף הענף</a>') && !row.includes("stake 2"), "capped at 2");
   const none = stripOf((await boot({now: "2026-10-30T08:00:00Z"})).view("home"));
   assert.ok(none.length && !none.includes("מה זה אומר"), "no quotas file, no stakes line");
+});
+
+test("quota earned: home panel for the last 14 days, strip line replaces stakes, nothing without earnedAt", async () => {
+  const base = QUOTAS.items[0];   // judo, valid
+  const item = (event, extra) => ({...base, event, israelNote: `הערה <b>${event}</b>`, stakes: `stake ${event}`,
+    nextQuotaEvent: {name: "גרנד סלאם", start: "2026-10-29"}, ...extra});
+  const quotas = {updatedAt: "2026-10-30", items: [
+    item("52- ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-29"}),
+    item("57- ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-01"}),   // 29 days ago: not new
+    item("63- ק״ג נשים", {israelStatus: "earned"}),                              // no earnedAt
+    item("78+ ק״ג נשים", {israelStatus: "earned", earnedAt: "bad"}),             // invalid → treated as missing
+    item("60- ק״ג גברים", {israelStatus: "in-contention"}),
+  ]};
+  const {view} = await boot({quotas, now: "2026-10-30T08:00:00Z"});
+  const home = view("home");
+  const won = home.split('class="panel won"')[1]?.split("</section>")[0] || "";
+  assert.ok(won.startsWith(' aria-labelledby="wonH"') && won.includes('<h2 id="wonH">מכסה חדשה לישראל</h2>'), won);
+  assert.strictEqual(count(won, "<li>"), 1);
+  assert.ok(won.includes("52- ק״ג נשים") && won.includes('href="#sport-judo"') && won.includes("pill q-earned"));
+  assert.ok(!/<b>52/.test(won) && won.includes("&lt;b&gt;52"), "note escaped");
+  assert.ok(home.indexOf('class="panel won"') > home.indexOf('class="panel today"'), "after the today strip");
+  const row = rowsOf(stripOf(home)).find(r => r.includes("גרנד סלאם אבו דאבי"));
+  assert.ok(row.includes('<small class="stakes won-line"><b>✓ מכסה הושגה:</b> <bdi>52- ק״ג נשים</bdi></small>'), row);
+  assert.ok(!row.includes("stake 52") && !row.includes("63- ק״ג") && !row.includes("stake 63"), "earned: no stakes; no earnedAt: nothing");
+
+  const two = {updatedAt: "2026-10-30", items: [quotas.items[0], {...quotas.items[0], event: "x", earnedAt: "2026-10-20"}]};
+  assert.ok((await boot({quotas: two, now: "2026-10-30T08:00:00Z"})).view("home").includes('<h2 id="wonH">מכסות חדשות לישראל</h2>'));
+  const none = await boot({quotas: {updatedAt: "2026-10-30", items: quotas.items.slice(1)}, now: "2026-10-30T08:00:00Z"});
+  assert.ok(!none.view("home").includes("wonH"), "hidden when nothing new");
 });
 
 test("today strip stakes order: followed athletes, then athletes in the row, then file order", async () => {
@@ -469,6 +499,18 @@ test("athlete page quota line (round3 §3): per status, awaiting, max 3, no line
   assert.ok(raz.includes("לפי המצב הנוכחי, ישראל מחוץ למקומות המכסה.") && raz.includes("עוד אין מידע על מצב ישראל במקצה הזה."));
 });
 
+test("earned items show no pre-event stakes (QA-2, #105): sport page and #quotas", async () => {
+  const q = JSON.parse(JSON.stringify(SPORT_QUOTAS));
+  const ev = {name: "גרנד סלאם", start: "2099-10-29"};
+  Object.assign(q.items.find(i => i.israelStatus === "earned"), {stakes: "stake earned", nextQuotaEvent: ev});
+  Object.assign(q.items.find(i => i.israelStatus === "in-contention"), {stakes: "stake running", nextQuotaEvent: ev});
+  const {view} = await boot({quotas: q});
+  for (const out of [view("sport-judo"), view("quotas")]) {
+    assert.ok(!out.includes("stake earned"), "earned: no stakes");
+    assert.ok(out.includes("stake running"), "in contention: stakes still shown");
+  }
+});
+
 test("quota section: all-unknown note; hidden without items", async () => {
   const {view} = await boot({quotas: SPORT_QUOTAS});
   const shooting = view("sport-shooting");
@@ -497,6 +539,54 @@ test("site/quotas.json: all items load and render", async () => {
     assert.ok(out.includes("מכסות לישראל"), sid);
     assert.strictEqual((out.match(/<li>\s*<div class="q-top">/g) || []).length, real.items.filter(q => q.sportId === sid).length, sid);
   }
+});
+
+// docs/product/spec-rank-tiebreak.md: IJF ranks from the real items' notes, as of mid-October.
+const JUDO_RANKS = {"raz-hershko": 1, "izhak-ashpiz": 5, "timna-nelson-levy": 6, "gefen-primo": 11, "kerem-primo": 13,
+  "yuli-alma-mishiner": 13, "inbar-lanir": 22, "yonatan-elbaz": 26, "inbal-shemesh": 35};
+const rankedData = asOf => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  for (const a of data.athletes) if (a.id in JUDO_RANKS) Object.assign(a, {rankNum: JUDO_RANKS[a.id], rankList: "IJF World Ranking List", rankAsOf: asOf});
+  return data;
+};
+const abuDhabiStakes = async data => {
+  const row = rowsOf(stripOf((await boot({data, quotas: REAL_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home"))).find(r => r.includes("גרנד סלאם אבו דאבי")) || "";
+  return [...row.matchAll(/<small class="stakes"><b>מה זה אומר:<\/b> (?:<bdi>)?([^<:]+?)(?:<\/bdi>)?:/g)].map(m => m[1]);
+};
+
+test("rank tie-break: Abu Dhabi strip shows the best-ranked judo items; stale or missing ranks keep file order", async () => {
+  assert.deepStrictEqual(await abuDhabiStakes(rankedData("2026-10-15")), ["78+ ק״ג נשים", "60- ק״ג גברים"], "world #1 and #5 first");
+  const fileOrder = await abuDhabiStakes(FIXTURE);
+  assert.deepStrictEqual(fileOrder, ["60- ק״ג גברים", "73- ק״ג גברים"], "no rankNum: unchanged");
+  assert.deepStrictEqual(await abuDhabiStakes(rankedData("2026-08-01")), fileOrder, "rank older than 60 days is ignored");
+});
+
+test("rank tie-break: every real judo quota item resolves to its athlete", async () => {
+  const {run} = await boot({quotas: REAL_QUOTAS});
+  const resolved = JSON.parse(run(`JSON.stringify(quotasOf("judo").map(q => [q.event, quotaAthletes(q).map(a => a.id).sort()]))`));
+  const want = {"60- ק״ג גברים": ["izhak-ashpiz"], "73- ק״ג גברים": ["yonatan-elbaz"], "52- ק״ג נשים": ["gefen-primo"],
+    "57- ק״ג נשים": ["inbal-shemesh", "timna-nelson-levy"], "63- ק״ג נשים": ["kerem-primo"], "78- ק״ג נשים": ["inbar-lanir"],
+    "78+ ק״ג נשים": ["raz-hershko", "yuli-alma-mishiner"]};
+  assert.deepStrictEqual(Object.fromEntries(resolved), want);
+});
+
+test("rank tie-break: digest lists ranked athletes first within a quota event", async () => {
+  const b = await boot({data: rankedData("2026-10-15"), now: DIGEST_NOW, quotas: REAL_QUOTAS});
+  const line = b.run("digestText()").split("\n").find(l => l.startsWith("  ישראלים: ") && l.includes("רז הרשקו")) || "";
+  assert.ok(line.indexOf("רז הרשקו") < line.indexOf("יצחק אשפיז") && line.indexOf("יצחק אשפיז") < line.indexOf("גפן פרימו"), line);
+});
+
+test("edit dialog: rank number needs its list and date", async () => {
+  const {run, els} = await boot();
+  run(`var __w = []; S.db = {collection: () => ({doc: () => ({update: async p => { __w.push(p); }})})}; openForm(S.athletes.find(a => a.id === "raz-hershko"))`);
+  els.fRankNum.value = "1";
+  await run("saveForm({preventDefault(){}})");
+  assert.ok(!els.frmErr.hidden && els.frmErr.textContent.includes("שם הרשימה ותאריך"), "rejected without list/date");
+  els.fRankList.value = "IJF World Ranking List"; els.fRankAsOf.value = "2026-10-15";
+  await run("saveForm({preventDefault(){}})");
+  const saved = JSON.parse(run("JSON.stringify(__w)"));
+  assert.strictEqual(saved.length, 1);
+  assert.deepStrictEqual([saved[0].rankNum, saved[0].rankList, saved[0].rankAsOf], [1, "IJF World Ranking List", "2026-10-15"]);
 });
 
 test("fetch failure shows the retry view", async () => {
@@ -603,8 +693,8 @@ test("#admin quota health: stale file, past/soon events, earned without a stage-
   const flag = k => out.split(`data-flag="${k}"`)[1]?.split("</div>")[0] || "";
   const panel = out.split('id="quotaHealth"')[1].split("</section>")[0];
   assert.ok(panel.includes("ישן מ־14 ימים") && out.includes('class="panel adm-alert" id="quotaHealth"'), "17-day-old file flagged");
-  assert.ok(flag("past").includes("עבר&lt;b&gt;") && !flag("past").includes("עבר<b>"), "past event listed and escaped");
-  assert.ok(flag("past").includes('href="#sport-judo"'));
+  assert.ok(flag("awaiting").includes("עבר&lt;b&gt;") && !flag("awaiting").includes("עבר<b>"), "ended event listed and escaped");
+  assert.ok(flag("awaiting").includes('href="#sport-judo"') && flag("awaiting").includes("אתמול"));
   assert.ok(flag("soon").includes("בקרוב") && flag("soon").includes("לעדכן אחרי התחרות") && !flag("soon").includes("רחוק"), "soon = within 3 days only");
   assert.ok(flag("earned").includes("הושגה-בלי") && !flag("earned").includes("הושגה-עם"), "earned needs a stage ≥ 2 athlete in the sport");
 
@@ -617,7 +707,7 @@ test("#admin quota health: stale file, past/soon events, earned without a stage-
 test("multi-day quota events stay current until their last day (sport page, #quotas, #admin)", async () => {
   const base = QUOTAS.items[0];   // judo, valid
   const item = (sportId, event, nextQuotaEvent) => ({...base, sportId, event, israelStatus: "in-contention", stakes: `stakes ${event}`, nextQuotaEvent});
-  const quotas = {updatedAt: "2026-10-29", items: [
+  const quotas = {updatedAt: "2026-10-20", items: [
     item("judo", "גרנד-סלאם", {name: "גרנד סלאם אבו דאבי", start: "2026-10-29"}),            // end from the fixture competition (29–31 Oct)
     item("shooting", "עם-סוף", {name: "אליפות", start: "2026-10-27", end: "2026-11-08"}),   // explicit end
     item("sailing", "עבר", {name: "אירוע שעבר", start: "2026-10-28"}),                      // one day, no competition
@@ -630,12 +720,46 @@ test("multi-day quota events stay current until their last day (sport page, #quo
   assert.ok(!day2.view("sport-sailing").includes("מה זה אומר"), "one-day event already over");
   const upcoming = day2.view("quotas").split('id="qNextH"')[1].split("</section>")[0];
   assert.ok(upcoming.includes("גרנד-סלאם") && upcoming.includes("עם-סוף") && !upcoming.includes("עבר"));
-  const past = day2.view("admin").split('data-flag="past"')[1]?.split("</div>")[0] || "";
+  const past = day2.view("admin").split('data-flag="awaiting"')[1]?.split("</div>")[0] || "";
   assert.ok(past.includes("עבר") && !past.includes("גרנד-סלאם") && !past.includes("עם-סוף"), "running events not flagged as past");
 
   const after = await at("2026-11-01T08:00:00Z");
   assert.ok(!after.view("sport-judo").includes("מה זה אומר"), "gone after the competition ends");
-  assert.ok((after.view("admin").split('data-flag="past"')[1] || "").split("</div>")[0].includes("גרנד-סלאם"));
+  assert.ok((after.view("admin").split('data-flag="awaiting"')[1] || "").split("</div>")[0].includes("גרנד-סלאם"));
+});
+
+test("#admin re-check flags: awaiting within 14 days, overdue after, none once re-checked", async () => {
+  // Abu Dhabi Grand Slam ends 31 Oct (fixture competition); the item was last checked before it.
+  const item = checkedAt => ({...QUOTAS.items[0], event: "60- ק״ג", israelStatus: "in-contention",
+    nextQuotaEvent: {name: "גרנד סלאם אבו דאבי", start: "2026-10-29"}, ...(checkedAt ? {checkedAt} : {})});
+  const at = async (now, checkedAt, updatedAt = "2026-10-25") => {
+    const b = await boot({quotas: {updatedAt, items: [item(checkedAt)]}, now});
+    b.run("S.isAdmin = true; S.live = true");
+    const out = b.view("admin");
+    const flag = k => out.split(`data-flag="${k}"`)[1]?.split("</div>")[0] || "";
+    return {out, flag, panelOpen: out.slice(0, out.indexOf('id="quotaHealth"')).split("<section").pop()};
+  };
+  const tileOf = out => out.split("אירועי מכסה שלא נבדקו מחדש")[0].split("<a ").pop();
+
+  const a = await at("2026-11-03T08:00:00Z", "2026-10-25");
+  assert.ok(a.flag("awaiting").includes("60- ק״ג") && !a.out.includes('data-flag="overdue"'), "awaiting");
+  assert.ok(a.flag("awaiting").includes("לפני 3 ימים") && a.flag("awaiting").includes("בדיקה ידנית אחרונה") && a.flag("awaiting").includes("q-in-contention"));
+  assert.ok(a.flag("awaiting").includes("build_quotas.py"), "fix hint");
+  assert.ok(!a.panelOpen.includes("adm-alert"), "awaiting alone is a reminder");
+  assert.ok(/digits">1</.test(tileOf(a.out)) && !tileOf(a.out).includes("hot"), "tile counts it, not hot");
+
+  const o = await at("2026-11-15T08:00:00Z", "2026-10-25", "2026-11-10");   // 15 days after 31 Oct; fresh file, stale item
+  assert.ok(o.flag("overdue").includes("60- ק״ג") && !o.out.includes('data-flag="awaiting"'), "overdue");
+  assert.ok(o.panelOpen.includes("adm-alert") && tileOf(o.out).includes("hot"));
+
+  const c = await at("2026-11-15T08:00:00Z", "2026-11-02");   // re-checked after the event
+  assert.ok(!c.out.includes('data-flag="overdue"') && !c.out.includes('data-flag="awaiting"'), "re-checked items are not flagged");
+  const pub = await boot({quotas: {updatedAt: "2026-10-25", items: [item("2026-11-02")]}, now: "2026-11-03T08:00:00Z"});
+  assert.strictEqual(pub.run(`awaitingOf(S.quotas[0])`), null, "public 'awaiting results' uses the item's checkedAt, not the older file date");
+  const old = await boot({quotas: {updatedAt: "2026-10-25", items: [item()]}, now: "2026-11-03T08:00:00Z"});
+  assert.ok(old.run(`awaitingOf(S.quotas[0])`), "without checkedAt it falls back to the file date");
+  const f = await at("2026-11-03T08:00:00Z");                  // no checkedAt: falls back to the file date (25 Oct)
+  assert.ok(f.flag("awaiting").includes("60- ק״ג"));
 });
 
 test("#quotas renders the fixture grouped by status, with links and the as-of date", async () => {
