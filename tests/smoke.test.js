@@ -871,6 +871,24 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   assert.ok(s.includes("08:30") && s.includes('href="#a-sergey-richter"') && s.includes("לפני התחרות"), "timed session (Israel time)");
 });
 
+test("lookup indexes follow data replacement; athletesOf/quotasOf return copies", async () => {
+  const {run} = await boot({quotas: QUOTAS});
+  assert.strictEqual(run(`athleteById("raz-hershko").name`), "רז הרשקו");
+  const n = run(`athletesOf("judo").length`);
+  run(`athletesOf("judo").length = 0; quotasOf("judo").length = 0`);
+  assert.strictEqual(run(`athletesOf("judo").length`), n, "a caller sorting or truncating its copy can't touch the index");
+  assert.ok(run(`quotasOf("judo").length`) > 0);
+  // A live snapshot replaces the arrays: the next lookup sees the new data.
+  run(`S.athletes = S.athletes.map(a => a.id === "raz-hershko" ? {...a, sportId: "sailing", name: "שונה"} : a)`);
+  assert.strictEqual(run(`athleteById("raz-hershko").name`), "שונה");
+  assert.strictEqual(run(`athletesOf("judo").length`), n - 1);
+  assert.ok(run(`athletesOf("sailing").some(a => a.id === "raz-hershko")`));
+  run(`S.sports = S.sports.map(s => s.id === "judo" ? {...s, he: "ג׳ודו חדש"} : s)`);
+  assert.strictEqual(run(`sportName("judo")`), "ג׳ודו חדש");
+  run(`S.comps = []`);
+  assert.strictEqual(run(`compOn("judo", "2026-10-29")`), null, "competition index follows S.comps");
+});
+
 test("entry points link to #c-<id>: calendar rows, home today, #day heading, athlete's next competition", async () => {
   const AD_LINK = '<a href="#c-judo-gs-abu-dhabi-2026">גרנד סלאם אבו דאבי</a>';
   const {view} = await boot({now: "2026-10-29T08:00:00Z"});
