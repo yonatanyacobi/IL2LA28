@@ -247,7 +247,7 @@ function viewHome(){
   <section class="hero">
     <div>
       <h1 tabindex="-1">הדרך ללוס אנג׳לס 28</h1>
-      <p class="muted">מעקב אחרי מסלול ההעפלה של ספורטאיות וספורטאים ישראלים לאולימפיאדת לוס אנג׳לס, 14–30 ביולי 2028.<span class="tag">מעקב לא רשמי</span></p>
+      <p class="muted">מעקב אחרי מסלול ההעפלה של ספורטאיות, ספורטאים ונבחרות מישראל לאולימפיאדת לוס אנג׳לס, 14–30 ביולי 2028.<span class="tag">מעקב לא רשמי</span></p>
       ${freshness()}
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
@@ -258,22 +258,22 @@ function viewHome(){
   <p class="sr" id="qCount" aria-live="polite"></p>
   <div id="results"></div>
   ${mine.length ? `<section class="panel">
-      <div class="sec-head"><h2>הספורטאים שלי</h2>${mineNew ? `<span class="new">${mineNew} עודכנו מאז הביקור הקודם</span>` : ""}</div>
+      <div class="sec-head"><h2>במעקב שלי</h2>${mineNew ? `<span class="new">${mineNew} עודכנו מאז הביקור הקודם</span>` : ""}</div>
       <div class="cards">${mine.map(athleteCard).join("")}</div></section>`
-    : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת כדי לעקוב, והם יופיעו כאן. המעקב נשמר רק בדפדפן הזה.</p>`}
-  <section class="panel" aria-label="התקדמות">
+    : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>`}
+  <section class="panel" aria-label="התקדמות בהעפלה">
     <p class="kpi"><b>${S.athletes.length}</b> ספורטאים ונבחרות במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה · <b>${verified}</b> מתוך ${S.athletes.length} נבדקו ידנית</p>
     ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
-    <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: לפריז 2024 ישראל שלחה ${PARIS_ATHLETES} ספורטאים. נבחרת נספרת כאן כרשומה אחת.</p>
+    <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: ישראל שלחה לפריז 2024 ${PARIS_ATHLETES} ספורטאיות וספורטאים. נבחרת נספרת כאן כרשומה אחת.</p>
   </section>
   <div class="grid2">
     <section class="panel">
       <h2>ישראלים בפעולה ב־14 הימים הקרובים</h2>
       ${busy.length ? `<ul class="rows">${busy.map(a => `<li><span class="d">${fmtShort(a.nextDate)}</span>
         <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))} · ${esc(a.next)}</small></span><span></span></li>`).join("")}</ul>`
-        : `<p class="muted">אין תחרויות ידועות של ספורטאים ישראלים בשבועיים הקרובים.</p>`}
+        : `<p class="muted">אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.</p>`}
     </section>
     <section class="panel">
       <div class="sec-head"><h2>מה התעדכן</h2><span class="actions">${typeof viewDigest === "function" ? `<a href="#digest">תקציר שבועי לשיתוף</a>` : ""}<a href="#updates">כל העדכונים</a></span></div>
@@ -293,10 +293,10 @@ function renderResults(){
   if (!q) { box.innerHTML = ""; $("qCount").textContent = ""; return; }
   const sports = S.sports.filter(s => searchKey(str(s.he) + " " + str(s.en)).includes(q));
   const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportName(a.sportId)].map(str).join(" ")).includes(q));
-  $("qCount").textContent = `נמצאו ${hits.length} ספורטאים ו־${sports.length} ענפים`;
+  $("qCount").textContent = `נמצאו ${hits.length} ספורטאים ונבחרות ו־${sports.length} ענפים`;
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
-    ${hits.length ? `<div class="cards">${hits.slice(0, 24).map(athleteCard).join("")}</div>` : `<p class="muted">לא נמצאו ספורטאים שמתאימים לחיפוש.</p>`}
+    ${hits.length ? `<div class="cards">${hits.slice(0, 24).map(athleteCard).join("")}</div>` : `<p class="muted">לא נמצאו ספורטאים או נבחרות שמתאימים לחיפוש.</p>`}
   </section>`;
 }
 
@@ -307,17 +307,17 @@ function viewSports(){
   withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
-  <p class="muted">${withA.length} ענפים עם ספורטאים ישראלים במעקב, לפי התחרות הקרובה.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
+  <p class="muted">${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
   <ul class="sports">${withA.map(s => {
     const list = athletesOf(s.id), ws = winStatus(s.window), nc = upcomingIn(s.id)[0], fresh = list.filter(isNew).length;
     return `<li><a class="sport" href="#sport-${esc(s.id)}">
-      <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון ${ws[1]}</span>` : ""}</span>
+      <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</span>
       ${stageBar(list, true).html}
       ${quotaCardSummary(s.id)}
-      <span class="meta">${list.length} במעקב${fresh ? ` · <span class="new">${fresh} חדש</span>` : ""}${nc ? ` · התחרות הבאה: ${esc(nc.name)} (${fmtShort(nc.start)})` : ""}</span>
+      <span class="meta">${list.length} במעקב${fresh ? ` · <span class="new">${fresh} עודכנו</span>` : ""}${nc ? ` · התחרות הבאה: ${esc(nc.name)} (${fmtShort(nc.start)})` : ""}</span>
     </a></li>`;
   }).join("")}</ul>
-  ${without.length ? `<section class="panel"><h2>ענפים בלי מתמודד ישראלי במעקב כרגע</h2>
+  ${without.length ? `<section class="panel"><h2>ענפים בלי ספורטאים או נבחרות מישראל במעקב כרגע</h2>
     <div class="chips">${without.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div></section>` : ""}`;
 }
 
@@ -328,18 +328,18 @@ function viewSport(id){
   const ws = winStatus(s.window), w = s.window;
   const comps = upcomingIn(id);
   return `
-  <p class="crumb"><a href="#sports">← כל הענפים</a></p>
+  <p class="crumb"><a href="#sports">→ כל הענפים</a></p>
   <div class="sec-head"><h1 tabindex="-1">${esc(s.he)}</h1>${S.isAdmin ? `<button class="btn small" data-add="${esc(id)}">+ הוספת ספורטאי/ת</button>` : ""}</div>
   <section class="panel">
-    <div class="sec-head"><h2>שיטת ההעפלה</h2>${ws ? `<span class="pill ${ws[0]}">חלון ${ws[1]}</span>` : ""}</div>
+    <div class="sec-head"><h2>שיטת ההעפלה</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</div>
     ${w ? `<p class="muted">${fmt(w.from)} – ${isDate(w.to) ? fmt(w.to) : "מועד סיום טרם פורסם"}</p>
-      ${w.summary ? `<p>${esc(w.summary)}</p>` : ""}${w.source ? `<p class="foot">${linkOut(w.source, "מערכת ההעפלה הרשמית")}</p>` : ""}`
+      ${w.summary ? `<p>${esc(w.summary)}</p>` : ""}${w.source ? `<p class="foot">${linkOut(w.source, "שיטת ההעפלה הרשמית")}</p>` : ""}`
       : `<p class="muted">עוד לא נאספו פרטים על שיטת ההעפלה בענף הזה.</p>`}
   </section>
   ${quotaSection(id)}
   <section class="stack">
     <h2>${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
-    ${list.length ? `<div class="cards">${list.map(athleteCard).join("")}</div>` : `<div class="empty">אין כרגע ספורטאים ישראלים במעקב בענף הזה.</div>`}
+    ${list.length ? `<div class="cards">${list.map(athleteCard).join("")}</div>` : `<div class="empty">אין כרגע ספורטאים או נבחרות מישראל במעקב בענף הזה.</div>`}
   </section>
   <section class="stack">
     <div class="sec-head"><h2>תחרויות קרובות בענף</h2>${comps.length > 5 ? `<a href="#calendar-${esc(id)}">כל ${comps.length} התחרויות</a>` : ""}</div>
@@ -356,7 +356,7 @@ function viewAthlete(id){
   const hist = (Array.isArray(a.history) ? a.history : []).filter(h => isDate(h.at)).slice().reverse();
   const link = `${SITE_URL}#a-${id}`;
   return `
-  <p class="crumb"><a href="#sport-${esc(a.sportId)}">← ${esc(sp?.he || "ענף")}</a></p>
+  <p class="crumb"><a href="#sport-${esc(a.sportId)}">→ ${esc(sp?.he || "ענף")}</a></p>
   <div class="sec-head">
     <div><h1 tabindex="-1">${esc(a.name)}</h1>${a.name_en ? `<p class="muted" dir="ltr" style="text-align:right">${esc(a.name_en)}</p>` : ""}</div>
     <div class="actions">
@@ -372,7 +372,7 @@ function viewAthlete(id){
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}</dd>` : ""}
       ${a.next ? `<dt>התחרות הבאה</dt><dd>${esc(a.next)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}</dd>` : ""}
       <dt>בדיקה</dt><dd>${trustChip(a)}</dd>
-      ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן מעל חודש" : ""}</dd>` : ""}
+      ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
       ${safeUrl(a.source) ? `<dt>מקור</dt><dd>${linkOut(a.source, host(a.source))}</dd>` : ""}
     </dl>
     ${a.notes ? `<p>${esc(a.notes)}</p>` : ""}
@@ -450,24 +450,24 @@ function viewUpdates(){
   return `<h1 tabindex="-1">מה התעדכן</h1>
   ${typeof viewDigest === "function" ? `<p><a href="#digest">תקציר שבועי לשיתוף</a></p>` : ""}
   <section class="panel">${S.changes.length ? `<ul class="rows">${S.changes.map(changeRow).join("")}</ul>` : `<p class="muted">עוד אין עדכונים.</p>`}</section>
-  <p class="foot">העדכונים נאספים פעם ביום ממקורות רשמיים ומכלי תקשורת. שינוי שלב (מכסה או בחירה לנבחרת) מתפרסם רק אחרי אימות ידני.</p>`;
+  <p class="foot">העדכונים נאספים פעם ביום ממקורות רשמיים ומכלי תקשורת. שינוי שלב (מכסה או בחירה לנבחרת) מתפרסם רק אחרי בדיקה ידנית.</p>`;
 }
 
 function viewAbout(){
   return `<h1 tabindex="-1">אודות</h1>
   <section class="panel prose">
-    <h2>מה זה</h2>
+    <h2>על האתר</h2>
     <p>אתר עצמאי ולא רשמי שעוקב אחרי ספורטאיות, ספורטאים ונבחרות מישראל בדרך לאולימפיאדת לוס אנג׳לס 2028. אין לאתר קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של המשחקים או לוועד האולימפי בישראל.</p>
     <h2>ארבעת השלבים</h2>
     <ol>
       <li><b>במעקב</b>: ספורטאי/ת או נבחרת עם סיכוי ריאלי, לפני שחלון ההעפלה בענף נפתח.</li>
-      <li><b>בחלון ההעפלה</b>: החלון בענף פתוח, ותוצאות ודירוגים נספרים להעפלה.</li>
-      <li><b>מכסה הושגה</b>: הושגה מכסה אולימפית לפי הודעה רשמית של ההתאחדות הבין־לאומית. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי.</li>
+      <li><b>בחלון ההעפלה</b>: חלון ההעפלה בענף פתוח, ותוצאות ודירוגים נספרים להעפלה.</li>
+      <li><b>מכסה הושגה</b>: הושגה מכסה אולימפית לפי הודעה רשמית של ההתאחדות הבין־לאומית. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת.</li>
       <li><b>נבחר/ה לנבחרת</b>: הוועד האולימפי בישראל הודיע רשמית על הבחירה.</li>
     </ol>
     <h2>איך הנתונים נאספים</h2>
-    <p>פעם ביום תהליך אוטומטי בודק תוצאות, דירוגים רשמיים והודעות של התאחדויות, ומעדכן דירוגים ותחרויות קרובות. מעבר לשלב "מכסה" או "נבחר/ה", ספורטאים חדשים ופרישות מתפרסמים רק אחרי בדיקה ידנית. לכל נתון מצורף קישור למקור, וכדאי לבדוק מולו לפני הסתמכות.</p>
-    <p>"דירוג או הישג" הוא דירוג עולמי רשמי כשיש כזה, ואחרת התוצאה הבולטת האחרונה (מסומנת "מיקום, לא דירוג").</p>
+    <p>פעם ביום, תהליך אוטומטי בודק תוצאות, דירוגים רשמיים והודעות של התאחדויות, ומעדכן דירוגים ותחרויות קרובות. מעבר לשלב „מכסה” או „נבחר/ה”, ספורטאים חדשים ופרישות מתפרסמים רק אחרי בדיקה ידנית. לכל נתון מצורף קישור למקור, וכדאי לבדוק מולו לפני הסתמכות.</p>
+    <p>„דירוג או הישג” הוא דירוג עולמי רשמי כשיש כזה, ואחרת התוצאה הבולטת האחרונה (מסומנת „מיקום, לא דירוג”).</p>
     <h2>עדכניות</h2>
     <p>${freshness() || "מועד העדכון האחרון לא ידוע."}</p>
   </section>
@@ -486,9 +486,9 @@ function freshness(){
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
 
 function banner(){
-  if (S.liveLost) return `<div class="banner">החיבור לנתונים החיים נותק. מוצגת הגרסה הציבורית האחרונה. רעננו כדי להתחבר מחדש.</div>`;
+  if (S.liveLost) return `<div class="banner">החיבור לנתונים החיים נותק. מוצגת הגרסה הציבורית האחרונה. רעננו את הדף כדי להתחבר מחדש.</div>`;
   const ts = S.generatedAt;
-  if (!S.live && ts && daysSince(ts) > 2) return `<div class="banner">הנתונים לא עודכנו כבר ${Math.floor(daysSince(ts))} ימים, וייתכן שחלקם כבר לא עדכניים.</div>`;
+  if (!S.live && ts && daysSince(ts) > 2) return `<div class="banner">הנתונים לא עודכנו כבר ${Math.floor(daysSince(ts))} ימים, וייתכן שחלקם אינם עדכניים.</div>`;
   return "";
 }
 
@@ -498,7 +498,7 @@ function reviewPanel(){
   const pend = S.proposals.filter(p => p.status === "pending");
   const note = `<p class="foot">את/ה רואה נתונים חיים. הציבור רואה את הפרסום האחרון, שמתעדכן בכל ריצה של העדכון היומי.</p>`;
   if (!pend.length) return `<section class="panel">${note}</section>`;
-  return `<section class="panel review"><h2>ממתין לאישור שלך (${pend.length})</h2>${note}
+  return `<section class="panel review"><h2>ממתינים לאישורך (${pend.length})</h2>${note}
     <div class="stack">${pend.map(p => {
       const t = S.athletes.find(a => a.id === p.target);
       const who = p.kind === "create" ? `ספורטאי/ת חדש/ה: ${esc(p.patch?.name)}` : esc(t?.name || p.target);
@@ -511,7 +511,7 @@ function reviewPanel(){
 }
 
 function describePatch(p, t){
-  const labels = {rank:"דירוג או הישג", next:"התחרות הבאה", nextDate:"תאריך", notes:"הערות", event:"מקצה", name:"שם"};
+  const labels = {rank:"דירוג או הישג", next:"התחרות הבאה", nextDate:"תאריך התחרות", notes:"הערות", event:"מקצה", name:"שם"};
   return Object.entries(p.patch || {}).map(([k, v]) => {
     if (k === "stage") return `<li>שלב: ${STAGES[stageOf(t || {})]} ← ${STAGES[stageOf({stage: v})]}</li>`;
     if (k === "sportId") return `<li>ענף: ${esc(sportName(v))}</li>`;
@@ -627,7 +627,7 @@ async function saveForm(ev){
 
 // Soft delete: no undo exists for a hard delete, and the daily job could re-add the athlete.
 async function archive(){
-  if (!archArmed) { archArmed = true; $("archBtn").textContent = "ללחוץ שוב להסרה"; return; }
+  if (!archArmed) { archArmed = true; $("archBtn").textContent = "לחצו שוב לאישור ההסרה"; return; }
   try {
     await S.db.collection("athletes").doc(editing.id).update({archived: true, updatedAt: new Date().toISOString(), updatedBy: S.uid || "manual"});
     $("dlg").close();
@@ -731,6 +731,8 @@ $("archBtn").addEventListener("click", archive);
 $("cancelBtn").addEventListener("click", () => $("dlg").close());
 // Past Israel midnight the today strip and "live"/"past" labels are stale.
 setInterval(() => { if (today() !== renderedDay) return refresh(); const d = $("days"); if (d) d.textContent = daysLeft(); }, 60e3);
+// The skip link must not change the hash: the router would treat "#view" as an unknown page.
+document.querySelector(".skip")?.addEventListener("click", e => { e.preventDefault(); $("view").focus(); });
 
 // ---------- data ----------
 function applySnapshot(d){

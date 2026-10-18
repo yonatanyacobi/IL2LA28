@@ -1,22 +1,22 @@
 /* Layout: sticky top nav over a single routed view (home, sports index, sport, athlete, calendar, updates).
    Tokens: deep blue = Israel, sun = LA; semantic ok/bad stay separate from the accent. */
 :root{
-  --bg:#f3f5f8; --surface:#ffffff; --ink:#0f1d33; --muted:#5a6880; --line:#d9dfe8;
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#0f1d33; --muted:#5a6880; --line:#d9dfe8; --line-ui:#7f8ca1;
   --blue:#1546a8; --blue-soft:#e3ebfa; --on-blue:#ffffff;
-  --sun:#e8890c; --sun-soft:#fdf0dc; --sun-ink:#8f5200;
-  --ok:#17804a; --ok-soft:#dff3e8; --ok-ink:#11693c; --bad:#c0392b;
+  --sun:#d07806; --sun-soft:#fdf0dc; --sun-ink:#8f5200;
+  --ok:#147644; --ok-soft:#dff3e8; --ok-ink:#11693c; --bad:#c0392b;
   --stage0:#a9b4c4; --focus:#8f5200;
   --f-display:"Secular One","Assistant",system-ui,sans-serif;
   --f-body:"Assistant",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0c1422; --surface:#142035; --ink:#e8eef8; --muted:#97a6bf; --line:#26354f;
+  --bg:#0c1422; --surface:#142035; --ink:#e8eef8; --muted:#97a6bf; --line:#26354f; --line-ui:#5d6f90;
   --blue:#7ea6f5; --blue-soft:#1b2d50; --on-blue:#0c1422;
   --sun:#f5a83d; --sun-soft:#3a2a12; --sun-ink:#f5b75e;
   --ok:#5fd18f; --ok-soft:#173826; --ok-ink:#5fd18f; --bad:#ff8a7a; --stage0:#4a5a75; --focus:#f5a83d; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0c1422; --surface:#142035; --ink:#e8eef8; --muted:#97a6bf; --line:#26354f;
+  --bg:#0c1422; --surface:#142035; --ink:#e8eef8; --muted:#97a6bf; --line:#26354f; --line-ui:#5d6f90;
   --blue:#7ea6f5; --blue-soft:#1b2d50; --on-blue:#0c1422;
   --sun:#f5a83d; --sun-soft:#3a2a12; --sun-ink:#f5b75e;
   --ok:#5fd18f; --ok-soft:#173826; --ok-ink:#5fd18f; --bad:#ff8a7a; --stage0:#4a5a75; --focus:#f5a83d; color-scheme:dark}
@@ -97,9 +97,9 @@ main{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;
 .now{color:var(--ok);font-weight:700;font-size:13px}
 
 /* search */
-.search{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+.search{background:var(--surface);border:1px solid var(--line-ui);border-radius:10px;padding:10px 12px;width:100%}
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.toolbar select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.toolbar select{background:var(--surface);border:1px solid var(--line-ui);border-radius:8px;padding:8px 10px}
 .chk{display:flex;gap:6px;align-items:center;font-size:14px}
 
 /* sports index */
@@ -110,7 +110,7 @@ main{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;
 .sport .top h2{font-size:20px}
 .sport .meta{font-size:14px;color:var(--muted)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chips a{font-size:15px;border:1px solid var(--line);border-radius:99px;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)}
+.chips a{font-size:15px;border:1px solid var(--line-ui);border-radius:99px;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)}
 
 /* athlete cards */
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
@@ -158,7 +158,7 @@ main{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;
 .prop:first-of-type{border-top:0;padding-top:0}
 .prop ul{margin:0;padding-inline-start:18px;color:var(--muted)}
 .btn{background:var(--sun);color:#1c1204;border:0;border-radius:8px;padding:8px 16px;font-weight:700;cursor:pointer}
-.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-ui)}
 .btn.danger{background:transparent;color:var(--bad);border:1px solid currentColor}
 .btn.small{padding:4px 12px;font-size:14px}
 .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -171,7 +171,7 @@ dialog::backdrop{background:rgb(5 10 20/.55)}
 dialog form{padding:20px;display:grid;gap:12px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 label{display:grid;gap:4px;font-size:14px;font-weight:600}
-label input,label select,label textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);font-weight:400}
+label input,label select,label textarea{border:1px solid var(--line-ui);border-radius:8px;padding:8px 10px;background:var(--bg);font-weight:400}
 
 @media (max-width:640px){
   .hero{grid-template-columns:1fr}
@@ -198,7 +198,7 @@ label input,label select,label textarea{border:1px solid var(--line);border-radi
 .timeline li.k-stage::before{background:var(--sun);border-color:var(--sun)}
 .timeline .d{font-size:13px;color:var(--muted)}
 .share{display:flex;gap:8px;flex-wrap:wrap}
-.share input{flex:1 1 240px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);font-size:14px}
+.share input{flex:1 1 240px;min-width:0;border:1px solid var(--line-ui);border-radius:8px;padding:8px 10px;background:var(--bg);font-size:14px}
 .banner{background:var(--sun-soft);color:var(--ink);border:1px solid var(--sun);border-radius:10px;padding:10px 14px;font-size:15px}
 .skeleton{display:grid;gap:14px}
 .skeleton span{display:block;height:64px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
@@ -207,6 +207,15 @@ label input,label select,label textarea{border:1px solid var(--line);border-radi
 .prose ol{margin:0;padding-inline-start:20px;display:grid;gap:6px}
 .site-foot{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:20px 32px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
 a.btn{text-decoration:none;display:inline-flex;align-items:center}
+
+/* a11y: skip link, focus target, 44px touch targets on touch-size screens */
+.skip{position:absolute;inset-inline-start:16px;top:-100px;z-index:10;background:var(--surface);color:var(--blue);border:2px solid var(--focus);border-radius:8px;padding:10px 16px;font-weight:700}
+.skip:focus{top:8px}
+main:focus{outline:none}
+@media (max-width:640px){
+  .links a,.crumb a,.sec-head a{display:inline-flex;align-items:center;min-height:44px}
+  .btn,.toolbar select,.chk,label input,label select,.share input{min-height:44px}
+}
 
 /* editor dashboard (#admin) */
 .pill.bad{background:var(--sun-soft);color:var(--bad)}

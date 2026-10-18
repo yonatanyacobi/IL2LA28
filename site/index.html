@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="styles.css">
 
 <div dir="rtl" lang="he">
+  <a class="skip" href="#view">דילוג לתוכן</a>
   <nav class="nav" aria-label="ניווט ראשי">
     <div class="nav-in">
       <a class="brand" href="#home">הדרך ל<b>לוס אנג׳לס</b></a>
@@ -19,7 +20,7 @@
     </div>
   </nav>
   <p class="sr" id="routeStatus" aria-live="polite"></p>
-  <main id="view"><div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div></main>
+  <main id="view" tabindex="-1" aria-label="תוכן ראשי"><div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div></main>
   <footer class="site-foot">
     <p>אתר עצמאי ולא רשמי. אין לו קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של משחקי לוס אנג׳לס 2028 או לוועד האולימפי בישראל. הנתונים נאספים ממקורות פומביים, וכדאי לבדוק מול המקור המצורף. <a href="#about">איך הנתונים נאספים</a> · דיווח על טעות: <span dir="ltr">yacobiyonatan@gmail.com</span></p>
   </footer>
@@ -33,14 +34,14 @@
       </div>
       <div class="row">
         <label>ענף<select id="fSportIn" required></select></label>
-        <label>מקצה / קטגוריה<input id="fEvent" maxlength="60"></label>
+        <label>מקצה או קטגוריה<input id="fEvent" maxlength="60"></label>
       </div>
       <div class="row">
         <label>שלב<select id="fStageIn"></select></label>
-        <label>דירוג נוכחי<input id="fRank" maxlength="80" placeholder="למשל 7 בעולם"></label>
+        <label>דירוג או הישג<input id="fRank" maxlength="80" placeholder="למשל: מקום 7 בעולם"></label>
       </div>
       <div class="row">
-        <label>התחרות הבאה שלו/ה<input id="fNext" maxlength="100"></label>
+        <label>התחרות הבאה<input id="fNext" maxlength="100"></label>
         <label>תאריך התחרות<input id="fNextDate" type="date"></label>
       </div>
       <label>הערות<textarea id="fNotes" rows="3" maxlength="500"></textarea></label>
