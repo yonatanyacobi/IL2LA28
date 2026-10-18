@@ -160,12 +160,14 @@ function quotaSection(id){
       QUOTA_STATUSES.map(k => n[k] ? `<i class="q-${k}" style="width:${(n[k] / items.length * 100).toFixed(2)}%"></i>` : "").join("")}</div>
     <ul class="legend">${QUOTA_STATUSES.map(k => n[k] ? `<li><i class="q-${k}"></i>${Q_LABEL[k][1]} <b>${n[k]}</b></li>` : "").join("")}</ul>
     ${n.unknown === items.length ? `<p class="muted">עוד אין מידע על מצב ישראל במקצים האלה.</p>` : ""}
+    ${n.earned && !athletesOf(id).some(a => stageOf(a) >= 2) ? `<p class="foot">המכסה הושגה למדינה. שלב הספורטאים יתעדכן אחרי אישור ידני.</p>` : ""}
     <ul class="qlist">${items.map(q => {
       const tot = q.totalQuotas, max = q.maxPerNOC, e = nxt(q), w = awaitingOf(q), src = linkOut(q.source, host(q.source));
       const meta = [tot != null && `${plural(tot, "מכסה אחת", "מכסות")} בעולם`, max != null && `עד ${plural(max, "מכסה אחת", "מכסות")} למדינה`].filter(Boolean).join(" · ");
       return `<li>
         <div class="q-top"><b>${esc(q.event)}</b>${w ? `<span class="actions">${quotaStatusPill(q.israelStatus)}${AWAIT_PILL}</span>` : quotaStatusPill(q.israelStatus)}</div>
         ${meta ? `<p class="q-meta">${meta}</p>` : ""}
+        ${q.israelStatus === "earned" && isDate(q.earnedAt) ? `<p class="q-meta">הושגה ב־${fmt(q.earnedAt)}</p>` : ""}
         ${q.israelNote ? `<p>${esc(q.israelNote)}</p>` : ""}
         ${e ? `<p class="q-meta">אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}</p>` : w ? `<p class="q-meta">${awaitingLine(w)}</p>` : ""}
         ${stakesLine(q)}

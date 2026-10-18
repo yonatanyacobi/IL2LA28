@@ -410,6 +410,25 @@ test("awaiting results after a quota event (round3 §1): sport page, #quotas, ho
   assert.ok(!late.sport.includes(PILL) && !late.all.includes("qWaitH"), "after 14 days the awaiting state ends");
 });
 
+test("sport page earned rows (round3 §2): earned date, stage note once when no stage-2 athlete", async () => {
+  const NOTE = "המכסה הושגה למדינה. שלב הספורטאים יתעדכן אחרי אישור ידני.";
+  // earnedAt is set on S.quotas directly: the loader passes it through only once dev/omer/earned-banner lands.
+  const withDate = b => { b.run(`S.quotas.find(q => q.israelStatus === "earned").earnedAt = "2026-10-15"`); return b; };
+  const {view} = withDate(await boot({quotas: SPORT_QUOTAS}));
+  const judo = view("sport-judo");
+  const row = judo.split("<li>").find(x => x.includes("מכסה הושגה</span>"));
+  assert.ok(row.includes('<p class="q-meta">הושגה ב־'), "earned row shows its date");
+  assert.strictEqual(judo.split(NOTE).length - 1, 1, "stage note once");
+  assert.ok(judo.indexOf(NOTE) < judo.indexOf('<ul class="qlist">'), "under the bar");
+  assert.strictEqual(judo.split("הושגה ב־").length - 1, 1, "only the earned row");
+  assert.ok(!view("sport-shooting").includes(NOTE), "no earned item, no note");
+
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.find(a => a.sportId === "judo").stage = 2;
+  assert.ok(!withDate(await boot({data, quotas: SPORT_QUOTAS})).view("sport-judo").includes(NOTE), "a stage-2 athlete: no note");
+  assert.ok(!(await boot({quotas: SPORT_QUOTAS})).view("sport-judo").includes("הושגה ב־"), "no earnedAt, no date line");
+});
+
 test("quota section: all-unknown note; hidden without items", async () => {
   const {view} = await boot({quotas: SPORT_QUOTAS});
   const shooting = view("sport-shooting");
