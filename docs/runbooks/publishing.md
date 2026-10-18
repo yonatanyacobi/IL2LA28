@@ -191,6 +191,85 @@ before the stage change, both validators after it, `quota_due.py` (nothing due),
 | 8 | Home shows "5 עם מכסה" (athletes at stage ≥ 2) next to "מקצה אחד עם מכסה לישראל". Two counts that read like they disagree. | Open, Shira / UX. |
 | 9 | (א) copy uses "LA28", hyphens and dotted dates (`ב-20.10.2026`), unlike the site's style. Its `stakes` never shows on an earned item. | Open, Dana / Shira (wording). Drop `stakes` for earned items. |
 
+## Event checklists (dry-run 2026-10-18)
+
+These are dry runs on the live data.json of 18.10, with made-up results. No API key, no publishing. The general
+steps 0–7 still apply. These lists cover only what is specific to each event.
+
+### Tongyeong World Cup, triathlon (24.10): automated results via `job/tri_results.py`
+
+No quota and no stage change (event-calendar.md). The job writes the result into Sagiv's `history` itself; a
+podium only becomes a `notes` proposal.
+
+```
+[ ] By 23.10 (Ofir): the 2026 Tongyeong competition record is in the DB, with source
+    https://triathlon.org/events/2026-world-triathlon-cup-tongyeong (the slug is what tri_results matches)
+[ ] By 23.10 (Ofir): Sagiv's nextDate = 2026-10-24 and his source = his triathlon.org profile (id 41870)
+[ ] 24.10: nothing to do; tri_results only looks at competitions that ended before today
+[ ] 25.10 after the 23:45 run: runs/2026-10-25 has no "תוצאות טריאתלון" warning, and Sagiv's history has the result
+    ("הרשימה עוד לא סופית" → wait for the next run; "לא נמצא/ה בתוצאות" → check DNS or the id by hand)
+[ ] Podium only: approve or reject the "<id>-20261024-result" notes proposal (Tamar)
+[ ] Ofir: next/nextDate → WTCS Abu Dhabi 13.11 (if on the start list), and the quota item's israelNote,
+    stakes and nextQuotaEvent per his plan, through result-night.md + steps 0–7
+[ ] Step 4 preview for 25.10: the digest shows the result under "תוצאות השבוע"
+```
+
+Rehearse it the same way, without a key:
+
+```sh
+python3 tests/dryrun_tri_results.py /tmp/la28-data.json tests/fixtures/dryrun/tri-api-tongyeong-final.json \
+  --today 2026-10-25 --add-competition tests/fixtures/dryrun/tongyeong-competition.json
+```
+
+Expected (made-up 7th place), with no warnings and no proposals:
+`history`: `מקום 7 בגביע העולם בטריאתלון טונגיונג (ספרינט, 2026-10-24)`. Digest of 25.10:
+```
+• 24 באוק׳ · גביע העולם בטריאתלון טונגיונג (טריאתלון)
+  ישראלים: שחר שגיב
+  – שחר שגיב: מקום 7 בגביע העולם בטריאתלון טונגיונג (ספרינט, 2026-10-24)
+```
+With `tri-api-tongyeong-provisional.json`, the plan carries only the warning "הרשימה עוד לא סופית; לא נכתב דבר".
+
+### Abu Dhabi Grand Slam, judo (29–31.10): results entered by editors
+
+No quota (abu-dhabi-outcomes.md). There is no results tool for judo yet. Per day, Roni enters each Israeli's result
+from https://www.ijf.org/competition/3157/results, and Dana signs off.
+
+```
+[ ] By 28.10 (Roni): each judoka's nextDate = their actual day from the IJF outlines
+    (29.10: Ashpiz, G. Primo, Nelson Levy; 30.10: Elbaz; 31.10: Hershko), and the entries checked after the draw
+[ ] Each evening (Roni): one history entry per Israeli who fought that day, kind "result", source = IJF results:
+    "<זהב|כסף|ארד|מקום 5|מקום 7|הודח/ה בסיבוב <n>> בגרנד סלאם אבו דאבי, <weight> (<DD>.10.2026)"
+[ ] Medals only: one meta/status change "ג׳ודו: <name> – <same text>" with athleteId (the digest shows it once)
+[ ] No rank changes until the next IJF WRL PDF; no quota status changes
+[ ] After 31.10, one PR for all 7 judo items (stakes, nextQuotaEvent → the next event), through steps 0–7.
+    From 1.11 until it is live, the items show "◷ בהמתנה לתוצאות"
+[ ] Step 4 previews: 30.10 (strip day 2), 1.11 (digest)
+```
+
+Digest of 1.11 in the dry run (made-up results):
+```
+• 31 באוק׳ · גרנד סלאם אבו דאבי (ג׳ודו)
+  ישראלים: גפן פרימו, יהונתן אלבז, יצחק אשפיז, רז הרשקו, תמנע נלסון לוי
+  – גפן פרימו: מקום 5 בגרנד סלאם אבו דאבי, 52- ק״ג (29.10.2026)
+  – יצחק אשפיז: ארד בגרנד סלאם אבו דאבי, 60- ק״ג (29.10.2026)
+  – תמנע נלסון לוי: זהב בגרנד סלאם אבו דאבי, 57- ק״ג (29.10.2026)
+  – יהונתן אלבז: הודח בסיבוב הראשון בגרנד סלאם אבו דאבי, 73- ק״ג (30.10.2026)
+  – רז הרשקו: כסף בגרנד סלאם אבו דאבי, 78+ ק״ג (31.10.2026)
+```
+
+### Found in these dry runs
+
+| # | Problem | Status / owner |
+|---|---|---|
+| D1 | **Blocker:** the live data has no 2026 Tongyeong competition record (only 2027 triathlon events), so `tri_results.py` does nothing on 25.10 **and gives no warning**. | Ofir: add the record by 23.10 (checklist). Maya: warn when an entrant's `nextDate` has no competition record. |
+| D2 | The digest ignored results written into athlete history (where `tri_results.py` and editors put them). Results showed as "התוצאות עוד לא עודכנו". | Fixed on this branch (digest.js). |
+| D3 | A medal entered both in history and as a meta/status change appeared twice in the digest. | Fixed on this branch: the change is dropped when the athlete's result is already listed. |
+| D4 | All five judoka have `nextDate` 29.10, but Elbaz fights 30.10 and Hershko 31.10. On day 2 the strip still lists day-1 athletes and their "מה זה אומר". | Roni: the actual days (checklist). Noa: whether to rank items of athletes who already fought below the others. |
+| D5 | The Rotterdam result bullet carries the 18.10 change "מתקיימת עכשיו…", a pre-event note, as if it were a result. | Open (Maya, job change wording). |
+| D6 | `tri_results` history text has an ISO date `(ספרינט, 2026-10-24)`, unlike the site's date style. | Open (Maya / Shira). |
+| D7 | Abu Dhabi runbook says "יונתן אלבז", while the data says "יהונתן אלבז". | Roni / Dana. |
+
 ## Rollback
 
 Republish the previous build. Don't hand-edit published files.

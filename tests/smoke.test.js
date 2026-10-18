@@ -1013,6 +1013,23 @@ test("#digest: page, entry points and the week's text", async () => {
 
 const digestSection = (text, title) => (text.split(`*${title}*\n`)[1] || "").split("\n\n")[0];
 
+test("#digest: results logged in athlete history count, even after nextDate moved on", async () => {
+  // Results-assist (tri_results.py) writes history, not meta/status changes, and the athlete's next event moves on.
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.competitions.push({id: "tri-tongyeong-2026", sportId: "triathlon", name: "גביע העולם בטריאתלון טונגיונג",
+    location: "טונגיונג", start: "2026-10-24", end: "2026-10-24", qualifying: true});
+  Object.assign(data.athletes.find(a => a.id === "shachar-sagiv"), {nextDate: "2026-11-13", history: [
+    {at: "2026-10-24", kind: "result", text: "מקום 7 בגביע העולם בטריאתלון טונגיונג (ספרינט, 2026-10-24)"},
+    {at: "2026-09-01", kind: "result", text: "תוצאה ישנה"}]});
+  data.changes.unshift({at: "2026-10-24", text: "טריאתלון: שחר שגיב במקום 7 בטונגיונג.", athleteId: "shachar-sagiv"});
+  const {text} = await digestOf({data, now: "2026-10-25T09:00:00Z"});
+  const results = digestSection(text, "תוצאות השבוע");
+  const tri = results.split("\n• ").find(b => b.includes("טונגיונג"));
+  assert.ok(tri && tri.includes("  ישראלים: שחר שגיב") && tri.includes("  – שחר שגיב: מקום 7 בגביע העולם"), results);
+  assert.ok(!tri.includes("תוצאה ישנה") && !tri.includes("התוצאות עוד לא עודכנו"), tri);
+  assert.ok(!tri.includes("במקום 7 בטונגיונג") && !text.includes("במקום 7 בטונגיונג"), "an editor's change about a logged result isn't repeated anywhere");
+});
+
 test("#digest: this week's results group ended competitions with their changes", async () => {
   const empty = digestSection((await digestOf()).text, "תוצאות השבוע");
   assert.strictEqual(empty, "לא הסתיימו השבוע תחרויות בענפים שבמעקב.");
