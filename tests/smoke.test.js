@@ -580,14 +580,14 @@ test("#corrections: months newest first, diffs, labels, speed, escaping, invalid
   // #112 review: audit label, month count read out, check link, date values formatted, intro count.
   assert.ok(out.includes('<span class="pill by-audit">בדיקה ידנית</span>'));
   assert.ok(out.includes('<span class="sr"> תיקונים</span>') && out.includes('<a href="#about-trust">איך אנחנו בודקים</a>'));
-  assert.ok(out.includes("בבדיקה מול המקורות לפני ההשקה תיקנו 25 רשומות."));
+  assert.ok(out.includes("בבדיקה מול המקורות לפני ההשקה תיקנו פרטים אצל 25 ספורטאים ונבחרות."));
   const dated = (await bootFixes([fix({at: "2026-10-24T09:10:00Z"}, [{field: "nextDate", wrong: "2026-10-29", right: "2026-10-30"}])])).view("corrections");
   assert.ok(dated.includes("<del>29 באוק׳ 2026</del>") && !dated.includes("2026-10-29"), "nextDate through fmt()");
   const data = clone();
   for (const a of data.athletes) delete a.verifiedAt;   // exactly the two verified below
   for (const id of ["raz-hershko", "inbar-lanir"]) Object.assign(data.athletes.find(a => a.id === id), {verifiedAt: "2026-10-20T10:00:00Z", updatedAt: "2026-10-19T10:00:00Z"});
   const counted = (await boot({data: {...data, corrections: CORRECTIONS, launchAt: LAUNCH}})).view("corrections");
-  assert.ok(counted.includes(" 2 רשומות כבר נבדקו ידנית מול המקור."), "computed manual-check count");
+  assert.ok(counted.includes(" נבדקו ידנית מול המקור עד כה: 2 ספורטאים ונבחרות."), "computed manual-check count");
 });
 
 test("#corrections: 48-hour stat from 5 timed entries", async () => {
@@ -1682,8 +1682,8 @@ test("verification: card badge only when checked, three athlete-page states, #ab
   for (const a of [stale, auto]) assert.ok(!card(a).includes('class="trust'), `${a.id}: no chip on the card`);
 
   const facts = id => view(`a-${id}`).split("<dt>בדיקה</dt>")[1].split("</dd>")[0];
-  const lines = {[ok.id]: "הרשומה הושוותה למקור (ijf.org) ולא השתנתה מאז.", [stale.id]: "הם ייכללו בבדיקה הבאה.",
-    [auto.id]: "נבדקות ידנית בהדרגה."};
+  const lines = {[ok.id]: "הפרטים הושוו ידנית למקור (ijf.org) ולא השתנו מאז.", [stale.id]: "הם ייכללו בבדיקה הבאה.",
+    [auto.id]: "והבדיקה הידנית נעשית בהדרגה."};
   for (const [id, line] of Object.entries(lines)) {
     const f = facts(id);
     assert.ok(f.includes(line) && f.includes('href="#about-trust"'), id);
@@ -1778,7 +1778,7 @@ test("view as visitor: editors get a toggle; visitor mode runs on data.json with
   assert.ok(e.run("S.live && S.isAdmin"), "editor mode is live");
   e.view("home");
   assert.ok(!hid(e, "visitorBtn") && !hid(e, "adminChip") && !hid(e, "adminLink") && hid(e, "visitorBar") && hid(e, "visitorChip"));
-  assert.ok(e.view("home").includes("את/ה רואה נתונים חיים"), "review queue for editors");
+  assert.ok(e.view("home").includes("את/ה רואה את הנתונים העדכניים מהמאגר"), "review queue for editors");
   e.run("setVisitorView(true)");
   assert.strictEqual(e.run(`localStorage.getItem("la28.viewAsVisitor")`), "true");
   assert.strictEqual(e.ctx.reloads, 1);
@@ -1790,7 +1790,7 @@ test("view as visitor: editors get a toggle; visitor mode runs on data.json with
   const home = v.view("home");
   assert.ok(!hid(v, "visitorBar") && !hid(v, "visitorChip") && hid(v, "adminLink") && hid(v, "adminChip") && hid(v, "visitorBtn"),
     "bar shown; chip, toggle and בקרה hidden");
-  assert.ok(!home.includes("את/ה רואה נתונים חיים") && !home.includes("data-edit") && !home.includes("data-add"));
+  assert.ok(!home.includes("את/ה רואה את הנתונים העדכניים מהמאגר") && !home.includes("data-edit") && !home.includes("data-add"));
   assert.ok(!v.view("sport-judo").includes("data-add") && !v.view("a-raz-hershko").includes("data-edit"));
   assert.ok(v.view("admin").includes(NOT_FOUND), "#admin is not-found, as for visitors");
   v.run("setVisitorView(false)");
