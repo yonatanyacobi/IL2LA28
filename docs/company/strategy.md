@@ -8,25 +8,31 @@ We are the trustworthy Hebrew answer to "who from Israel is on the way to LA28, 
 Audience: fans following a few athletes, journalists and federation people needing a sourced overview, and
 families who share news on WhatsApp.
 
-Until the Games (14–30.7.2028) we compete on trust and timeliness, not volume. Every claim has an official source
-and a fact-check, and results go up within a day.
+Until the Games (14–30.7.2028) we compete on trust and speed. The owner's direction is an NBA-app-style
+experience: every competition by day, near-real-time results, and updates on the sports and athletes a user
+follows. We deliver **the fastest possible updates within the platform constraints, without compromising
+fact-checking**:
+- Results come from official sources and are published by the job.
+- Quota and stage claims still wait for sign-off.
+- The PM's plan is in `docs/product/nba-style.md`.
 
 ## 2. Goals and targets
 There are no analytics, so we measure what we control:
 - **Coverage**: the % of sports with quota items, and the % of athletes with checked records.
-- **Freshness**: hours from an official result to the site, and the age of quotas.json.
+- **Freshness**: minutes from an official result being posted to the site going live, and the age of
+  quotas.json.
 - **Fact-check latency**: the time a PR waits for sign-off.
 - **Corrections**: errors found after publishing.
 - **Digest copies**: a DB counter is D8, still open. The PM recommends no counter and a share log instead.
 
 | Horizon | Targets |
 |---|---|
-| Launch (date set by the owner in D1; readiness check 22.10; to 1.11.2026) | 0 open ✏️ audit fixes. At most 10 ❓ athletes, or the rest hidden. 33/33 sports have quota items. Results are live within 24 hours. |
-| Season (to 30.6.2027) | About 60 qualifying events, peaking at about 3 a week. Results are live within 24 hours. Sign-off takes ≤4 hours on event days and ≤24 hours otherwise. A weekly audit runs. Fewer than 2 public corrections a month. A digest every Sunday. |
+| Launch (date set by the owner in D1; readiness check 22.10; to 1.11.2026) | Event-day job runs every 2 hours from Abu Dhabi (29.10). 0 open ✏️ audit fixes. At most 10 ❓ athletes, or the rest hidden. 33/33 sports have quota items. Results are live within 24 hours. |
+| Season (to 30.6.2027) | About 60 qualifying events, peaking at about 3 a week. On event days, results are live within 2 hours of the official posting (24 hours on other days). Quota claims are live within 1 hour after sign-off. Sign-off takes ≤4 hours on event days and ≤24 hours otherwise. A weekly audit runs. Fewer than 2 public corrections a month. A digest every Sunday. |
 | Games (Jun–Jul 2028) | Every qualified Israeli has a schedule and stakes. Same-day results. Zero unsourced "earned" or "selected" claims. |
 
 ## 3. Roadmap themes
-- **Launch:** apply the audit fixes; add canoe and rowing quota items; ship the "awaiting results" and "earned"
+- **Launch:** a day-by-day competition view; a "what's new for you" feed for followed sports and athletes; apply the audit fixes; add canoe and rowing quota items; ship the "awaiting results" and "earned"
   states; add a trust block (sources, method, corrections).
 - **Season:**
   - *Results-assist*: the daily job drafts quota-item updates as proposals from official results, and a human
@@ -39,7 +45,10 @@ There are no analytics, so we measure what we control:
 - **We will NOT:**
   - build an English version (doubles fact-checking);
   - cover the Paralympics before mid-2027;
-  - run live scores or scraping;
+  - show play-by-play or live in-match scores (there is no external fetch; we update between sessions, not
+    during them);
+  - offer device push (the platform has none; followed updates appear on the next visit and in the digest);
+  - publish a quota or stage claim before sign-off, however fast the result is;
   - add comments or accounts;
   - publish predictions;
   - use official logos.
@@ -53,8 +62,14 @@ Workload over the next 2 months, which hold about 14 qualifying events:
 - **Roni: full but sustainable.** About 10 sports and 47 athletes.
 - **Owner: no longer on the result-night path.** Omer publishes, and Dana and Tamar approve `earned` without the
   owner.
-- **Five developers and UX: more capacity than work** after launch. The recurring work is results tooling and
-  regression, not features.
+- **Five developers and UX: more capacity than work** after launch. The NBA-style direction absorbs this capacity
+  with no hire:
+  - Maya: event-day job cadence and results-assist.
+  - Itai: the day view.
+  - Noa: the "for you" feed.
+  - Omer: monitors event-day runs.
+  - The bottleneck is sign-off speed and the platform, not developers. We revisit a data engineer after Doha
+    (1.11) if event-day runs miss the 2-hour target.
 
 **Hires, in this order:**
 1. **Second fact-checker.**
