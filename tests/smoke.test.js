@@ -38,7 +38,7 @@ const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.
 // `quotas`: quotas.json payload; undefined → 404, "fail" → that fetch rejects.
 // `now` pins the clock (ISO instant); `follows` seeds localStorage.
 // Start hidden like their markup in index.html, so tests see what the app un-hides.
-const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar", "visitorChip", "visitorMsg"];
+const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar", "visitorChip", "visitorMsg", "updateNote"];
 // `claude` stands in for window.claude (editor tests); `storage` seeds localStorage.
 async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = [], claude, storage = {}} = {}){
   const els = {}, listeners = {};
@@ -1615,7 +1615,7 @@ test("auto-refresh: re-renders on a new export, keeps focus/scroll, skips unchan
 
   await run("checkForUpdate()");
   assert.deepStrictEqual(calls.sort(), ["data.json", "quotas.json"]);
-  assert.notStrictEqual(els.routeStatus.textContent, "הנתונים התעדכנו", "unchanged export: no update");
+  assert.ok(run(`$("updateNote").hidden`), "unchanged export: no update note");
 
   next = {...FIXTURE, generatedAt: "2099-01-01T00:00:00Z", athletes: FIXTURE.athletes.slice(1)};
   run(`$("q")`); const q = els.q; let focused = 0, sel = null, scrolled = null;
@@ -1625,7 +1625,7 @@ test("auto-refresh: re-renders on a new export, keeps focus/scroll, skips unchan
   await run("checkForUpdate()");
   assert.strictEqual(run("S.generatedAt"), "2099-01-01T00:00:00Z");
   assert.strictEqual(run("S.athletes.length"), FIXTURE.athletes.length - 1);
-  assert.strictEqual(els.routeStatus.textContent, "הנתונים התעדכנו");
+  assert.ok(!run(`$("updateNote").hidden`) && run(`$("updateNote").textContent`).includes("יש עדכון"), "visible update note");
   assert.ok(focused === 1 && sel === 3 && scrolled === 640, "focus, caret and scroll kept");
   assert.ok(els.view.innerHTML.includes("נכון ל־"), "freshness says נכון ל־");
 
@@ -1710,6 +1710,34 @@ test("#day (Gil D4, D6, D8): 'תאריך בלבד', no stakes for earned items, 
   assert.ok(judo.length && !judo.some(i => judoBlock.includes(i.stakes.slice(0, 20))), "D6: earned items don't show pre-event stakes");
   assert.ok(out.indexOf('id="ds-weightlifting"') < out.indexOf('id="ds-judo"'), "D8: followed sport first");
   assert.ok(out.split('id="ds-weightlifting"')[1].split("</h2>")[0].includes("במעקב שלך"), "D8: followed sport marked");
+});
+
+test("refresh keeps focus without an id (href, data-follow), reopens <details>, polls every 5 minutes (Gil on #152)", async () => {
+  const {ctx, run, els} = await boot();
+  assert.strictEqual(run("REFRESH_MS"), 5 * 60e3);
+  run(`$("view")`);
+  // A tiny stand-in for the rendered #view: elements found by attribute selector, plus <details>.
+  const mk = attrs => ({attrs, focused: 0, open: false, getAttribute: k => k in attrs ? attrs[k] : null, focus(){ this.focused++; }});
+  let nodes = [];
+  const render = () => { nodes = [mk({href: "#a-x"}), mk({href: "#day-2026-10-29"}), mk({href: "#day-2026-10-29"}), mk({"data-follow": "raz-hershko"})];
+    details = [mk({}), mk({})]; };
+  let details = [];
+  render();
+  els.view.querySelectorAll = sel => sel === "details" ? details
+    : nodes.filter(n => Object.entries(n.attrs).some(([k, v]) => sel === `[${k}="${v}"]`));
+  const realRoute = run("route");
+  ctx.route = () => { render(); return realRoute(); };
+  const check = (old, pick, label) => {
+    ctx.document.activeElement = old;
+    run("refresh()");
+    assert.strictEqual(pick().focused, 1, label);
+  };
+  check(nodes[2], () => nodes[2], "second of two equal hrefs (a #day chip)");
+  check(nodes[3], () => nodes[3], "☆ button by data-follow");
+  details[1].open = true;
+  ctx.document.activeElement = null;
+  run("refresh()");
+  assert.ok(details[1].open && !details[0].open, "open <details> reopened by index");
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.

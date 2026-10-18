@@ -996,12 +996,27 @@ function navigate(){
 }
 // Data refreshes re-render in place without jumping the scroll position or losing search focus.
 // Focus is restored by id (search box, filters, buttons with ids); the scroll position is kept explicitly.
+// Re-rendering replaces #view, so focus is found again by a stable key: the id, else a data-* action attribute,
+// else the link's href (with its index among equal matches). Open <details> are reopened by index.
+const FOCUS_ATTRS = ["data-follow", "data-follow-sport", "data-edit", "data-add", "data-verify", "data-copy", "href"];
+const attrSel = (k, v) => `[${k}="${str(v).replace(/["\\]/g, "\\$&")}"]`;
+function focusKey(el){
+  if (!el || el === document.body) return null;
+  if (el.id) return {id: el.id};
+  const k = FOCUS_ATTRS.find(a => el.getAttribute?.(a) != null);
+  if (!k) return null;
+  const sel = attrSel(k, el.getAttribute(k));
+  return {sel, idx: Math.max(0, [...($("view").querySelectorAll?.(sel) || [])].indexOf(el))};
+}
 function refresh(){
-  const el = document.activeElement, id = el?.id, y = window.scrollY;
+  const el = document.activeElement, key = focusKey(el), y = window.scrollY;
+  const open = [...($("view").querySelectorAll?.("details") || [])].map((d, i) => d.open ? i : -1).filter(i => i >= 0);
   let pos = null;
   try { pos = typeof el?.selectionStart === "number" ? el.selectionStart : null; } catch {}
   route();
-  const again = id ? $(id) : null;
+  const details = [...($("view").querySelectorAll?.("details") || [])];
+  open.forEach(i => { if (details[i]) details[i].open = true; });
+  const again = !key ? null : key.id ? $(key.id) : (m => m[key.idx] || m[0])([...($("view").querySelectorAll?.(key.sel) || [])]);
   if (again && again !== el) {
     again.focus({preventScroll: true});
     if (pos !== null) try { again.setSelectionRange(pos, pos); } catch {}
@@ -1180,7 +1195,7 @@ async function goLive(){
 // ---------- auto-refresh (public data) ----------
 // An open tab re-reads data.json every REFRESH_MS and re-renders only when the export changed. Hidden tabs
 // don't poll; on return the check runs at once if it's due. Editors get live DB snapshots instead.
-const REFRESH_MS = 10 * 60e3;
+const REFRESH_MS = 5 * 60e3;   // acceptance item 11: at most 5 minutes
 let lastCheck = Date.now(), refreshTimer = 0;
 async function checkForUpdate(){
   lastCheck = Date.now();
@@ -1188,7 +1203,8 @@ async function checkForUpdate(){
   try {
     const prevQ = quotaFile, prevJson = JSON.stringify(quotaFile);
     const [r] = await Promise.all([fetch("data.json", {cache: "no-cache"}), loadQuotas()]);
-    if (quotaFile === null) quotaFile = prevQ;   // a failed re-read keeps the quotas already shown
+    // A failed re-read keeps the quotas already shown; a 404 is an empty list (file removed on purpose), so they go.
+    if (quotaFile === null) quotaFile = prevQ;
     const quotasChanged = JSON.stringify(quotaFile) !== prevJson;
     if (quotasChanged) applyQuotas();
     const d = r.ok ? await r.json() : null;
@@ -1196,8 +1212,18 @@ async function checkForUpdate(){
     publicSnapshot = d;
     applySnapshot(d);
     refresh();
-    $("routeStatus").textContent = "הנתונים התעדכנו";
+    showUpdateNote();
   } catch { /* keep what is on screen; freshness() turns stale after 1.5 days */ }
+}
+// A small visible note (also the screen-reader announcement); it hides itself after a few seconds.
+let noteTimer = 0;
+function showUpdateNote(){
+  const n = $("updateNote");
+  if (!n) return;
+  n.textContent = "יש עדכון: הנתונים התחדשו";
+  n.hidden = false;
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => { n.hidden = true; }, 8000);
 }
 function scheduleRefresh(){
   clearTimeout(refreshTimer);
