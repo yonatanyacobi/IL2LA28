@@ -42,6 +42,22 @@ class QuotasTest(unittest.TestCase):
         self.assertEqual(len(errors), 1, errors)
         self.assertIn('"earned"', errors[0])
 
+    def test_stakes_style(self):
+        stakes = lambda v: self.errors(lambda q: q["items"][1].__setitem__("stakes", v))
+        for ok in ["גרנד סלאם (מ־29 באוק׳ 2026): נקודות לדירוג IJF עד 12 ביוני 2028",
+                   "שיא 9.58 שניות; 10.5 נקודות; עונת 2026-2027; קטגוריה 60- ק״ג; T-50 ו־ל־LA28"]:
+            self.assertEqual(stakes(ok), [], ok)
+        for bad, needle in [("מ־29.10.2026 והלאה", "dotted date '29.10.2026'"), ("עד 12.6.28", "dotted date"),
+                            ("ב־29.10 בערב", "dotted date '29.10'"), ("מ-29 באוק׳ 2026", "hyphen in 'מ-29'"),
+                            ("ל-LA28", "maqaf"), ("דרום-קוריאה", "hyphen")]:
+            errors = stakes(bad)
+            self.assertEqual(len(errors), 1, (bad, errors))
+            self.assertIn(needle, errors[0])
+        # The published file follows the style already.
+        with open(os.path.join(HERE, "..", "site", "quotas.json"), encoding="utf-8") as f:
+            published = json.load(f)
+        self.assertFalse([e for e in validate_data.validate_quotas(published, self.data) if ".stakes" in e])
+
     def test_stakes_optional_and_accepted_up_to_140(self):
         self.assertEqual(self.errors(lambda q: q["items"][1].__setitem__("stakes", "א" * 140)), [])
 

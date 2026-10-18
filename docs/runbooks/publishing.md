@@ -50,8 +50,8 @@ A `STOP` item is left out by the build, so it would silently not go live. No out
 For an `earned` item, the athletes' stage-2 proposals have been approved in the page (result-night.md, step 4).
 On the branch, before asking for review, the author runs steps 2 and 4 below and commits `site/quotas.json`.
 
-`check_signoff.py` sees only one `review` per item. For `earned`, the second fact-checker's sign-off and the
-owner's approval go in the PR thread, and the Publisher checks both there before step 1.
+`earned` is approved by Dana and Tamar together (result-night.md step 3). `check_signoff.py` says STOP on an `earned`
+item unless `review.by` is `"dana+tamar"`.
 
 ### 1. Merge (lead)
 
@@ -185,7 +185,7 @@ before the stage change, both validators after it, `quota_due.py` (nothing due),
 | 2 | With `nextQuotaEvent: null` (as (א) says), the strip never matched the earned item, so there was no "✓ מכסה הושגה" line. | Fixed in #68 (cc8cd71): earned items are matched by `earnedAt` and sorted first. **#68 must merge before 20.10.** |
 | 3 | The individual men's item → `outside` kept "אירוע המכסה הבא: 2027" next to "לא רלוונטי". | Fixed here: (א) now also sets its `nextQuotaEvent: null`. |
 | 4 | **Blocker:** `node tests/smoke.test.js` fails after the real result is built. Two tests (date matrix, `#admin` result night) read `site/quotas.json` and expect the pre-final item. Step 4 can't pass on the night. | Open. **Maya, before 20.10:** point those tests at a frozen fixture copy. Until then, if only these two fail and only on the changed item, note it in the PR and go on. |
-| 5 | `review` has one `by`, so `check_signoff.py` can't show the second fact-checker or the owner's approval that `earned` needs. | Workaround in step 0 (PR thread). Schema change: Maya / Dana. |
+| 5 | `check_signoff.py` couldn't tell whether an `earned` item had both fact-checkers. | Fixed here: `earned` requires `review.by` `"dana+tamar"` (#102's D4 format). |
 | 6 | After approval, the athletes' "התחרות הבאה" still showed the 18.10 qualifiers. | Open. The editor updates `next`/`nextDate` while approving (result-night.md step 4). Itai: an `#admin` hint. |
 | 7 | The athlete page has no "מכסה" line for the team members, because the (א) note names no gymnasts and the matcher looks for names. | Open, UX (round3 §3). A team quota belongs to the NOC, so maybe that's correct. |
 | 8 | Home shows "5 עם מכסה" (athletes at stage ≥ 2) next to "מקצה אחד עם מכסה לישראל". Two counts that read like they disagree. | Open, Shira / UX. |

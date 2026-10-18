@@ -1,13 +1,14 @@
 """List quota items changed since a base ref and whether each is signed off (docs/runbooks/publishing.md, step 0).
 
 Usage: python3 job/check_signoff.py [<base-ref>]   (default origin/main; run at the repo root on the PR branch)
-Prints one line per added or changed item in data/quotas/quotas.json: OK if review.status is "ok" or "fixed",
-else STOP. Exit 1 if any item is STOP. Removed items are listed as REMOVED and don't fail the check.
+Prints one line per added or changed item in data/quotas/quotas.json: OK if review.status is "ok" or "fixed" (and,
+for "earned", review.by is "dana+tamar"), else STOP. Exit 1 if any item is STOP. Removed items are listed as REMOVED and don't fail the check.
 """
 import json, subprocess, sys
 
 MASTER = "data/quotas/quotas.json"
 SIGNED = {"ok", "fixed"}
+EARNED_BY = "dana+tamar"   # owner decision D4: both fact-checkers approve "earned"
 
 
 def key(item):
@@ -24,7 +25,7 @@ def main(ref):
         if old_by.get(key(item)) == item:
             continue
         review = item.get("review") or {}
-        ok = review.get("status") in SIGNED
+        ok = review.get("status") in SIGNED and (item.get("israelStatus") != "earned" or review.get("by") == EARNED_BY)
         stop += not ok
         print("OK  " if ok else "STOP", *key(item), json.dumps(review, ensure_ascii=False))
     for k in old_by.keys() - {key(i) for i in new}:

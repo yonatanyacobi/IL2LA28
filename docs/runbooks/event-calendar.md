@@ -10,7 +10,7 @@ behind Israel throughout. Korea is 6 hours ahead (24.10). After 25.10, Abu Dhabi
 **Rules for every row**
 - Results are taken only from the federation's official list (FIG / World Triathlon / IJF / ISSF). Live scoring,
   TV and news are not sources, so "expected official results" is a window, not a promise.
-- `earned` needs both fact-checkers (Dana and Tamar) **and** the owner's approval, plus `earnedAt` = the date of the
+- `earned` is approved by Dana and Tamar together (`review.by` `"dana+tamar"`), plus `earnedAt` = the date of the
   deciding result. The athletes' stage proposals are approved and exported **before** the quota item goes live.
 - Status labels on the site change by themselves. The day after a quota event ends, the item shows
   "◷ בהמתנה לתוצאות" until `quotas.json` is updated, for up to 14 days. Nobody needs to publish for that.
@@ -40,7 +40,7 @@ Quota item: `artistic-gymnastics` / `קבוצתי גברים`. Texts: [rotterdam
   it's outcome (ב) on the night of 18–19.10 and nothing happens on 20.10 except the strip.
 - **20.10 during the session:** the today strip shows the Worlds (day 4 of 9) with the team final's "מה זה אומר"
   line. Nothing to publish.
-- **20.10 after the FIG list (Roni → Dana/Tamar → owner → Omer):**
+- **20.10 after the FIG list (Roni → Dana + Tamar → Omer):**
 
 | Outcome | Changes on the site after publishing |
 |---|---|
