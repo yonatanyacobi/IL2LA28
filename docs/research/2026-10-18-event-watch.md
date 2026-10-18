@@ -54,3 +54,37 @@ Quota-relevant events in the next 30 days for shooting, surfing, triathlon and w
   Source: https://www.juedische-allgemeine.de/kultur/228-kilogramm/ . This points to 77 kg as her Olympic category, but it is not an entry.
 - **Spelling:** Israeli press writes **"סיליה גולד"** (Sport1: https://sport1.maariv.co.il/other-industries/article/1085514/ , Kan, Walla). The DB has "צליה גולד". Propose renaming her through `proposals`.
 - **Still open:** an editor needs to open the IWF Start Book in a browser (link in the Ningbo row), or ask the federation directly.
+
+### Proposal for Dana: rename `celia-gold` (sent via the coordinator)
+```json
+{"id": "celia-gold-20261018-name", "kind": "update", "target": "celia-gold",
+ "patch": {"name": "סיליה גולד"},
+ "summary": "תיקון איות השם לפי העיתונות הישראלית: סיליה גולד",
+ "evidence": [
+  {"url": "https://sport1.maariv.co.il/other-industries/article/1085514/", "label": "ספורט1 – 'סיליה גולד בת 24 תתחרה ב-71 ק״ג'"},
+  {"url": "https://sports.walla.co.il/item/3572237", "label": "וואלה – 'סיליה גולד בת 24 תתחרה ב-71 ק״ג'"}],
+ "status": "pending", "createdAt": "2026-10-18"}
+```
+Kan also uses "סיליה גולד": https://www.kan.org.il/content/kan-news/sport/515787/
+
+## Event radar 15.11–31.12.2026 (Yael's sports)
+"LA28 weight": **quota** = places are awarded; **ranking** = the event counts toward a qualification ranking; **none** = no LA28 effect.
+
+| Date | Event | Sport | Israelis | LA28 weight | Source |
+|---|---|---|---|---|---|
+| until 11-18 | European Sixes, Salou – men (started 11-10) | Lacrosse | Israel men's sixes | Ranking: qualifier for World Sixes 2027 | https://worldlacrosse.sport/spain-to-host-2026-european-sixes-lacrosse-championships/ |
+| 11-19 – 11-22 | LPGA CME Group Tour Championship, Naples FL (season finale) | Golf | Laetitia Beck only if she is in the top 60 of the season standings; unverified | Ranking: Olympic Golf Ranking | https://en.wikipedia.org/wiki/2026_LPGA_Tour |
+| 11-27 (+ a second game in the window, date not found) | World Cup 2027 qualifiers, November window: Netherlands–Israel | Basketball | Men's national team | Indirect: World Cup results lead to the Olympic qualifying tournaments; teams that miss the World Cup go to the Aug 2027 pre-qualifiers | data.json; https://about.fiba.basketball/en/news/second-round-lineup-set-for-fiba-basketball-world-cup-2027-european-qualifiers |
+| 11-28 – 11-29 | FIBA 3x3 World Tour stop (Hong Kong per search; venue unverified) | 3x3 | No tracked Israelis | Ranking: last World Tour results before the 1.12.2026 cutoff of ranking year 1 | https://allsportdb.com/Events/2026-FIBA-3x3-World-Tour-19988 |
+| 12-01 | 3x3 NOC Ranking: end of counting year 1 | 3x3 | National 3x3 players | Ranking | BK3 qualification system (see the radar doc) |
+| 12-03 – 12-06 | FIE World Cup épée, Vancouver (men and women) | Fencing | Épée team; entries not checked | None: LA28 period starts 2027-04-01 | https://fie.org/tournaments/2026/129 |
+
+**Quiet in the window:**
+- Shooting and weightlifting: the Worlds end 11-14 and 11-08.
+- Cycling: no counting track event until the 2027 continental championships and World Cup.
+- Archery and badminton: their windows open in 2027.
+- Equestrian: Group C Olympic ranking counts from 2027-01-01.
+- Climbing: no events in the window.
+- Beach volleyball: the "Beach World Series" has no dates found. Recheck it, because the 8-event count runs from 11-01.
+- Baseball, flag football and water polo: nothing found.
+- Just before the window: men's épée World Cup Bern, 11-12 – 11-14 (https://fie.org/tournaments/2026/124).
