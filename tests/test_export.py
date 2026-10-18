@@ -201,6 +201,23 @@ class ExportTest(unittest.TestCase):
         walk(fixture)
         self.assertEqual(left, [])
 
+    def test_olympic_rank_fields_apart_from_world_rank(self):
+        W, O, D = "IJF World Ranking List", "IJF Olympic Ranking List", "2026-10-13"
+        cases = {
+            "both": ({"rankNum": 1, "rankList": W, "rankAsOf": D, "olympicRankNum": 3, "olympicRankList": O,
+                      "olympicRankAsOf": D}, (1, W, D, 3, O, D)),
+            "olympic-only": ({"olympicRankNum": "12", "olympicRankList": O, "olympicRankAsOf": D}, (None, "", "", 12, O, D)),
+            "no-olympic-list": ({"rankNum": 5, "rankList": W, "rankAsOf": D, "olympicRankNum": 9, "olympicRankAsOf": D},
+                                (5, W, D, None, "", D)),
+            "bad-olympic": ({"olympicRankNum": 0, "olympicRankList": O, "olympicRankAsOf": "13.10.2026"},
+                            (None, "", "", None, O, "")),
+            "none": ({}, (None, "", "", None, "", "")),
+        }
+        data = self.export(athletes={k: athlete(**f) for k, (f, _) in cases.items()})
+        keys = ("rankNum", "rankList", "rankAsOf", "olympicRankNum", "olympicRankList", "olympicRankAsOf")
+        self.assertEqual({a["id"]: tuple(a[k] for k in keys) for a in data["athletes"]},
+                         {k: want for k, (_, want) in cases.items()})
+
     def test_rank_fields(self):
         L, D = "IJF World Ranking List", "2026-10-13"
         cases = {
