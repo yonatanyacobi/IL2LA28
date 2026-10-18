@@ -363,6 +363,10 @@ div.track{background:none}
 .res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px;color:var(--muted)}
 .res b{color:var(--ink)}
 .home-now{display:grid;gap:22px}
+.rows.standings li{grid-template-columns:3.5ch 1fr auto}
+/* the generic phone rule would put the rank alone on its own line */
+@media (max-width:640px){.rows.standings li{grid-template-columns:3.5ch 1fr auto}.rows.standings .d{grid-column:auto}}
+.rows li.cutline{display:block;border-top:2px dashed var(--sun);padding-top:4px;color:var(--sun-ink);font-size:14px;font-weight:700}
 .won-compact{display:none;margin:0;font-weight:700}
 .home-top{display:flex;flex-direction:column;gap:22px}
 @media (max-width:640px){.won-compact{display:block}.home-top > .won{order:1}}

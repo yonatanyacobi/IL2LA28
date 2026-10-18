@@ -78,10 +78,10 @@ function viewEvent(id){
   const dayHead = (d, only) => `<h3><a class="hlink" href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span>${only ? DATE_ONLY : ""}</h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
   const schedule = !flat.length
-    ? calEmpty(t <= (c.end || c.start) ? "הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי." : "לא תועדו סשנים של ישראלים בתחרות הזו.", c.sportId)
+    ? calEmpty(t <= (c.end || c.start) ? "ההופעות של הישראלים יפורסמו לפי לוח הזמנים הרשמי." : "לא תועדו הופעות של ישראלים בתחרות הזו.", c.sportId)
     : [...groups].filter(([, list]) => list.length).map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k, dateOnly(list))}
         <ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list))).join("")}</ul></div>`).join("")
-      + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועים סשנים של ישראלים.</p>` : "")(
+      + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועות הופעות של ישראלים.</p>` : "")(
         series ? 0 : [...groups].filter(([, list]) => !list.length).length));
   return `<p class="crumb"><a href="#sport-${esc(c.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sportName(c.sportId))}</a></p>
   <div class="event-head" data-event="${esc(id)}">
@@ -97,14 +97,14 @@ function viewEvent(id){
         : calEmpty("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", c.sportId)}
   </section>
   <div class="event-cols">
-    <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הסשנים</h2>${schedule}</section>
+    <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הזמנים של הישראלים</h2>${schedule}</section>
     <div class="stack">
       ${stakes}
       ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH">הישראלים בתחרות (${athletes.length})</h2>
         <ul class="rows">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
           const st = last ? athleteStatus(last[0], last[1], a) : "";
           // A result is shown only in the schedule row, next to its source; components.md §6 row.
-          return athleteRow(a, isResult(st) ? `<span class="muted">תוצאה בלוח הסשנים</span>` : statusChip(st)); }).join("")}</ul></section>` : ""}
+          return athleteRow(a, isResult(st) ? `<span class="muted">תוצאה בלוח הזמנים</span>` : statusChip(st)); }).join("")}</ul></section>` : ""}
     </div>
   </div>
   ${safeUrl(schedSrc) ? `<p class="foot">${hostLink(schedSrc, "לוח הזמנים")}</p>` : ""}

@@ -4,6 +4,14 @@
 
 // ---------- constants & helpers ----------
 const STAGES = ["לפני חלון ההעפלה", "בחלון ההעפלה", "מכסה הושגה", "נבחר/ה לנבחרת"];
+// One sentence per stage: under the athlete's track and in About's stage list (UX F2). Phrased as a definition, so it
+// reads right both about one athlete and as a list.
+const STAGE_HELP = [
+  "יש סיכוי ריאלי להעפיל, וחלון ההעפלה בענף עוד לא נפתח.",
+  "חלון ההעפלה בענף פתוח, ותוצאות ודירוגים נספרים להעפלה.",
+  "הושגה מכסה (מקום באולימפיאדה) לפי הודעה רשמית של ההתאחדות הבין־לאומית. ברוב הענפים המכסה שייכת למדינה, לא לספורטאי/ת.",
+  "הוועד האולימפי בישראל הודיע רשמית על הבחירה לנבחרת האולימפית.",
+];
 const OPENING = new Date("2028-07-14T00:00:00-07:00");
 const PARIS_ATHLETES = 88;
 const SITE_NAME = "הדרך ללוס אנג׳לס 28";
@@ -188,9 +196,9 @@ function trustChip(a, where){
 }
 function trustNote(a){
   const t = trustOf(a), src = safeUrl(a.source);
-  const line = t === "ok" ? `הרשומה הושוותה למקור${src ? ` (${esc(host(src))})` : ""} ולא השתנתה מאז.`
+  const line = t === "ok" ? `הפרטים הושוו ידנית למקור${src ? ` (${esc(host(src))})` : ""} ולא השתנו מאז.`
     : t === "stale" ? `מאז התעדכנו פרטים אוטומטית (${fmt(str(a.updatedAt).slice(0, 10))}). הם ייכללו בבדיקה הבאה.`
-    : `הפרטים נאספו אוטומטית ממקורות פומביים, והרשומות נבדקות ידנית בהדרגה.${src ? " בינתיים כדאי להיעזר בקישור למקור." : ""}`;
+    : `הפרטים נאספו אוטומטית ממקורות פומביים, והבדיקה הידנית נעשית בהדרגה.${src ? " בינתיים כדאי להיעזר בקישור למקור." : ""}`;
   return `${trustChip(a)}<span class="muted">${line}</span><a href="#about-trust">איך אנחנו בודקים</a>`;
 }
 
@@ -484,11 +492,12 @@ function viewHome(){
   ${closestPanel(rows)}
   ${reviewPanel()}
   <section class="panel" aria-label="התקדמות בהעפלה">
-    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} ברשימה · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה${verified ? ` · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית עד כה · <a href="#about-trust">איך בודקים</a>` : ""}</p>
+    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} ברשימה · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה${verified ? ` · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית עד כה · <a href="#about-trust">איך אנחנו בודקים</a>` : ""}</p>
     ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
-    <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: ישראל שלחה לפריז 2024 ${PARIS_ATHLETES} ספורטאיות וספורטאים. נבחרת נספרת כאן כרשומה אחת.</p>
+    <p class="foot"><a href="#about">מה אומרים השלבים?</a></p>
+    <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: ישראל שלחה לפריז 2024 ${PARIS_ATHLETES} ספורטאיות וספורטאים. נבחרת נספרת כאן פעם אחת.</p>
   </section>
   <section class="panel">
     <div class="sec-head"><h2>מה התעדכן</h2><span class="actions">${typeof viewDigest === "function" ? `<a href="#digest">תקציר שבועי לשיתוף</a>` : ""}<a href="#updates">כל העדכונים</a></span></div>
@@ -553,6 +562,7 @@ function viewSport(id){
       ${w.summary ? `<p>${esc(w.summary)}</p>` : ""}${w.source ? `<p class="foot">${linkOut(w.source, "שיטת ההעפלה הרשמית")}</p>` : ""}`
       : `<p class="muted">עוד לא נאספו פרטים על שיטת ההעפלה בענף הזה.</p>`}
   </section>
+  ${typeof standingsPanel === "function" ? standingsPanel(id) : ""}
   ${quotaSection(id)}
   <section class="stack">
     <h2>${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
@@ -585,10 +595,12 @@ function viewAthlete(id){
   <section class="panel">
     <div class="track s${s}" aria-hidden="true">${STAGES.map((_, i) => `<i class="${i <= s ? "on" : ""}"></i>`).join("")}</div>
     <ol class="track-labels">${STAGES.map((x, i) => `<li ${i === s ? `class="cur" aria-current="step"` : ""}>${x}${i === s ? `<span class="sr"> (שלב נוכחי)</span>` : ""}</li>`).join("")}</ol>
+    <p class="muted stage-help">${STAGE_HELP[s]} <a href="#about">מה אומרים השלבים?</a></p>
     <dl class="facts">
       <dt>ענף</dt><dd><a href="#sport-${esc(a.sportId)}">${esc(sp?.he || a.sportId)}</a>${a.event ? ` · ${esc(a.event)}` : ""}</dd>
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}${rowMark(`rank|${id}`, a.rank)}</dd>` : ""}
       ${athleteQuotaFacts(a)}
+      ${typeof standingsFact === "function" ? standingsFact(a) : ""}
       ${a.next ? `<dt>התחרות הבאה</dt><dd>${nextCompFact(a)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}${rowMark(`next|${id}`, a.next + a.nextDate)}</dd>` : ""}
       <dt>בדיקה</dt><dd class="stack">${trustNote(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
@@ -683,12 +695,7 @@ function viewAbout(){
     <h2>על האתר</h2>
     <p>אתר עצמאי ולא רשמי שעוקב אחרי ספורטאיות, ספורטאים ונבחרות מישראל בדרך לאולימפיאדת לוס אנג׳לס 2028. אין לאתר קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של המשחקים או לוועד האולימפי בישראל.</p>
     <h2>ארבעת השלבים</h2>
-    <ol>
-      <li><b>לפני חלון ההעפלה</b>: ספורטאי/ת או נבחרת עם סיכוי ריאלי, בענף שחלון ההעפלה בו עוד לא נפתח.</li>
-      <li><b>בחלון ההעפלה</b>: חלון ההעפלה בענף פתוח, ותוצאות ודירוגים נספרים להעפלה.</li>
-      <li><b>מכסה הושגה</b>: הושגה מכסה אולימפית לפי הודעה רשמית של ההתאחדות הבין־לאומית. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת.</li>
-      <li><b>נבחר/ה לנבחרת</b>: הוועד האולימפי בישראל הודיע רשמית על הבחירה.</li>
-    </ol>
+    <ol>${STAGES.map((x, i) => `<li><b>${x}</b>: ${STAGE_HELP[i]}</li>`).join("")}</ol>
   </section>
   ${trustBlock()}
   ${reportBox("טעות באתר הדרך ללוס אנג׳לס 28", SITE_URL)}`;
@@ -703,9 +710,9 @@ function trustBlock(){
   // The legend renders the real chips, so it can't drift from what cards and athlete pages show.
   const d = today() + "T08:00:00Z", earlier = addDays(today(), -3) + "T08:00:00Z", later = today() + "T12:00:00Z";
   const legend = [
-    [{verifiedAt: d, updatedAt: earlier}, "אדם בדק את הרשומה מול המקור, והיא לא השתנתה מאז."],
-    [{verifiedAt: d, updatedAt: later}, "נבדקה ידנית, ואחר כך התעדכנה אוטומטית. ייתכן שהעדכון עוד לא נבדק."],
-    [{}, "נאספה אוטומטית ועוד לא נבדקה ידנית. כדאי לבדוק מול המקור."],
+    [{verifiedAt: d, updatedAt: earlier}, "הפרטים נבדקו ידנית מול המקור, ולא השתנו מאז."],
+    [{verifiedAt: d, updatedAt: later}, "הפרטים נבדקו ידנית, ואחר כך התעדכנו אוטומטית. ייתכן שהעדכון עוד לא נבדק."],
+    [{}, "הפרטים נאספו אוטומטית ועוד לא נבדקו ידנית. כדאי לבדוק מול המקור."],
   ];
   const tile = (n, label) => `<div class="adm-tile"><b class="digits">${n}</b><span>${label}</span></div>`;
   return `<section class="panel prose" aria-labelledby="trustH">
@@ -735,7 +742,7 @@ function trustBlock(){
   </section>`;
 }
 
-const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p>ייתכן שהקישור ישן או שהרשומה הוסרה.</p><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
+const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p>ייתכן שהקישור ישן או שהדף הוסר.</p><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
 
 function freshness(){
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
@@ -758,7 +765,7 @@ function banner(){
 function reviewPanel(){
   if (!S.isAdmin) return "";
   const pend = S.proposals.filter(p => p.status === "pending");
-  const note = `<p class="foot">את/ה רואה נתונים חיים. הציבור רואה את הפרסום האחרון, שמתעדכן בכל ריצה של העדכון היומי.</p>`;
+  const note = `<p class="foot">את/ה רואה את הנתונים העדכניים מהמאגר, לפני הפרסום. הציבור רואה את הפרסום האחרון, שמתעדכן בכל ריצה של העדכון היומי.</p>`;
   if (!pend.length) return `<section class="panel">${note}</section>`;
   return `<section class="panel review"><h2>הצעות לאישורך (${pend.length})</h2>${note}
     <div class="stack">${pend.map(p => {
@@ -1142,6 +1149,11 @@ let quotaFile = null;
 const quotaCount = v => v == null || (Number.isInteger(v) && v >= 0);
 // Optional; an over-long line is dropped but the item is kept.
 const stakesOf = q => { const v = str(q.stakes).trim(); return v.length <= 140 ? v : ""; };
+// Optional standings line (docs/design/standings.md §1); an invalid one is dropped, the item kept.
+function cutoffOf(c){
+  if (!c || typeof c !== "object" || !Number.isInteger(c.rank) || c.rank < 1 || !str(c.list).trim() || !safeUrl(c.url) || !isDate(c.final)) return null;
+  return {rank: c.rank, list: str(c.list), url: c.url, final: c.final, opens: isDate(c.opens) ? c.opens : ""};
+}
 function applyQuotas(){
   const items = Array.isArray(quotaFile?.items) ? quotaFile.items : [];
   S.quotas = items.filter(q => q && typeof q === "object" && sportById(q.sportId) && QUOTA_STATUSES.includes(q.israelStatus)
@@ -1149,6 +1161,7 @@ function applyQuotas(){
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
       allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
+      cutoff: cutoffOf(q.cutoff),
       checkedAt: isDate(q.checkedAt) ? q.checkedAt : "",
       earnedAt: isDate(q.earnedAt) ? q.earnedAt : "",
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
