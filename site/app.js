@@ -578,6 +578,7 @@ function viewSport(id){
       ${w.summary ? `<p>${esc(w.summary)}</p>` : ""}${w.source ? `<p class="foot">${linkOut(w.source, "שיטת ההעפלה הרשמית")}</p>` : ""}`
       : `<p class="muted">עוד לא נאספו פרטים על שיטת ההעפלה בענף הזה.</p>`}
   </section>
+  ${typeof standingsPanel === "function" ? standingsPanel(id) : ""}
   ${quotaSection(id)}
   <section class="stack">
     <h2>${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
@@ -615,6 +616,7 @@ function viewAthlete(id){
       <dt>ענף</dt><dd><a href="#sport-${esc(a.sportId)}">${esc(sp?.he || a.sportId)}</a>${a.event ? ` · ${esc(a.event)}` : ""}</dd>
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}${rowMark(`rank|${id}`, a.rank)}</dd>` : ""}
       ${athleteQuotaFacts(a)}
+      ${typeof standingsFact === "function" ? standingsFact(a) : ""}
       ${a.next ? `<dt>התחרות הבאה</dt><dd>${nextCompFact(a)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}${rowMark(`next|${id}`, a.next + a.nextDate)}</dd>` : ""}
       <dt>בדיקה</dt><dd class="stack">${trustNote(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
@@ -1163,6 +1165,11 @@ let quotaFile = null;
 const quotaCount = v => v == null || (Number.isInteger(v) && v >= 0);
 // Optional; an over-long line is dropped but the item is kept.
 const stakesOf = q => { const v = str(q.stakes).trim(); return v.length <= 140 ? v : ""; };
+// Optional standings line (docs/design/standings.md §1); an invalid one is dropped, the item kept.
+function cutoffOf(c){
+  if (!c || typeof c !== "object" || !Number.isInteger(c.rank) || c.rank < 1 || !str(c.list).trim() || !safeUrl(c.url) || !isDate(c.final)) return null;
+  return {rank: c.rank, list: str(c.list), url: c.url, final: c.final, opens: isDate(c.opens) ? c.opens : ""};
+}
 function applyQuotas(){
   const items = Array.isArray(quotaFile?.items) ? quotaFile.items : [];
   S.quotas = items.filter(q => q && typeof q === "object" && sportById(q.sportId) && QUOTA_STATUSES.includes(q.israelStatus)
@@ -1170,6 +1177,7 @@ function applyQuotas(){
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
       allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
+      cutoff: cutoffOf(q.cutoff),
       checkedAt: isDate(q.checkedAt) ? q.checkedAt : "",
       earnedAt: isDate(q.earnedAt) ? q.earnedAt : "",
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
