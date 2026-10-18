@@ -2080,6 +2080,24 @@ test("#day (Gil D4, D6, D8): 'תאריך בלבד', no stakes for earned items, 
   assert.ok(out.split('id="ds-weightlifting"')[1].split("</h2>")[0].includes("במעקב שלך"), "D8: followed sport marked");
 });
 
+test("#day: a result day with no known competition isn't titled with the athlete's later 'next' (Gil, v52 regression)", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const lifter = data.athletes.find(a => a.sportId === "weightlifting");
+  lifter.next = "תחרות עתידית"; lifter.nextDate = "2026-12-01";
+  lifter.history = [...(lifter.history || []), {at: "2026-09-15", kind: "result", text: "מקום 4", source: "https://example.org/r"}];
+  const b = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-20T08:00:00Z"});
+  assert.strictEqual(b.run('compOn("weightlifting", "2026-09-15")'), null, "precondition: no competition that day");
+  const block = b.view("day-2026-09-15").split('id="ds-weightlifting"')[1].split("</section>")[0];
+  assert.ok(block.includes("מקום 4"), "the result row is listed");
+  assert.ok(!block.includes("תחרות עתידית"), "not titled with the later competition");
+  assert.ok(block.includes(`<h3>${b.run('sportName("weightlifting")')}</h3>`), "falls back to the sport name");
+});
+
+test("#following tabs: the current tab has a visible style, not only aria-current", async () => {
+  const css = fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8");
+  assert.ok(/\.chips a\[aria-current="page"\]\{[^}]*background:var\(--/.test(css));
+});
+
 test("#day sessions sort by time with untimed last (Gil P1 on #151)", async () => {
   const data = withSessions([
     SESS({id: "a", startUtc: null, athleteIds: ["sergey-richter"], phase: "ללא שעה"}),
