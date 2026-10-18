@@ -1625,7 +1625,8 @@ test("auto-refresh: re-renders on a new export, keeps focus/scroll, skips unchan
   await run("checkForUpdate()");
   assert.strictEqual(run("S.generatedAt"), "2099-01-01T00:00:00Z");
   assert.strictEqual(run("S.athletes.length"), FIXTURE.athletes.length - 1);
-  assert.ok(!run(`$("updateNote").hidden`) && run(`$("updateNote").textContent`).includes("יש עדכון"), "visible update note");
+  // generatedAt 2099-01-01T00:00Z is 02:00 in Israel (winter time).
+  assert.ok(!run(`$("updateNote").hidden`) && run(`$("updateNote").textContent`) === "הנתונים עודכנו ב־02:00", "visible note with the export's Israel time");
   assert.ok(focused === 1 && sel === 3 && scrolled === 640, "focus, caret and scroll kept");
   assert.ok(els.view.innerHTML.includes("נכון ל־"), "freshness says נכון ל־");
 

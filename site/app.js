@@ -1215,12 +1215,14 @@ async function checkForUpdate(){
     showUpdateNote();
   } catch { /* keep what is on screen; freshness() turns stale after 1.5 days */ }
 }
-// A small visible note (also the screen-reader announcement); it hides itself after a few seconds.
+// A small visible note (also the screen-reader announcement), shown only when the export changed; it hides itself.
 let noteTimer = 0;
 function showUpdateNote(){
   const n = $("updateNote");
   if (!n) return;
-  n.textContent = "יש עדכון: הנתונים התחדשו";
+  // The export's own time (Israel), not the moment the tab noticed it.
+  const ts = S.generatedAt || S.lastRun, ok = ts && !isNaN(Date.parse(ts));
+  n.textContent = ok ? `הנתונים עודכנו ב־${new Date(ts).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"})}` : "הנתונים עודכנו";
   n.hidden = false;
   clearTimeout(noteTimer);
   noteTimer = setTimeout(() => { n.hidden = true; }, 8000);
