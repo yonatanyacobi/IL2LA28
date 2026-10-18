@@ -930,7 +930,9 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
 
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
-  assert.ok(view("home").includes("data-retry"));
+  const out = view("home");
+  assert.ok(out.includes("data-retry"));
+  assert.ok(out.includes('role="alert"') && out.includes("<h1 tabindex=\"-1\">לא הצלחנו לטעון את הנתונים</h1>"), "announced, with a heading");
 });
 
 test("#admin last-run panel shows the newest run's warnings, escaped", async () => {
