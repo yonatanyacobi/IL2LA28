@@ -355,13 +355,14 @@ div.track{background:none}
 .daystrip a[aria-current="date"].has::after{background:var(--on-blue)}   /* sun on blue is 1.2:1 in dark */
 .day-nav{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .day-nav > a{min-height:44px;display:inline-flex;align-items:center;font-weight:600;text-decoration:none}
+.day-nav .day-prev{order:-1}   /* h1 comes first in the DOM (reading/tab order); visually prev stays at the start */
 .rows.sess li{grid-template-columns:70px 1fr auto}
-.res{font-size:14.5px;overflow-wrap:anywhere;margin-top:2px}
+.res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px}
 .day-sport h3{font-family:var(--f-body);font-size:16px;font-weight:700;overflow-wrap:anywhere}
 .pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
 .pill.s-wait{background:var(--blue-soft);color:var(--blue)}
-@media (max-width:640px){.day-nav h1{flex-basis:100%;order:-1}}
+@media (max-width:640px){.day-nav h1{flex-basis:100%;order:-2}}
 
 /* following (#following): nav badge */
 .nav-badge{display:inline-block;min-width:18px;margin-inline-start:4px;padding:0 5px;border-radius:99px;background:var(--sun);color:var(--on-sun);font-size:11px;font-weight:700;line-height:18px;text-align:center}
