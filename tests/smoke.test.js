@@ -450,6 +450,41 @@ test("#admin launch readiness: counts link to where each issue is fixed", async 
   assert.ok(plain.view("admin").split('id="launch"')[1].includes("לא ידוע"), "no count in quotas.json → unknown, not 0");
 });
 
+test("#admin result night: picks quota events ending today/yesterday, links the runbook, keeps ticks", async () => {
+  const SITE_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+  const panelOf = html => html.split('id="resultNight"')[1].split("</section>")[0];
+  const admin = async (now, quotas = SITE_QUOTAS) => {
+    const b = await boot({quotas, now});
+    b.run(`S.isAdmin = true; S.live = true`);
+    return b;
+  };
+  // Rotterdam men's team final, 20 Oct 2026: listed on the day and the day after, not before or two days later.
+  for (const [now, shown, label] of [["2026-10-20T18:00:00Z", true, "מסתיים היום"], ["2026-10-21T08:00:00Z", true, "הסתיים אתמול"],
+      ["2026-10-19T08:00:00Z", false], ["2026-10-22T08:00:00Z", false]]) {
+    const panel = panelOf((await admin(now)).view("admin"));
+    assert.strictEqual(panel.includes("קבוצתי גברים"), shown, now);
+    if (label) assert.ok(panel.includes(label), now);
+    assert.ok(panel.includes('href="https://github.com/yonatanyacobi/IL2LA28/blob/main/docs/runbooks/result-night.md"'), "runbook link");
+  }
+  const b = await admin("2026-10-20T18:00:00Z");
+  const panel = panelOf(b.view("admin"));
+  assert.ok(!panel.includes("אישי גברים"), "a 2027 event of the same sport stays out");
+  assert.ok(panel.includes('href="#sport-artistic-gymnastics"') && panel.includes('href="#a-artem-dolgopyat"') && panel.includes('href="#home"'));
+  assert.ok(panel.includes("0/9"));
+  const key = JSON.parse(b.run(`JSON.stringify(rnKey(S.quotas.find(q => q.event === "קבוצתי גברים")))`));
+  b.fire("change", {checked: true, dataset: {rn: key, step: "0"}});
+  b.fire("change", {checked: true, dataset: {rn: key, step: "3"}});
+  b.fire("change", {checked: false, dataset: {rn: key, step: "0"}});
+  const again = panelOf(b.view("admin"));
+  assert.ok(again.includes("1/9") && /data-step="3" checked/.test(again) && !/data-step="0" checked/.test(again), "ticks persist per browser");
+
+  const items = [{...QUOTAS.items[1], event: "<img src=x onerror=alert(1)>", nextQuotaEvent: {name: "<b>x</b>", start: "2026-10-20", end: "2026-10-20"}}];
+  const hostile = panelOf((await admin("2026-10-20T18:00:00Z", {updatedAt: "2026-10-18", items})).view("admin"));
+  assert.ok(!/<img|<b>x/i.test(hostile) && hostile.includes("&lt;img"), "escaped");
+  const quiet = {updatedAt: "2026-10-18", items: [QUOTAS.items[1]]};   // its event is in 2027
+  assert.ok(panelOf((await admin("2026-11-30T08:00:00Z", quiet)).view("admin")).includes("אין אירועי מכסה"), "quiet day");
+});
+
 test("#admin quota health: stale file, past/soon events, earned without a stage-2 athlete", async () => {
   const base = QUOTAS.items[0];   // judo, valid
   const item = (sportId, event, israelStatus, start) => ({...base, sportId, event, israelStatus,
