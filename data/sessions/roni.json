@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T19:00:00Z",
+ "updatedAt": "2026-10-18T19:30:00Z",
  "sessions": [
   {
    "id": "ag-worlds-2026-20261019-wag-q-sub7",
@@ -387,6 +387,24 @@
     "by": "dana",
     "at": "2026-10-18"
    }
+  },
+  {
+   "id": "tra-worlds-2026-20261105-m-ind-q1-g4",
+   "competitionId": "tra-worlds-2026",
+   "date": "2026-11-05",
+   "timeLocal": "14:00",
+   "tz": "Asia/Shanghai",
+   "athleteIds": [
+    "ben-nanadze"
+   ],
+   "phase": "אישי גברים – מוקדמות (Q1), בית 4",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_23455",
+   "notes": "FIG Drawing of Lots (עדכון 24.08.2026): ISR באישי גברים Q1, בית 4, מקום זינוק 6. השעה מתוך Competition Schedule (גרסה 29.09.2026, https://www.gymnastics.sport/asset.php?id=fidb_24002): בית 4 באולם התחרות 14:00–15:00. רישום שמי: https://www.gymnastics.sport/asset.php?id=fidb_23949 (01.10.2026) – NANADZE Benyamin, אישי גברים בלבד; עמיאל לא רשום.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
   }
  ],
  "pendingFinalBlocks": [
@@ -456,6 +474,30 @@
    "phase": "גמרי מכשירים, יום 2 (קורה/קרקע נשים)",
    "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
    "addWhen": "אם רז או שמאי עולות לגמר קורה או קרקע לפי התוצאות הרשמיות"
+  },
+  {
+   "competitionId": "tra-worlds-2026",
+   "date": "2026-11-07",
+   "timeLocal": "12:00",
+   "tz": "Asia/Shanghai",
+   "phase": "אישי גברים – מוקדמות שלב 2 (Q2)",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_24002",
+   "addWhen": "אם ננדזה בין 24 הראשונים ב־Q1 לפי התוצאות הרשמיות של FIG; בית 1 ב־12:00, בית 2 ב־12:30 – לפי המיקום ב־Q1",
+   "athleteIds": [
+    "ben-nanadze"
+   ]
+  },
+  {
+   "competitionId": "tra-worlds-2026",
+   "date": "2026-11-08",
+   "timeLocal": "13:45",
+   "tz": "Asia/Shanghai",
+   "phase": "אישי גברים – גמר",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_24002",
+   "addWhen": "אם ננדזה בין 8 הראשונים ב־Q2",
+   "athleteIds": [
+    "ben-nanadze"
+   ]
   }
  ]
 }
