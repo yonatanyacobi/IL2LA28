@@ -302,3 +302,5 @@ div.track{background:none}
 .rn-steps .chk{align-items:flex-start;font-weight:400;overflow-wrap:anywhere}
 .rn-steps .chk input{margin-top:4px;flex:none}
 .rn-steps code{font-size:12.5px;overflow-wrap:anywhere}
+/* editors' "view as visitor" preview */
+.visitor-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:center;background:var(--blue-soft);color:var(--ink);border-bottom:1px solid var(--line);padding:6px 16px;font-size:14px}

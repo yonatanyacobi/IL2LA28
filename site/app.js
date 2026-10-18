@@ -758,6 +758,8 @@ document.addEventListener("click", e => {
   }
 });
 $("frm").addEventListener("submit", saveForm);
+$("visitorBtn").addEventListener("click", () => setVisitorView(true));
+$("editModeBtn").addEventListener("click", () => setVisitorView(false));
 $("archBtn").addEventListener("click", archive);
 $("cancelBtn").addEventListener("click", () => $("dlg").close());
 // Past Israel midnight the today strip and "live"/"past" labels are stale.
@@ -828,14 +830,23 @@ function dropLive(){
   refresh();
 }
 
+// Editors can preview the public site: nothing editor-only is set up (no DB, controls, review queue or #admin),
+// so the page runs on data.json exactly as for a visitor. A reload applies the switch cleanly in both directions.
+const VISITOR_KEY = "la28.viewAsVisitor";
+function setVisitorView(on){
+  store.set(VISITOR_KEY, on);
+  try { location.reload(); } catch {}
+}
+
 async function goLive(){
   try {
     const user = await window.claude?.use?.("user");
     if (!user || !(await user.canEdit())) return;
+    if (store.get(VISITOR_KEY, false) === true) { $("visitorBar").hidden = false; return; }
     const db = await window.claude.use("db");
     if (!db) return;
     S.db = db; S.isAdmin = true; S.uid = await user.id();
-    $("adminChip").hidden = false;
+    $("adminChip").hidden = false; $("visitorBtn").hidden = false;
     const ready = {athletes: false, competitions: false, sports: false};
     const go = () => { if (!S.liveLost && Object.values(ready).every(Boolean)) { S.live = true; S.loaded = true; refresh(); } };
     db.collection("athletes").onSnapshot(snap => {
