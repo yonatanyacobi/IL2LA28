@@ -1199,8 +1199,9 @@ test("home order: search right under the hero; chances panel caps at 3 rows on p
   const one = (await boot({quotas: few, now: "2026-10-18T08:00:00Z"})).view("home").split('id="closeH"')[1].split("</section>")[0];
   assert.ok(!one.includes("sm-only"), "≤ 3 groups: no suffix");
 });
-
-(async () => {
+// tests/preview_at.js reuses boot() to render real data on a chosen date.
+module.exports = {boot};
+if (require.main === module) (async () => {
   let failed = 0;
   for (const {name, fn} of tests) {
     try { await fn(); console.log(`ok   ${name}`); }
