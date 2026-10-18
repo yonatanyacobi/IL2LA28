@@ -140,18 +140,18 @@ Two flags replace `past`, inside the same `quotaHealthPanel()` and in the same `
 | key | label | items | alert |
 |---|---|---|---|
 | `overdue` | `אירוע מכסה עבר לפני יותר מ־14 יום ולא נבדק מחדש` | `unchecked(q)` and `dayNo(end, t) - 1 > AWAIT_DAYS` | yes (`adm-bad`, panel `adm-alert`) |
-| `awaiting` | `ממתינים לבדיקה אחרי אירוע מכסה` | `unchecked(q)` and within `AWAIT_DAYS` | no (pill "תזכורת") |
+| `awaiting` | `בהמתנה לבדיקה אחרי אירוע מכסה` | `unchecked(q)` and within `AWAIT_DAYS` | no (pill "תזכורת") |
 
 Order: `overdue` → `awaiting` → existing `earned` → `soon`. Within a flag: oldest event end first.
 
 Row (`.rows li`):
 ```html
 <li><span class="d"><a href="#sport-{id}">{sport}</a></span>
-  <span class="t">{event}<small>{name} הסתיים ב־{fmt(end)} · לפני {n} ימים · נבדק לאחרונה {fmt(checkedOf(q))}</small></span>
+  <span class="t"><bdi>{event}</bdi><small>{name} ({fmtRange(start, end)}) · לפני {n} ימים · בדיקה ידנית אחרונה: {fmt(checkedOf(q))}</small></span>
   <span>{quotaStatusPill(q.israelStatus)}</span></li>
 ```
 - "לפני {n} ימים": `n = dayNo(end, t) - 1`; n = 1 → `אתמול`.
-- Status pill so the editor sees what visitors currently see ("◐ במרוץ למכסה" + public "ממתינים לתוצאות").
+- Status pill so the editor sees what visitors currently see ("◐ במרוץ למכסה" + public "בהמתנה לתוצאות").
 - Footer of each flag (`.foot`, once): `לעדכן את data/quotas/quotas.json (סטטוס, אירוע מכסה הבא, review.at) ולהריץ את build_quotas.py.`
 - Empty flags are omitted (as today); if neither fires and nothing else does, the panel pill stays "תקין".
 
