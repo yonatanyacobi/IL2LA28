@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js", "site/event.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/sessions.js", "site/day.js", "site/event.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
 // (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
@@ -941,6 +941,26 @@ test("entry points link to #c-<id>: calendar rows, today strip, #day heading, at
   Object.assign(data.athletes.find(a => a.id === "raz-hershko"), {next: "אימון", nextDate: "2026-09-01"});
   const none = (await boot({data, now: "2026-08-01T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
   assert.ok(!none.includes('href="#c-'), "no matching competition: no link");
+});
+
+test("#c-: arrival scrolls today's day into view once; the athletes panel points results to the schedule", async () => {
+  const b = await boot({now: "2026-10-29T08:00:00Z"});
+  b.run(`var __scrolls = []; document.querySelector = sel => sel.includes('aria-current="date"')
+    ? {closest: () => ({scrollIntoView: o => __scrolls.push(o)})} : null`);
+  const tick = () => new Promise(r => setTimeout(r, 5));
+  b.view("c-judo-gs-abu-dhabi-2026"); await tick();
+  assert.strictEqual(b.run("__scrolls.length"), 1, "arrival scrolls");
+  b.view("c-judo-gs-abu-dhabi-2026"); await tick();
+  assert.strictEqual(b.run("__scrolls.length"), 1, "a re-render of the same page does not");
+  b.view("home"); b.view("c-judo-gs-abu-dhabi-2026"); await tick();
+  assert.strictEqual(b.run("__scrolls.length"), 2, "coming back scrolls again");
+  assert.strictEqual(b.run("__scrolls[0].block"), "start");
+
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-10-29", kind: "result", text: "ארד"}];
+  const out = (await boot({data, now: "2026-10-30T08:00:00Z"})).run(`viewEvent("judo-gs-abu-dhabi-2026")`);
+  const raz = out.split('id="evAthH"')[1].split('<div class="stack"><a class="card" href="#a-').find(x => x.startsWith("raz-hershko")) || "";
+  assert.ok(raz.includes('<span class="muted">תוצאה בלוח הסשנים</span>') && !raz.includes("ארד"), "Gil nit: result points to the schedule");
 });
 
 test("fetch failure shows the retry view", async () => {
