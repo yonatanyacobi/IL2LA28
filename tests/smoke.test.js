@@ -834,7 +834,7 @@ test("followed first: sports page, today strip and chances panel put followed sp
 });
 
 test("QA F1/F2: blocked storage says the follow wasn't saved; footer has its own \"אודות\" link", async () => {
-  const MSG = "המעקב לא נשמר: הדפדפן חוסם שמירה מקומית באתר הזה";
+  const MSG = "לא הצלחנו לשמור את המעקב: הדפדפן חוסם שמירת נתונים באתר הזה. השינוי יישאר רק עד שתסגרו או תרעננו את הדף.";
   const ok = await boot();
   ok.view("sport-judo");
   ok.fire("click", {closest: () => ({dataset: {followSport: "judo"}})});
@@ -852,7 +852,8 @@ test("QA F1/F2: blocked storage says the follow wasn't saved; footer has its own
 
   const html = fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8");
   const foot = html.split('<footer class="site-foot">')[1].split("</footer>")[0];
-  assert.ok(foot.includes('<a class="foot-link" href="#about">אודות</a>') && !html.split("<footer")[0].includes('href="#about"'), "About in the footer, not the nav");
+  assert.ok(foot.includes('<a class="foot-link" href="#about">אודות ואיך הנתונים נאספים</a>') && foot.split('href="#about"').length === 2, "one About link in the footer");
+  assert.ok(!html.split("<footer")[0].includes('href="#about"'), "About is not in the nav");
   assert.ok(/\.site-foot \.foot-link\{[^}]*min-height:44px/.test(fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8")), "44px target");
 });
 

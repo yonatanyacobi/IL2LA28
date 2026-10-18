@@ -116,7 +116,7 @@ function winStatus(w){
 function saveFollows(key, list){
   store.set(key, list);
   if (JSON.stringify(store.get(key, null)) === JSON.stringify(list)) return;
-  $("visitorMsgText").textContent = "המעקב לא נשמר: הדפדפן חוסם שמירה מקומית באתר הזה, ולכן הוא יימחק כשתסגרו את הדף.";
+  $("visitorMsgText").textContent = "לא הצלחנו לשמור את המעקב: הדפדפן חוסם שמירת נתונים באתר הזה. השינוי יישאר רק עד שתסגרו או תרעננו את הדף.";
   $("visitorMsg").hidden = false;
 }
 
