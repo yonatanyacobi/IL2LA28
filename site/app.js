@@ -57,7 +57,6 @@ function nextIsraeliDay(from){
   for (let i = 1; i <= DAY_LOOKAHEAD; i++) if (hasIsraelis(addDays(from, i))) return addDays(from, i);
   return "";
 }
-const nextDayEmpty = (text, from) => (d => emptyLine(text, d && `#day-${d}`, d && `ליום התחרויות הבא: ${fmt(d)}`))(nextIsraeliDay(from));
 const calEmpty = (text, sid) => emptyLine(text, sid ? `#calendar-${sid}` : "#calendar", "לוח התחרויות");
 // "השתנה ב־HH:MM" (docs/design/changed-rows.md): a row whose signature differs from the previous render of the same
 // page, compared only on an auto-refresh render, stays marked until the next navigation. Rows that are new count too.
@@ -454,12 +453,9 @@ function nextUpLine(rows){
 function viewHome(){
   const {counts, html: bar} = stageBar(S.athletes);
   const quota = counts[2] + counts[3];
-  const t = today(), soon = addDays(t, 14), rows = todayRows();
+  const t = today(), rows = todayRows();
   const hub = typeof homeNow === "function";
-  // Athletes in today's sessions aren't repeated in the 14-day list.
   const inToday = new Set(hub ? daySessions(t).flatMap(s => s.athletes.map(a => a.id)) : []);
-  const busy = S.athletes.filter(a => isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= soon && !inToday.has(a.id))
-    .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name));
   const mine = S.athletes.filter(a => S.follows.has(a.id)).sort((a, b) => heCmp(a.name, b.name));
   const mineNew = mine.filter(isNew).length;
   const mineSports = S.sports.filter(s => followsSport(s.id)).sort((a, b) => heCmp(a.he, b.he));
@@ -484,6 +480,7 @@ function viewHome(){
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
   ${wonFirst ? `${wonLine}<div class="home-top">${wonPanel()}${homeNow()}</div>` : hub ? homeNow() : ""}
+  ${hub ? weekPanel() : ""}
   ${mine.length || mineSports.length ? `<section class="panel">
       <div class="sec-head"><h2>במעקב שלי</h2>${mineNew ? `<span class="new">${mineNew} עודכנו מאז הביקור הקודם</span>` : ""}</div>
       ${mineSports.length ? `<div class="chips" role="group" aria-labelledby="mineSportsL"><span class="chips-lbl" id="mineSportsL">ענפים במעקב:</span>${mineSports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
@@ -502,24 +499,11 @@ function viewHome(){
     <p class="foot"><a href="#about">מה אומרים השלבים?</a></p>
     <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: ישראל שלחה לפריז 2024 ${PARIS_ATHLETES} ספורטאיות וספורטאים. נבחרת נספרת כאן פעם אחת.</p>
   </section>
-  <div class="grid2">
-    <section class="panel">
-      <h2>ישראלים בפעולה ב־14 הימים הקרובים</h2>
-      ${busy.length ? `<ul class="rows">${busy.map(a => `<li><span class="d">${fmtShort(a.nextDate)}</span>
-        <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))} · ${nextCompFact(a)}</small></span><span></span></li>`).join("")}</ul>`
-        : nextDayEmpty(inToday.size ? "כל מי שמתחרה ב־14 הימים הקרובים כבר מופיע למעלה."
-          : "אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.", t)}
-    </section>
-    <section class="panel">
-      <div class="sec-head"><h2>מה התעדכן</h2><span class="actions">${typeof viewDigest === "function" ? `<a href="#digest">תקציר שבועי לשיתוף</a>` : ""}<a href="#updates">כל העדכונים</a></span></div>
-      ${S.changes.length ? `<ul class="rows">${S.changes.slice(0, 5).map(changeRow).join("")}</ul>` : calEmpty("עוד אין עדכונים.")}
-    </section>
-  </div>
-  ${S.seenBefore && !mine.length && !mineSports.length ? `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>` : ""}
   <section class="panel">
-    <div class="sec-head"><h2>תחרויות קרובות</h2><a href="#calendar">ללוח התחרויות</a></div>
-    <div class="stack">${upcoming().slice(0, 6).map(c => compRow(c, true)).join("") || calEmpty("אין תחרויות קרובות ידועות.")}</div>
-  </section>`;
+    <div class="sec-head"><h2>מה התעדכן</h2><span class="actions">${typeof viewDigest === "function" ? `<a href="#digest">תקציר שבועי לשיתוף</a>` : ""}<a href="#updates">כל העדכונים</a></span></div>
+    ${S.changes.length ? `<ul class="rows">${S.changes.slice(0, 5).map(changeRow).join("")}</ul>` : calEmpty("עוד אין עדכונים.")}
+  </section>
+  ${S.seenBefore && !mine.length && !mineSports.length ? `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>` : ""}`;
 }
 
 const SEARCH_MAX = 24;

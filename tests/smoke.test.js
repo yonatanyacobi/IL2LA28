@@ -106,7 +106,7 @@ const unhide = html => html.replace(/<span aria-hidden="true">([^<]*)<\/span>/g,
 test("routes render expected content", async () => {
   const {view} = await boot();
   const expect = {
-    home: ["הדרך ללוס אנג׳לס 28", "מה התעדכן", "תחרויות קרובות"],
+    home: ["הדרך ללוס אנג׳לס 28", "מה התעדכן", "התקדמות בהעפלה"],
     sports: ["<h1 tabindex=\"-1\">ענפים</h1>", "ג׳ודו"],
     "sport-judo": ["שיטת ההעפלה", "ספורטאים ונבחרות", "רז הרשקו"],
     "a-raz-hershko": ["<h1 tabindex=\"-1\">רז הרשקו</h1>", "היסטוריה", "שיתוף"],
@@ -234,7 +234,7 @@ test("every <script src> in index.html is in SCRIPTS and in the publish map", ()
 
 test("empty data renders empty states", async () => {
   const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}});
-  assert.ok(view("home").includes("אין תחרויות קרובות ידועות."));
+  assert.ok(view("home").includes("אין השבוע תחרויות ידועות של ספורטאים או נבחרות מישראל."));
   assert.ok(view("home").includes("עוד אין עדכונים"));
   assert.ok(view("sport-judo").includes("אין כרגע ספורטאים או נבחרות מישראל ברשימה"));
   assert.ok(view("calendar").includes("אין תחרויות שמתאימות לסינון"));
@@ -251,12 +251,10 @@ test("empty states (S5): p.muted lines, each table row's way on, no \"במאגר
   const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}, now: "2026-10-19T09:00:00Z"});
   const judo = view("sport-judo"), home = view("home");
   assert.ok(judo.includes('<p class="muted">אין תחרויות קרובות ידועות בענף. <a href="#calendar-judo">לוח התחרויות</a></p>'), "sport row");
-  assert.ok(home.includes('<p class="muted">אין תחרויות קרובות ידועות. <a href="#calendar">לוח התחרויות</a></p>'), "home row");
-  assert.ok(home.includes('<p class="muted">אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.</p>'), "no Israeli day ahead: no link");
+  assert.ok(home.includes('<p class="muted">אין השבוע תחרויות ידועות של ספורטאים או נבחרות מישראל. <a href="#calendar">ללוח התחרויות</a></p>'), "home week row (S4)");
   for (const out of [judo, home, view("updates"), view("calendar")])
     assert.ok(!out.includes('class="empty"'), "a section's empty state is a p.muted line, not div.empty");
-  // With data: athlete "תחרויות קרובות" links to the sport's calendar, history has no link, and the home 14 days
-  // link to the next #day with Israelis.
+  // With data: athlete "תחרויות קרובות" links to the sport's calendar and history has no link.
   const far = JSON.parse(JSON.stringify(FIXTURE));
   far.athletes.forEach(a => { a.nextDate = ""; a.history = []; });
   far.athletes[0].nextDate = "2026-12-20";
@@ -266,12 +264,12 @@ test("empty states (S5): p.muted lines, each table row's way on, no \"במאגר
   const a0 = far.athletes[0], page = b.view(`a-${a0.id}`);
   assert.ok(page.includes(`<p class="muted">אין תחרויות קרובות ידועות בענף. <a href="#calendar-${a0.sportId}">לוח התחרויות</a></p>`), "athlete row");
   assert.ok(page.includes('<p class="muted">עוד אין אירועים מתועדים.</p>'), "athlete history: no way on");
-  assert.ok(b.view("home").includes(' <a href="#day-2026-12-20">ליום התחרויות הבא: '), "home 14-days row");
-  // Everyone in the next 14 days is in the today strip: the schedule says so instead of "no competitions".
+  // Israelis only today: the week says "after today" instead of "no competitions" (S4), linking the calendar when
+  // no later day is known.
   far.athletes[0].nextDate = "2026-10-19";
   const h = (await boot({data: far, now: "2026-10-19T09:00:00Z"})).view("home");
-  assert.ok(h.includes("כל מי שמתחרה ב־14 הימים הקרובים כבר מופיע למעלה.") && !h.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים"),
-    "strip-only day: no false 'no competitions'");
+  assert.ok(h.includes('<p class="muted">אחרי היום אין השבוע תחרויות ידועות של ספורטאים או נבחרות מישראל. <a href="#calendar">ללוח התחרויות</a></p>'),
+    "today only: no false 'no competitions'");
 });
 const rowsOf = strip => strip.split("<li>").slice(1);
 const count = (s, needle) => s.split(needle).length - 1;
@@ -1165,9 +1163,10 @@ test("S3: every resolvable competition on home and #following renders as a[href^
     const b = await boot({now, quotas: SITE_QUOTAS, follows, storage: {"la28.followSports": '["judo","sailing"]', "la28.followingSeen": '"2026-10-01T00:00:00Z"'}});
     const home = b.view("home"), following = b.view("following");
     const ids = expr => JSON.parse(b.run(`JSON.stringify([...new Set((${expr}).filter(Boolean).map(c => c.id))])`));
-    // The "14 הימים" list, the closest-chances groups, and #following's next-up rows (athletes and followed sports).
-    const t = b.run("today()"), soon = b.run("addDays(today(), 14)");
-    const homeIds = ids(`S.athletes.filter(a => a.next && isDate(a.nextDate) && a.nextDate >= "${t}" && a.nextDate <= "${soon}").map(a => compOn(a.sportId, a.nextDate))
+    // The "השבוע" rows (at most WEEK_COMPS competitions each), the closest-chances groups, and #following's next-up
+    // rows (athletes and followed sports).
+    const homeIds = ids(`Array.from({length: WEEK_DAYS}, (_, i) => addDays(today(), i + 1))
+      .flatMap(d => [...new Map(daySessions(d).sort(sessionOrder).map(s => [s.comp ? s.comp.id : s.sportId, s.comp])).values()].slice(0, WEEK_COMPS))
       .concat(closestGroups(todayRows(), today()).map(g => compOn(g.sportId, g.start)))`);
     // The rows #following actually shows: a competition row, or an athlete row whose nextDate falls in one.
     const followIds = ids(`followUpcoming().map(x => x.k.startsWith("up|c|") ? S.comps.find(c => c.id === x.k.slice(5))
@@ -2469,18 +2468,61 @@ test("home results: 48 h window, date-only history, no source dropped, session a
   assert.ok(!more.split("</summary>")[0].includes("#updates") && many.includes('· <a href="#updates">לכל העדכונים באתר</a></p>'));
 });
 
-test("home: fresh line in the hero, no live wording for editors either, today's athletes not repeated in 14 days", async () => {
+test("home: fresh line in the hero, no live wording for editors either", async () => {
   const b = await boot({data: judoOn29(), quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"});
   const home = b.view("home");
   const hero = home.split('<section class="hero">')[1].split("</section>")[0];
   assert.ok(/<p class="fresh( stale)?"><i><\/i><span>/.test(hero) && hero.includes("<time datetime="), "freshLine in the hero");
   noLiveClaims(home, "home");
-  const fourteen = home.split("ב־14 הימים הקרובים")[1].split("</section>")[0];
-  assert.ok(!fourteen.includes('href="#a-raz-hershko"'), "today's athlete isn't repeated");
   b.run("S.live = true; S.lastRun = '2026-10-29T07:00:00Z'");
   const live = b.view("home");
   noLiveClaims(live, "home, S.live");
   assert.ok(!live.includes("עדכון אוטומטי אחרון"), "editor freshness says נכון ל־ too");
+});
+
+// UX S4 (sprint6-ux-specs.md): one "השבוע" panel, one row per day with Israelis, tomorrow to today+7.
+const weekOf = html => html.split('aria-labelledby="weekH"')[1]?.split("</section>")[0] ?? null;
+const weekDays = week => [...week.matchAll(/<span class="d"><a href="#day-([\d-]+)">/g)].map(m => m[1]);
+const nextUpDay = html => (html.match(/<a href="#day-([\d-]+)">לכל ההופעות ב־/) || [])[1] || "";
+
+test("S4 week: normal week, \"הבא בתור\" day left out, followed names, quota pill, foot; the old lists are gone", async () => {
+  const home = (await boot({quotas: SITE_QUOTAS, follows: ["raz-hershko"], now: "2026-10-28T08:00:00Z"})).view("home");
+  const week = weekOf(home);
+  assert.strictEqual(nextUpDay(home), "2026-10-29", "precondition: 29.10 is \"הבא בתור\"");
+  assert.deepStrictEqual(weekDays(week), ["2026-10-30", "2026-10-31", "2026-11-02", "2026-11-03", "2026-11-04"], "no day twice; every .d links #day-");
+  const rows = week.split("<li>").slice(1), r31 = rows[1];
+  assert.ok(r31.includes('<a href="#c-judo-gs-abu-dhabi-2026">גרנד סלאם אבו דאבי</a>') && r31.includes('<a href="#a-raz-hershko">רז הרשקו</a> · ועוד 1')
+    && r31.includes("★"), "followed name first, then the rest's count");
+  assert.ok(rows[0].includes("<small>2 ספורטאים ונבחרות</small>") && rows[2].includes("<small>ספורטאי/ת או נבחרת אחת</small>"), "counts");
+  assert.ok(rows[0].includes("◐</span> אירוע מכסה") && !rows[3].includes("אירוע מכסה"), "quota pill only on a quota-event day of that day's sports");
+  assert.ok(week.includes('<p class="foot"><a href="#calendar">ללוח התחרויות</a></p>'), "foot");
+  for (const gone of ["ישראלים בפעולה ב־14 הימים", "<h2>תחרויות קרובות</h2>", 'class="grid2"']) assert.ok(!home.includes(gone), gone);
+  assert.ok(home.indexOf('id="homeResH"') < home.indexOf('id="weekH"'), "right after homeNow()");
+  // 22.10: 24.10 is "הבא בתור", so the week has only 29.10.
+  const h22 = (await boot({quotas: SITE_QUOTAS, now: "2026-10-22T08:00:00Z"})).view("home");
+  assert.strictEqual(nextUpDay(h22), "2026-10-24");
+  assert.deepStrictEqual(weekDays(weekOf(h22)), ["2026-10-29"]);
+});
+
+test("S4 week: today only, empty week (hidden or calendar line), result night and its end", async () => {
+  const on = async now => (await boot({quotas: SITE_QUOTAS, now})).view("home");
+  const todayOnly = weekOf(await on("2026-11-17T08:00:00Z"));
+  assert.ok(todayOnly.includes('<p class="muted">אחרי היום אין השבוע תחרויות ידועות של ספורטאים או נבחרות מישראל. <a href="#day-2026-11-27">ליום התחרויות הבא: 27 בנוב׳ 2026</a></p>')
+    && todayOnly.includes('href="#calendar"'), "today only: next day after the week, and the calendar foot");
+  assert.strictEqual(weekOf(await on("2026-11-21T08:00:00Z")), null, "the week's only day is \"הבא בתור\": hidden");
+  const empty = weekOf(await on("2026-11-19T08:00:00Z"));
+  assert.ok(empty.includes('<p class="muted">אין השבוע תחרויות ידועות של ספורטאים או נבחרות מישראל. <a href="#calendar">ללוח התחרויות</a></p>')
+    && !empty.includes('class="foot"') && !empty.includes("<li>"), "\"הבא בתור\" after the week: the calendar line, no second calendar link");
+  // Result night: 19.10's sessions on 20.10 at 08:00 with no result.
+  const night = weekOf(await on("2026-10-20T05:00:00Z")), first = night.split("<li>")[1];
+  assert.ok(first.startsWith('<span class="d"><a href="#day-2026-10-19">אתמול</a></span>') && first.includes("2 ממתינים לתוצאה")
+    && first.includes('<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>'), "the אתמול row first");
+  const landed = clone();
+  for (const s of landed.sessions.filter(s => s.date === "2026-10-19")) Object.assign(s, {result: "מקום 30", resultSource: "https://www.gymnastics.sport/r", resultAt: "2026-10-19T23:00:00Z"});
+  for (const a of landed.athletes.filter(a => a.nextDate === "2026-10-19")) a.nextDate = "";
+  const after = weekOf((await boot({data: landed, quotas: SITE_QUOTAS, now: "2026-10-20T05:00:00Z"})).view("home")) || "";
+  assert.ok(!after.includes("אתמול"), "every result landed: the row goes");
+  assert.ok(!(weekOf(await on("2026-10-22T08:00:00Z")) || "").includes("אתמול"), "past 48 h (awaitLong) the row goes");
 });
 
 // Standings vs. the quota line (#179, docs/design/standings.md §7). Judo 60 kg, cutoff 17 on the Olympic list.
