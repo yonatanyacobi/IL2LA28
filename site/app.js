@@ -384,7 +384,7 @@ function viewHome(){
       <div class="cards">${mine.map(athleteCard).join("")}</div></section>`
     : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>`}
   <section class="panel" aria-label="התקדמות בהעפלה">
-    <p class="kpi"><b>${S.athletes.length}</b> ספורטאים ונבחרות במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה · <b>${verified}</b> מתוך ${S.athletes.length} נבדקו ידנית</p>
+    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית</p>
     ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
@@ -417,7 +417,7 @@ function renderResults(){
   const sportKey = s => [s.id, s.he, s.en].map(str).join(" ");
   const sports = S.sports.filter(s => searchKey(sportKey(s)).includes(q));
   const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportKey(sportById(a.sportId) || {id: a.sportId})].map(str).join(" ")).includes(q));
-  $("qCount").textContent = `נמצאו ${hits.length} ספורטאים ונבחרות ו־${sports.length} ענפים`;
+  $("qCount").textContent = `נמצאו ${hits.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${hits.length} ספורטאים ונבחרות`} ${sports.length === 1 ? "וענף אחד" : `ו־${sports.length} ענפים`}`;
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
     ${hits.length ? `<div class="cards">${hits.slice(0, SEARCH_MAX).map(athleteCard).join("")}</div>
@@ -432,7 +432,7 @@ function viewSports(){
   withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
-  <p class="muted">${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
+  <p class="muted">${withA.length === 1 ? "ענף אחד עם ספורטאים ונבחרות מישראל במעקב." : `${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.`}${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
   <ul class="sports">${withA.map(s => {
     const list = athletesOf(s.id), ws = winStatus(s.window), nc = upcomingIn(s.id)[0], fresh = list.filter(isNew).length;
     return `<li><a class="sport" href="#sport-${esc(s.id)}">
