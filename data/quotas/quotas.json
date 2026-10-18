@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:00:04Z",
+ "updatedAt": "2026-10-18T17:00:00Z",
  "items": [
   {
    "sportId": "judo",
@@ -262,7 +262,7 @@
    "event": "כל המשקלים",
    "totalQuotas": 288,
    "maxPerNOC": 18,
-   "allocation": "מדליסטים באליפות העולם 2027, 3 הראשונים בדירוג UWW, 2 לכל משקל במוקדמות יבשתיות ו-1 בטורניר עולמי ב-2028; אחד/ת לכל משקל למדינה.",
+   "allocation": "מדליסטים באליפות העולם 2027, 3 הראשונים בדירוג UWW, 2 לכל משקל בכל אחד מ-4 טורנירים יבשתיים ו-1 בטורניר עולמי ב-2028; אחד/ת לכל משקל למדינה.",
    "israelStatus": "unknown",
    "israelNote": "אין מתאבק/ת ישראלי/ת במעקב",
    "nextQuotaEvent": {
@@ -271,8 +271,8 @@
    },
    "source": "https://cdn.uww.org/2026-08/260825_wre_la28_qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "roni",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -318,7 +318,7 @@
    "event": "אישי גברים (קרב-רב ומכשירים)",
    "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "למדינות בלי נבחרת: 3 לנבחרות הבאות במוקדמות 2027, 8 בקרב-רב ו-6 במכשירים באליפות העולם 2027, 12 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028.",
+   "allocation": "למדינות בלי נבחרת: 3 לנבחרות הבאות במוקדמות 2027, 8 בקרב-רב ו-6 במכשירים באליפות העולם 2027, 12 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארח ואוניברסלי.",
    "israelStatus": "in-contention",
    "israelNote": "ארטיום דולגופיאט (זהב בקרקע, אירופה 2026); זמין רק אם הנבחרת לא תעפיל",
    "nextQuotaEvent": {
@@ -327,8 +327,8 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "roni",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -337,7 +337,7 @@
    "event": "אישי נשים (קרב-רב ומכשירים)",
    "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "3 לנבחרות הבאות במוקדמות 2027, 14 בקרב-רב ו-4 במכשירים באליפות העולם 2027 (אחת לכל מדינה בקרב-רב), 8 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028.",
+   "allocation": "3 לנבחרות הבאות במוקדמות 2027, 14 בקרב-רב ו-4 במכשירים באליפות העולם 2027 (אחת לכל מדינה בקרב-רב), 8 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארחת ואוניברסלית.",
    "israelStatus": "unknown",
    "israelNote": "ליהיא רז, רוני שמאי ויהלי שושני; אין נבחרת נשים ישראלית ברוטרדם",
    "nextQuotaEvent": {
@@ -346,8 +346,8 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "roni",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -496,8 +496,8 @@
    },
    "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "roni",
+    "status": "ok",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
