@@ -1277,6 +1277,63 @@ test("#admin launch readiness: counts link to where each issue is fixed", async 
   assert.ok(plain.view("admin").split('id="launch"')[1].includes("לא ידוע"), "no count in quotas.json → unknown, not 0");
 });
 
+// Sprint 7 item 3 (readiness-2210.md §1–§3 on one screen): each row's number and its link.
+test("#admin readiness: verified X/N, starts without a session, M3 per result night (incl. > 24 h), last 2 runs", async () => {
+  const data = clone();
+  const AG = "ag-worlds-2026", sess = (date, startUtc, id, extra = {}) => ({competitionId: AG, date, startUtc, athleteIds: [id], phase: "שלב", ...extra});
+  const ok = (resultAt) => ({result: "מקום 8", resultSource: "https://www.gymnastics.sport/r", resultAt});
+  data.sessions = [
+    sess("2026-10-19", "2026-10-19T14:00:00Z", "yali-shoshani", ok("2026-10-20T19:30:00Z")),   // end 17:00Z → 26.5 h: late
+    sess("2026-10-19", "2026-10-19T19:10:00Z", "lihie-raz"),                                    // no result, 34 h since its end
+    sess("2026-10-20", null, "roni-shamay", ok("2026-10-20T22:00:00Z")),                         // untimed: end of day (21:00Z) → 1 h
+    sess("2026-10-24", "2026-10-24T09:00:00Z", "artem-dolgopyat"),                               // his start has a session
+  ];
+  const NOW = "2026-10-21T08:00:00Z", t = "2026-10-21", end = "2026-11-04";
+  const runs = docs => `S.isAdmin = true; S.live = true; S.db = {collection: () => ({orderBy: () => ({limit: () => ({
+    onSnapshot: ok => ok({docs: ${JSON.stringify(docs)}.map(d => ({id: d.id, data: () => d}))})})})})}`;
+  const b = await boot({data, quotas: QUOTAS, now: NOW});
+  b.run(runs([{id: "2026-10-21", status: "done", started: "2026-10-21T04:13:00Z", published: true, errors: []},
+    {id: "2026-10-20", status: "failed", started: "2026-10-20T04:13:00Z", published: false, errors: ["export refused: athletes shrank"]}]));
+  b.view("admin");   // subscribes to runs
+  const panel = b.view("admin").split('id="launch"')[1].split("</section>")[0];
+  const part = (from, to) => panel.split(from)[1].split(to)[0];
+  const rowsOf = html => html.split("<li>").slice(1);
+  const num = row => row.split('digits')[1].split(">")[1].split("<")[0];
+
+  // §1: verified X/N, with the rest's list; starts in the next 14 days without a session.
+  const cov = rowsOf(part('id="readyData"', 'id="readyNights"'));
+  const V = JSON.parse(b.run(`JSON.stringify(S.athletes.filter(a => trustOf(a) === "ok").length)`)), N = data.athletes.length;
+  assert.strictEqual(num(cov[0]), `${V}/${N}`, "verified X/N");
+  assert.ok(cov[0].includes(`${Math.floor(100 * V / N)}%`) && cov[0].includes('href="#admin-unverified"'));
+  const withSession = new Set(data.sessions.map(x => `${x.athleteIds[0]}|${x.date}`));
+  const missing = data.athletes.filter(a => a.nextDate >= t && a.nextDate <= end && !withSession.has(`${a.id}|${a.nextDate}`));
+  assert.strictEqual(num(cov[1]), String(missing.length), "starts without a session");
+  assert.ok(cov[1].includes('href="#admin-nosession"'));
+  const list = b.view("admin-nosession");
+  assert.ok(missing.every(a => list.includes(`href="#a-${a.id}"`)) && !list.includes('href="#a-artem-dolgopyat"'), "the list, minus starts with a session");
+
+  // §2: one row per night, newest first; 19.10 is over 24 h both ways (a late result and a missing one).
+  const nights = rowsOf(part('id="readyNights"', 'id="readyRuns"'));
+  assert.strictEqual(nights.length, 2);
+  assert.ok(nights[0].includes('href="#day-2026-10-20"') && num(nights[0]) === "1 ש׳" && nights[0].includes("1 מתוך 1 תוצאות באתר")
+    && nights[0].includes('<span class="pill open">עד 24 שעות</span>'), "20.10: within 24 h (untimed ends at the end of the day)");
+  assert.ok(nights[1].includes('href="#day-2026-10-19"') && num(nights[1]) === "27 ש׳" && nights[1].includes("1 מתוך 2 תוצאות באתר")
+    && nights[1].includes("1 עדיין בלי תוצאה, 1 מהן יותר מ־24 שעות") && nights[1].includes('<span class="pill bad">מעל 24 שעות</span>'), "19.10: > 24 h");
+
+  // §3: the last 2 runs, each with published and errors, linking the runs log.
+  const runRows = rowsOf(panel.split('id="readyRuns"')[1]);
+  assert.ok(runRows[0].includes("ריצה 21 באוק׳ 2026: פורסמה") && runRows[0].includes("אין שגיאות") && num(runRows[0]) === "0");
+  assert.ok(runRows[1].includes("לא פורסמה") && runRows[1].includes("שגיאה אחת") && num(runRows[1]) === "1");
+  assert.ok(runRows.every(r => r.includes('href="#admin-runs"')) && b.view("admin-runs").includes("<h1 tabindex=\"-1\">יומן הריצות היומיות</h1>"));
+  assert.ok(panel.includes("נושאים פתוחים"));
+
+  // No runs recorded (runs/ empty): one open row says so.
+  const none = await boot({data, quotas: QUOTAS, now: NOW});
+  none.run(runs([]));
+  none.view("admin");
+  assert.ok(none.view("admin").split('id="readyRuns"')[1].includes("אין ריצות יומיות מתועדות"));
+});
+
 test("#admin result night: picks quota events ending today/yesterday, links the runbook, keeps ticks", async () => {
   const SITE_QUOTAS = QUOTAS_SNAPSHOT;
   const panelOf = html => html.split('id="resultNight"')[1].split("</section>")[0];
