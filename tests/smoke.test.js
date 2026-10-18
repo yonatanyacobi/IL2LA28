@@ -211,12 +211,35 @@ test("hostile strings are escaped and unsafe links dropped", async () => {
 
 test("empty data renders empty states", async () => {
   const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}});
-  assert.ok(view("home").includes("אין תחרויות קרובות במאגר"));
+  assert.ok(view("home").includes("אין תחרויות קרובות ידועות."));
   assert.ok(view("home").includes("עוד אין עדכונים"));
   assert.ok(view("sport-judo").includes("אין כרגע ספורטאים או נבחרות מישראל במעקב"));
   assert.ok(view("calendar").includes("אין תחרויות שמתאימות לסינון"));
   assert.ok(view("updates").includes("עוד אין עדכונים"));
   assert.ok(view("sports").length > 0);
+});
+
+// UX S5: one form (.empty), what is known plus one next step; never the internal word "במאגר".
+test("empty states: one form, a next step, no \"במאגר\"", async () => {
+  const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}, now: "2026-10-19T09:00:00Z"});
+  const judo = view("sport-judo"), home = view("home");
+  assert.ok(judo.includes('<div class="empty"><p>אין תחרויות קרובות ידועות בענף.</p><p><a href="#calendar-judo">ללוח התחרויות בענף</a></p></div>'), "sport: link to its calendar");
+  assert.ok(home.includes('<div class="empty"><p>אין תחרויות קרובות ידועות.</p><p><a href="#calendar">ללוח התחרויות</a></p></div>'));
+  assert.ok(home.includes('<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.</p></div>'), "no Israeli day ahead: no link");
+  for (const out of [judo, home, view("updates"), view("calendar")]) {
+    assert.ok(!out.includes("במאגר"), "internal word in UI copy");
+    assert.ok(!/<p class="muted">(אין|עוד אין|לא נמצאו)/.test(out), "empty list in the old p.muted form");
+  }
+  // Athlete page and home schedule with data: the athlete links to their sport's calendar; the home schedule links
+  // to the next #day with Israelis when nothing is in the next 14 days.
+  const far = JSON.parse(JSON.stringify(FIXTURE));
+  far.athletes.forEach(a => { a.nextDate = ""; a.history = []; });
+  far.athletes[0].nextDate = "2026-12-20";
+  far.sessions = [];
+  const b = await boot({data: far, now: "2026-10-19T09:00:00Z"});
+  const a0 = far.athletes[0];
+  assert.ok(b.view(`a-${a0.id}`).includes(`<div class="empty"><p>עוד אין אירועים מתועדים.</p><p><a href="#calendar-${a0.sportId}">ללוח התחרויות בענף</a></p></div>`));
+  assert.ok(b.view("home").includes('<p><a href="#day-2026-12-20">לתחרות הבאה: '), "home schedule: next #day with Israelis");
 });
 
 const STRIP = "ישראלים מתחרים היום";
