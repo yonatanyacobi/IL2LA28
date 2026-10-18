@@ -993,7 +993,7 @@ function route(){
   const h = currentRoute();
   renderedDay = today();
   let html, nav;
-  if (S.failed && !S.loaded) html = `<div class="empty" role="alert"><h1 tabindex="-1">לא הצלחנו לטעון את הנתונים</h1><p>ייתכן שמדובר בתקלה זמנית. אפשר לנסות שוב בעוד רגע.</p><p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
+  if (S.failed && !S.loaded) html = `<div class="empty" role="alert">${loadFailure(S.failed)}<p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
   else if (!S.loaded) html = `<div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div>`, nav = "home";
   else if (h === "home") html = viewHome(), nav = "home";
   else if (h === "sports") html = viewSports(), nav = "sports";
@@ -1183,22 +1183,44 @@ function applyQuotas(){
 
 async function loadQuotas(){
   try {
-    const r = await fetch("quotas.json", {cache: "no-cache"});
+    const r = await withDeadline(fetch("quotas.json", {cache: "no-cache"}));
     // 404 = not published yet (an empty list); anything else unusable is an error.
     quotaFile = r.status === 404 ? {items: []} : r.ok ? await r.json() : null;
   } catch { quotaFile = null; }
+}
+
+// A host that never answers must end in the error view, not an endless skeleton.
+const LOAD_TIMEOUT_MS = 15e3;
+const withDeadline = p => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error("timeout")), LOAD_TIMEOUT_MS))]);
+// The export, not some other JSON the host answered with (e.g. {"error": "forbidden"}): applying that would blank the site.
+// generatedAt may be empty (no check time is a supported state), but the export always writes it.
+const isExport = d => Array.isArray(d?.athletes) && typeof d.generatedAt === "string";
+// Why data.json didn't load. "access": 401/403, HTML where JSON should be (a sign-in page) or JSON that isn't the
+// export, i.e. the artifact isn't open to this visitor (launch-day.md, sharing); not a temporary fault.
+function loadFailure(kind){
+  const [h, p] = kind === "access" ? ["האתר לא זמין עבורך כרגע",
+      `ייתכן שהאתר עוד לא נפתח לציבור, או שהקישור דורש התחברות לחשבון. אם קיבלתם את הקישור מאיתנו, כתבו לנו: <span dir="ltr">${esc(CONTACT_EMAIL)}</span>`]
+    : kind === "timeout" ? ["הטעינה נמשכת יותר מדי", "ייתכן שהחיבור איטי או שהשרת לא עונה. אפשר לנסות שוב בעוד רגע."]
+    : ["לא הצלחנו לטעון את הנתונים", "ייתכן שמדובר בתקלה זמנית. אפשר לנסות שוב בעוד רגע."];
+  return `<h1 tabindex="-1">${h}</h1><p>${p}</p>`;
 }
 
 let publicSnapshot = null;
 async function loadPublic(){
   const quotas = loadQuotas();   // in parallel; never delays or fails the data.json render
   try {
-    const r = await fetch("data.json", {cache: "no-cache"});
-    if (!r.ok) throw new Error(r.status);
-    publicSnapshot = await r.json();
+    publicSnapshot = await withDeadline((async () => {
+      const r = await fetch("data.json", {cache: "no-cache"});
+      if (r.status === 401 || r.status === 403) throw new Error("access");
+      if (!r.ok) throw new Error(String(r.status));
+      let d;
+      try { d = await r.json(); } catch { throw new Error("access"); }
+      if (!isExport(d)) throw new Error("access");
+      return d;
+    })());
     if (!S.live) { applySnapshot(publicSnapshot); navigate(); }
-  } catch {
-    if (!S.loaded) { S.failed = true; route(); }
+  } catch (e) {
+    if (!S.loaded) { S.failed = ["access", "timeout"].includes(e?.message) ? e.message : "error"; route(); }
   }
   await quotas;
   applyQuotas();
@@ -1279,7 +1301,7 @@ async function checkForUpdate(){
     const quotasChanged = JSON.stringify(quotaFile) !== prevJson;
     if (quotasChanged) applyQuotas();
     const d = r.ok ? await r.json() : null;
-    if (S.live || !d || (str(d.generatedAt) === S.generatedAt && str(d.lastRun) === S.lastRun)) { if (quotasChanged) refresh(); return; }
+    if (S.live || !isExport(d) || (str(d.generatedAt) === S.generatedAt && str(d.lastRun) === S.lastRun)) { if (quotasChanged) refresh(); return; }
     publicSnapshot = d;
     applySnapshot(d);
     diffRender = true; newlyChanged = 0;
