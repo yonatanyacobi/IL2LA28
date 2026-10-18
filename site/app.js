@@ -77,7 +77,7 @@ function stageBar(list, thin){
 
 function trustChip(a){
   const t = trustOf(a), d = fmt(str(a.verifiedAt).slice(0, 10));
-  return `<span class="trust ${t}">${t === "auto" ? "◌ איסוף אוטומטי" : t === "ok" ? `✓ נבדק ידנית ${d}` : `✓ נבדק ${d} · עודכן אוטומטית מאז`}</span>`;
+  return `<span class="trust ${t}">${t === "auto" ? "◌ איסוף אוטומטי" : t === "ok" ? `✓ נבדק ידנית ${d}` : `✓ נבדק ${d} · עודכן מאז`}</span>`;
 }
 
 function compRow(c, withSport){
