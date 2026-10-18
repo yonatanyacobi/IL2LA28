@@ -1470,40 +1470,49 @@ test("approving an empty patch only closes the proposal; a real patch still stam
   assert.ok(upd && upd.v.rank === "3 בעולם" && upd.v.updatedAt, "non-empty patch still writes updatedAt");
 });
 
-// #today / #day-<date> (site/day.js; copy from Shira on #130).
-test("#day renders the fixture on 24.10, 29.10 and 3.11", async () => {
-  const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
+// #today / #day-<date> (site/day.js; daily-and-following.md §1, UX review on #140).
+test("#day renders the fixture on 24.10, 29.10 and 3.11 with Israelis' sessions only", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  // A past day keeps its athletes through history results even after nextDate has moved on.
+  const sagiv = data.athletes.find(a => a.id === "shachar-sagiv");
+  sagiv.nextDate = "2026-12-01";
+  sagiv.history = [...(sagiv.history || []), {at: "2026-10-24", kind: "result", text: "מקום 12", source: "https://triathlon.org/x"}];
+  const {view} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
   const d24 = view("day-2026-10-24"), d29 = view("day-2026-10-29"), d03 = view("day-2026-11-03");
   for (const [h, out] of [["24", d24], ["29", d29], ["03", d03]]) {
     assert.ok(!out.includes(NOT_FOUND) && out.includes('<h1 tabindex="-1">'), h);
-    assert.ok(out.includes("→ היום הקודם") && out.includes("היום הבא ←"), `${h}: prev/next when not today`);
+    assert.ok(out.includes("→ היום הקודם") && out.includes("היום הבא ←") && out.includes('<a href="#today">היום</a>'), `${h}: prev/next + today link`);
+    assert.strictEqual((out.split('aria-label="בחירת יום"')[1].split("</nav>")[0].match(/href="#day-/g) || []).length, 7, `${h}: 7 chips`);
     assert.strictEqual((out.match(/aria-current="date"/g) || []).length, 1, `${h}: one selected chip`);
-    assert.ok(/נכון ל־.*, \d\d:\d\d/.test(out), `${h}: data note`);
-    assert.ok(!/live|חי\b/.test(out));
+    assert.ok(/נכון ל־.*, \d\d:\d\d · מתעדכן פעם ביום/.test(out), `${h}: data note with cadence`);
+    assert.ok(!/live|בזמן אמת|חי\b/.test(out));
   }
-  assert.ok(d24.includes("טונגיונג") && d24.includes('href="#a-shachar-sagiv"') && d24.includes("בהמתנה לתוצאה"), "24.10: past day → awaiting");
-  assert.ok(d29.includes("גרנד סלאם אבו דאבי") && d29.includes("יום 1 מתוך 3") && d29.includes("מתחרה ב־29 באוק׳ 2026"), "29.10: future day");
-  assert.ok(!d29.includes("מתקיימת עכשיו"));
-  assert.ok(d03.includes("#sport-shooting") && /ספורט(אים ונבחרות|אי\/ת או נבחרת אחת) במעקב בענף/.test(d03), "3.11: comps without listed entrants");
-  assert.ok(d29.includes('aria-label="יום חמישי, 29 באוקטובר · יש תחרויות של ישראלים" aria-current="date">ה׳ 29'), "chip label + current");
+  assert.ok(d24.includes('href="#a-shachar-sagiv"') && d24.includes("<b>תוצאה:</b> מקום 12") && !d24.includes("עודכן ב־"), "24.10: result from history, no stamp");
+  assert.ok(d29.includes("<h3>גרנד סלאם אבו דאבי</h3>") && d29.includes("pill s-before") && d29.includes('id="ds-judo"'), "29.10: sport h2, comp h3, before chips");
+  assert.ok(!d29.includes("#sport-weightlifting"), "no competitions without Israelis' sessions");
+  assert.ok(d29.includes('aria-label="יום חמישי, 29 באוקטובר · יש תחרויות של ישראלים" aria-current="date"'), "chip label + current");
+  assert.ok(!d03.includes("#sport-shooting"), "3.11: running competitions without Israelis are left out");
 });
 
-test("#today: today's copy, home link, result line, empty day, bad dates, escaping", async () => {
+test("#day: today's states, a result on another day, #day alone, impossible dates, empty day, escaping", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
-  const raz = data.athletes.find(a => a.id === "raz-hershko");
+  const raz = data.athletes.find(a => a.id === "raz-hershko"), gefen = data.athletes.find(a => a.id === "gefen-primo");
   raz.history = [...(raz.history || []), {at: "2026-10-29", kind: "result", text: "<b>ארד</b>"}];
-  raz.updatedAt = "2026-10-29T16:40:00Z";   // 18:40 in Israel (UTC+2 after the 25.10 clock change)
-  const {view, run} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-29T17:00:00Z"});
+  raz.nextDate = "2026-10-29";
+  gefen.nextDate = "2026-10-30";
+  const {view, run} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-30T08:00:00Z"});
   const t = view("today");
-  assert.strictEqual(t, view("day-2026-10-29"), "#today = #day-<today>");
-  assert.ok(t.includes("→ אתמול") && t.includes("מחר ←") && t.includes("מתקיימת עכשיו · יום 1 מתוך 3") && t.includes("מתחרה היום"));
-  assert.ok(t.includes("תוצאה: &lt;b&gt;ארד&lt;/b&gt; · עודכן ב־18:40") && !t.includes("<b>ארד"), "result in Israel time, escaped");
+  assert.strictEqual(t, view("day-2026-10-30")); assert.strictEqual(t, view("day"), "#day alone = today");
+  assert.ok(t.includes("→ אתמול") && t.includes("מחר ←") && !t.includes('<a href="#today">היום</a>'));
+  assert.ok(t.includes("מתקיימת עכשיו · יום 2 מתוך 3") && t.includes("pill s-live"), "today: live header and chip");
+  assert.ok(!t.includes('href="#a-raz-hershko"'), "a result on 29.10 isn't shown as awaiting on 30.10");
+  const y = view("day-2026-10-29");
+  assert.ok(y.includes("<b>תוצאה:</b> &lt;b&gt;ארד&lt;/b&gt;") && !y.includes("<b>ארד"), "result escaped");
+  for (const bad of ["day-2026-02-30", "day-2026-13-45", "day-nope", "day-<img>"]) assert.ok(view(bad).includes(NOT_FOUND), bad);
   assert.ok(view("home").includes('<a href="#today">לכל התחרויות היום</a>'));
-  const quiet = run(`(() => { for (let d = "2026-11-15"; d < "2027-06-01"; d = addDays(d, 1)) if (!dayRows(d).length) return d; })()`);
-  assert.ok(quiet, "the fixture has a day without competitions");
+  const quiet = run(`(() => { for (let d = "2026-11-15"; d < "2027-06-01"; d = addDays(d, 1)) if (!daySessions(d).length) return d; })()`);
   const empty = view("day-" + quiet);
   assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
-  for (const bad of ["day-2026-13-45", "day-nope", "day-<img>"]) assert.ok(view(bad).includes(NOT_FOUND), bad);
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
