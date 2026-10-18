@@ -584,7 +584,7 @@ test("#digest: page, entry points and the week's text", async () => {
   assert.ok(view("home").includes('href="#digest"') && view("updates").includes('href="#digest"'), "entry points");
   const lines = text.split("\n");
   assert.strictEqual(lines[0], "*הדרך ללוס אנג׳לס 28 · תקציר שבועי*");
-  assert.deepStrictEqual(boldLines(text).slice(1), ["*מה התעדכן*", "*ישראלים מתחרים השבוע*", "*אירועי מכסה בשבועיים הקרובים*"]);
+  assert.deepStrictEqual(boldLines(text).slice(1), ["*תוצאות השבוע*", "*מה התעדכן*", "*ישראלים מתחרים השבוע*", "*אירועי מכסה בשבועיים הקרובים*"]);
   assert.ok(text.includes("מתן רודיטי פרש"), "this week's change");
   const competing = text.split("*ישראלים מתחרים השבוע*")[1].split("\n\n")[0];
   assert.match(competing, /• 18 באוק׳ · .+ \(אתלטיקה\): מרתון אמסטרדם/, "athlete competing this week");
@@ -595,6 +595,28 @@ test("#digest: page, entry points and the week's text", async () => {
 });
 
 const digestSection = (text, title) => (text.split(`*${title}*\n`)[1] || "").split("\n\n")[0];
+
+test("#digest: this week's results group ended competitions with their changes", async () => {
+  const empty = digestSection((await digestOf()).text, "תוצאות השבוע");
+  assert.strictEqual(empty, "אין תחרויות שהסתיימו השבוע.");
+
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.changes.unshift(
+    {at: "2026-10-25", text: "התעמלות מכשירים: נבחרת הגברים סיימה שישית באליפות העולם."},
+    {at: "2026-10-24", text: "ארטיום דולגופיאט זכה בכסף בקרקע.", athleteId: "artem-dolgopyat"},
+    {at: "2026-10-25", text: "ג׳ודו: עדכון שאינו קשור לתחרות שהסתיימה."});
+  const {text} = await digestOf({data, now: "2026-10-26T09:00:00Z"});
+  const results = digestSection(text, "תוצאות השבוע");
+  const gym = results.split("\n• ").find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026"));
+  assert.ok(gym && gym.includes("25 באוק׳") && gym.includes("הסתיימה"), results);
+  assert.ok(gym.includes("  – התעמלות מכשירים: נבחרת הגברים סיימה שישית") && gym.includes("  – ארטיום דולגופיאט זכה בכסף"), gym);
+  const changes = digestSection(text, "מה התעדכן");
+  assert.ok(!changes.includes("סיימה שישית") && !changes.includes("זכה בכסף"), "no repeat under מה התעדכן");
+  assert.ok(changes.includes("ג׳ודו: עדכון שאינו קשור"), "other sports' changes stay put");
+
+  const judo = digestSection((await digestOf({now: "2026-11-01T09:00:00Z"})).text, "תוצאות השבוע");
+  assert.ok(judo.includes("גרנד סלאם אבו דאבי (ג׳ודו), הסתיימה") && judo.includes("  ישראלים: ") && judo.includes("התוצאות עוד לא עודכנו באתר."), judo);
+});
 
 test("#digest: athletes in a competition under way are listed under it", async () => {
   // 20 Oct: day 4 of the gymnastics Worlds; the gymnasts' nextDate (18–19 Oct) has passed.
@@ -625,7 +647,7 @@ test("#digest: ≤3500 chars with 60 long changes, no data asterisks, bullets cu
   const {text} = await digestOf({data});
   assert.ok(text.length <= 3500, String(text.length));
   assert.match(text, /• ועוד \d+ באתר/);
-  assert.strictEqual(boldLines(text).length, 4, "only the header and section headings are bold");
+  assert.strictEqual(boldLines(text).length, 5, "only the header and section headings are bold");
   assert.ok(!/[_~]/.test(text));
   assert.ok(text.split("\n").filter(l => l.startsWith("• ") || l.startsWith("  ")).every(l => l.length <= 160));
   assert.ok(text.endsWith("כדאי לבדוק מול המקור."), "footer never trimmed");
