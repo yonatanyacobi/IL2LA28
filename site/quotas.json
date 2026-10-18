@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:27:47Z",
+ "updatedAt": "2026-10-18T19:00:00Z",
  "items": [
   {
    "sportId": "judo",
@@ -503,6 +503,36 @@
   },
   {
    "sportId": "sailing",
+   "event": "גלישת רוח iQFoil נשים",
+   "totalQuotas": 25,
+   "maxPerNOC": 1,
+   "allocation": "10 מדינות באליפות העולם 2027, 7 באירועים יבשתיים (2 מהם באירוע האירופי), 6 בתחרות ההזדמנות האחרונה 2028 ועוד 1 למדינה מתפתחת (Emerging Nations), ומקום למארחת; סירה אחת למדינה.",
+   "israelStatus": "in-contention",
+   "israelNote": "תמר שטיינברג אלופת העולם 2026; שרון קנטור כסף; המכסות יחולקו באליפות העולם 2027",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בשייט – מקצי יחיד, פורטלזה",
+    "start": "2027-01-15"
+   },
+   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "sailing",
+   "event": "גלישת רוח iQFoil גברים",
+   "totalQuotas": 25,
+   "maxPerNOC": 1,
+   "allocation": "10 מדינות באליפות העולם 2027, 7 באירועים יבשתיים (2 מהם באירוע האירופי), 6 בתחרות ההזדמנות האחרונה 2028 ועוד 1 למדינה מתפתחת (Emerging Nations), ומקום למארחת; סירה אחת למדינה.",
+   "israelStatus": "in-contention",
+   "israelNote": "תום ראובני אלוף אולימפי ומקום 5 באליפות העולם 2026; יואב עומר מקום 8",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בשייט – מקצי יחיד, פורטלזה",
+    "start": "2027-01-15"
+   },
+   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "sailing",
    "event": "ILCA 7 גברים",
    "totalQuotas": 43,
    "maxPerNOC": 1,
@@ -740,7 +770,51 @@
    "nextQuotaEvent": null,
    "source": "https://www.worldaquatics.com/news/4498571/la28-olympic-games-angeles-2028-water-polo-qualification-system-finalised-ioc-world-aquatics",
    "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "rowing",
+   "event": "סקיף יחיד (1x) גברים ונשים",
+   "totalQuotas": 66,
+   "maxPerNOC": 2,
+   "allocation": "לכל מגדר: 10 באליפות העולם 2027 בלוצרן, 15 במקצי קליטה יבשתיים (3 מהם באירופה), 2 במקצה הקליטה האחרון, ועוד מקום מארחת ו-2 אוניברסליות (במסמך השיטה יש סתירה: בטבלה B.1 מקום אוניברסליות אחד לכל מגדר, ובסעיף D.7 שניים).",
+   "israelStatus": "unknown",
+   "israelNote": "אין חותר/ת ישראלי/ת אולימפי/ת במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בחתירה, לוצרן",
+    "start": "2027-08-23",
+    "end": "2027-08-29"
+   },
+   "source": "https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "canoe",
+   "event": "קאנו ספרינט – גברים ונשים",
+   "totalQuotas": 234,
+   "maxPerNOC": 16,
+   "allocation": "לכל מגדר: רוב המקומות לפי דירוג הקליטה האולימפי ב-31.12.2027 (תוצאות מ-20.4.2026), והיתר באירועי קליטה יבשתיים ב-2028; עד 2 סירות למדינה בכל מקצה.",
+   "israelStatus": "unknown",
+   "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו ספרינט במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
+   "nextQuotaEvent": null,
+   "source": "https://cdn.nocnsf.nl/media/qllnxmff/csp-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "canoe",
+   "event": "קאנו סלאלום – גברים ונשים",
+   "totalQuotas": 82,
+   "maxPerNOC": 6,
+   "allocation": "לכל מגדר 19 מקומות לפי הדירוג ב-3.10.2027 (6 K-1, 3 X-1, 10 C-1; תוצאות מ-20.7.2026), והיתר בתחרויות יבשתיות ועולמית ב-2028; אחד למדינה בכל מקצה.",
+   "israelStatus": "unknown",
+   "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו סלאלום במעקב",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בקאנו סלאלום, לה סאו",
+    "start": "2027-09-07",
+    "end": "2027-09-12"
+   },
+   "source": "https://cdn.nocnsf.nl/media/1v2nt1k3/csl-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
   }
  ],
- "unpublished": 10
+ "unpublished": 5
 }

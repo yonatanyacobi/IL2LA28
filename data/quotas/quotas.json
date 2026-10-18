@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:27:47Z",
+ "updatedAt": "2026-10-18T19:00:00Z",
  "items": [
   {
    "sportId": "judo",
@@ -679,8 +679,8 @@
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "ofir",
+    "status": "ok",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -698,8 +698,8 @@
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "ofir",
+    "status": "ok",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -1083,8 +1083,8 @@
    },
    "source": "https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "ofir",
+    "status": "ok",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -1097,10 +1097,10 @@
    "israelStatus": "unknown",
    "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו ספרינט במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
    "nextQuotaEvent": null,
-   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
+   "source": "https://cdn.nocnsf.nl/media/qllnxmff/csp-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "ofir",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -1117,10 +1117,10 @@
     "start": "2027-09-07",
     "end": "2027-09-12"
    },
-   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
+   "source": "https://cdn.nocnsf.nl/media/1v2nt1k3/csl-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "ofir",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   }
