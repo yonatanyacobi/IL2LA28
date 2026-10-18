@@ -56,17 +56,17 @@ Nav highlight: "אודות". Route tokens: `corrections` and `corrections-<athle
 <p class="crumb"><a href="#about">→ אודות</a></p>
 <h1 tabindex="-1">יומן התיקונים</h1>
 <p class="muted">כל טעות שתוקנה באתר מאז ההשקה ב־{fmt(LAUNCH_AT)}: מה היה כתוב, מה נכון, ומאיזה מקור.
-  לפני ההשקה בדקנו ידנית את כל הרשומות ותיקנו 25 מהן.</p>
+  לפני ההשקה בדקנו את הרשומות מול המקורות ותיקנו 25 מהן.{verified}</p>
 
 <section class="panel" aria-labelledby="howH">
   <h2 id="howH">מטעות לתיקון</h2>
-  <ol class="steps">
+  <ol class="steps" role="list">
     <li><b>מצאתם טעות</b><span>שלחו קישור לדף ומקור לנתון הנכון.</span></li>
-    <li><b>בודקים מול המקור</b><span>אדם בודק כל דיווח, לא תהליך אוטומטי.</span></li>
+    <li><b>בודקים מול המקור</b><span>כל דיווח נבדק ידנית מול המקור, לא אוטומטית.</span></li>
     <li><b>מתקנים ומתעדים</b><span>התיקון עולה לאתר ונרשם כאן.</span></li>
   </ol>
   <p>היעד: תיקון תוך 48 שעות מקבלת דיווח עם מקור.{stat}</p>
-  <p><a href="#about-trust">איך אנחנו בודקים</a> · דיווח: <span dir="ltr">{CONTACT_EMAIL}</span></p>
+  <p><a href="#about-trust">איך אנחנו בודקים</a> · דיווח: <span dir="ltr">{REPORT_EMAIL}</span></p>
 </section>
 
 {filter line, only on #corrections-<id>: <p>מוצגים התיקונים של <b>{name}</b> · <a href="#corrections">לכל התיקונים</a></p>}
@@ -84,15 +84,20 @@ Nav highlight: "אודות". Route tokens: `corrections` and `corrections-<athle
 </section>
 ```
 **Dynamic parts**
-- `{stat}`: shown once there are ≥ 5 entries with `reportedAt` — ` עד עכשיו {k} מתוך {n} תיקונים בוצעו בתוך 48 שעות.`
+- `{verified}`: ` {V} מהן כבר נבדקו ידנית.`, where `V` = athletes with `trustOf(a) === "ok"`, the same count as the
+  trust block. Omitted when V = 0. The 25 fixes come from the source audit of all records, not from the V manual
+  checks, so the sentence must not read as "25 of V".
+- `{stat}`: shown once there are ≥ 5 entries with `reportedAt` — ` עד עכשיו, {k} מתוך {n} התיקונים בוצעו תוך 48 שעות.`
   Below 5 it's omitted; small numbers would mislead.
 - `{speed}`, from `h = (at - reportedAt) / 36e5`:
-  - h < 24: `תוקן באותו יום`
-  - h ≤ 48: `תוקן תוך יומיים`
-  - otherwise: `תוקן אחרי {ceil(h/24)} ימים`
+  - h < 24: `תוך פחות מיום`
+  - h ≤ 48: `תוך יומיים`
+  - otherwise: `אחרי {ceil(h/24)} ימים`
+
+  The foot already starts with `תוקן ב־…`, so `{speed}` carries no verb.
 
   It is shown even past 48 hours: hiding slow fixes would undercut the point of the page.
-- `by` labels: `reader` → `דיווח של קורא/ת`, `audit` → `בדיקה ידנית`, `job` → `העדכון האוטומטי מצא`.
+- `by` labels: `reader` → `דיווח של קורא/ת`, `audit` → `בדיקת עובדות`, `job` → `נמצא בעדכון האוטומטי`.
 - Field labels: reuse `describePatch()` labels, plus `stage` → `שלב` and `quota` → `מכסה`.
 - Empty or partial values: `wrong === ""` → a single `<span class="now-is">נוסף: <ins>{right}</ins></span>`;
   `right === ""` → `<span class="was">הוסר: <del>{wrong}</del></span>`.
@@ -104,7 +109,7 @@ until there are 300 entries.
 ### Empty state (launch day)
 ```html
 <div class="empty"><p>עוד אין תיקונים מאז ההשקה.</p>
-  <p>מצאתם טעות? שלחו קישור ומקור ל־<span dir="ltr">{CONTACT_EMAIL}</span>, והתיקון יופיע כאן.</p></div>
+  <p>מצאתם טעות? שלחו קישור ומקור ל־<span dir="ltr">{REPORT_EMAIL}</span>, והתיקון יופיע כאן.</p></div>
 ```
 The "מטעות לתיקון" panel stays above it, so the promise is visible from day one.
 On `#corrections-<id>` with no entries: `אין תיקונים מתועדים לרשומה הזאת.` plus the link to all corrections.
@@ -112,8 +117,8 @@ On `#corrections-<id>` with no entries: `אין תיקונים מתועדים ל
 ## 3. Entry points
 | Where | Change |
 |---|---|
-| `reportBox()` ("מצאתם טעות?", on every athlete page and on About) | Add a last line: `<p class="foot">כל התיקונים מתפרסמים ב<a href="#corrections">יומן התיקונים</a>, בדרך כלל תוך 48 שעות.</p>` |
-| About trust block, "תיקונים" (`about-trust.md`) | Replace the sentence about "מה התעדכן" with `כל תיקון נרשם ב<a href="#corrections">יומן התיקונים</a> ({n} מאז ההשקה).` With n = 0: `…ביומן התיקונים.` |
+| `reportBox()` ("מצאתם טעות?", on every athlete page and on About) | Add a last line: `<p class="foot">כל התיקונים מתפרסמים ב<a href="#corrections">יומן התיקונים</a>, והיעד הוא תוך 48 שעות.</p>` |
+| About trust block, "תיקונים" (`about-trust.md`) | Replace the sentence about "מה התעדכן" with `כל תיקון נרשם ב<a href="#corrections">יומן התיקונים</a> ({plural(n, "תיקון אחד", "תיקונים")} מאז ההשקה).` With n = 0: `…ביומן התיקונים.` |
 | Athlete page `dl.facts` | When the record has entries: `<dt>תיקונים</dt><dd><a href="#corrections-{id}">{plural(n, "תיקון אחד", "תיקונים")}</a></dd>` |
 | Athlete history timeline | `kind: "correction"` entries render like the others; the dot uses `.timeline li.k-correction::before{border-color:var(--muted)}` |
 | Footer `.site-foot` | After "איך הנתונים נאספים": ` · <a href="#corrections">יומן התיקונים</a>` |
@@ -149,7 +154,7 @@ On `#corrections-<id>` with no entries: `אין תיקונים מתועדים ל
 │                             אודות →  │
 │ יומן התיקונים                         │
 │ כל טעות שתוקנה מאז ההשקה ב־… לפני     │
-│ ההשקה בדקנו ותיקנו 25 רשומות.        │
+│ ההשקה בדקנו מול המקורות ותיקנו 25.   │
 │ ┌ מטעות לתיקון ────────────────────┐ │
 │ │ 1. מצאתם טעות                     │ │
 │ │    שלחו קישור לדף ומקור…          │ │
@@ -164,7 +169,7 @@ On `#corrections-<id>` with no entries: `אין תיקונים מתועדים ל
 │ │ דירוג או הישג                     │ │
 │ │ היה: ̶2̶ ̶ב̶ע̶ו̶ל̶ם̶                     │ │
 │ │ עכשיו: 1 בעולם (IJF, 21.10.2026) │ │
-│ │ תוקן ב־24 באוק׳ · באותו יום · ijf │ │
+│ │ תוקן ב־24 באוק׳ · תוך פחות מיום · ijf│ │
 │ └──────────────────────────────────┘ │
 └──────────────────────────────────────┘
 ```
@@ -179,8 +184,10 @@ Desktop: the three steps sit in one row, and `.fix-diff` shows the label in its 
 - **Escaping:** `wrong` and `right` values from the fixture are escaped. No `@` appears in any entry (no reporter emails).
 - **Export:** entries before `LAUNCH_AT` aren't exported.
 
-## Open for PM
-- Set `LAUNCH_AT`.
-- Confirm that "תיקנו 25 מהן" may be stated publicly. The count comes from `docs/audit/2026-10-18.md`.
-- Confirm that 48 hours is a target we can keep at night and on weekends. If not, say `היעד: תוך יומיים בימי חול`.
-- `CONTACT_EMAIL` is still the personal address flagged in the backlog.
+## Decisions (PM, on #89)
+- `LAUNCH_AT = "2026-10-22T09:00:00Z"` (12:00 Israel time). If launch slips to the 27.10 fallback, it becomes
+  `"2026-10-27T10:00:00Z"`; the lead sets it in the launch PR.
+- "תיקנו 25" may be published, worded as a check against sources, not "ידנית" (see `{verified}`).
+- The 48-hour target applies every day, including nights and weekends (launch runbook shifts).
+- `{REPORT_EMAIL}` is the dedicated reports inbox (backlog item D2), never a personal address. **Don't ship
+  `#corrections` until D2 is in.**
