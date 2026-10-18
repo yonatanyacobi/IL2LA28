@@ -704,6 +704,27 @@ test("edit dialog: rank number needs its list and date", async () => {
   assert.deepStrictEqual([saved[0].rankNum, saved[0].rankList, saved[0].rankAsOf], [1, "IJF World Ranking List", "2026-10-15"]);
 });
 
+test("two-day quota event inside a longer competition (Doha 3–4.11 in the 1–14.11 Worlds): stakes, then awaiting", async () => {
+  const base = QUOTAS.items[0];   // valid item
+  const quotas = {updatedAt: "2026-10-30", items: [{...base, sportId: "shooting", event: "רובה אוויר", israelStatus: "in-contention",
+    stakes: "stake doha", nextQuotaEvent: {name: "גמר דוחא", start: "2026-11-03", end: "2026-11-04"}}]};
+  const at = async day => {
+    const {view} = await boot({quotas, now: `${day}T08:00:00Z`});
+    const row = rowsOf(stripOf(view("home"))).find(r => r.includes("אליפות העולם בקליעה")) || "";
+    return {row, sport: view("sport-shooting"), all: view("quotas")};
+  };
+  for (const day of ["2026-11-03", "2026-11-04"]) {
+    const d = await at(day);
+    assert.ok(d.row.includes("<b>מה זה אומר:</b> <bdi>רובה אוויר</bdi>: stake doha") && !d.row.includes("stakes awaiting"), `${day}: strip stakes`);
+    assert.ok(d.sport.includes("stake doha") && !d.sport.includes("q-awaiting"), `${day}: sport page stakes`);
+    assert.ok(d.all.split('id="qNextH"')[1]?.includes("גמר דוחא"), `${day}: still upcoming on #quotas`);
+  }
+  const after = await at("2026-11-05");
+  assert.ok(after.row.includes('<small class="stakes awaiting">') && after.row.includes("<bdi>רובה אוויר</bdi> · 3 בנוב׳ – 4 בנוב׳ 2026") && !after.row.includes("stake doha"), "5.11: strip awaiting");
+  assert.ok(after.sport.includes("q-awaiting") && after.sport.includes("גמר דוחא (3 בנוב׳ – 4 בנוב׳ 2026). עדכון המכסות יפורסם") && !after.sport.includes("stake doha"), "5.11: sport page awaiting");
+  assert.ok(after.all.includes('id="qWaitH"') && !(after.all.split('id="qNextH"')[1] || "").includes("גמר דוחא"), "5.11: #quotas awaiting panel");
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));
