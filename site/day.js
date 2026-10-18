@@ -52,9 +52,13 @@ function fallbackSessions(d){
 // The job records results in athletes' history (#137); a session without its own result takes them for that day.
 const historyResult = (a, d) => (Array.isArray(a.history) ? a.history : []).find(h => h.kind === "result" && h.at === d && str(h.text).trim());
 
-// Exported sessions, plus fallback pseudo-sessions for athletes who have no session that day (merged per athlete).
+// Exported sessions, plus fallback pseudo-sessions for athletes who have no session in that day's competition (merged
+// per athlete). An athlete with a session on any day of the competition gets no fallback row, or a nextDate on day 1
+// and a session on day 3 would list them twice.
 function daySessions(d){
-  const real = exportedSessions().filter(s => s.day === d).map(s => {
+  const all = exportedSessions();
+  const inComp = new Set(all.flatMap(s => s.athletes.map(a => `${s.comp.id}|${a.id}`)));
+  const real = all.filter(s => s.day === d).map(s => {
     if (s.result) return s;
     const found = s.athletes.map(a => [a, historyResult(a, d)]).filter(([, h]) => h);
     if (!found.length) return s;
@@ -63,7 +67,8 @@ function daySessions(d){
     return {...s, result: text.slice(0, 120), resultSource: found[0][1].source, resultAt: ""};   // a date only: no "עודכן ב־"
   });
   const covered = new Set(real.flatMap(s => s.athletes.map(a => a.id)));
-  return [...real, ...fallbackSessions(d).filter(s => !covered.has(s.athletes[0].id))];
+  return [...real, ...fallbackSessions(d).filter(s => !covered.has(s.athletes[0].id)
+    && !(s.comp && inComp.has(`${s.comp.id}|${s.athletes[0].id}`)))];
 }
 const hasIsraelis = d => daySessions(d).length > 0;
 
@@ -87,7 +92,9 @@ function sessionRow(s, d){
 
 const followedIn = s => s.athletes.some(a => S.follows.has(a.id));
 // Followed first, then by start time (untimed last), then by name.
-const sessionOrder = (x, y) => followedIn(y) - followedIn(x) || str(x.startUtc || "~").localeCompare(str(y.startUtc || "~"))
+// Start time ascending, untimed last (explicit: localeCompare would put a "~" placeholder before digits).
+const byStart = (a, b) => !a === !b ? (a ? Date.parse(a) - Date.parse(b) : 0) : a ? -1 : 1;
+const sessionOrder = (x, y) => followedIn(y) - followedIn(x) || byStart(x.startUtc, y.startUtc)
   || heCmp(x.athletes[0].name, y.athletes[0].name);
 
 function compBlock(comp, sessions, sid, d){
@@ -122,7 +129,7 @@ function viewDay(d){
   }
   const rank = sid => followsSport(sid) ? 0 : [...bySport.get(sid).values()].some(c => c.list.some(followedIn)) ? 1 : 2;
   const sports = [...bySport.keys()].sort((x, y) => rank(x) - rank(y) || heCmp(sportName(x), sportName(y)));
-  const firstStart = c => c.list.map(s => s.startUtc || "~").sort()[0];
+  const firstStart = c => c.list.map(s => s.startUtc).sort(byStart)[0] || null;
   let after = "";
   if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && !after; i++) if (hasIsraelis(addDays(d, i))) after = addDays(d, i);
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
@@ -138,7 +145,7 @@ function viewDay(d){
   <p class="foot">${tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)} · ` : ""}${CADENCE}</p>
   ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
       <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
-      ${[...bySport.get(sid).values()].sort((x, y) => firstStart(x).localeCompare(firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
+      ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
     : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.</p>${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
 }

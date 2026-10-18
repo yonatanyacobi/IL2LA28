@@ -1718,6 +1718,27 @@ test("#day (Gil D4, D6, D8): 'תאריך בלבד', no stakes for earned items, 
   assert.ok(out.split('id="ds-weightlifting"')[1].split("</h2>")[0].includes("במעקב שלך"), "D8: followed sport marked");
 });
 
+test("#day sessions sort by time with untimed last (Gil P1 on #151)", async () => {
+  const data = withSessions([
+    SESS({id: "a", startUtc: null, athleteIds: ["sergey-richter"], phase: "ללא שעה"}),
+    SESS({id: "b", startUtc: "2026-11-03T08:00:00Z", phase: "שנייה"}),
+    SESS({id: "c", startUtc: "2026-11-03T06:00:00Z", phase: "ראשונה"}),
+  ]);
+  const out = (await boot({data, quotas: SITE_QUOTAS, now: "2026-11-01T08:00:00Z"})).view("day-2026-11-03");
+  const order = ["ראשונה", "שנייה", "ללא שעה"].map(t => out.indexOf(t));
+  assert.ok(order.every(i => i > 0) && order[0] < order[1] && order[1] < order[2], "08:00, 10:00, then untimed: " + order);
+});
+
+test("#day: an athlete with a session later in the competition isn't listed on their nextDate too (Gil P1 on #151)", async () => {
+  // Hershko's nextDate is day 1 of Abu Dhabi (29.10); her session is on day 3 (31.10).
+  const data = withSessions([SESS({id: "j1", competitionId: "judo-gs-abu-dhabi-2026", date: "2026-10-31", startUtc: "2026-10-31T07:00:00Z",
+    athleteIds: ["raz-hershko"], phase: "מעל 78 ק״ג"})]);
+  const b = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
+  assert.ok(!b.view("day-2026-10-29").includes('href="#a-raz-hershko"'), "not on her nextDate");
+  assert.ok(b.view("day-2026-10-29").includes('href="#a-izhak-ashpiz"'), "others without a session keep their nextDate row");
+  assert.strictEqual((b.view("day-2026-10-31").match(/href="#a-raz-hershko"/g) || []).length, 1, "once, on the session day");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {
