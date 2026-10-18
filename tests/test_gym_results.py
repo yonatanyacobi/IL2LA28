@@ -42,13 +42,40 @@ class GymResultsTest(unittest.TestCase):
     def test_reserve_wording(self):
         comp, day = "אליפות העולם ברוטרדם", "19 באוק׳ 2026"
         self.assertEqual(gr.result_text("qual", 10, "balancebeam", comp, day, qualified=False, reserve=2),
-                         "מקום 10 בקורה במוקדמות אליפות העולם ברוטרדם (19 באוק׳ 2026), מחליף/ה 2 לגמר")
+                         "מקום 10 בקורה במוקדמות אליפות העולם ברוטרדם (19 באוק׳ 2026), מחליף/ה 2 לגמר הקורה")
         self.assertNotIn("לא עלה/תה", gr.result_text("qual", 9, "floor", comp, day, reserve=1))
         for bad in (dict(qualified=True, reserve=1), dict(reserve=0), dict(reserve="R1")):
             with self.assertRaises(ValueError, msg=bad):
                 gr.result_text("qual", 9, "floor", comp, day, **bad)
         with self.assertRaises(ValueError):
             gr.result_text("final", 4, "floor", comp, day, reserve=1)
+
+    def test_matches_runbook_173_exactly(self):
+        # The strings of docs/runbooks/result-night-1910.md (#173) with <N> = 12 and <R> = 2.
+        comp, day, N = "אליפות העולם בהתעמלות מכשירים 2026", "19 באוק׳ 2026", 12
+        cases = [
+            (gr.result_text("qual", N, "allaround", comp, day, True, gender="f"),
+             "מקום 12 בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב"),
+            (gr.result_text("qual", N, "allaround", comp, day, False, gender="f"),
+             "מקום 12 בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר הקרב־רב"),
+            (gr.result_text("qual", N, "unevenbars", comp, day, True, gender="f"),
+             "מקום 12 במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר המקבילים"),
+            (gr.result_text("qual", N, "unevenbars", comp, day, False, reserve=2, gender="f"),
+             "מקום 12 במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה 2 לגמר המקבילים"),
+            (gr.result_text("qual", N, "unevenbars", comp, day, False, gender="f"),
+             "מקום 12 במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר המקבילים"),
+            # Session `result` short forms.
+            (gr.session_text(N, "allaround", True, gender="f"), "מקום 12 בקרב־רב, עלתה לגמר"),
+            (gr.session_text(N, "allaround", False, gender="f"), "מקום 12 בקרב־רב, לא עלתה לגמר"),
+            (gr.session_text(N, "unevenbars", True, gender="f"), "מקום 12 במקבילים, עלתה לגמר"),
+            (gr.session_text(N, "unevenbars", False, reserve=2, gender="f"), "מקום 12 במקבילים, מחליפה 2"),
+            (gr.session_text(N, "unevenbars", False, gender="f"), "מקום 12 במקבילים, לא עלתה לגמר"),
+        ]
+        for got, want in cases:
+            self.assertEqual(got, want)
+        self.assertEqual(gr.session_text(N, "unevenbars", False, reserve=2), "מקום 12 במקבילים, מחליף/ה 2", "neutral default")
+        with self.assertRaises(ValueError):
+            gr.session_text(N, "unevenbars", True, reserve=2)
 
     def test_pdf_text_from_saved_fig_pdf(self):
         with open(PDF, "rb") as f:
@@ -66,9 +93,13 @@ class GymResultsTest(unittest.TestCase):
 
     def test_result_text_is_deterministic(self):
         self.assertEqual(gr.result_text("qual", 3, "floor", "אליפות העולם ברוטרדם", "18 באוק׳ 2026", True),
-                         "מקום 3 בקרקע במוקדמות אליפות העולם ברוטרדם (18 באוק׳ 2026), עלה/תה לגמר")
-        self.assertEqual(gr.result_text("qual", 67, "floor", "אליפות העולם ברוטרדם", "18 באוק׳ 2026", False)[-14:],
-                         "לא עלה/תה לגמר")
+                         "מקום 3 בקרקע במוקדמות אליפות העולם ברוטרדם (18 באוק׳ 2026), עלה/תה לגמר הקרקע")
+        self.assertTrue(gr.result_text("qual", 67, "floor", "אליפות העולם ברוטרדם", "18 באוק׳ 2026", False)
+                        .endswith(", לא עלה/תה לגמר הקרקע"))
+        self.assertEqual(gr.result_text("qual", 67, "floor", "x", "d"), "מקום 67 בקרקע במוקדמות x (d)", "no outcome stated")
+        self.assertEqual(gr.result_text("qual", 3, "floor", "x", "d", True, gender="m"), "מקום 3 בקרקע במוקדמות x (d), עלה לגמר הקרקע")
+        with self.assertRaises(ValueError):
+            gr.result_text("qual", 3, "floor", "x", "d", True, gender="x")
         self.assertEqual(gr.result_text("final", 1, "floor", "אליפות העולם ברוטרדם", "24 באוק׳ 2026"),
                          "זהב בגמר קרקע באליפות העולם ברוטרדם (24 באוק׳ 2026)")
         self.assertEqual(gr.result_text("final", 5, "קורה", "x", "d"), "מקום 5 בגמר קורה בx (d)")

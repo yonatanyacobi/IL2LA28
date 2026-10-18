@@ -25,6 +25,15 @@ AGENT = "IL2LA28-results/1.0 (+https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT
 APPARATUS = {"floor": "קרקע", "pommelhorse": "סוס סמוכות", "rings": "טבעות", "vault": "קפיצות", "parallelbars": "מקבילים",
              "horizontalbar": "מתח", "unevenbars": "מקבילים מדורגים", "balancebeam": "קורה", "allaround": "קרב־רב"}
 MEDAL = {1: "זהב", 2: "כסף", 3: "ארד"}
+# "לגמר <final>" in qualification texts, as the result-night runbook (#173) writes them.
+FINAL_NAME = {"floor": "הקרקע", "pommelhorse": "סוס הסמוכות", "rings": "הטבעות", "vault": "הקפיצות",
+              "parallelbars": "המקבילים", "horizontalbar": "המתח", "unevenbars": "המקבילים", "balancebeam": "הקורה",
+              "allaround": "הקרב־רב"}
+# The apparatus in the short session text (#173): "במקבילים", not "במקבילים מדורגים".
+SHORT_NAME = {"unevenbars": "מקבילים"}
+VERBS = {None: {"in": "עלה/תה", "out": "לא עלה/תה", "reserve": "מחליף/ה"},
+         "f": {"in": "עלתה", "out": "לא עלתה", "reserve": "מחליפה"},
+         "m": {"in": "עלה", "out": "לא עלה", "reserve": "מחליף"}}
 
 
 def fetch(url, timeout=30):
@@ -128,24 +137,45 @@ def pdf_text(data):
     return "\n".join(lines)
 
 
-def result_text(phase, place, apparatus, comp, day_he, qualified=None, reserve=None):
-    """The one Hebrew wording for a gymnastics result (#168), also for manual entries on result night.
+def _qual_outcome(qualified, reserve, gender):
+    """(verb, reserve) for a qualification outcome; verb is None when qualified is None (outcome not stated)."""
+    if gender not in VERBS:
+        raise ValueError(f"gender must be one of {sorted(g for g in VERBS if g)} or None, got {gender!r}")
+    if reserve is not None:
+        if qualified or type(reserve) is not int or reserve < 1:
+            raise ValueError(f"reserve must be an int >= 1 on a non-qualified result, got {reserve!r}")
+        return f"{VERBS[gender]['reserve']} {reserve}", reserve
+    if qualified is None:
+        return None, None
+    return VERBS[gender]["in" if qualified else "out"], None
+
+
+def result_text(phase, place, apparatus, comp, day_he, qualified=None, reserve=None, gender=None):
+    """The one Hebrew wording for a gymnastics result (#168): the history text the job and manual entries share.
     phase: "qual" or "final"; apparatus: a Longines key (APPARATUS) or Hebrew; day_he: site date style.
-    reserve: n for a qualification reserve (Longines R<n>), written as such, never as "לא עלה/תה"."""
+    reserve: n for a qualification reserve (Longines R<n>), never written as "not qualified".
+    gender: "f" / "m", or None for the neutral form (עלה/תה). Matches the result-night runbook #173 exactly."""
     app = APPARATUS.get(apparatus, apparatus)
     if phase == "final":
         if reserve is not None:
             raise ValueError("reserve applies to a qualification result")
+        _qual_outcome(None, None, gender)   # validates gender
         return f"{MEDAL.get(place, f'מקום {place}')} בגמר {app} ב{comp} ({day_he})"
     if phase == "qual":
-        if reserve is not None:
-            if qualified or type(reserve) is not int or reserve < 1:
-                raise ValueError(f"reserve must be an int >= 1 on a non-qualified result, got {reserve!r}")
-            tail = f", מחליף/ה {reserve} לגמר"
-        else:
-            tail = "" if qualified is None else (", עלה/תה לגמר" if qualified else ", לא עלה/תה לגמר")
+        verb, _ = _qual_outcome(qualified, reserve, gender)
+        final = FINAL_NAME.get(apparatus, "")
+        tail = f", {verb} לגמר" + (f" {final}" if final else "") if verb else ""
         return f"מקום {place} ב{app} במוקדמות {comp} ({day_he}){tail}"
     raise ValueError(f"phase must be qual or final, got {phase!r}")
+
+
+def session_text(place, apparatus, qualified=None, reserve=None, gender=None):
+    """The short form for a session's `result` on #day (#173): "מקום 12 במקבילים, עלתה לגמר" / ", מחליפה 2"."""
+    verb, res = _qual_outcome(qualified, reserve, gender)
+    short = f"מקום {place} ב{SHORT_NAME.get(apparatus, APPARATUS.get(apparatus, apparatus))}"
+    if verb is None:
+        return short
+    return f"{short}, {verb}" if res is not None else f"{short}, {verb} לגמר"
 
 
 def _load(arg):
