@@ -7,8 +7,11 @@
 // Olympic rank and fall back to the world rank (the row then sits on that list, e.g. tennis' WTA list).
 const rankOn = (n, list, asOf) => Number.isInteger(n) && n >= 1 ? {n, list: str(list), asOf} : null;
 const ranksOf = a => [rankOn(a.olympicRankNum, a.olympicRankList, a.olympicRankAsOf), rankOn(a.rankNum, a.rankList, a.rankAsOf)].filter(Boolean);
-// Raw numbers order the rows (not rankOf(), which hides stale ranks); stale ones are flagged instead.
-const rankStale = r => !isDate(r.asOf) || dayNo(r.asOf, today()) - 1 > RANK_MAX_AGE_D;
+// Raw numbers order the rows (not rankOf(), which hides stale ranks); stale ones are flagged instead. A date after
+// today is a data error, never "fresh" (Noa on #266).
+const rankStale = r => !isDate(r.asOf) || r.asOf > today() || dayNo(r.asOf, today()) - 1 > RANK_MAX_AGE_D;
+// The athlete page dates a rank the way the sport page does: the neutral pill when stale, plain otherwise.
+const rankWhen = (r, fresh) => !isDate(r.asOf) ? "" : rankStale(r) ? ` <span class="pill ended">דירוג מ־${fmt(r.asOf)}</span>` : fresh(fmt(r.asOf));
 const STANDINGS_CAVEAT = "הקו הוא מקום ברשימה, לא תחזית. ברוב השיטות כל מדינה יכולה לקבל לכל היותר מכסה אחת במקצה, ויש גם מסלולים יבשתיים.";
 
 function standingsGroups(q){
@@ -52,8 +55,8 @@ function standingsPanel(sid){
 // athlete is ranked in on the cutoff's own list.
 function standingsFact(a){
   const o = rankOn(a.olympicRankNum, a.olympicRankList, a.olympicRankAsOf);
-  const olympic = o ? `<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt><dd>${o.n} (<bdi>${esc(o.list)}</bdi>${isDate(o.asOf) ? `, נכון ל־${fmt(o.asOf)}` : ""})</dd>` : "";
+  const olympic = o ? `<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt><dd>${o.n} (<bdi>${esc(o.list)}</bdi>${rankWhen(o, d => `, נכון ל־${d}`)})</dd>` : "";
   return olympic + quotasOf(a.sportId).map(q => [q, q.cutoff && quotaAthletes(q).includes(a) && ranksOf(a).find(r => r.list === q.cutoff.list)])
     .filter(([, r]) => r)
-    .map(([q, r]) => `<dt>מול קו המכסה</dt><dd><a href="#sport-${esc(a.sportId)}">מקום ${r.n} · הקו: מקום ${q.cutoff.rank}</a> · <bdi>${esc(q.cutoff.list)}</bdi>${isDate(r.asOf) ? `, ${fmt(r.asOf)}` : ""}</dd>`).join("");
+    .map(([q, r]) => `<dt>מול קו המכסה</dt><dd><a href="#sport-${esc(a.sportId)}">מקום ${r.n} · הקו: מקום ${q.cutoff.rank}</a> · <bdi>${esc(q.cutoff.list)}</bdi>${rankWhen(r, d => `, ${d}`)}</dd>`).join("");
 }

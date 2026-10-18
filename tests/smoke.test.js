@@ -2635,6 +2635,17 @@ test("standings copy (Gil on #266): no LA28 in public text; a rank without a dat
   assert.ok(!/LA28/.test(visibleText(block + page)) && page.includes("<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt>"), "copy-rules: the Games' name");
 });
 
+test("standings (Noa on #266): the athlete page flags a stale rank like the sport page; a future date is never fresh", async () => {
+  const {b, block} = await standingsAt({ranks: {"izhak-ashpiz": {olympicRankNum: 2, olympicRankList: OLY, olympicRankAsOf: "2026-08-04"},
+    "j-second": {olympicRankNum: 20, olympicRankList: OLY, olympicRankAsOf: "2026-11-30"}}});
+  const page = b.view("a-izhak-ashpiz");
+  const facts = page.split("<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt>")[1].split("</dl>")[0];
+  assert.ok(facts.includes('2 (<bdi>IJF Olympic Ranking List</bdi> <span class="pill ended">דירוג מ־4 באוג׳ 2026</span>)') && !facts.includes("נכון ל־4 באוג׳"), facts);
+  assert.ok(facts.includes('<bdi>IJF Olympic Ranking List</bdi> <span class="pill ended">דירוג מ־4 באוג׳ 2026</span></dd>'), "the standing fact too");
+  const future = block.split("<li>").find(li => li.includes('href="#a-j-second"')) || "";
+  assert.ok(future.includes('<span class="pill ended">דירוג מ־30 בנוב׳ 2026</span>'), "future date flagged: " + future);
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {
