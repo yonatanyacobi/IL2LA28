@@ -9,6 +9,9 @@ const assert = require("assert");
 const ROOT = path.join(__dirname, "..");
 const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
+// site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
+// (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
+const QUOTAS_SNAPSHOT = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/site-quotas-2026-10-18.json"), "utf8"));
 
 function fakeEl(id){
   return {
@@ -650,7 +653,7 @@ test("#admin launch readiness: counts link to where each issue is fixed", async 
 });
 
 test("#admin result night: picks quota events ending today/yesterday, links the runbook, keeps ticks", async () => {
-  const SITE_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+  const SITE_QUOTAS = QUOTAS_SNAPSHOT;
   const panelOf = html => html.split('id="resultNight"')[1].split("</section>")[0];
   const admin = async (now, quotas = SITE_QUOTAS) => {
     const b = await boot({quotas, now});
@@ -862,7 +865,7 @@ test("calendar filters update only the results list, so focus and scroll survive
 });
 
 // ---------- #digest ----------
-const REAL_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+const REAL_QUOTAS = QUOTAS_SNAPSHOT;
 const DIGEST_NOW = "2026-10-18T09:00:00Z";
 const digestOf = async opts => { const b = await boot({now: DIGEST_NOW, quotas: REAL_QUOTAS, ...opts}); return {...b, text: b.run("digestText()")}; };
 const boldLines = text => text.split("\n").filter(l => l.includes("*"));
@@ -980,7 +983,7 @@ test("#digest: copy succeeds, and a refused clipboard selects the textarea", asy
 // Date matrix on the real snapshot + published quotas: the strip, #quotas and the sport page must show the
 // event that is on, keep a multi-day quota event current until its last day, and drop its stakes after.
 // tests/test_quota_due.py checks the job's warnings on the same dates.
-const SITE_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+const SITE_QUOTAS = QUOTAS_SNAPSHOT;
 // Last day of each quota event, as the page derives it (own end, else the containing competition, else start).
 const EVENT_END = {
   "אליפות העולם רוטרדם – גמר קבוצתי גברים": "2026-10-20",
