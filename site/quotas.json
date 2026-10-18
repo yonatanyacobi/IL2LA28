@@ -193,20 +193,6 @@
    "source": "https://cdn.nocnsf.nl/media/nlsj0xsh/wlf-la28-qualification-system.pdf"
   },
   {
-   "sportId": "wrestling",
-   "event": "כל המשקלים",
-   "totalQuotas": 288,
-   "maxPerNOC": 18,
-   "allocation": "מדליסטים באליפות העולם 2027, 3 הראשונים בדירוג UWW, ואז 2 לכל משקל בטורנירי מוקדמות יבשתיים ב-2028; אחד/ת לכל משקל למדינה.",
-   "israelStatus": "unknown",
-   "israelNote": "אין מתאבק/ת ישראלי/ת במעקב",
-   "nextQuotaEvent": {
-    "name": "אליפות אירופה",
-    "start": "2027-04-05"
-   },
-   "source": "https://cdn.uww.org/2026-08/260825_wre_la28_qualification-system.pdf"
-  },
-  {
    "sportId": "boxing",
    "event": "כל המשקלים",
    "totalQuotas": 248,
@@ -232,34 +218,6 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "stakes": "גמר קבוצתי ב־20 באוק׳ 2026: רק 3 הנבחרות הראשונות זוכות במכסת נבחרת (5 מתעמלים) ל־LA28"
-  },
-  {
-   "sportId": "artistic-gymnastics",
-   "event": "אישי גברים (קרב-רב ומכשירים)",
-   "totalQuotas": null,
-   "maxPerNOC": 3,
-   "allocation": "למדינות בלי נבחרת: 8 בקרב-רב באליפות העולם 2027, מדליסט מוביל בכל מכשיר ב-2027, ו-12 דרך גביעי העולם במכשירים 2028.",
-   "israelStatus": "in-contention",
-   "israelNote": "ארטיום דולגופיאט (זהב בקרקע, אירופה 2026); זמין רק אם הנבחרת לא תעפיל",
-   "nextQuotaEvent": {
-    "name": "אליפות העולם 2027",
-    "start": "2027-09-28"
-   },
-   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf"
-  },
-  {
-   "sportId": "artistic-gymnastics",
-   "event": "אישי נשים (קרב-רב ומכשירים)",
-   "totalQuotas": null,
-   "maxPerNOC": 3,
-   "allocation": "14 בקרב-רב באליפות העולם 2027 (אחת לכל מדינה), מדליסטית מובילה בכל מכשיר ב-2027, ו-8 דרך גביעי העולם במכשירים 2028.",
-   "israelStatus": "unknown",
-   "israelNote": "ליהיא רז, רוני שמאי ויהלי שושני; אין נבחרת נשים ישראלית ברוטרדם",
-   "nextQuotaEvent": {
-    "name": "אליפות העולם 2027",
-    "start": "2027-09-28"
-   },
-   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf"
   },
   {
    "sportId": "rhythmic-gymnastics",
@@ -355,21 +313,6 @@
     "start": "2027-06-26"
    },
    "source": "https://cdn.nocnsf.nl/media/hcvbaw55/ows-la28-qualification-system.pdf"
-  },
-  {
-   "sportId": "artistic-swimming",
-   "event": "קבוצתי",
-   "totalQuotas": 10,
-   "maxPerNOC": 1,
-   "allocation": "3 הנבחרות המובילות באליפות העולם בודפשט 2027, המארחת, ועד 4 באליפויות יבשתיות 2027 (אירופה – רק אם אף נבחרת אירופית לא בשלוש הראשונות).",
-   "israelStatus": "unknown",
-   "israelNote": "מקום 6 בקבוצתי טכני, גביע העולם פריז 2026; יוגב דגן בסגל",
-   "nextQuotaEvent": {
-    "name": "אליפות העולם באקווטיקה בודפשט – שחייה אמנותית",
-    "start": "2027-07-10",
-    "end": "2027-07-17"
-   },
-   "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf"
   },
   {
    "sportId": "artistic-swimming",
@@ -720,5 +663,5 @@
    "source": "https://www.worldaquatics.com/news/4498571/la28-olympic-games-angeles-2028-water-polo-qualification-system-finalised-ioc-world-aquatics"
   }
  ],
- "unpublished": 5
+ "unpublished": 9
 }
