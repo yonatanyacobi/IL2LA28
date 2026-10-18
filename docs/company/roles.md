@@ -82,3 +82,7 @@ runs out). Every change goes through a PR on `dev/<name>/<slug>`. Each file has 
 - **Neither fact-checker signs off their own edits.** A fix made during checking needs the other fact-checker's
   sign-off.
 - **The audit alternates weekly.** The checker not on audit duty that week takes event-day sign-offs first.
+
+## Data-writing rules (everyone who edits data, the DB or a dated file)
+- Timestamps (`updatedAt`, `verifiedAt`, `at`) are real UTC: `date -u +%Y-%m-%dT%H:%M:%SZ`. Israel local time
+  with a `Z` appended lands 2–3 hours in the future. Reviewers reject any timestamp later than the commit time.
