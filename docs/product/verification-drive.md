@@ -17,9 +17,9 @@ A record is verified only when all of these hold:
    proposal before marking. A record with an open ❓ is never marked.
 4. **The sign-off is logged.** The fact-checker adds one row per record to `docs/audit/2026-10-verification-drive.md`:
    record id, verdict (✅ / ✏️ fix needed), claims checked, source URLs, date and time, and checker name.
-5. **An editor clicks it.** The owner, or an editor under D3, presses "סימון כנבדק" in the page only for ✅ rows. That sets
-   `verifiedAt`/`verifiedBy`. If the record changes afterwards, the chip turns to "עודכן מאז" by itself and the record
-   returns to the next drive.
+5. **The coordinator marks it.** The owner has delegated approvals, so after each fact-checker's sign-off the
+   coordinator writes `verifiedAt`/`verifiedBy`, for ✅ rows only. If the record changes afterwards, the chip turns to
+   "עודכן מאז" by itself and the record returns to the next drive.
 
 **✅ records from Dana's 18.10 audit:** the check is a delta. Look at what changed since the audit (`history`,
 `updatedAt`, `next`), plus anything the audit marked optional. This should take about 5 minutes a record.
@@ -45,11 +45,11 @@ They're chosen by where they appear between 22.10 and 1.11:
 ## Schedule
 | When | What | Who |
 |---|---|---|
-| 19.10 20:00 | B1 logged | Dana |
-| 20.10 20:00 | B2 logged; the B1 ✅ marked in `#admin` | Tamar; owner |
-| 21.10 18:00 | B3 logged; the B2 ✅ marked | Dana; owner |
-| 22.10 11:00 | B3 ✅ marked; PM reports M2 for the go/no-go | Owner; PM |
-| 22.10 12:00 | **Go/no-go.** G3 passes at ≥ 27/30 marked, with none of the 10 B1 records missing | Owner |
+| 19.10 20:00 | B1 logged, then its ✅ marked | Dana; coordinator |
+| 20.10 20:00 | B2 logged, then its ✅ marked | Tamar; coordinator |
+| 21.10 18:00 | B3 logged, then its ✅ marked | Dana; coordinator |
+| 22.10 11:00 | PM reports M2 for the go/no-go | PM |
+| 22.10 12:00 | **Go/no-go.** G3 passes at ≥ 27/30 marked, with none of the 10 B1 records missing | Coordinator (delegated) |
 
 Expected after the drive: M2 = 30/99 (30%). The remaining 69 go through the weekly audit rotation (Dana and Tamar
 on alternate weeks), aiming for ≥ 80% by 1.11.
