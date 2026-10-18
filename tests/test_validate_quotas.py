@@ -42,6 +42,22 @@ class QuotasTest(unittest.TestCase):
         self.assertEqual(len(errors), 1, errors)
         self.assertIn('"earned"', errors[0])
 
+    def test_stakes_style(self):
+        stakes = lambda v: self.errors(lambda q: q["items"][1].__setitem__("stakes", v))
+        for ok in ["גרנד סלאם (מ־29 באוק׳ 2026): נקודות לדירוג IJF עד 12 ביוני 2028",
+                   "שיא 9.58 שניות; 10.5 נקודות; עונת 2026-2027; קטגוריה 60- ק״ג; T-50 ו־ל־LA28"]:
+            self.assertEqual(stakes(ok), [], ok)
+        for bad, needle in [("מ־29.10.2026 והלאה", "dotted date '29.10.2026'"), ("עד 12.6.28", "dotted date"),
+                            ("ב־29.10 בערב", "dotted date '29.10'"), ("מ-29 באוק׳ 2026", "hyphen in 'מ-29'"),
+                            ("ל-LA28", "maqaf"), ("דרום-קוריאה", "hyphen")]:
+            errors = stakes(bad)
+            self.assertEqual(len(errors), 1, (bad, errors))
+            self.assertIn(needle, errors[0])
+        # The published file follows the style already.
+        with open(os.path.join(HERE, "..", "site", "quotas.json"), encoding="utf-8") as f:
+            published = json.load(f)
+        self.assertFalse([e for e in validate_data.validate_quotas(published, self.data) if ".stakes" in e])
+
     def test_stakes_optional_and_accepted_up_to_140(self):
         self.assertEqual(self.errors(lambda q: q["items"][1].__setitem__("stakes", "א" * 140)), [])
 
@@ -50,6 +66,12 @@ class QuotasTest(unittest.TestCase):
             e = q["items"][1]["nextQuotaEvent"]
             e["end"] = e["start"]
         self.assertEqual(self.errors(add_end), [])
+
+    def test_earned_at_optional_on_earned_items(self):
+        q = copy.deepcopy(self.valid)
+        earned = next(i for i in q["items"] if i["israelStatus"] == "earned")
+        earned["earnedAt"] = "2026-10-18"
+        self.assertEqual(validate_data.validate_quotas(q, self.staged), [])
 
     def test_iso_updated_at_accepted(self):
         self.assertEqual(self.errors(lambda q: q.__setitem__("updatedAt", "2026-10-18T12:00:00Z")), [])
@@ -74,6 +96,8 @@ class QuotasTest(unittest.TestCase):
             ("unexpected", lambda q: i0(q).__setitem__("israelstatus", "earned")),
             ("israelNote", lambda q: i0(q).__setitem__("israelNote", None)),
             ("expected an object", lambda q: q["items"].append("junk")),
+            ("earnedAt", lambda q: i0(q).__setitem__("earnedAt", "yesterday")),
+            ("earnedAt", lambda q: i0(q).__setitem__("earnedAt", "2026-10-18")),   # i0 is not "earned"
             ("stakes", lambda q: i0(q).__setitem__("stakes", 7)),
             ("stakes", lambda q: i0(q).__setitem__("stakes", "  ")),
             ("stakes", lambda q: i0(q).__setitem__("stakes", "שורה\nשנייה")),

@@ -106,6 +106,9 @@ main{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .toolbar select{background:var(--surface);border:1px solid var(--line-ui);border-radius:8px;padding:8px 10px}
 .chk{display:flex;gap:6px;align-items:center;font-size:14px}
+.fix-set{border:1px solid var(--line);border-radius:10px;padding:8px 12px 10px;margin:0;display:grid;gap:8px;min-width:0}
+.fix-set legend{padding:0 4px;font-weight:700}
+.fix-set > div{display:grid;gap:8px}
 
 /* sports index */
 .sports{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
@@ -229,7 +232,7 @@ main:focus{outline:none}
 .adm-errs{margin:0;padding-inline-start:18px;font-size:14px;overflow-wrap:anywhere}
 .adm-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .adm-tile{display:grid;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-decoration:none;color:var(--ink);min-height:44px}
-.adm-tile:hover{border-color:var(--blue)}
+a.adm-tile:hover{border-color:var(--blue)}   /* static tiles on #about aren't links */
 .adm-tile b{font-size:26px;line-height:1.1}
 .adm-tile span{font-size:14px;color:var(--muted)}
 .adm-tile.hot b{color:var(--sun-ink)}
@@ -237,8 +240,9 @@ main:focus{outline:none}
 /* trust chip (symbol + text, so it never relies on colour) */
 .trust{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px}
 .trust.ok{background:var(--ok-soft);color:var(--ok-ink)}
-.trust.stale{background:var(--sun-soft);color:var(--sun-ink)}
-.trust.auto{border:1px solid var(--line);color:var(--muted)}
+.trust.stale{background:transparent;border:1px solid var(--line-ui);color:var(--ink)}   /* lower confidence, not a warning */
+.trust.auto{background:transparent;border:1px dashed var(--line-ui);color:var(--muted)}
+dd.stack .trust{justify-self:start}
 .today{border-inline-start:4px solid var(--sun)}
 
 /* quota status (shared: #quotas, sport page, #sports cards, home) */
@@ -286,6 +290,8 @@ div.track{background:none}
 .stakes{font-size:14px;color:var(--ink);border-inline-start:3px solid var(--sun);padding-inline-start:8px;overflow-wrap:anywhere}
 .stakes b{color:var(--sun-ink)}
 .rows .t small.stakes{color:var(--ink);margin-top:4px}
+.pill.q-awaiting{background:var(--blue-soft);color:var(--blue)}
+.stakes.awaiting{border-inline-start-color:var(--blue)} .stakes.awaiting b{color:var(--blue)}
 
 /* weekly digest (#digest); the stakes-line rules of the same spec come with §1 */
 .digest textarea{width:100%;min-height:22em;resize:vertical;border:1px solid var(--line-ui,var(--stage0));border-radius:8px;
@@ -302,3 +308,42 @@ div.track{background:none}
 .rn-steps .chk{align-items:flex-start;font-weight:400;overflow-wrap:anywhere}
 .rn-steps .chk input{margin-top:4px;flex:none}
 .rn-steps code{font-size:12.5px;overflow-wrap:anywhere}
+/* home: "הבא בתור" (round3 §5b) */
+.next-up{margin-top:8px;font-size:15px;overflow-wrap:anywhere}
+.next-up b{color:var(--sun-ink)}
+/* editors' "view as visitor" preview */
+/* Inside the sticky nav, so it stays in view; shown only to editors in visitor mode. */
+.visitor-bar{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:center;background:var(--blue-soft);color:var(--ink);
+  border-top:1px solid var(--line);border-inline-start:4px solid var(--blue);padding:4px 16px;font-size:14px}
+.visitor-bar b{color:var(--blue)}
+@media (min-width:641px){.visitor-bar .btn{min-height:36px}}
+@media (max-width:640px){.vb-more{display:none}}
+.vb-msg{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:center;padding:4px 16px;font-size:14px;background:var(--sun-soft);color:var(--ink);border-top:1px solid var(--line)}
+/* home: chances panel shows 3 rows on phones; the #quotas link carries the rest */
+.sm-only{display:none}
+@media (max-width:640px){
+  .closest > li:nth-child(n+4){display:none}
+  .sm-only{display:inline}
+}
+
+/* corrections log (#corrections). Wrong/right carry no red/green: "היה"/"עכשיו" and the line-through do. */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;counter-reset:st}
+.steps li{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14.5px;counter-increment:st}
+.steps li b::before{content:counter(st) ". ";color:var(--sun-ink)}
+.steps li span{color:var(--muted)}
+.fix{display:grid;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.fix-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;font-weight:700}
+.fix-diff{display:grid;gap:4px 12px;grid-template-columns:auto 1fr;margin:0;font-size:15px}
+.fix-diff dt{color:var(--muted)}
+.fix-diff dd{margin:0;display:grid;gap:2px;min-width:0;overflow-wrap:anywhere}
+.fix-diff del{color:var(--muted)}
+.fix-diff ins{text-decoration:none;font-weight:600}
+.pill.by-reader{background:var(--blue-soft);color:var(--blue)}
+.pill.by-audit,.pill.by-job{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
+.timeline li.k-correction::before{border-color:var(--muted)}
+@media (max-width:640px){.steps{grid-template-columns:1fr}.fix-diff{grid-template-columns:1fr}}
+/* quota earned (round3.md §2) */
+.won{border-inline-start:4px solid var(--ok)}
+.stakes.won-line{border-inline-start-color:var(--ok)} .stakes.won-line b{color:var(--ok-ink)}
+/* About trust block: chips stack above their explanation on phones */
+@media (max-width:640px){.trust-legend{grid-template-columns:1fr}}

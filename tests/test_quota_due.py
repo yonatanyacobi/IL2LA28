@@ -75,10 +75,10 @@ class QuotaDueTest(unittest.TestCase):
 
     def test_date_matrix_on_real_data(self):
         # Same dates as the smoke date matrix: a warning starts the day after the page stops showing the event.
-        root = os.path.join(HERE, "..")
         with open(os.path.join(HERE, "fixtures", "data.json"), encoding="utf-8") as f:
             data = json.load(f)
-        with open(os.path.join(root, "site", "quotas.json"), encoding="utf-8") as f:
+        # Frozen 18.10 copy: the live file changes on each result night.
+        with open(os.path.join(HERE, "fixtures", "site-quotas-2026-10-18.json"), encoding="utf-8") as f:
             quotas = json.load(f)
         expected = {
             "2026-10-20": [],

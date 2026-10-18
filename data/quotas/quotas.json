@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:00:04Z",
+ "updatedAt": "2026-10-18T12:51:28Z",
  "items": [
   {
    "sportId": "judo",
@@ -262,7 +262,7 @@
    "event": "כל המשקלים",
    "totalQuotas": 288,
    "maxPerNOC": 18,
-   "allocation": "מדליסטים באליפות העולם 2027, 3 הראשונים בדירוג UWW, ואז 2 לכל משקל בטורנירי מוקדמות יבשתיים ב-2028; אחד/ת לכל משקל למדינה.",
+   "allocation": "מדליסטים באליפות העולם 2027, 3 הראשונים בדירוג UWW, 2 לכל משקל בכל אחד מ-4 טורנירים יבשתיים ו-1 בטורניר עולמי ב-2028; אחד/ת לכל משקל למדינה.",
    "israelStatus": "unknown",
    "israelNote": "אין מתאבק/ת ישראלי/ת במעקב",
    "nextQuotaEvent": {
@@ -271,8 +271,8 @@
    },
    "source": "https://cdn.uww.org/2026-08/260825_wre_la28_qualification-system.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -316,9 +316,9 @@
   {
    "sportId": "artistic-gymnastics",
    "event": "אישי גברים (קרב-רב ומכשירים)",
-   "totalQuotas": null,
+   "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "למדינות בלי נבחרת: 8 בקרב-רב באליפות העולם 2027, מדליסט מוביל בכל מכשיר ב-2027, ו-12 דרך גביעי העולם במכשירים 2028.",
+   "allocation": "למדינות בלי נבחרת: 3 לנבחרות הבאות במוקדמות 2027, 8 בקרב-רב ו-6 במכשירים באליפות העולם 2027, 12 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארח ואוניברסלי.",
    "israelStatus": "in-contention",
    "israelNote": "ארטיום דולגופיאט (זהב בקרקע, אירופה 2026); זמין רק אם הנבחרת לא תעפיל",
    "nextQuotaEvent": {
@@ -327,17 +327,17 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
   {
    "sportId": "artistic-gymnastics",
    "event": "אישי נשים (קרב-רב ומכשירים)",
-   "totalQuotas": null,
+   "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "14 בקרב-רב באליפות העולם 2027 (אחת לכל מדינה), מדליסטית מובילה בכל מכשיר ב-2027, ו-8 דרך גביעי העולם במכשירים 2028.",
+   "allocation": "3 לנבחרות הבאות במוקדמות 2027, 14 בקרב-רב ו-4 במכשירים באליפות העולם 2027 (אחת לכל מדינה בקרב-רב), 8 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארחת ואוניברסלית.",
    "israelStatus": "unknown",
    "israelNote": "ליהיא רז, רוני שמאי ויהלי שושני; אין נבחרת נשים ישראלית ברוטרדם",
    "nextQuotaEvent": {
@@ -346,8 +346,8 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -486,7 +486,7 @@
    "event": "קבוצתי",
    "totalQuotas": 10,
    "maxPerNOC": 1,
-   "allocation": "3 הנבחרות המובילות באליפות העולם בודפשט 2027, המארחת, ועד 4 באליפויות יבשתיות 2027 (אירופה – רק אם אף נבחרת אירופית לא בשלוש הראשונות).",
+   "allocation": "3 באליפות העולם בודפשט 2027, המארחת, עד 4 באליפויות יבשתיות 2027 (אירופה – רק אם אין אירופית בשלוש הראשונות), והשאר בגמר העל של גביע העולם 2028.",
    "israelStatus": "unknown",
    "israelNote": "מקום 6 בקבוצתי טכני, גביע העולם פריז 2026; יוגב דגן בסגל",
    "nextQuotaEvent": {
@@ -497,7 +497,7 @@
    "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf",
    "review": {
     "status": "ok",
-    "by": "dana",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -670,7 +670,7 @@
    "event": "גלישת רוח iQFoil נשים",
    "totalQuotas": 25,
    "maxPerNOC": 1,
-   "allocation": "10 מדינות באליפות העולם 2027, 2 באירוע יבשתי אירופי, 6+1 בתחרות ההזדמנות האחרונה 2028; סירה אחת למדינה.",
+   "allocation": "10 מדינות באליפות העולם 2027, 7 באירועים יבשתיים (2 מהם באירוע האירופי), 6 בתחרות ההזדמנות האחרונה 2028 ועוד 1 למדינה מתפתחת (Emerging Nations), ומקום למארחת; סירה אחת למדינה.",
    "israelStatus": "in-contention",
    "israelNote": "תמר שטיינברג אלופת העולם 2026; שרון קנטור כסף; המכסות יחולקו באליפות העולם 2027",
    "nextQuotaEvent": {
@@ -680,7 +680,7 @@
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
     "status": "ok",
-    "by": "dana",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -689,7 +689,7 @@
    "event": "גלישת רוח iQFoil גברים",
    "totalQuotas": 25,
    "maxPerNOC": 1,
-   "allocation": "10 מדינות באליפות העולם 2027, 2 באירוע יבשתי אירופי, 6+1 בתחרות ההזדמנות האחרונה 2028.",
+   "allocation": "10 מדינות באליפות העולם 2027, 7 באירועים יבשתיים (2 מהם באירוע האירופי), 6 בתחרות ההזדמנות האחרונה 2028 ועוד 1 למדינה מתפתחת (Emerging Nations), ומקום למארחת; סירה אחת למדינה.",
    "israelStatus": "in-contention",
    "israelNote": "תום ראובני אלוף אולימפי ומקום 5 באליפות העולם 2026; יואב עומר מקום 8",
    "nextQuotaEvent": {
@@ -699,7 +699,7 @@
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
     "status": "ok",
-    "by": "dana",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -708,17 +708,17 @@
    "event": "קייט פויל (Formula Kite) נשים",
    "totalQuotas": 20,
    "maxPerNOC": 1,
-   "allocation": "8 מדינות באליפות העולם 2027, אחת באירוע יבשתי אירופי, 5 בתחרות ההזדמנות האחרונה 2028.",
+   "allocation": "8 מדינות באליפות העולם 2027, 6 באירועים יבשתיים (אחת לאירופה), 5 בתחרות ההזדמנות האחרונה 2028, ומקום מארחת.",
    "israelStatus": "in-contention",
-   "israelNote": "גל צוקרמן מקום 17 ומיה אשכנזי מקום 14 באליפות העולם 2026",
+   "israelNote": "מיה אשכנזי מקום 14 וגל צוקרמן מקום 17 באליפות העולם 2026 (לא חולקו בה מכסות)",
    "nextQuotaEvent": {
     "name": "אליפות העולם בשייט – מקצי יחיד, פורטלזה",
     "start": "2027-01-15"
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -727,17 +727,17 @@
    "event": "קייט פויל (Formula Kite) גברים",
    "totalQuotas": 20,
    "maxPerNOC": 1,
-   "allocation": "8 מדינות באליפות העולם 2027, אחת באירוע יבשתי אירופי, 5 בתחרות ההזדמנות האחרונה 2028.",
+   "allocation": "8 מדינות באליפות העולם 2027, 6 באירועים יבשתיים (אחת לאירופה), 5 בתחרות ההזדמנות האחרונה 2028, ומקום מארחת.",
    "israelStatus": "unknown",
-   "israelNote": "זוהר חרובי מקום 25 באליפות העולם 2026",
+   "israelNote": "זוהר חרובי מקום 25 באליפות העולם 2026 (לא חולקו בה מכסות)",
    "nextQuotaEvent": {
     "name": "אליפות העולם בשייט – מקצי יחיד, פורטלזה",
     "start": "2027-01-15"
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -844,16 +844,38 @@
    "maxPerNOC": 2,
    "allocation": "בדוחא 2026: 3 מכסות במקצה, אחת לכל היותר למדינה; אחר כך אליפות עולם וגביעי עולם 2027, אליפויות אירופה 2027/2028 (2+2), המשחקים האירופיים (1) ודירוג אולימפי.",
    "israelStatus": "unknown",
-   "israelNote": "סרגיי ריכטר: מקום 17 בגביע העולם בהאנגג׳ואו 2026; רשימת המשתתפים בדוחא לא אומתה",
-   "stakes": "אליפות העולם בדוחא (1–14 בנוב׳ 2026): 3 מכסות במקצה, אחת לכל היותר למדינה; השתתפות ריכטר לא אומתה",
+   "israelNote": "סרגיי ריכטר: מקום 17 בגביע העולם בהאנגג׳ואו 2026; רשום לאליפות העולם בדוחא (ISSF, 3.10.2026)",
+   "stakes": "אליפות העולם בדוחא (רובה אוויר גברים, 3 בנוב׳ 2026): 3 מכסות, אחת לכל היותר למדינה; נדרשת תוצאה של 613.0 לפחות",
    "nextQuotaEvent": {
     "name": "אליפות העולם בקליעה, דוחא",
-    "start": "2026-11-01"
+    "start": "2026-11-03",
+    "end": "2026-11-03"
    },
    "source": "https://www.asia-shooting.org/wp-content/uploads/2026/07/Qualification-System-01Jul26-ISSF.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "shooting",
+   "event": "רובה אוויר 10 מ׳ נשים",
+   "totalQuotas": 29,
+   "maxPerNOC": 2,
+   "allocation": "בדוחא 2026: 3 מכסות במקצה, אחת לכל היותר למדינה; אחר כך אליפות עולם וגביעי עולם 2027, אליפויות אירופה 2027/2028 (2+2), המשחקים האירופיים (1) ודירוג אולימפי.",
+   "israelStatus": "in-contention",
+   "israelNote": "Olga Tashtchiev מדורגת 22 בעולם (ISSF, 1.10.2026); רשומה לאליפות העולם בדוחא (ISSF, 3.10.2026)",
+   "stakes": "אליפות העולם בדוחא (רובה אוויר נשים, 3 בנוב׳ 2026): 3 מכסות, אחת לכל היותר למדינה; נדרשת תוצאה של 613.0 לפחות",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בקליעה, דוחא",
+    "start": "2026-11-03",
+    "end": "2026-11-03"
+   },
+   "source": "https://www.asia-shooting.org/wp-content/uploads/2026/07/Qualification-System-01Jul26-ISSF.pdf",
+   "review": {
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -1065,6 +1087,62 @@
    "review": {
     "status": "ok",
     "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "rowing",
+   "event": "סקיף יחיד (1x) גברים ונשים",
+   "totalQuotas": 66,
+   "maxPerNOC": 2,
+   "allocation": "לכל מגדר: 10 באליפות העולם 2027 בלוצרן, 15 במקצי קליטה יבשתיים (3 מהם באירופה), 2 במקצה הקליטה האחרון, ועוד מקום מארחת ו-2 אוניברסליות (במסמך השיטה יש סתירה: בטבלה B.1 מקום אוניברסליות אחד לכל מגדר, ובסעיף D.7 שניים).",
+   "israelStatus": "unknown",
+   "israelNote": "אין חותר/ת ישראלי/ת אולימפי/ת במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בחתירה, לוצרן",
+    "start": "2027-08-23",
+    "end": "2027-08-29"
+   },
+   "source": "https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "canoe",
+   "event": "קאנו ספרינט – גברים ונשים",
+   "totalQuotas": 234,
+   "maxPerNOC": 16,
+   "allocation": "לכל מגדר: רוב המקומות לפי דירוג הקליטה האולימפי ב-31.12.2027 (תוצאות מ-20.4.2026), והיתר באירועי קליטה יבשתיים ב-2028; עד 2 סירות למדינה בכל מקצה.",
+   "israelStatus": "unknown",
+   "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו ספרינט במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
+   "nextQuotaEvent": null,
+   "source": "https://cdn.nocnsf.nl/media/qllnxmff/csp-la28-qualification-system.pdf",
+   "review": {
+    "status": "fixed",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "canoe",
+   "event": "קאנו סלאלום – גברים ונשים",
+   "totalQuotas": 82,
+   "maxPerNOC": 6,
+   "allocation": "לכל מגדר 19 מקומות לפי הדירוג ב-3.10.2027 (6 K-1, 3 X-1, 10 C-1; תוצאות מ-20.7.2026), והיתר בתחרויות יבשתיות ועולמית ב-2028; אחד למדינה בכל מקצה.",
+   "israelStatus": "unknown",
+   "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו סלאלום במעקב",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בקאנו סלאלום, לה סאו",
+    "start": "2027-09-07",
+    "end": "2027-09-12"
+   },
+   "source": "https://cdn.nocnsf.nl/media/1v2nt1k3/csl-la28-qualification-system.pdf",
+   "review": {
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   }

@@ -13,12 +13,15 @@ PRIVATE_KEYS = {"updatedBy", "verifiedBy"}
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})", re.ASCII)
 STAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", re.ASCII)
-HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
+HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction"}  # = export_data.HISTORY_KINDS
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}
-QUOTA_OPTIONAL = {"stakes"}
+QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt"}
 STAKES_MAX = 140
+# Stakes style (site date format, maqaf). A year-less date needs a 2-digit month so decimals like 9.58 pass.
+DOTTED_DATE = re.compile(r"(?<![\d.])\d{1,2}\.(?:\d{1,2}\.\d{2,4}|0[1-9]|1[0-2])(?![\d.])", re.ASCII)
+HEB_HYPHEN = re.compile(r"[א-ת]-\S*")
 
 # key -> (kind, required); kinds: str, date ("" or YYYY-MM-DD), url ("" or https://), iso ("" or ISO datetime with timezone, as export_data.iso())
 SPORT = {"id": ("id", True), "he": ("str", True), "en": ("str", True), "window": ("window", True)}
@@ -28,7 +31,10 @@ ATHLETE = {
     "event": ("str", True), "stage": ("stage", True), "rank": ("str", True), "next": ("str", True),
     "nextDate": ("date", True), "notes": ("str", True), "source": ("url", True), "updatedAt": ("iso", True),
     "history": ("history", True), "verifiedAt": ("iso", False),
+    # Sortable world rank (docs/product/spec-rank-tiebreak.md); a set rankNum needs both companions (checked below).
+    "rankNum": ("rankNum", False), "rankList": ("rankList", False), "rankAsOf": ("date", False),
 }
+RANK_LIST_MAX = 80
 HISTORY = {"at": ("date!", True), "kind": ("kind", True), "text": ("str!", True), "source": ("url", True)}
 COMP = {
     "id": ("id", True), "sportId": ("sport", True), "name": ("str", True), "location": ("str", True),
@@ -85,9 +91,11 @@ def validate(data):
             data[k] = []
     if len(data["changes"]) > 30:
         err(f"changes: {len(data['changes'])} entries, max 30")
-    extra = set(data) - {"schemaVersion", "generatedAt", "lastRun", "sports", "athletes", "competitions", "changes"}
+    extra = set(data) - {"schemaVersion", "generatedAt", "lastRun", "sports", "athletes", "competitions", "changes",
+                         "launchAt", "corrections"}
     if extra:
         err(f"top level: unexpected keys {sorted(extra)}")
+    errors.extend(validate_corrections(data.get("corrections", []), data.get("launchAt")))
 
     sport_ids = {s.get("id") for s in data["sports"] if isinstance(s, dict)}
     athlete_ids = {a.get("id") for a in data["athletes"] if isinstance(a, dict)}
@@ -116,6 +124,8 @@ def validate(data):
                 "iso": lambda: v == "" or is_iso(v),
                 "url": lambda: v == "" or (isinstance(v, str) and v.startswith("https://") and len(v) > 8),
                 "stage": lambda: type(v) is int and 0 <= v <= 3,
+                "rankNum": lambda: v is None or (type(v) is int and v >= 1),
+                "rankList": lambda: isinstance(v, str) and "\n" not in v and len(v) <= RANK_LIST_MAX,
                 "kind": lambda: v in HISTORY_KINDS,
                 "sport": lambda: isinstance(v, str) and v in sport_ids,
                 "athlete": lambda: isinstance(v, str) and v in athlete_ids,
@@ -140,11 +150,76 @@ def validate(data):
         for i, row in enumerate(data[coll]):
             path = f"{coll}[{i}]" + (f"({row.get('id')})" if isinstance(row, dict) and "id" in row else "")
             check(row, spec, path)
+            if coll == "athletes" and isinstance(row, dict) and type(row.get("rankNum")) is int:
+                if not (isinstance(row.get("rankList"), str) and row["rankList"].strip()):
+                    err(f"{path}.rankList: required when rankNum is set")
+                if not is_date(row.get("rankAsOf")):
+                    err(f"{path}.rankAsOf: YYYY-MM-DD required when rankNum is set")
             if "id" in spec and isinstance(row, dict):
                 rid = row.get("id")
                 if isinstance(rid, str) and rid in seen:
                     err(f"{path}: duplicate id")
                 seen.add(rid)
+    return errors
+
+
+def validate_corrections(rows, launch_at):
+    """data.json "corrections" (optional) against its "launchAt": the export's public shape, on or after launchAt,
+    newest first, no emails. launchAt null (no launch date yet) allows only an empty list."""
+    from export_data import CORRECTION_TARGETS, CORRECTION_FIELDS, CORRECTION_BY, CORRECTIONS_MAX, EMAIL, instant
+    if not isinstance(rows, list):
+        return ["corrections: expected a list"]
+    errors = []
+    err = errors.append
+    if launch_at is not None and not (isinstance(launch_at, str) and launch_at.endswith("Z") and is_iso(launch_at)):
+        err(f"launchAt: expected null or an ISO time with Z, got {launch_at!r}")
+        launch_at = None
+    if rows and launch_at is None:
+        return errors + [f"corrections: {len(rows)} entries but no valid launchAt; nothing is public before launch"]
+    if len(rows) > CORRECTIONS_MAX:
+        err(f"corrections: {len(rows)} entries, max {CORRECTIONS_MAX}")
+    seen, prev = set(), None
+    for i, c in enumerate(rows):
+        path = f"corrections[{i}]"
+        if not isinstance(c, dict):
+            err(f"{path}: expected an object")
+            continue
+        path += f"({c.get('id')})"
+        extra = set(c) - {"id", "at", "reportedAt", "target", "changes", "source", "by"}
+        if extra:  # reporter identity or editor ids would land here
+            err(f"{path}: unexpected keys {sorted(extra)}")
+        if not (isinstance(c.get("id"), str) and c["id"]) or c.get("id") in seen:
+            err(f"{path}.id: missing or duplicate")
+        seen.add(c.get("id"))
+        at = instant(c.get("at")) if is_iso(c.get("at")) else None
+        if not at or at < instant(launch_at):
+            err(f"{path}.at: expected an ISO time on or after launchAt {launch_at}, got {c.get('at')!r}")
+        elif prev and at > prev:
+            err(f"{path}.at: not newest first")
+        prev = at or prev
+        if not (c.get("reportedAt") == "" or is_iso(c.get("reportedAt"))):
+            err(f"{path}.reportedAt: expected ISO time or \"\", got {c.get('reportedAt')!r}")
+        t = c.get("target")
+        if not (isinstance(t, dict) and set(t) == {"kind", "id", "name"} and t["kind"] in CORRECTION_TARGETS
+                and all(isinstance(t[k], str) and t[k].strip() for k in ("id", "name"))):
+            err(f"{path}.target: expected {{kind: {sorted(CORRECTION_TARGETS)}, id, name}}, got {t!r}")
+        ch = c.get("changes")
+        if not (isinstance(ch, list) and 1 <= len(ch) <= 5):
+            err(f"{path}.changes: expected 1-5 entries")
+            ch = []
+        for j, x in enumerate(ch):
+            if not (isinstance(x, dict) and set(x) == {"field", "wrong", "right"} and x["field"] in CORRECTION_FIELDS
+                    and all(isinstance(x[k], str) and len(x[k]) <= 200 for k in ("wrong", "right"))
+                    and (x["wrong"] or x["right"])):
+                err(f"{path}.changes[{j}]: expected {{field, wrong, right}} with a known field and one value set, got {x!r}")
+        src = c.get("source")
+        if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
+            err(f"{path}.source: expected an https:// URL, got {src!r}")
+        if c.get("by") not in CORRECTION_BY:
+            err(f"{path}.by: expected one of {sorted(CORRECTION_BY)}, got {c.get('by')!r}")
+        strings = [json.dumps(v, ensure_ascii=False) for k, v in c.items() if k != "source"]
+        if any(EMAIL.search(s) for s in strings):
+            err(f"{path}: contains an email address; data.json is public")
     return errors
 
 
@@ -193,10 +268,18 @@ def validate_quotas(q, data):
             err(f"{path}.israelStatus: expected one of {sorted(QUOTA_STATUSES)}, got {status!r}")
         elif status == "earned" and it.get("sportId") not in staged:
             err(f"{path}.israelStatus: \"earned\" but no athlete in {it.get('sportId')!r} has stage >= 2 in data.json")
+        if "checkedAt" in it and not is_date(it["checkedAt"]):
+            err(f"{path}.checkedAt: expected YYYY-MM-DD, got {it['checkedAt']!r}")
         if "stakes" in it:
             v = it["stakes"]
             if not (isinstance(v, str) and v.strip() and "\n" not in v and len(v) <= STAKES_MAX):
                 err(f"{path}.stakes: expected one non-empty line of at most {STAKES_MAX} chars, got {v!r}")
+            elif m := DOTTED_DATE.search(v):
+                err(f"{path}.stakes: dotted date {m.group()!r}; write it as the site does, e.g. \"29 באוק׳ 2026\"")
+            elif m := HEB_HYPHEN.search(v):
+                err(f"{path}.stakes: hyphen in {m.group()!r}; use a maqaf (־) after a Hebrew letter")
+        if "earnedAt" in it and not (is_date(it["earnedAt"]) and status == "earned"):
+            err(f"{path}.earnedAt: expected YYYY-MM-DD on an \"earned\" item, got {it['earnedAt']!r}")
         src = it.get("source")
         if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
             err(f"{path}.source: expected an https:// URL, got {src!r}")
