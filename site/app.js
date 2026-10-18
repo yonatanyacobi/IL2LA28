@@ -380,7 +380,7 @@ function closestPanel(rows){
   return `<section class="panel today" aria-labelledby="closeH">
     <h2 id="closeH">ההזדמנויות הקרובות למכסה</h2>
     <ul class="rows closest">${groups.map(row).join("")}</ul>
-    <p class="foot">מקצים שבהם ישראל במרוץ למכסה, ממוינים לפי מועד אירוע המכסה הבא. <a href="#quotas">לתמונת המכסות המלאה${groups.length > 3 ? `<span class="sm-only"> (עוד ${groups.length - 3})</span>` : ""}</a></p>
+    <p class="foot">מקצים שבהם ישראל במרוץ למכסה. מה שבמעקב שלך מופיע ראשון, והשאר לפי מועד אירוע המכסה הבא. <a href="#quotas">לתמונת המכסות המלאה${groups.length > 3 ? `<span class="sm-only"> (עוד ${groups.length - 3})</span>` : ""}</a></p>
   </section>`;
 }
 
