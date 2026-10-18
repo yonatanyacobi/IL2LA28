@@ -107,28 +107,52 @@ function changeRow(c){
   return `<li><span class="d">${fmt(str(c.at).slice(0, 10))}</span><span class="t">${body}</span><span></span></li>`;
 }
 
-// From the schedule, not live results: an athlete counts as competing on every day of a running
-// competition in their sport whose dates contain their nextDate.
-function competingToday(){
-  const t = today();
-  return S.athletes.flatMap(a => {
-    if (!isDate(a.nextDate)) return [];
-    const c = S.comps.find(c => c.sportId === a.sportId && c.start <= t && t <= (c.end || c.start)
-      && c.start <= a.nextDate && a.nextDate <= (c.end || c.start));
-    return c || a.nextDate === t ? [{a, comp: c ? c.name : a.next}] : [];
-  }).sort((x, y) => heCmp(sportName(x.a.sportId), sportName(y.a.sportId)) || heCmp(x.a.name, y.a.name));
+const TODAY_MAX = 6, SERIES_DAYS = 31;
+const dayNo = (from, to) => Math.round((new Date(to + "T12:00:00") - new Date(from + "T12:00:00")) / 864e5) + 1;
+
+// From the schedule, not live results. One row per running competition in a tracked sport, listing the
+// athletes whose nextDate falls inside it (or is today); athletes due today with no such competition get
+// their own row. Each athlete appears at most once.
+function todayRows(){
+  const t = today(), end = c => c.end || c.start;
+  // Season-long series (e.g. a 16-month World Cup) would otherwise fill the strip every day.
+  const running = S.comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS && athletesOf(c.sportId).length);
+  const rows = new Map(running.map(c => [c, {comp: c, sportId: c.sportId, athletes: []}]));
+  for (const a of S.athletes) {
+    if (!isDate(a.nextDate)) continue;
+    const mine = running.filter(c => c.sportId === a.sportId);
+    const c = mine.find(c => c.start <= a.nextDate && a.nextDate <= end(c)) || (a.nextDate === t ? mine[0] : null);
+    if (c) rows.get(c).athletes.push(a);
+    else if (a.nextDate === t) rows.set(a, {comp: null, sportId: a.sportId, athletes: [a]});
+  }
+  const fav = r => r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1;
+  return [...rows.values()].sort((x, y) => fav(x) - fav(y) || heCmp(sportName(x.sportId), sportName(y.sportId))
+    || heCmp(x.comp?.name || x.athletes[0].name, y.comp?.name || y.athletes[0].name));
 }
 
-function todayStrip(){
-  const list = competingToday();
-  if (!list.length) return "";
+function todayStrip(rows){
+  if (!rows.length) return "";
+  const t = today();
+  const star = a => S.follows.has(a.id) ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : "";
+  const who = a => `${star(a)}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`;
+  const row = ({comp: c, sportId, athletes}) => {
+    if (!c) { const a = athletes[0]; return `<li><span class="d">היום</span>
+      <span class="t">${who(a)}<small>${[sportName(sportId), a.next].filter(Boolean).map(esc).join(" · ")}</small></span><span></span></li>`; }
+    const total = dayNo(c.start, c.end || c.start);
+    const small = [athletes.length ? athletes.sort((a, b) => heCmp(a.name, b.name)).map(who).join(", ") : "",
+      esc(c.location), athletes.length ? "" : `${athletesOf(sportId).length} ישראלים במעקב בענף`, linkOut(c.source)].filter(Boolean).join(" · ");
+    return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
+      <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small></span>
+      <span class="now">מתקיימת עכשיו</span></li>`;
+  };
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
   const when = ts ? new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
-  return `<section class="panel today-strip">
-    <h2>ישראלים מתחרים היום</h2>
+  const more = rows.length - TODAY_MAX;
+  return `<section class="panel today" aria-labelledby="todayH">
+    <h2 id="todayH">${rows.some(r => r.athletes.length) ? "ישראלים מתחרים היום" : "היום בענפים שבמעקב"}</h2>
+    <ul class="rows">${rows.slice(0, TODAY_MAX).map(row).join("")}</ul>
+    ${more > 0 ? `<p><a href="#calendar">ועוד ${more} בלוח התחרויות</a></p>` : ""}
     <p class="foot">${when ? `לפי הנתונים מ־${when}` : "לפי לוח התחרויות"}, תוצאות יתעדכנו בעדכון היומי</p>
-    <ul class="rows">${list.map(({a, comp}) => `<li><span class="d">${esc(sportName(a.sportId))}</span>
-      <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${[a.event, comp].filter(Boolean).map(esc).join(" · ")}</small></span><span></span></li>`).join("")}</ul>
   </section>`;
 }
 
@@ -136,8 +160,10 @@ function todayStrip(){
 function viewHome(){
   const {counts, html: bar} = stageBar(S.athletes);
   const quota = counts[2] + counts[3];
-  const t = today(), soon = addDays(t, 14);
-  const busy = S.athletes.filter(a => isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= soon)
+  const t = today(), soon = addDays(t, 14), rows = todayRows();
+  // Athletes in the strip (all of today's, plus later days of a running competition) aren't repeated below.
+  const inStrip = new Set(rows.flatMap(r => r.athletes.map(a => a.id)));
+  const busy = S.athletes.filter(a => isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= soon && !inStrip.has(a.id))
     .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name));
   const mine = S.athletes.filter(a => S.follows.has(a.id)).sort((a, b) => heCmp(a.name, b.name));
   const mineNew = mine.filter(isNew).length;
@@ -152,7 +178,7 @@ function viewHome(){
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
-  ${todayStrip()}
+  ${todayStrip(rows)}
   ${reviewPanel()}
   <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
   <p class="sr" id="qCount" aria-live="polite"></p>
@@ -540,8 +566,10 @@ function currentRoute(){
   try { return decodeURIComponent(location.hash.slice(1)) || "home"; } catch { return "home"; }
 }
 
+let renderedDay = "";
 function route(){
   const h = currentRoute();
+  renderedDay = today();
   let html, nav;
   if (S.failed && !S.loaded) html = `<div class="empty">לא הצלחנו לטעון את הנתונים. <button class="btn small" data-retry>נסו שוב</button></div>`, nav = "";
   else if (!S.loaded) html = `<div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div>`, nav = "home";
@@ -608,7 +636,8 @@ document.addEventListener("click", e => {
 $("frm").addEventListener("submit", saveForm);
 $("archBtn").addEventListener("click", archive);
 $("cancelBtn").addEventListener("click", () => $("dlg").close());
-setInterval(() => { const d = $("days"); if (d) d.textContent = daysLeft(); }, 60e3);
+// Past Israel midnight the today strip and "live"/"past" labels are stale.
+setInterval(() => { if (today() !== renderedDay) return refresh(); const d = $("days"); if (d) d.textContent = daysLeft(); }, 60e3);
 
 // ---------- data ----------
 function applySnapshot(d){

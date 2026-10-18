@@ -225,3 +225,4 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .trust.ok{background:var(--ok-soft);color:var(--ok)}
 .trust.stale{background:var(--sun-soft);color:var(--sun-ink)}
 .trust.auto{border:1px solid var(--line);color:var(--muted)}
+.today{border-inline-start:4px solid var(--sun)}
