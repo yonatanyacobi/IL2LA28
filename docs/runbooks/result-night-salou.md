@@ -19,6 +19,7 @@ decided. Salou gives **no Olympic quota**: the quota item stays `in-contention`,
 |---|---|---|
 | 26.10 | The women's session row is on HOLD (no schedule as of 18.10). Once ELF/World Lacrosse publish groups and times: one session per Israeli game day, `timeLocal` as printed, `tz` Europe/Madrid; Dana signs. Same for the men before 10.11 | Yael → Dana → coordinator |
 | 26.10 | Name the **official results source** (ELF/World Lacrosse game pages). None is named in any plan yet; nothing is recorded without one | Yael |
+| 26.10 | Where ELF/World Lacrosse will announce the World Sixes 2027 qualifiers; "עלתה לאליפות העולם" waits for that statement | Yael |
 | 1.11 | Wording for the drafts below approved | Yael → Shira |
 
 ## Each game day
@@ -35,7 +36,7 @@ decided. Salou gives **no Olympic quota**: the quota item stays `in-contention`,
 |---|---|
 | Final placing from the official standings → Dana | Yael |
 | Team write through `job/athlete_patch.py`: `"result": {"at": "<last day>", "text": …, "source": <standings>}`; `next`/`nextDate` → `""` unless an official entry for the next event exists | coordinator |
-| Top 5: "מה התעדכן" line (below), `athleteId` = the team id | coordinator |
+| Top 5: "מה התעדכן" line (below), `athleteId` = the team id, **only after an official ELF/World Lacrosse statement** that the team is in the World Sixes 2027; the final standings alone are not enough | Yael → Dana → coordinator |
 | quotas.json PR: the item's `israelNote` / `stakes` / `nextQuotaEvent` after both tournaments (men's ends 18.11), `review` `unchecked`, through result-night.md | Yael → Dana → lead |
 
 ## Drafts (Yael / Shira to approve)
@@ -51,5 +52,4 @@ Dates in the job's style. Score with Israel's goals first.
 ## Open
 
 - No results source and no approved wording (above).
-- Is a top-5 finish final on the last day, or can ELF reallocate (withdrawals, eligibility)? If unclear, the "עלתה"
-  line waits for an official World Lacrosse/ELF statement, as with gymnastics Q marks.
+- Which official source exists for scores and standings (ELF or World Lacrosse)? Asked Yael on #214.

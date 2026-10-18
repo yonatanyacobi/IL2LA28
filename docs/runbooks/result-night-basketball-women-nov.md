@@ -1,7 +1,8 @@
 # Runbook: women's EuroBasket 2027 qualifiers, November window (11, 14, 17.11)
 
 For the coordinator (the only DB writer). Games, times and FIBA game ids come from Yael's
-`data/sessions/yael-2.json` and `docs/research/radar-2026-11-yael.md` (#172, not yet on `main`). No plan has
+`data/sessions/yael-2.json` and `docs/research/radar-2026-11-yael.md` (#172). The competition record and all five
+FIBA sessions are already in the DB and live (v47). No plan has
 result wording, so the texts below are **drafts for Yael and Shira**.
 
 Team: נבחרת ישראל בכדורסל (נשים), `israel-basketball-women`. Group I with Poland, Türkiye, Montenegro.
@@ -20,7 +21,6 @@ go to the Olympic qualifying tournaments (Feb 2028). The quota item stays as it 
 
 | By | Step | Who |
 |---|---|---|
-| 8.11 | #172 merged; the competition record `fiba-ebw-2027-q-nov-2026` created from `docs/research/fiba-competitions-2026-11.json`, then the three sessions loaded through `job/load_sessions.py` (Dana signs) | Yael → Dana → coordinator |
 | 8.11 | `next`/`nextDate` of the team = the 11.11 game | Yael |
 | 8.11 | Wording for the drafts below approved | Yael → Shira |
 
