@@ -33,12 +33,13 @@ function digestText(t = today()){
   const day = c => str(c.at).slice(0, 10);
   const end = c => c.end || c.start;
   const weekChanges = S.changes.filter(c => isDate(day(c)) && day(c) >= from && day(c) <= t);
-  // Results: competitions in tracked sports that ended in the 7 days before today, each with the changes about its
-  // sport since it started. 7 full days, not t-6, so a Sunday digest still covers last Sunday's finals.
+  // Results: competitions in tracked sports that ended in the 7 days before today, each with all changes about its
+  // sport since it started (a 9-day Worlds' first results are older than a week by the next Sunday).
+  // 7 full days, not t-6, so a Sunday digest still covers last Sunday's finals.
   // Changes carry no competition id, so the sport is taken from athleteId, else from the "<sport>: " prefix the
   // daily job writes.
   const resFrom = addDays(t, -7);
-  const resChanges = S.changes.filter(c => isDate(day(c)) && day(c) >= resFrom && day(c) <= t);
+  const resChanges = S.changes.filter(c => isDate(day(c)) && day(c) <= t);
   const changeSport = c => S.athletes.find(a => a.id === c.athleteId)?.sportId
     || S.sports.find(s => waText(c.text).startsWith(waText(s.he) + ":"))?.id || "";
   const used = new Set();

@@ -617,6 +617,7 @@ test("#digest: this week's results group ended competitions with their changes",
   // Sunday 1 Nov: last Sunday's finals (Rotterdam, ended 25 Oct) and their change still count.
   const sunday = digestSection((await digestOf({data, now: "2026-11-01T09:00:00Z"})).text, "תוצאות השבוע");
   assert.ok(sunday.includes("אליפות העולם בהתעמלות מכשירים 2026") && sunday.includes("סיימה שישית"), sunday);
+  assert.ok(sunday.includes("זכה בכסף"), "a change from the competition's first week is still attached");
   const judo = digestSection((await digestOf({now: "2026-11-01T09:00:00Z"})).text, "תוצאות השבוע");
   assert.ok(judo.includes("גרנד סלאם אבו דאבי (ג׳ודו)\n") && judo.includes("  ישראלים: ") && judo.includes("התוצאות עוד לא עודכנו באתר."), judo);
 });
