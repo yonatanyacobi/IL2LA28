@@ -392,3 +392,5 @@ div.track{background:none}
 .hlink{color:var(--ink);text-decoration:none}
 .hlink:hover,.hlink:focus-visible{text-decoration:underline}
 .hlink[aria-current="date"]{border-bottom:3px solid var(--sun)}
+.sess-day{scroll-margin-top:64px}   /* scrolled to on arrival: clear the sticky nav (two rows on mobile) */
+@media (max-width:640px){.sess-day{scroll-margin-top:110px}}
