@@ -186,6 +186,25 @@ class ExportTest(unittest.TestCase):
         walk(fixture)
         self.assertEqual(left, [])
 
+    def test_rank_fields(self):
+        L, D = "IJF World Ranking List", "2026-10-13"
+        cases = {
+            "full": ({"rankNum": 1, "rankList": L, "rankAsOf": D}, (1, L, D)),
+            "string from form": ({"rankNum": " 41 ", "rankList": L, "rankAsOf": D}, (41, L, D)),
+            "no list": ({"rankNum": 5, "rankAsOf": D}, (None, "", D)),
+            "no date": ({"rankNum": 5, "rankList": L}, (None, L, "")),
+            "bad date": ({"rankNum": 5, "rankList": L, "rankAsOf": "13.10.2026"}, (None, L, "")),
+            "zero": ({"rankNum": 0, "rankList": L, "rankAsOf": D}, (None, L, D)),
+            "negative": ({"rankNum": -3, "rankList": L, "rankAsOf": D}, (None, L, D)),
+            "float": ({"rankNum": 2.5, "rankList": L, "rankAsOf": D}, (None, L, D)),
+            "bool": ({"rankNum": True, "rankList": L, "rankAsOf": D}, (None, L, D)),
+            "absent": ({}, (None, "", "")),
+            "long list": ({"rankNum": 3, "rankList": "x" * 200, "rankAsOf": D}, (3, "x" * 80, D)),
+        }
+        data = self.export(athletes={k: athlete(**fields) for k, (fields, _) in cases.items()})
+        got = {a["id"]: (a["rankNum"], a["rankList"], a["rankAsOf"]) for a in data["athletes"]}
+        self.assertEqual(got, {k: want for k, (_, want) in cases.items()})
+
     def test_shrink_guard(self):
         with tempfile.TemporaryDirectory() as tmp:
             prev = os.path.join(tmp, "prev.json")
