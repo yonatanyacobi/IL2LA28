@@ -10,7 +10,7 @@
    "athleteIds": [
     "yali-shoshani"
    ],
-   "phase": "אליפות העולם בהתעמלות מכשירים – מוקדמות נשים, סבב 7 (מקבילים מדורגים)",
+   "phase": "מוקדמות נשים, סבב 7 (מקבילים מדורגים)",
    "source": "https://www.gymnastics.sport/asset.php?id=fidb_24017",
    "result": "",
    "resultSource": "",
@@ -32,7 +32,7 @@
     "lihie-raz",
     "roni-shamay"
    ],
-   "phase": "אליפות העולם בהתעמלות מכשירים – מוקדמות נשים, סבב 10 (קרב־רב)",
+   "phase": "מוקדמות נשים, סבב 10 (קרב־רב)",
    "source": "https://www.gymnastics.sport/asset.php?id=fidb_24017",
    "result": "",
    "resultSource": "",
@@ -55,7 +55,7 @@
     "gefen-primo",
     "timna-nelson-levy"
    ],
-   "phase": "גרנד סלאם אבו דאבי – מוקדמות, יום 1: גברים 60-, נשים 52- ו־57-",
+   "phase": "מוקדמות, יום 1: גברים 60-, נשים 52- ו־57-",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "result": "",
    "resultSource": "",
@@ -76,7 +76,7 @@
    "athleteIds": [
     "yonatan-elbaz"
    ],
-   "phase": "גרנד סלאם אבו דאבי – מוקדמות, יום 2: גברים 73-",
+   "phase": "מוקדמות, יום 2: גברים 73-",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "result": "",
    "resultSource": "",
@@ -97,7 +97,7 @@
    "athleteIds": [
     "raz-hershko"
    ],
-   "phase": "גרנד סלאם אבו דאבי – מוקדמות, יום 3: נשים 78+",
+   "phase": "מוקדמות, יום 3: נשים 78+",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "result": "",
    "resultSource": "",
@@ -116,7 +116,7 @@
    "date": "2026-10-29",
    "timeLocal": "17:00",
    "tz": "Asia/Dubai",
-   "phase": "גרנד סלאם אבו דאבי – בלוק הגמרים, יום 1",
+   "phase": "בלוק הגמרים, יום 1",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "addWhen": "ישראלי/ת מאותו יום עולה לבלוק הגמרים (חצי גמר/תקומה), לפי תוצאות IJF"
   },
@@ -125,7 +125,7 @@
    "date": "2026-10-30",
    "timeLocal": "17:00",
    "tz": "Asia/Dubai",
-   "phase": "גרנד סלאם אבו דאבי – בלוק הגמרים, יום 2",
+   "phase": "בלוק הגמרים, יום 2",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "addWhen": "ישראלי/ת מאותו יום עולה לבלוק הגמרים (חצי גמר/תקומה), לפי תוצאות IJF"
   },
@@ -134,7 +134,7 @@
    "date": "2026-10-31",
    "timeLocal": "17:00",
    "tz": "Asia/Dubai",
-   "phase": "גרנד סלאם אבו דאבי – בלוק הגמרים, יום 3",
+   "phase": "בלוק הגמרים, יום 3",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "addWhen": "ישראלי/ת מאותו יום עולה לבלוק הגמרים (חצי גמר/תקומה), לפי תוצאות IJF"
   },
@@ -143,7 +143,7 @@
    "date": "2026-10-24",
    "timeLocal": "14:00",
    "tz": "Europe/Amsterdam",
-   "phase": "אליפות העולם בהתעמלות מכשירים – גמר קרקע גברים",
+   "phase": "גמר קרקע גברים",
    "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
    "athleteIds": [
     "artem-dolgopyat",
@@ -156,7 +156,7 @@
    "date": "2026-10-23",
    "timeLocal": "19:30",
    "tz": "Europe/Amsterdam",
-   "phase": "אליפות העולם בהתעמלות מכשירים – גמר קרב־רב נשים",
+   "phase": "גמר קרב־רב נשים",
    "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
    "addWhen": "אם רז או שמאי עולות לגמר לפי התוצאות הרשמיות של המוקדמות (19.10)"
   },
@@ -165,7 +165,7 @@
    "date": "2026-10-24",
    "timeLocal": "14:00",
    "tz": "Europe/Amsterdam",
-   "phase": "אליפות העולם בהתעמלות מכשירים – גמרי מכשירים, יום 1 (מקבילים מדורגים נשים)",
+   "phase": "גמרי מכשירים, יום 1 (מקבילים מדורגים נשים)",
    "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
    "addWhen": "אם שושני (או רז/שמאי) עולה לגמר המקבילים; השעה המדויקת של המכשיר רק מתוך מסמך FIG"
   },
@@ -174,7 +174,7 @@
    "date": "2026-10-25",
    "timeLocal": "14:00",
    "tz": "Europe/Amsterdam",
-   "phase": "אליפות העולם בהתעמלות מכשירים – גמרי מכשירים, יום 2 (קורה/קרקע נשים)",
+   "phase": "גמרי מכשירים, יום 2 (קורה/קרקע נשים)",
    "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
    "addWhen": "אם רז או שמאי עולות לגמר קורה או קרקע לפי התוצאות הרשמיות"
   }

@@ -8,7 +8,7 @@ qualified. The unofficial Longines Ranking shows Dolgopyat 3rd (14.300, Q) and B
 | When (IL) | What | Who |
 |---|---|---|
 | as soon as #134 has the Official PDF | If the PDF shows Q for one or both, move the floor final from `pendingFinalBlocks` in `data/sessions/roni.json` to `sessions`. If not, the session isn't added and their `next`/`nextDate` go to `""` | Roni → Dana |
-| on adding the session | `id` = `ag-worlds-2026-20261024-mag-fx-final`, `date` 2026-10-24, `timeLocal` 14:00, `tz` Europe/Amsterdam (startUtc 12:00Z = 15:00 IL), `athleteIds` = the confirmed ones, `phase` = `אליפות העולם בהתעמלות מכשירים – גמר קרקע גברים`, `source` = FIG Work Plan (fidb_23944) | Roni |
+| on adding the session | `id` = `ag-worlds-2026-20261024-mag-fx-final`, `date` 2026-10-24, `timeLocal` 14:00, `tz` Europe/Amsterdam (startUtc 12:00Z = 15:00 IL), `athleteIds` = the confirmed ones, `phase` = `גמר קרקע גברים`, `source` = FIG Work Plan (fidb_23944) | Roni |
 | 24.10 morning | Check the final's start list (Longines → Men's Apparatus Finals → Start List) for withdrawals. A reserve (R1: Kovtun/Leykin, tied 9th) can step in. If an Israeli withdraws, remove them from `athleteIds` | Roni |
 
 ## The final

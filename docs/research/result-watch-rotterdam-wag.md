@@ -42,7 +42,7 @@ pass `athlete_patch.result_entry()` unchanged and are 95–111 characters long (
 ### Raz (`lihie-raz`) and Shamai (`roni-shamay`), all-around
 | Outcome | `result.text` | session `result` | `next` / `nextDate` |
 |---|---|---|---|
-| Q to the all-around final | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב` | `מקום <N> בקרב־רב, עלתה לגמר` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב-רב נשים` / `2026-10-23` |
+| Q to the all-around final | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב` | `מקום <N> בקרב־רב, עלתה לגמר` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים` / `2026-10-23` |
 | Not qualified | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר הקרב־רב` | `מקום <N> בקרב־רב, לא עלתה לגמר` | `""` / `""`, unless an editor knows the next competition |
 
 - **Apparatus final as well** (for example Shamai on bars): a second, separate write, with the bars row below and its
