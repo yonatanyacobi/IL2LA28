@@ -3,6 +3,7 @@
 "use strict";
 
 const HOME_RESULTS_H = 48, HOME_RESULTS_MAX = 5, HOME_STAKES_MAX = 2, HOME_NEXT_ROWS = 3, HOME_NEXT_LOOKAHEAD = 60;
+const WEEK_DAYS = 7, WEEK_COMPS = 2, WEEK_NAMES = 2;
 const homeDayTitle = d => asDate(d).toLocaleDateString("he-IL", {weekday: "short", day: "numeric", month: "short"});
 const compA = c => c ? compLink(c, esc(c.name)) : "";
 const sportLink = sid => `<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a>`;
@@ -27,14 +28,19 @@ function todayStakes(sessions, t){
 const homeRows = (list, d) => `<ul class="rows sess">${list.map(s =>
   sessionRow(s, d, dateOnly(list), `<small>${s.comp ? compA(s.comp) : sportLink(s.sportId)}</small>`)).join("")}</ul>`;
 
+// "הבא בתור" in homeToday(): on a day without Israelis, the next day that has them. weekPanel() leaves it out.
+function homeNextDay(t){
+  for (let i = 1; i <= HOME_NEXT_LOOKAHEAD; i++) if (hasIsraelis(addDays(t, i))) return addDays(t, i);
+  return "";
+}
+
 function homeToday(){
   const t = today(), sessions = daySessions(t).sort(sessionOrder);
   const more = sessions.length - TODAY_MAX;
   const withComp = new Set(sessions.map(s => s.comp?.id).filter(Boolean));
   const running = S.comps.filter(c => c.start <= t && t <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS
     && athletesOf(c.sportId).length && !withComp.has(c.id)).sort((x, y) => heCmp(x.name, y.name));
-  let next = "";
-  if (!sessions.length) for (let i = 1; i <= HOME_NEXT_LOOKAHEAD && !next; i++) if (hasIsraelis(addDays(t, i))) next = addDays(t, i);
+  const next = sessions.length ? "" : homeNextDay(t);
   const shown = sessions.slice(0, TODAY_MAX), nextList = next ? daySessions(next).sort(sessionOrder).slice(0, HOME_NEXT_ROWS) : [];
   // PM on #171: an empty day shows the next session day's first rows, so the home still opens on sessions.
   const nextBlock = () => `<h3>הבא בתור: ${homeDayTitle(next)}${dateOnly(nextList) ? DATE_ONLY : ""}</h3>
@@ -90,3 +96,54 @@ function homeResults(){
 }
 
 const homeNow = () => `<div class="home-now">${homeToday()}${homeResults()}</div>`;
+
+// ---------- "השבוע" (sprint6-ux-specs.md S4): one row per day with Israelis, tomorrow to today+7 ----------
+// A day's competitions in session order, once each; a session without a known competition stands for its sport.
+const dayComps = list => [...new Map(list.slice().sort(sessionOrder)
+  .map(s => [s.comp ? s.comp.id : `sport|${s.sportId}`, s.comp ? compA(s.comp) : sportLink(s.sportId)])).values()];
+const weekComps = list => (cs => cs.slice(0, WEEK_COMPS).join(" · ") + (cs.length > WEEK_COMPS ? ` · ועוד ${cs.length - WEEK_COMPS}` : ""))(dayComps(list));
+
+// Followed athletes first (★ + at most 2 names); otherwise only the count.
+function weekWho(list){
+  const as = [...new Map(list.flatMap(s => s.athletes).map(a => [a.id, a])).values()];
+  const fav = as.filter(a => S.follows.has(a.id)).sort((x, y) => heCmp(x.name, y.name)).slice(0, WEEK_NAMES);
+  if (!fav.length) return as.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${as.length} ספורטאים ונבחרות`;
+  const more = as.length - fav.length;
+  return `${STAR}${fav.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")}${more > 0 ? ` · ועוד ${more}` : ""}`;
+}
+
+// Only the sports competing that day, as #day's stakes lines: a quota event elsewhere doesn't make the day one.
+const weekQuotaDay = (list, d, t) => [...new Set(list.map(s => s.sportId))].some(sid => quotasOf(sid).some(q =>
+  q.israelStatus === "in-contention" && nxt(q, t) && q.nextQuotaEvent.start <= d && d <= quotaEventEnd(q)));
+const WEEK_QUOTA_PILL = `<span class="pill q-in-contention"><span aria-hidden="true">◐</span> אירוע מכסה</span>`;
+const WEEK_WAIT_PILL = `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`;
+const weekRow = (day, comps, small, pill) =>
+  `<li><span class="d">${day}</span><span class="t">${comps}<small>${small}</small></span>${pill ? `<span>${pill}</span>` : ""}</li>`;
+
+function weekPanel(){
+  if (typeof daySessions !== "function" || typeof hasIsraelis !== "function") return "";
+  const t = today(), y = addDays(t, -1), last = addDays(t, WEEK_DAYS);
+  const todayHas = hasIsraelis(t), next = todayHas ? "" : homeNextDay(t);
+  const days = Array.from({length: WEEK_DAYS}, (_, i) => addDays(t, i + 1)).filter(d => d !== next)
+    .map(d => [d, daySessions(d)]).filter(([, list]) => list.length);
+  // Result night: yesterday's sessions still awaiting a result (awaitLong no longer implies a check is coming).
+  const waiting = daySessions(y).filter(s => ["awaitFresh", "awaitChecked"].includes(sessionState(s, y)));
+  const rows = [
+    waiting.length ? weekRow(`<a href="#day-${y}">אתמול</a>`, weekComps(waiting),
+      waiting.length === 1 ? "סשן אחד ממתין לתוצאה" : `${waiting.length} ממתינים לתוצאה`, WEEK_WAIT_PILL) : "",
+    ...days.map(([d, list]) => weekRow(`<a href="#day-${d}">${homeDayTitle(d)}</a>`, weekComps(list), weekWho(list),
+      weekQuotaDay(list, d, t) ? WEEK_QUOTA_PILL : ""))].filter(Boolean);
+  let empty = "";
+  if (!days.length) {
+    const after = todayHas && nextIsraeliDay(last);
+    if (todayHas) empty = emptyLine("אחרי היום אין השבוע תחרויות ידועות של ספורטאים או נבחרות מישראל.",
+      after ? `#day-${after}` : "#calendar", after ? `ליום התחרויות הבא: ${fmt(after)}` : "ללוח התחרויות");
+    // "הבא בתור" inside the week is its only day, so the panel would repeat it.
+    else if (!next || next > last) empty = emptyLine("אין השבוע תחרויות ידועות של ספורטאים או נבחרות מישראל.", "#calendar", "ללוח התחרויות");
+  }
+  if (!rows.length && !empty) return "";
+  return `<section class="panel" aria-labelledby="weekH"><h2 id="weekH">השבוע</h2>
+    ${rows.length ? `<ul class="rows week">${rows.join("")}</ul>` : ""}${empty}
+    ${empty.includes('href="#calendar"') ? "" : `<p class="foot"><a href="#calendar">ללוח התחרויות</a></p>`}
+  </section>`;
+}
