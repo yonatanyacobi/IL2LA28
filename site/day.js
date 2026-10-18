@@ -16,8 +16,10 @@ const isUtc = v => typeof v === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.
 const dayTitle = d => asDate(d).toLocaleDateString("he-IL", {weekday: "short", day: "numeric", month: "short", year: "numeric"});
 const chipText = d => `${asDate(d).toLocaleDateString("he-IL", {weekday: "narrow"})} ${asDate(d).getDate()}`;
 const chipName = d => asDate(d).toLocaleDateString("he-IL", {weekday: "long", day: "numeric", month: "long"});
-const hhmm = iso => new Date(iso).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
-const ilDate = iso => new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Jerusalem"}).format(new Date(iso));
+// Built once; a new Intl.DateTimeFormat per call dominated #day (docs/perf/2026-10.md). IL_DAY comes from app.js.
+const HHMM = new Intl.DateTimeFormat("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
+const hhmm = iso => HHMM.format(new Date(iso));
+const ilDate = iso => IL_DAY.format(new Date(iso));
 const STAR = `<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span>`;
 
 // The ≤ 31-day competition of a sport that contains day d (season-long series don't count).
@@ -42,7 +44,8 @@ function fallbackSessions(d){
   const out = new Map();
   for (const a of S.athletes) {
     const res = (Array.isArray(a.history) ? a.history : []).find(h => h.kind === "result" && h.at === d && str(h.text).trim());
-    const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null, timed: false};
+    if (!res && a.nextDate !== d) continue;   // most athletes have nothing that day: skip compOn() (docs/perf/2026-10.md)
+    const base ={athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null, timed: false};
     if (res) out.set(a.id, {...base, result: str(res.text).slice(0, 120), resultSource: res.source, resultAt: ""});
     else if (a.nextDate === d) out.set(a.id, {...base, result: ""});
   }
