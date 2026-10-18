@@ -1,7 +1,7 @@
 // Daily view: #today, #day and #day-YYYY-MM-DD (docs/design/daily-and-following.md §1; copy: Shira).
 // Loaded after app.js and uses its helpers. Sessions come from data.json.sessions (docs/design/sessions-contract.md);
-// while that list is empty or missing, a day is built from fallback pseudo-sessions: an athlete's nextDate, and
-// history entries of kind "result". Results arrive with the job run, so the page says when, never "live".
+// athletes with no session that day fall back to pseudo-sessions from their nextDate and history entries of kind
+// "result". Results arrive with the job run, so the page says when, never "live".
 "use strict";
 
 const CADENCE = "מתעדכן פעם ביום";   // the one place to change when event-day runs are approved (OD2)
@@ -49,9 +49,21 @@ function fallbackSessions(d){
   return [...out.values()];
 }
 
+// The job records results in athletes' history (#137); a session without its own result takes them for that day.
+const historyResult = (a, d) => (Array.isArray(a.history) ? a.history : []).find(h => h.kind === "result" && h.at === d && str(h.text).trim());
+
+// Exported sessions, plus fallback pseudo-sessions for athletes who have no session that day (merged per athlete).
 function daySessions(d){
-  const all = exportedSessions();
-  return all.length ? all.filter(s => s.day === d) : fallbackSessions(d);
+  const real = exportedSessions().filter(s => s.day === d).map(s => {
+    if (s.result) return s;
+    const found = s.athletes.map(a => [a, historyResult(a, d)]).filter(([, h]) => h);
+    if (!found.length) return s;
+    const text = found.length === 1 && s.athletes.length === 1 ? str(found[0][1].text)
+      : found.map(([a, h]) => `${a.name}: ${str(h.text)}`).join(" · ");
+    return {...s, result: text.slice(0, 120), resultSource: found[0][1].source, resultAt: ""};   // a date only: no "עודכן ב־"
+  });
+  const covered = new Set(real.flatMap(s => s.athletes.map(a => a.id)));
+  return [...real, ...fallbackSessions(d).filter(s => !covered.has(s.athletes[0].id))];
 }
 const hasIsraelis = d => daySessions(d).length > 0;
 

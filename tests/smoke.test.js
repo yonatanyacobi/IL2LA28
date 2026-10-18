@@ -1677,9 +1677,28 @@ test("#day from sessions: time, status by clock, result stamp, untimed, Israel d
   assert.ok(rowOf(late).includes("01:30"), "Israel day key");
   const junk = await at("2026-11-01T08:00:00Z", [SESS({competitionId: "nope"}), SESS({id: "x2", athleteIds: ["nobody"]})]);
   assert.ok(!junk.includes('<ul class="rows sess">'), "unknown competition / athletes dropped");
-  // With sessions present, the nextDate fallback is off: Abu Dhabi judo (fallback only) isn't on 29.10.
-  const j = (await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"})).view("day-2026-10-29");
-  assert.ok(!j.includes('id="ds-judo"') && j.includes("אין תחרויות ידועות"), "sessions replace the fallback");
+});
+
+test("#day merges sessions with the fallback per athlete (lead review on #151, MEDIUM)", async () => {
+  // Richter has a session on 3.11; Abu Dhabi judo athletes (29.10) have none and keep their nextDate rows.
+  const b = await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
+  const j = b.view("day-2026-10-29");
+  assert.ok(j.includes('id="ds-judo"') && j.includes('href="#a-raz-hershko"') && j.includes('<span class="d">תאריך בלבד</span>'), "athletes without a session stay");
+  const sh = b.view("day-2026-11-03");
+  assert.strictEqual((sh.match(/href="#a-sergey-richter"/g) || []).length, 1, "an athlete with a session isn't repeated from the fallback");
+  assert.ok(sh.includes('<span class="d">08:15</span>'));
+});
+
+test("#day: a session without its own result shows the athlete's history result for that day (lead review on #151, HIGH)", async () => {
+  const data = withSessions([SESS()]);
+  data.athletes.find(a => a.id === "sergey-richter").history.push({at: "2026-11-03", kind: "result", text: "מקום 30 <i>במוקדמות</i>", source: "https://www.issf-sports.org/r"});
+  const out = (await boot({data, quotas: SITE_QUOTAS, now: "2026-11-03T12:00:00Z"})).view("day-2026-11-03");
+  const row = out.split('<ul class="rows sess">')[1].split("</ul>")[0];
+  assert.ok(row.includes("<b>תוצאה:</b> מקום 30 &lt;i&gt;במוקדמות&lt;/i&gt;") && !row.includes("בהמתנה לתוצאה"), "history result fills the session");
+  assert.ok(!row.includes("עודכן ב־") && row.includes('href="https://www.issf-sports.org/r"'), "date-only result: no stamp, its source linked");
+  const other = withSessions([SESS()]);
+  other.athletes.find(a => a.id === "sergey-richter").history.push({at: "2026-11-02", kind: "result", text: "יום אחר", source: "https://x.org"});
+  assert.ok(!(await boot({data: other, quotas: SITE_QUOTAS, now: "2026-11-03T12:00:00Z"})).view("day-2026-11-03").includes("יום אחר"), "only the same day");
 });
 
 test("#day (Gil D4, D6, D8): 'תאריך בלבד', no stakes for earned items, followed sports first", async () => {
