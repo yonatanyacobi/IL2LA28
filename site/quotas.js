@@ -21,7 +21,7 @@ function viewQuotas(){
     <p class="foot">הספירה היא לפי מקצים, לא לפי ספורטאים. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת.${isDate(at) ? ` נכון ל־${fmt(at)}.` : ""}</p>
   </section>
   ${waiting.length ? `<section class="panel" aria-labelledby="qWaitH">
-    <h2 id="qWaitH">ממתינים לתוצאות</h2>
+    <h2 id="qWaitH">בהמתנה לתוצאות</h2>
     <ul class="rows">${waiting.map(([q, w]) => `<li><span class="d">${fmtShort(w.end)}</span>
       <span class="t">${esc(w.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · ${esc(q.event)}</small></span>
       <span>${quotaStatusPill(q.israelStatus)}</span></li>`).join("")}</ul>

@@ -93,7 +93,7 @@ function quotaKpi(){
   const sports = k === 1 ? "בענף אחד" : k ? `ב־${k} ענפים` : "";
   return `<p class="kpi">${n.earned ? [`${events(n.earned)} עם מכסה לישראל`, `<b>${n["in-contention"]}</b> במרוץ למכסה`, sports].filter(Boolean).join(" · ")
     : `טרם הושגו מכסות לישראל · ${events(n["in-contention"])} במרוץ למכסה${sports ? " " + sports : ""}`}${
-    (w => w ? ` · <b>${w}</b> ממתינים לתוצאות` : "")(list.filter(q => awaitingOf(q)).length)} · ${link}</p>`;
+    (w => w ? ` · <b>${w}</b> בהמתנה לתוצאות` : "")(list.filter(q => awaitingOf(q)).length)} · ${link}</p>`;
 }
 
 function winStatus(w){
@@ -140,8 +140,10 @@ const awaitingOf = (q, t = today()) => {
   if (str(S.quotasUpdatedAt).slice(0, 10) > end) return null;
   return dayNo(end, t) - 1 <= AWAIT_DAYS ? {...e, end} : null;
 };
-const AWAIT_PILL = `<span class="pill q-awaiting">◷ ממתינים לתוצאות</span>`;
-const awaitingLine = w => `${esc(w.name)} ${w.start === w.end ? "התקיים" : "הסתיים"} ב־${fmt(w.end)}. ממתינים לעדכון המכסות לפי ההודעה הרשמית.`;
+const AWAITING = `<span aria-hidden="true">◷</span> בהמתנה לתוצאות`;
+const AWAIT_PILL = `<span class="pill q-awaiting">${AWAITING}</span>`;
+// No verb: event names are both masculine and feminine ("גרנד סלאם", "אליפות").
+const awaitingLine = w => `${esc(w.name)} · ${fmt(w.end)}. ממתינים לעדכון המכסות לפי ההודעה הרשמית.`;
 // "What it means" for Israel at the next quota event; meaningless once that event is past.
 const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
 
@@ -252,7 +254,7 @@ function todayStrip(rows){
     const stakes = quotasOf(sportId).filter(q => (q.stakes && nxt(q) || awaitingOf(q)) && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
       .sort((x, y) => rank(x) - rank(y));
     const onLine = stakes.slice(0, STAKES_MAX).map(q => awaitingOf(q)
-      ? `<small class="stakes awaiting"><b>◷ ממתינים לתוצאות:</b> ${esc(q.event)}</small>`
+      ? `<small class="stakes awaiting"><b>${AWAITING}:</b> ${esc(q.event)}</small>`
       : `<small class="stakes"><b>מה זה אומר:</b> ${esc(q.event)}: ${esc(q.stakes)}</small>`).join("")
       + (stakes.length > STAKES_MAX ? `<small>ועוד ${stakes.length - STAKES_MAX} מקצים — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>

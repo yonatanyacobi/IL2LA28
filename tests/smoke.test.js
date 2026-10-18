@@ -378,8 +378,9 @@ test("awaiting results after a quota event (round3 §1): sport page, #quotas, ho
     item("אישי", "in-contention", {name: "אליפות העולם 2027", start: "2027-09-28"}),
     item("הושגה", "earned", {name: "גמר קבוצתי<i>", start: "2026-10-20", end: "2026-10-20"}),             // earned never waits
   ]});
-  const PILL = '<span class="pill q-awaiting">◷ ממתינים לתוצאות</span>';
-  const LINE = "גמר קבוצתי&lt;i&gt; התקיים ב־";
+  const AW = '<span aria-hidden="true">◷</span> בהמתנה לתוצאות';
+  const PILL = `<span class="pill q-awaiting">${AW}</span>`;
+  const LINE = "גמר קבוצתי&lt;i&gt; · ";
   const at = async (now, updatedAt = "2026-10-18") => {
     const {view} = await boot({quotas: quotas(updatedAt), now});
     const home = view("home");
@@ -400,11 +401,11 @@ test("awaiting results after a quota event (round3 §1): sport page, #quotas, ho
   const panel = next.all.split('id="qWaitH"')[1]?.split("</section>")[0] || "";
   assert.ok(panel.includes("גמר קבוצתי&lt;i&gt;") && panel.includes("קבוצתי&lt;b&gt;") && !panel.includes("הושגה") && !/<[bi]>/.test(panel.replace(/<\/?b>/g, "")), "#quotas panel, escaped");
   assert.ok(next.all.indexOf('id="qWaitH"') < next.all.indexOf('id="qNextH"'), "panel above upcoming");
-  assert.ok(next.home.includes(" · <b>1</b> ממתינים לתוצאות"), "home KPI");
-  assert.ok(next.strip.includes('<small class="stakes awaiting"><b>◷ ממתינים לתוצאות:</b> קבוצתי&lt;b&gt;</small>') && !next.strip.includes("stake קבוצתי"), "strip: no stale stakes");
+  assert.ok(next.home.includes(" · <b>1</b> בהמתנה לתוצאות"), "home KPI");
+  assert.ok(next.strip.includes(`<small class="stakes awaiting"><b>${AW}:</b> קבוצתי&lt;b&gt;</small>`) && !next.strip.includes("stake קבוצתי"), "strip: no stale stakes");
 
   const updated = await at("2026-10-21T08:00:00Z", "2026-10-21T06:00:00Z");
-  for (const page of Object.values(updated)) assert.ok(!page.includes("ממתינים לתוצאות") && !page.includes("stake קבוצתי"), "curated after the event: no awaiting");
+  for (const page of Object.values(updated)) assert.ok(!page.includes("בהמתנה לתוצאות") && !page.includes("stake קבוצתי"), "curated after the event: no awaiting");
   const late = await at("2026-11-05T08:00:00Z");
   assert.ok(!late.sport.includes(PILL) && !late.all.includes("qWaitH"), "after 14 days the awaiting state ends");
 });
