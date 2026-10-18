@@ -321,7 +321,7 @@ test("quota earned: home panel for the last 14 days, nothing without earnedAt", 
   assert.strictEqual(count(won, "<li>"), 1);
   assert.ok(won.includes("52- ק״ג נשים") && won.includes('href="#sport-judo"') && won.includes("pill q-earned"));
   assert.ok(!/<b>52/.test(won) && won.includes("&lt;b&gt;52"), "note escaped");
-  assert.ok(home.indexOf('class="panel won"') > home.indexOf('id="homeResH"'), "after the today hub");
+  assert.ok(home.indexOf('class="panel won"') < home.indexOf('id="homeTodayH"'), "earned yesterday: above the today hub (PM on #171)");
 
   const two = {updatedAt: "2026-10-30", items: [quotas.items[0], {...quotas.items[0], event: "x", earnedAt: "2026-10-20"}]};
   assert.ok((await boot({quotas: two, now: "2026-10-30T08:00:00Z"})).view("home").includes('<h2 id="wonH">מכסות חדשות לישראל</h2>'));
@@ -1850,7 +1850,7 @@ test("refresh keeps focus without an id (href, data-follow), reopens <details>, 
 const todayOf = html => html.split('aria-labelledby="homeTodayH"')[1]?.split("</section>")[0] || "";
 const resultsOf = html => html.split('aria-labelledby="homeResH"')[1]?.split("</section>")[0] || "";
 
-test("home today: 8 sessions show 6, followed first, each row links its sport and #c-, the more link counts all", async () => {
+test("home today: 8 sessions show 6, followed first, each row links its sport and #c-, the more link counts the hidden", async () => {
   const list = Array.from({length: 8}, (_, i) => SESS({id: `s${i}`, startUtc: `2026-11-03T0${i + 1}:00:00Z`, phase: `מקצה ${i}`}));
   list[7].athleteIds = ["raz-hershko"];
   const b = await boot({data: withSessions(list), quotas: SITE_QUOTAS, now: "2026-11-03T00:30:00Z", follows: ["raz-hershko"]});
@@ -1859,20 +1859,38 @@ test("home today: 8 sessions show 6, followed first, each row links its sport an
   assert.strictEqual(rows.length, 6);
   assert.ok(rows[0].includes('href="#a-raz-hershko"') && rows[0].includes("במעקב שלך"), "followed first");
   for (const r of rows) assert.ok(r.includes('<small><a href="#sport-shooting">') && r.includes('<a href="#c-issf-wch-doha-2026">'), r);
-  assert.ok(sec.includes('<a href="#today">לכל 8 הסשנים היום</a>') && sec.includes('<h2 id="homeTodayH">היום, יום ג׳, 3 בנוב׳</h2>'));
+  assert.ok(sec.includes('<a href="#today">ועוד 2 סשנים היום</a>') && sec.includes('<h2 id="homeTodayH">היום, יום ג׳, 3 בנוב׳</h2>'));
   const seven = await boot({data: withSessions(list.slice(1)), quotas: SITE_QUOTAS, now: "2026-11-03T00:30:00Z"});
-  assert.ok(todayOf(seven.view("home")).includes(">לסשן נוסף אחד היום</a>"), "one more");
+  assert.ok(todayOf(seven.view("home")).includes(">ועוד סשן אחד היום</a>"), "one more");
 });
 
 test("home today: Abu Dhabi on 29.10, an empty day with הבא בתור, running competitions without a session", async () => {
   const ad = todayOf((await boot({quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home"));
   assert.ok(ad.includes('<a href="#c-judo-gs-abu-dhabi-2026">גרנד סלאם אבו דאבי</a>') && ad.includes("pill s-live") && ad.includes('<a href="#today">לכל התחרויות היום</a>'));
   const empty = todayOf((await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"})).view("home"));
+  const nextRows = empty.split("<h3>הבא בתור, יום ה׳, 29 באוק׳</h3>")[1]?.split("</ul>")[0] || "";
   assert.ok(empty.includes('<p class="muted">אין היום סשנים ידועים של ספורטאים ונבחרות מישראל.</p>')
-    && empty.includes('<p>הבא בתור: <a href="#day-2026-10-29">29 באוק׳ 2026</a> · גרנד סלאם אבו דאבי</p>'), empty);
+    && (nextRows.match(/<li>/g) || []).length === 3 && nextRows.includes("pill s-before")
+    && empty.includes('<p><a href="#day-2026-10-29">לכל הסשנים ב־29 באוק׳</a></p>'), "empty day: the next day's first 3 rows (PM on #171)");
   const doha = todayOf((await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-11-05T08:00:00Z"})).view("home"));
   assert.ok(/<p class="foot">מתקיימות היום, בלי סשן ידוע של ישראלים: .*<a href="#c-issf-wch-doha-2026">אליפות העולם בקליעה<\/a>/.test(doha), doha);
-  assert.ok(!doha.includes('<ul class="rows sess">'));
+  assert.ok(!doha.split("<h3>")[0].includes('<ul class="rows sess">'), "no rows for today");
+});
+
+test("home today: at most 2 'על הכף היום' lines, one per running competition, followed item first; won panel placement (PM on #171)", async () => {
+  const stakes = html => html.match(/<p class="stakes"><b>על הכף היום · [\s\S]*?<\/p>/g) || [];
+  const plain = stakes(todayOf((await boot({quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home")));
+  assert.ok(plain.length >= 1 && plain.length <= 2, plain.join("\n"));
+  assert.strictEqual(plain.filter(l => l.includes("#c-judo-gs-abu-dhabi-2026")).length, 1, "one line per competition");
+  const followed = stakes(todayOf((await boot({quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z", follows: ["raz-hershko"]})).view("home")));
+  assert.ok(followed[0].includes("#c-judo-gs-abu-dhabi-2026") && followed[0].includes("<bdi>78+ ק״ג נשים</bdi>"), followed[0]);
+  const q = JSON.parse(JSON.stringify(SITE_QUOTAS));
+  for (const i of q.items.filter(i => i.sportId === "judo")) Object.assign(i, {israelStatus: "earned", earnedAt: "2026-10-29"});
+  const won = (await boot({quotas: q, now: "2026-10-29T08:00:00Z"})).view("home");
+  assert.ok(!stakes(won).some(l => l.includes("#c-judo-gs-abu-dhabi-2026")), "earned: no stakes");
+  assert.ok(won.indexOf('class="panel won"') < won.indexOf('id="homeTodayH"'), "earned today: won above היום");
+  const older = (await boot({quotas: q, now: "2026-11-07T08:00:00Z"})).view("home");   // 9 days later: still in the 14-day panel
+  assert.ok(older.includes('class="panel won"') && older.indexOf('class="panel won"') > older.indexOf('id="homeResH"'), "older than 7 days: below");
 });
 
 test("home results: 48 h window, date-only history, no source dropped, session and history once", async () => {

@@ -7,6 +7,23 @@ const homeDayTitle = d => asDate(d).toLocaleDateString("he-IL", {weekday: "short
 const compLink = c => c ? `<a href="#c-${esc(c.id)}">${esc(c.name)}</a>` : "";
 const sportLink = sid => `<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a>`;
 
+const HOME_STAKES_MAX = 2, HOME_NEXT_ROWS = 3;
+
+// PM on #171: one "על הכף היום" line per quota competition running today, at most 2. Each competition's item is
+// picked followed → athlete in today's rows → best rank → file order; stakesLine()'s rules decide what may show
+// (in-contention, event not over).
+function todayStakes(sessions, t){
+  const listed = new Set(sessions.flatMap(s => s.athletes.map(a => a.id)));
+  const key = q => { const as = quotaAthletes(q);
+    return [as.some(a => S.follows.has(a.id)) ? 0 : 1, as.some(a => listed.has(a.id)) ? 0 : 1, Math.min(Infinity, ...as.map(a => rankOf(a, t)))]; };
+  const cmp = (x, y) => x.k[0] - y.k[0] || x.k[1] - y.k[1] || (x.k[2] - y.k[2] || 0) || x.i - y.i;   // || 0: Infinity - Infinity
+  const picks = S.comps.filter(c => c.start <= t && t <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS)
+    .map(c => quotasOf(c.sportId).map((q, i) => ({c, q, i, k: key(q)}))
+      .filter(({q}) => stakesLine(q) && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start)).sort(cmp)[0])
+    .filter(Boolean).sort(cmp).slice(0, HOME_STAKES_MAX);
+  return picks.map(({c, q}) => `<p class="stakes"><b>על הכף היום · ${compLink(c)}:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</p>`).join("");
+}
+
 function homeToday(){
   const t = today(), sessions = daySessions(t).sort(sessionOrder);
   const more = sessions.length - TODAY_MAX;
@@ -15,14 +32,18 @@ function homeToday(){
     && athletesOf(c.sportId).length && !withComp.has(c.id)).sort((x, y) => heCmp(x.name, y.name));
   let next = "";
   if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && !next; i++) if (hasIsraelis(addDays(t, i))) next = addDays(t, i);
-  const first = next ? daySessions(next).sort(sessionOrder)[0] : null;
-  const where = s => [sportLink(s.sportId), compLink(s.comp)].filter(Boolean).join(" · ");
+  const where = s => `<small>${[sportLink(s.sportId), compLink(s.comp)].filter(Boolean).join(" · ")}</small>`;
+  const rows = (list, d) => `<ul class="rows sess">${list.map(s => sessionRow(s, d, where(s))).join("")}</ul>`;
+  // PM on #171: an empty day shows the next session day's first rows, so the home still opens on sessions.
+  const nextBlock = () => `<h3>הבא בתור, ${homeDayTitle(next)}</h3>
+    ${rows(daySessions(next).sort(sessionOrder).slice(0, HOME_NEXT_ROWS), next)}
+    <p><a href="#day-${next}">לכל הסשנים ב־${fmtShort(next)}</a></p>`;
   return `<section class="panel" aria-labelledby="homeTodayH">
     <div class="sec-head"><h2 id="homeTodayH">היום, ${homeDayTitle(t)}</h2>${sessions.length && more <= 0 ? `<a href="#today">לכל התחרויות היום</a>` : ""}</div>
-    ${sessions.length ? `<ul class="rows sess">${sessions.slice(0, TODAY_MAX).map(s => sessionRow(s, t, `<small>${where(s)}</small>`)).join("")}</ul>`
-      : `<p class="muted">אין היום סשנים ידועים של ספורטאים ונבחרות מישראל.</p>`}
-    ${more > 0 ? `<p><a href="#today">${more === 1 ? "לסשן נוסף אחד היום" : `לכל ${sessions.length} הסשנים היום`}</a></p>` : ""}
-    ${first ? `<p>הבא בתור: <a href="#day-${next}">${fmt(next)}</a> · ${esc(first.comp?.name || sportName(first.sportId))}</p>` : ""}
+    ${sessions.length ? rows(sessions.slice(0, TODAY_MAX), t) : `<p class="muted">אין היום סשנים ידועים של ספורטאים ונבחרות מישראל.</p>`}
+    ${todayStakes(sessions, t)}
+    ${more > 0 ? `<p><a href="#today">${more === 1 ? "ועוד סשן אחד היום" : `ועוד ${more} סשנים היום`}</a></p>` : ""}
+    ${next ? nextBlock() : ""}
     ${running.length ? `<p class="foot">מתקיימות היום, בלי סשן ידוע של ישראלים: ${running.map(compLink).join(" · ")}</p>` : ""}
   </section>`;
 }
