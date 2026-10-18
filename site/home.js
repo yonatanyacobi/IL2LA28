@@ -4,8 +4,6 @@
 
 const HOME_RESULTS_H = 48, HOME_RESULTS_MAX = 5, HOME_STAKES_MAX = 2, HOME_NEXT_ROWS = 3, HOME_NEXT_LOOKAHEAD = 60;
 const homeDayTitle = d => asDate(d).toLocaleDateString("he-IL", {weekday: "short", day: "numeric", month: "short"});
-// Noa's compLink(c, text) lands in app.js with #188; until then, the same function. Drop this line after merging it.
-if (typeof compLink === "undefined") window.compLink = (c, text) => c?.id ? `<a href="#c-${esc(c.id)}">${text}</a>` : text;
 const compA = c => c ? compLink(c, esc(c.name)) : "";
 const sportLink = sid => `<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a>`;
 
