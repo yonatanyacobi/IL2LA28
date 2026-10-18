@@ -1,0 +1,17 @@
+{
+  "updatedAt": "2026-10-18",
+  "items": [
+    {"sportId": "judo", "event": "fixture: -57 ק״ג", "totalQuotas": 18, "maxPerNOC": 1, "allocation": "fixture: allocation text",
+     "israelStatus": "earned", "israelNote": "fixture: earned", "nextQuotaEvent": null, "source": "https://example.org/judo"},
+    {"sportId": "sailing", "event": "fixture: iQFOiL", "totalQuotas": 24, "maxPerNOC": 1, "allocation": "fixture: allocation text",
+     "israelStatus": "in-contention", "israelNote": "fixture: in contention",
+     "nextQuotaEvent": {"name": "fixture: worlds", "start": "2027-01-10"}, "source": "https://example.org/sailing"},
+    {"sportId": "athletics", "event": "fixture: 3000 מ׳ מכשולים", "totalQuotas": 36, "maxPerNOC": 3, "allocation": "fixture: allocation text",
+     "israelStatus": "outside", "israelNote": "", "nextQuotaEvent": {"name": "fixture: meet", "start": "2027-06-01"},
+     "source": "https://example.org/athletics"},
+    {"sportId": "swimming", "event": "fixture: 10 ק״מ", "totalQuotas": null, "maxPerNOC": null, "allocation": "",
+     "israelStatus": "unknown", "israelNote": "", "nextQuotaEvent": null, "source": "https://example.org/swimming"},
+    {"sportId": "judo", "event": "fixture: invalid item", "totalQuotas": 18, "maxPerNOC": 1, "allocation": "",
+     "israelStatus": "earned", "israelNote": "fixture: dropped (http source)", "nextQuotaEvent": null, "source": "http://example.org/judo"}
+  ]
+}

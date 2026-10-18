@@ -1,6 +1,8 @@
 """Validate a public data.json produced by export_data.py (shipped next to it).
 
 Usage: python3 validate_data.py <data.json>  -> exit 0 if valid, 1 with one error per line otherwise.
+       python3 validate_data.py --quotas <quotas.json> <data.json>  -> checks the hand-curated quotas.json;
+       data.json is context for sportId and the "earned" cross-check.
 Checks the contract the exporter guarantees; unknown keys are errors so a private field can't leak silently.
 """
 import json, re, sys
@@ -12,6 +14,9 @@ DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})", re.ASCII)
 STAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", re.ASCII)
 HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
+QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
+QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
+              "nextQuotaEvent", "source"}
 
 # key -> (kind, required); kinds: str, date ("" or YYYY-MM-DD), url ("" or https://), iso ("" or ISO datetime with timezone, as export_data.iso())
 SPORT = {"id": ("id", True), "he": ("str", True), "en": ("str", True), "window": ("window", True)}
@@ -141,21 +146,87 @@ def validate(data):
     return errors
 
 
+def validate_quotas(q, data):
+    """Same per-item rules as the page's quota loader, plus: "earned" needs an athlete at stage >= 2 in that sport."""
+    if not isinstance(q, dict):
+        return ["top level: expected an object"]
+    errors = []
+    err = errors.append
+    # The sprint backlog says YYYY-MM-DD, the agreed format says ISO; both are accepted.
+    if not (is_date(q.get("updatedAt")) or is_iso(q.get("updatedAt"))):
+        err(f"updatedAt: expected YYYY-MM-DD or ISO datetime, got {q.get('updatedAt')!r}")
+    if set(q) - {"updatedAt", "items"}:
+        err(f"top level: unexpected keys {sorted(set(q) - {'updatedAt', 'items'})}")
+    if not isinstance(q.get("items"), list):
+        return errors + ["items: expected a list"]
+    sports = {s.get("id") for s in data.get("sports") or [] if isinstance(s, dict)}
+    staged = {a.get("sportId") for a in data.get("athletes") or []
+              if isinstance(a, dict) and type(a.get("stage")) is int and a["stage"] >= 2}
+    for i, it in enumerate(q["items"]):
+        path = f"items[{i}]"
+        if not isinstance(it, dict):
+            err(f"{path}: expected an object")
+            continue
+        path += f"({it.get('sportId')}/{it.get('event')})"
+        for k in sorted(QUOTA_KEYS - set(it)):
+            err(f"{path}.{k}: missing")
+        for k in sorted(set(it) - QUOTA_KEYS):
+            err(f"{path}.{k}: unexpected key")
+        if it.get("sportId") not in sports:
+            err(f"{path}.sportId: unknown sport {it.get('sportId')!r}")
+        for k in ("event", "allocation", "israelNote"):
+            if k in it and not isinstance(it[k], str):
+                err(f"{path}.{k}: expected a string")
+        if isinstance(it.get("event"), str) and not it["event"].strip():
+            err(f"{path}.event: must not be empty")
+        for k in ("totalQuotas", "maxPerNOC"):
+            v = it.get(k)
+            if not (v is None or (type(v) is int and v >= 0)):
+                err(f"{path}.{k}: expected a non-negative int or null, got {v!r}")
+        status = it.get("israelStatus")
+        if status not in QUOTA_STATUSES:
+            err(f"{path}.israelStatus: expected one of {sorted(QUOTA_STATUSES)}, got {status!r}")
+        elif status == "earned" and it.get("sportId") not in staged:
+            err(f"{path}.israelStatus: \"earned\" but no athlete in {it.get('sportId')!r} has stage >= 2 in data.json")
+        src = it.get("source")
+        if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
+            err(f"{path}.source: expected an https:// URL, got {src!r}")
+        nxt = it.get("nextQuotaEvent")
+        if nxt is not None:
+            if not (isinstance(nxt, dict) and set(nxt) == {"name", "start"}):
+                err(f"{path}.nextQuotaEvent: expected null or {{name, start}}")
+            else:
+                if not (isinstance(nxt["name"], str) and nxt["name"].strip()):
+                    err(f"{path}.nextQuotaEvent.name: must not be empty")
+                if not is_date(nxt["start"]):
+                    err(f"{path}.nextQuotaEvent.start: expected YYYY-MM-DD, got {nxt['start']!r}")
+    return errors
+
+
 def main(argv):
-    if len(argv) != 2:
-        print("usage: python3 validate_data.py <data.json>", file=sys.stderr)
+    args = argv[1:]
+    quotas = bool(args) and args[0] == "--quotas"
+    if quotas:
+        args = args[1:]
+    if len(args) != (2 if quotas else 1):
+        print("usage: python3 validate_data.py [--quotas <quotas.json>] <data.json>", file=sys.stderr)
         return 1
-    try:
-        with open(argv[1], encoding="utf-8") as f:
-            data = json.load(f)
-    except (OSError, ValueError) as e:
-        print(f"INVALID: cannot read {argv[1]}: {e}")
-        return 1
-    errors = validate(data)
+    docs = []
+    for p in args:
+        try:
+            with open(p, encoding="utf-8") as f:
+                docs.append(json.load(f))
+        except (OSError, ValueError) as e:
+            print(f"INVALID: cannot read {p}: {e}")
+            return 1
+    if quotas:
+        errors = validate_quotas(docs[0], docs[1] if isinstance(docs[1], dict) else {})
+    else:
+        errors = validate(docs[0])
     for e in errors:
         print(f"INVALID: {e}")
     if not errors:
-        print(f"OK: {argv[1]}")
+        print(f"OK: {args[0]}")
     return 1 if errors else 0
 
 
