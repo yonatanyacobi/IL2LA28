@@ -27,6 +27,7 @@ const safeUrl = u => /^https:\/\//i.test(str(u)) ? str(u) : "";
 const isDate = d => /^\d{4}-\d{2}-\d{2}$/.test(str(d));
 const fmt = d => isDate(d) ? new Date(d + "T12:00:00").toLocaleDateString("he-IL", {day:"numeric", month:"short", year:"numeric"}) : "";
 const fmtShort = d => isDate(d) ? new Date(d + "T12:00:00").toLocaleDateString("he-IL", {day:"numeric", month:"short"}) : "";
+const fmtShortY = d => isDate(d) && d.slice(0, 4) !== today().slice(0, 4) ? fmt(d) : fmtShort(d);
 // Same-year ranges show the year once, at the end.
 const fmtRange = (a, b) => !isDate(b) || a === b ? fmt(a) : (a.slice(0, 4) === b.slice(0, 4) ? fmtShort(a) : fmt(a)) + " – " + fmt(b);
 // Israel's calendar date, so "live"/"past" don't flip at UTC midnight.
@@ -123,9 +124,18 @@ function stageBar(list, thin){
     counts.map((c, i) => c ? `<i class="s${i}" style="width:${(c / n * 100).toFixed(2)}%"></i>` : "").join("")}</div>`};
 }
 
-function trustChip(a){
-  const t = trustOf(a), d = fmt(str(a.verifiedAt).slice(0, 10));
-  return `<span class="trust ${t}">${t === "auto" ? "◌ איסוף אוטומטי" : t === "ok" ? `✓ נבדק ידנית ${d}` : `✓ נבדק ${d} · עודכן מאז`}</span>`;
+// Show the check where it exists; its absence is explained once, on the athlete page (trustNote), never as a verdict.
+function trustChip(a, where){
+  const t = trustOf(a), v = str(a.verifiedAt).slice(0, 10), sym = s => `<span aria-hidden="true">${s}</span>`;
+  if (where === "card") return t === "ok" ? `<span class="trust ok">${sym("✓")} נבדק ${fmtShortY(v)}</span>` : "";
+  return `<span class="trust ${t}">${t === "auto" ? `${sym("◌")} טרם נבדק ידנית` : t === "ok" ? `${sym("✓")} נבדק ידנית ב־${fmt(v)}` : `${sym("✓")} נבדק ב־${fmt(v)}`}</span>`;
+}
+function trustNote(a){
+  const t = trustOf(a), src = safeUrl(a.source);
+  const line = t === "ok" ? `הרשומה הושוותה למקור${src ? ` (${esc(host(src))})` : ""} ולא השתנתה מאז.`
+    : t === "stale" ? `מאז התעדכנו פרטים אוטומטית (${fmt(str(a.updatedAt).slice(0, 10))}). הם ייכללו בבדיקה הבאה.`
+    : `הפרטים נאספו אוטומטית ממקורות פומביים, והרשומות נבדקות ידנית בהדרגה.${src ? " בינתיים כדאי להיעזר בקישור למקור." : ""}`;
+  return `${trustChip(a)}<span class="muted">${line}</span><a href="#about-trust">איך אנחנו בודקים</a>`;
 }
 
 // A quota event is current until its last day: nextQuotaEvent.end, else the end of the competition in the same
@@ -204,7 +214,7 @@ function athleteCard(a){
   return `<a class="card" href="#a-${esc(a.id)}">
     <span class="nm">${fav ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : ""}${esc(a.name)}${isNew(a) ? ` <span class="new">חדש</span>` : ""}</span>
     ${a.event ? `<span class="ev">${esc(a.event)}</span>` : ""}
-    <span><span class="pill st${s}">${STAGES[s]}</span> ${trustChip(a)}</span>
+    <span><span class="pill st${s}">${STAGES[s]}</span> ${trustChip(a, "card")}</span>
     ${a.rank ? `<span class="ln"><span>דירוג או הישג: </span>${esc(a.rank)}</span>` : ""}
     ${a.next ? `<span class="ln"><span>התחרות הבאה: </span>${esc(a.next)}${isDate(a.nextDate) ? ` (${fmtShort(a.nextDate)})` : ""}</span>` : ""}
   </a>`;
@@ -305,9 +315,11 @@ function todayStrip(rows){
     // own event already ended inside this still-running competition (a team final in a 9-day Worlds) shows
     // "awaiting" instead of its stale stakes.
     const won = q => q.israelStatus === "earned";
-    const stakes = quotasOf(sportId).filter(q => (won(q) ? q.earnedAt : q.stakes && nxt(q) || awaitingOf(q))
-        && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
-      .sort((x, y) => rank(x) - rank(y) || (best(x) - best(y) || 0));   // || 0: Infinity - Infinity is NaN
+    // An earned item is matched by earnedAt: once earned, its nextQuotaEvent is usually cleared to null.
+    const inComp = d => isDate(d) && c.start <= d && d <= (c.end || c.start);
+    const stakes = quotasOf(sportId).filter(q => won(q) ? inComp(q.earnedAt)
+        : (q.stakes && nxt(q) || awaitingOf(q)) && inComp(q.nextQuotaEvent?.start))
+      .sort((x, y) => won(y) - won(x) || rank(x) - rank(y) || (best(x) - best(y) || 0));   // earned first; || 0: Infinity - Infinity is NaN
     const onLine = stakes.slice(0, STAKES_MAX).map(q => won(q)
       ? `<small class="stakes won-line"><b>✓ מכסה הושגה:</b> <bdi>${esc(q.event)}</bdi></small>`
       : awaitingOf(q)
@@ -423,7 +435,7 @@ function viewHome(){
       <div class="cards">${mine.map(athleteCard).join("")}</div></section>`
     : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>`}
   <section class="panel" aria-label="התקדמות בהעפלה">
-    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית</p>
+    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה${verified ? ` · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית עד כה · <a href="#about-trust">איך בודקים</a>` : ""}</p>
     ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
@@ -536,7 +548,7 @@ function viewAthlete(id){
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}</dd>` : ""}
       ${athleteQuotaFacts(a)}
       ${a.next ? `<dt>התחרות הבאה</dt><dd>${esc(a.next)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}</dd>` : ""}
-      <dt>בדיקה</dt><dd>${trustChip(a)}</dd>
+      <dt>בדיקה</dt><dd class="stack">${trustNote(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
       ${safeUrl(a.source) ? `<dt>מקור</dt><dd>${linkOut(a.source, host(a.source))}</dd>` : ""}
       ${(n => n && fixLogLive() ? `<dt>תיקונים</dt><dd><a href="#corrections-${esc(id)}">${plural(n, "תיקון אחד", "תיקונים")}</a></dd>` : "")(
@@ -841,7 +853,7 @@ function route(){
   else if (h === "calendar") html = viewCalendar(), nav = "calendar";
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
-  else if (h === "about") html = viewAbout(), nav = "about";
+  else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
@@ -851,6 +863,11 @@ function route(){
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
   $("view").innerHTML = banner() + html;
   $("fixLink").innerHTML = fixLogLive() ? ` · <a href="#corrections">יומן התיקונים</a>` : "";
+  if (focusTrust && S.loaded) {   // once per arrival, so data refreshes don't steal focus
+    focusTrust = false;
+    const el = document.getElementById("trustH");   // the About trust block (#48); before it lands the page top stays
+    if (el) { el.tabIndex = -1; el.focus({preventScroll: false}); }
+  }
   // Here, not in navigate(): a deep link's first render is the skeleton, and navigate() skips the re-render after load.
   const h1 = document.querySelector("#view h1")?.textContent.trim();
   document.title = h1 && h1 !== SITE_NAME ? `${h1} · ${SITE_NAME}` : SITE_NAME;
@@ -862,18 +879,19 @@ function route(){
   return h;
 }
 
-let lastRoute = null;
+let lastRoute = null, focusTrust = false;
 function navigate(){
   // Filters last only while you stay on the calendar: arriving at it (from elsewhere or another sport) starts clean.
   const next = currentRoute();
   if (next !== lastRoute && /^calendar(-|$)/.test(next)) S.cal = {sport: "", qual: false, past: false};
+  if (next !== lastRoute && next === "about-trust") focusTrust = true;
   const h = route();
   if (h === lastRoute) return;
   const first = lastRoute === null;
   lastRoute = h;
   scrollTo({top: 0, behavior: "auto"});
   // Move focus to the new page's heading so screen readers announce the page, not the whole view.
-  if (!first) document.querySelector("#view h1")?.focus({preventScroll: true});
+  if (!first && h !== "about-trust") document.querySelector("#view h1")?.focus({preventScroll: true});
   $("routeStatus").textContent = document.querySelector("#view h1")?.textContent || "";
 }
 // Data refreshes re-render in place without jumping the scroll position or losing search focus.

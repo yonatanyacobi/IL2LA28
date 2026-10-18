@@ -371,7 +371,7 @@ test("quota earned: home panel for the last 14 days, strip line replaces stakes,
   const item = (event, extra) => ({...base, event, israelNote: `הערה <b>${event}</b>`, stakes: `stake ${event}`,
     nextQuotaEvent: {name: "גרנד סלאם", start: "2026-10-29"}, ...extra});
   const quotas = {updatedAt: "2026-10-30", items: [
-    item("52- ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-29"}),
+    item("52- ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-29", nextQuotaEvent: null}),   // cleared once earned: matched by earnedAt
     item("57- ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-01"}),   // 29 days ago: not new
     item("63- ק״ג נשים", {israelStatus: "earned"}),                              // no earnedAt
     item("78+ ק״ג נשים", {israelStatus: "earned", earnedAt: "bad"}),             // invalid → treated as missing
@@ -388,6 +388,15 @@ test("quota earned: home panel for the last 14 days, strip line replaces stakes,
   const row = rowsOf(stripOf(home)).find(r => r.includes("גרנד סלאם אבו דאבי"));
   assert.ok(row.includes('<small class="stakes won-line"><b>✓ מכסה הושגה:</b> <bdi>52- ק״ג נשים</bdi></small>'), row);
   assert.ok(!row.includes("stake 52") && !row.includes("63- ק״ג") && !row.includes("stake 63"), "earned: no stakes; no earnedAt: nothing");
+
+  // Earned first, even after more stakes lines than fit (Gil, P2).
+  const busy = {updatedAt: "2026-10-30", items: [
+    ...["60- ק״ג גברים", "73- ק״ג גברים", "63- ק״ג נשים"].map(e => item(e, {israelStatus: "in-contention"})),
+    item("78+ ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-30", nextQuotaEvent: null})]};
+  const busyRow = rowsOf(stripOf((await boot({quotas: busy, now: "2026-10-30T08:00:00Z"})).view("home")))
+    .find(r => r.includes("גרנד סלאם אבו דאבי"));
+  assert.ok(busyRow.indexOf("won-line") > 0 && busyRow.indexOf("won-line") < busyRow.indexOf("מה זה אומר"), busyRow);
+  assert.ok(busyRow.includes("ועוד 2 מקצים"), "the cap still applies");
 
   const two = {updatedAt: "2026-10-30", items: [quotas.items[0], {...quotas.items[0], event: "x", earnedAt: "2026-10-20"}]};
   assert.ok((await boot({quotas: two, now: "2026-10-30T08:00:00Z"})).view("home").includes('<h2 id="wonH">מכסות חדשות לישראל</h2>'));
@@ -1099,6 +1108,45 @@ test("date matrix: strip, #quotas and sport page follow the event calendar; no s
         assert.ok(!html.includes(run(`esc(${JSON.stringify(q.stakes)})`)), `${t}: stale stakes on ${page}: ${q.event}`);
     }
   }
+});
+
+// round3.md §6: verification status for visitors.
+test("verification: card badge only when checked, three athlete-page states, #about-trust, KPI", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const [ok, stale, auto, prevYear, bare] = data.athletes;
+  Object.assign(ok, {verifiedAt: "2026-10-10T09:00:00Z", updatedAt: "2026-10-01T00:00:00Z", source: "https://www.ijf.org/x"});
+  Object.assign(stale, {verifiedAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-12T00:00:00Z"});
+  Object.assign(prevYear, {verifiedAt: "2025-12-30T00:00:00Z", updatedAt: "2025-12-01T00:00:00Z"});
+  Object.assign(bare, {source: ""});
+  for (const a of [auto, bare]) delete a.verifiedAt;
+  const {view, run, els} = await boot({data, now: "2026-10-18T08:00:00Z"});
+  const card = a => { const html = run(`athleteCard(S.athletes.find(x => x.id === ${JSON.stringify(a.id)}))`); return html; };
+  assert.ok(card(ok).includes("נבדק 10 באוק׳") && card(ok).includes('class="trust ok"'));
+  const badge = a => card(a).split('class="trust ok">')[1]?.split("</span></span>")[0] || "";
+  assert.ok(badge(ok) && !badge(ok).includes("2026"), "same-year badge has no year");
+  assert.ok(badge(prevYear).includes("2025"), "previous-year badge shows the year");
+  for (const a of [stale, auto]) assert.ok(!card(a).includes('class="trust'), `${a.id}: no chip on the card`);
+
+  const facts = id => view(`a-${id}`).split("<dt>בדיקה</dt>")[1].split("</dd>")[0];
+  const lines = {[ok.id]: "הרשומה הושוותה למקור (ijf.org) ולא השתנתה מאז.", [stale.id]: "הם ייכללו בבדיקה הבאה.",
+    [auto.id]: "נבדקות ידנית בהדרגה."};
+  for (const [id, line] of Object.entries(lines)) {
+    const f = facts(id);
+    assert.ok(f.includes(line) && f.includes('href="#about-trust"'), id);
+    assert.ok(!/איסוף אוטומטי|לא אמין|חשוד|שגוי/.test(view(`a-${id}`)), id);
+  }
+  assert.ok(facts(stale.id).includes("trust stale") && facts(auto.id).includes("טרם נבדק ידנית"));
+  assert.ok(facts(auto.id).includes("בקישור למקור") && !facts(bare.id).includes("בקישור למקור"), "source hint only with a source");
+  assert.ok(facts(ok.id).includes('<span aria-hidden="true">✓</span>'));
+
+  const about = view("about-trust");
+  assert.ok(about.includes("<h1 tabindex=\"-1\">אודות</h1>") && !about.includes(NOT_FOUND));
+  assert.strictEqual(els.view.innerHTML, about);
+
+  assert.ok(view("home").includes("נבדקו ידנית עד כה") && view("home").includes('href="#about-trust"'));
+  const none = JSON.parse(JSON.stringify(FIXTURE));
+  none.athletes.forEach(a => delete a.verifiedAt);
+  assert.ok(!(await boot({data: none})).view("home").includes("נבדקו"), "V = 0: no verified count");
 });
 
 // round3.md §5: "ההזדמנויות הקרובות למכסה" panel and the hero "הבא בתור" line.
