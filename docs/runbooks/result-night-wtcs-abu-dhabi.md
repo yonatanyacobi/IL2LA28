@@ -32,7 +32,7 @@ builds, which the job then skips (same `at` and `text`).
 | race (per the schedule) | – | – |
 | after the race | Results tab on https://triathlon.org/events/2026-wtcs-abu-dhabi, **final list only** (every row validated). TriathlonLIVE and news are not sources | Ofir |
 | final + 30 min | Values → Tamar | Ofir |
-| after Tamar, before the 23:45 run | Steps 1–3 below | coordinator |
+| after Tamar, before the next morning's 07:13 daily run | Steps 1–3 below | coordinator |
 | 15.11 run | `runs/2026-11-15`: no second Abu Dhabi entry and no "תוצאות טריאתלון" warning. A second entry: delete the **manual** one (the job's text is the API's) and tell Omer | Ofir |
 
 ## Coordinator steps
