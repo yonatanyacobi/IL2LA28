@@ -318,7 +318,7 @@ function renderResults(){
   const sportKey = s => [s.id, s.he, s.en].map(str).join(" ");
   const sports = S.sports.filter(s => searchKey(sportKey(s)).includes(q));
   const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportKey(sportById(a.sportId) || {id: a.sportId})].map(str).join(" ")).includes(q));
-  $("qCount").textContent = `נמצאו ${hits.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${hits.length} ספורטאים ונבחרות`} ו־${plural(sports.length, "ענף אחד", "ענפים")}`;
+  $("qCount").textContent = `נמצאו ${hits.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${hits.length} ספורטאים ונבחרות`} ${sports.length === 1 ? "וענף אחד" : `ו־${sports.length} ענפים`}`;
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
     ${hits.length ? `<div class="cards">${hits.slice(0, SEARCH_MAX).map(athleteCard).join("")}</div>
