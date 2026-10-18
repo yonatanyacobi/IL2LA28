@@ -31,7 +31,9 @@ const section = (html, cls) => html.split(`class="panel ${cls}"`)[1]?.split("</s
   }
   const home = pages.home || "", digest = run("digestText()");
   console.log(`Israel date ${day}: ${routes.length} routes rendered, quotas loaded: ${run("S.quotas.length")}`);
-  console.log(`today strip: ${text(section(home, "today")) || "(hidden)"}`);
+  const byHeading = id => home.split(`aria-labelledby="${id}"`)[1]?.split("</section>")[0].replace(/^[^>]*>/, "") || "";
+  console.log(`today: ${text(byHeading("homeTodayH")) || "(hidden)"}`);
+  console.log(`recent results: ${text(byHeading("homeResH")) || "(hidden)"}`);
   console.log(`new quota panel: ${text(section(home, "won")) || "(hidden)"}`);
   console.log(`digest: ${digest.length} chars\n${digest}`);
   if (digest.length > 3500) errors.push(`digest is ${digest.length} chars`);

@@ -141,7 +141,8 @@ function freshLine(hasToday){
 const dateOnly = list => list.length > 0 && list.every(s => !s.startUtc);
 const DATE_ONLY = `<span class="muted"> · תאריך בלבד</span>`;
 
-function sessionRow(s, d, groupDateOnly = false){
+// `extra`: markup after the names (the home adds the competition link).
+function sessionRow(s, d, groupDateOnly = false, extra = ""){
   const names = s.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   const state = sessionState(s, d);
   // Untimed is always "תאריך בלבד", never a promised time (components.md §1); an all-untimed group says it in its heading.
@@ -151,7 +152,7 @@ function sessionRow(s, d, groupDateOnly = false){
   const mark = rowMark(`sess|${d}|${s.comp?.id || ""}|${s.athletes.map(a => a.id).join(",")}|${s.phase}`,
     [s.result, s.resultSource, s.resultAt, s.startUtc, s.athletes.map(a => a.name).join(",")].join("\u241f"));
   return `<li><span class="d">${when}</span>
-    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${sessionDetail(s, state)}${mark}</span>
+    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${extra}${sessionDetail(s, state)}${mark}</span>
     <span>${statusChip(state)}</span></li>`;
 }
 
