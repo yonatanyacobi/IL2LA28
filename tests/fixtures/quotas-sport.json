@@ -1,0 +1,14 @@
+{"updatedAt": "2026-10-18",
+ "items": [
+  {"sportId": "judo", "event": "עד 78 ק״ג (נשים)", "totalQuotas": 18, "maxPerNOC": 1, "allocation": "לפי דירוג ההעפלה העולמי",
+   "israelStatus": "in-contention", "israelNote": "<img src=x onerror=alert(1)>", "nextQuotaEvent": {"name": "גרנד סלאם אבו דאבי", "start": "2099-10-29"},
+   "source": "https://example.org/judo-78"},
+  {"sportId": "judo", "event": "עד 57 ק״ג (נשים)", "totalQuotas": 18, "maxPerNOC": 1, "allocation": "לפי דירוג ההעפלה העולמי",
+   "israelStatus": "earned", "israelNote": "", "nextQuotaEvent": null, "source": "https://www.ijf.org/qualification"},
+  {"sportId": "judo", "event": "קבוצה מעורבת", "totalQuotas": null, "maxPerNOC": null, "allocation": "",
+   "israelStatus": "outside", "israelNote": "", "nextQuotaEvent": {"name": "תחרות שעברה", "start": "2020-01-01"}, "source": "https://example.org/judo-team"},
+  {"sportId": "judo", "event": "עד 100 ק״ג (גברים)", "totalQuotas": 0, "maxPerNOC": 2, "allocation": "",
+   "israelStatus": "unknown", "israelNote": "", "nextQuotaEvent": null, "source": "https://example.org/judo-100"},
+  {"sportId": "shooting", "event": "רובה אוויר 10 מ׳", "totalQuotas": 24, "maxPerNOC": 2, "allocation": "",
+   "israelStatus": "unknown", "israelNote": "", "nextQuotaEvent": {"name": "אליפות העולם", "start": "2099-11-01"}, "source": "https://www.issf-sports.org/"}
+ ]}
