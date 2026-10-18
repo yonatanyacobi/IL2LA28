@@ -1,0 +1,110 @@
+# Company strategy (2026-10-18)
+
+Baseline: 99 athletes in 33 sports and 82 qualifying competitions. There are 57 quota items, 52 of them
+published, covering 31 of 33 sports. Canoe and rowing have none.
+
+## 1. Mission and audience
+We are the trustworthy Hebrew answer to "who from Israel is on the way to LA28, and what's at stake this week".
+Audience: fans following a few athletes, journalists and federation people needing a sourced overview, and
+families who share news on WhatsApp.
+
+Until the Games (14–30.7.2028) we compete on trust and speed. The owner's direction is an NBA-app-style
+experience: every competition by day, near-real-time results, and updates on the sports and athletes a user
+follows. We deliver **the fastest possible updates within the platform constraints, without compromising
+fact-checking**:
+- Results come from official sources and are published by the job.
+- Quota and stage claims still wait for sign-off.
+- The PM's plan is in `docs/product/nba-style.md`.
+
+## 2. Goals and targets
+There are no analytics, so we measure what we control:
+- **Coverage**: the % of sports with quota items, and the % of athletes with checked records.
+- **Freshness**: minutes from an official result being posted to the site going live, and the age of
+  quotas.json.
+- **Fact-check latency**: the time a PR waits for sign-off.
+- **Corrections**: errors found after publishing.
+- **Digest copies**: a DB counter is D8, still open. The PM recommends no counter and a share log instead.
+
+| Horizon | Targets |
+|---|---|
+| Launch (date set by the owner in D1; readiness check 22.10; to 1.11.2026) | Event-day job runs every 2 hours from Abu Dhabi (29.10). 0 open ✏️ audit fixes. At most 10 ❓ athletes, or the rest hidden. 33/33 sports have quota items. Results are live within 24 hours. |
+| Season (to 30.6.2027) | About 60 qualifying events, peaking at about 3 a week. On event days, results are live within 2 hours of the official posting (24 hours on other days). Quota claims are live within 1 hour after sign-off. Sign-off takes ≤4 hours on event days and ≤24 hours otherwise. A weekly audit runs. Fewer than 2 public corrections a month. A digest every Sunday. |
+| Games (Jun–Jul 2028) | Every qualified Israeli has a schedule and stakes. Same-day results. Zero unsourced "earned" or "selected" claims. |
+
+## 3. Roadmap themes
+- **Launch:** a day-by-day competition view; a "what's new for you" feed for followed sports and athletes; apply the audit fixes; add canoe and rowing quota items; ship the "awaiting results" and "earned"
+  states; add a trust block (sources, method, corrections).
+- **Season:**
+  - *Results-assist*: the daily job drafts quota-item updates as proposals from official results, and a human
+    approves them.
+  - A *ranking tracker* for ranking-based quotas (judo, taekwondo, fencing).
+  - The *digest as our newsletter*, weekly and per followed sport, shared by copy and paste. It is the only push
+    channel the platform allows.
+  - A public *corrections log*.
+- **Games:** a Games-mode home (today's Israelis and results), and a frozen *archive* of each athlete's path.
+- **We will NOT:**
+  - build an English version (doubles fact-checking);
+  - cover the Paralympics before mid-2027;
+  - show play-by-play or live in-match scores (there is no external fetch; we update between sessions, not
+    during them);
+  - offer device push (the platform has none; followed updates appear on the next visit and in the digest);
+  - publish a quota or stage claim before sign-off, however fast the result is;
+  - add comments or accounts;
+  - publish predictions;
+  - use official logos.
+
+## 4. Organisation
+Workload over the next 2 months, which hold about 14 qualifying events:
+- **Dana: overloaded.** Every publish goes through her, and PRs #40 and #42 are already waiting on her today. In
+  spring there will be 3 or more urgent sign-offs a week on top of the audit.
+- **Yael: overloaded.** About 20 sports and 52 athletes, including athletics and sailing (most of the ❓) and every
+  November event.
+- **Roni: full but sustainable.** About 10 sports and 47 athletes.
+- **Owner: no longer on the result-night path.** Omer publishes, and Dana and Tamar approve `earned` without the
+  owner.
+- **Five developers and UX: more capacity than work** after launch. The NBA-style direction absorbs this capacity
+  with no hire:
+  - Maya: event-day job cadence and results-assist.
+  - Itai: the day view.
+  - Noa: the "for you" feed.
+  - Omer: monitors event-day runs.
+  - The bottleneck is sign-off speed and the platform, not developers. We revisit a data engineer after Doha
+    (1.11) if event-day runs miss the 2-hour target.
+
+**Hires, in this order:**
+1. **Second fact-checker.**
+   - Why now: Dana gates everything, and November has 7 qualifying events.
+   - Standing duty: sign-off for Yael's sports, and the weekly audit on alternate weeks.
+   - First task: re-verify the 27 ❓ athletes.
+   - What breaks without: results land late, or unchecked.
+2. **Researcher for athletics and water sports.** Takes athletics, sailing, rowing, canoe, surfing and triathlon
+   from Yael.
+   - Standing duty: event-watch for those sports.
+   - First task: the World Athletics LA28 system, and the 5 ❓ quota items.
+   - What breaks without: Yael misses events in the June 2027 peak.
+3. **Publisher: convert Omer, don't hire.**
+   - Standing duty: result-night edit, build, PR, publish and live check, plus the Sunday digest.
+
+**Not hiring:**
+- a translator (no English version);
+- a data engineer (Maya's standing duty becomes results-assist);
+- a community editor (wait until reader reports actually arrive).
+
+**Merge:** after round 3, UX moves to one design a month under the PM. The total becomes 14 workers.
+
+## 5. Top risks
+1. **A wrong public fact, above all a false "earned".** Mitigations: two-person sign-off on `earned`, the
+   validator's stage cross-check, a weekly audit and a corrections log.
+2. **Single points of failure** (Dana, the owner, the team lead). Mitigations: the second fact-checker; the
+   publisher role; Noa as backup reviewer for doc-only PRs.
+3. **Platform limits** (no fetch, no push, no analytics, host changes). Mitigation: keep `site/` static and portable.
+4. **Owner bandwidth.** Mitigations: at most one batched ask a week, each with a recommendation; the publisher role.
+5. **Legal and brand.** Risks: unofficial status, athlete names, a personal email shown publicly. Mitigations: an
+   "unofficial" tag, no logos, a dedicated contact address (D2 decided; `{REPORT_EMAIL}` until it exists), and a corrections and removal policy on `#about`.
+
+## 6. Owner decisions
+The single list is `docs/product/owner-decisions.md` (PM, #57). Decided there and applied here: D2 (the contact
+address), D4 (`earned` approved by Dana and Tamar), D5 (new athletes are added without the owner), D6 (no launch
+announcement) and D-R1 (the World Triathlon API key stays outside the repo). The hires and the publisher role were
+approved on 18.10.
+- Still to propose: no English version and no Paralympics coverage until mid-2027. [Confirm]
