@@ -202,9 +202,11 @@ No quota and no stage change (event-calendar.md). The job writes the result into
 podium only becomes a `notes` proposal.
 
 ```
-[ ] By 23.10 (Ofir): the 2026 Tongyeong competition record is in the DB, with source
-    https://triathlon.org/events/2026-world-triathlon-cup-tongyeong (the slug is what tri_results matches)
-[ ] By 23.10 (Ofir): Sagiv's nextDate = 2026-10-24 and his source = his triathlon.org profile (id 41870)
+[ ] By 23.10: the 2026 Tongyeong record (tri-world-cup-tongyeong-2026, in the DB since 18.10) is in the
+    *published* data.json, with source https://triathlon.org/events/2026-world-triathlon-cup-tongyeong (the slug
+    is what tri_results matches). tri_results reads the published file, not the DB, so check the file.
+[ ] By 23.10 (Ofir): Sagiv's nextDate = 2026-10-24 and his source = his triathlon.org profile (id 41870), also in
+    the published file
 [ ] 24.10: nothing to do; tri_results only looks at competitions that ended before today
 [ ] 25.10 after the 23:45 run: runs/2026-10-25 has no "תוצאות טריאתלון" warning, and Sagiv's history has the result
     ("הרשימה עוד לא סופית" → wait for the next run; "לא נמצא/ה בתוצאות" → check DNS or the id by hand)
@@ -262,7 +264,8 @@ Digest of 1.11 in the dry run (made-up results):
 
 | # | Problem | Status / owner |
 |---|---|---|
-| D1 | **Blocker:** the live data has no 2026 Tongyeong competition record (only 2027 triathlon events), so `tri_results.py` does nothing on 25.10 **and gives no warning**. | Ofir: add the record by 23.10 (checklist). Maya: warn when an entrant's `nextDate` has no competition record. |
+| D1 | The published data.json of 18.10 had no 2026 Tongyeong record. Without one, `tri_results.py` does nothing **and gives no warning**. The record has been in the DB since 18.10 and reaches data.json with the 19.10 export, so this is not a blocker for 25.10. | Checklist: confirm in the published file by 23.10. Maya: warn when an entrant's `nextDate` has no competition record. |
+| D1b | `tri_results.py` reads the **last published** data.json (job/SKILL.md step 2d: `pub.json`), not the DB dump. A record or `nextDate` added in the DB after the last export is invisible to it. If the export fails (for example the >20% shrink guard), it stays invisible until an export succeeds. Its "already logged" check also only sees published history. | Bug, Maya: feed it the step-1 DB read (or the step-5 export), not `pub.json`. |
 | D2 | The digest ignored results written into athlete history (where `tri_results.py` and editors put them). Results showed as "התוצאות עוד לא עודכנו". | Fixed on this branch (digest.js). |
 | D3 | A medal entered both in history and as a meta/status change appeared twice in the digest. | Fixed on this branch: the change is dropped when the athlete's result is already listed. |
 | D4 | All five judoka have `nextDate` 29.10, but Elbaz fights 30.10 and Hershko 31.10. On day 2 the strip still lists day-1 athletes and their "מה זה אומר". | Roni: the actual days (checklist). Noa: whether to rank items of athletes who already fought below the others. |

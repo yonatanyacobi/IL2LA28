@@ -18,13 +18,17 @@ const followedAthletes = () => S.athletes.filter(a => S.follows.has(a.id) || S.f
 
 // History entries of followed athletes (or athletes in followed sports) newer than `since`. History is dated by
 // day only, so an entry on the day of the last visit counts when its record changed after that visit.
+// A record that changed without a new history entry (most daily updates, until results land) still gets one
+// "הפרטים עודכנו" row, dated by updatedAt.
 function followFeed(since){
   if (!since) return [];
   const day = since.slice(0, 10);
-  return followedAthletes().flatMap(a => (Array.isArray(a.history) ? a.history : [])
-      .filter(h => isDate(h.at) && (h.at > day || (h.at === day && str(a.updatedAt) > since)))
-      .map(h => ({a, h})))
-    .sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(x.a.name, y.a.name)).slice(0, FEED_MAX);
+  return followedAthletes().flatMap(a => {
+    const items = (Array.isArray(a.history) ? a.history : [])
+      .filter(h => isDate(h.at) && (h.at > day || (h.at === day && str(a.updatedAt) > since))).map(h => ({a, h}));
+    const at = str(a.updatedAt).slice(0, 10);
+    return items.length || !(str(a.updatedAt) > since && isDate(at)) ? items : [{a, h: {at, text: "הפרטים עודכנו"}}];
+  }).sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(x.a.name, y.a.name)).slice(0, FEED_MAX);
 }
 
 function followUpcoming(){
@@ -49,11 +53,13 @@ function viewFollowing(tab = ""){
     <a href="#following-sports" ${tab ? `aria-current="page"` : ""}>ענפים (${sports.length})</a></nav>`;
   const foot = `<p class="foot">המעקב נשמר רק בדפדפן הזה, בלי חשבון.</p>`;
   const empty = `<div class="empty"><p>עוד אין כאן אף אחד. לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב.</p></div>`;
+  const emptyTab = tab ? `<div class="empty"><p>עוד אין ענפים במעקב. לחצו על ☆ בדף של ענף כדי לעקוב.</p></div>`
+    : `<div class="empty"><p>עוד אין ספורטאים או נבחרות במעקב. לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב.</p></div>`;
   if (!athletes.length && !sports.length) {
     const t = today(), seen = new Set(), picks = [];
     for (const g of closestGroups(todayRows(), t)) for (const {as} of g.items) for (const a of as) if (!seen.has(a.id) && picks.length < 3) { seen.add(a.id); picks.push(a); }
     return `${head}${empty}
-    ${picks.length ? `<section class="panel"><h3>הצעות למעקב</h3><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}${foot}`;
+    ${picks.length ? `<section class="panel"><h2>הצעות למעקב</h2><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}${foot}`;
   }
   const feed = followFeed(followSeenAtLoad), next = followUpcoming();
   return `${head}
@@ -65,12 +71,12 @@ function viewFollowing(tab = ""){
   </section>
   ${next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
     <ul class="rows">${next.map(x => `<li><span class="d">${fmtShort(x.d)}</span><span class="t">${x.html}</span><span></span></li>`).join("")}</ul></section>` : ""}
-  ${tab ? (sports.length ? `<ul class="sports">${sports.map(s => `<li><a class="sport" href="#sport-${esc(s.id)}">
-      <span class="top"><h2>${esc(s.he)}</h2></span>${stageBar(athletesOf(s.id), true).html}
-      <span class="meta">${athletesOf(s.id).length} במעקב</span></a></li>`).join("")}</ul>`
-      : empty)
+  ${tab ? (sports.length ? `<ul class="sports">${sports.map(s => { const ws = winStatus(s.window); return `<li><a class="sport" href="#sport-${esc(s.id)}">
+      <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</span>${stageBar(athletesOf(s.id), true).html}
+      ${quotaCardSummary(s.id)}<span class="meta">${athletesOf(s.id).length} במעקב</span></a></li>`; }).join("")}</ul>`
+      : emptyTab)
     : (athletes.length ? `<div class="cards">${athletes.map(athleteCard).join("")}</div>`
-      : empty)}
+      : emptyTab)}
   ${foot}`;
 }
 
@@ -78,9 +84,10 @@ function viewFollowing(tab = ""){
 // needs the router lines.
 function followingDecorate(h, html){
   if (h.startsWith("sport-") && sportById(h.slice(6))) {
-    const id = h.slice(6), on = S.followSports.has(id);
-    html = html.replace("</h1>", `</h1><button class="btn ghost follow" data-follow-sport="${esc(id)}" aria-pressed="${on}">${on ? `<span aria-hidden="true">★</span> הענף במעקב שלך` : `<span aria-hidden="true">☆</span> מעקב אחרי הענף`}</button>`);
+    const id = h.slice(6), on = S.followSports.has(id), he = esc(sportName(id));
+    html = html.replace("</h1>", `</h1><button class="btn ghost follow" data-follow-sport="${esc(id)}" aria-pressed="${on}" aria-label="${on ? `${he} במעקב שלך` : `מעקב אחרי ${he}`}">${on ? `<span aria-hidden="true">★</span> הענף במעקב שלך` : `<span aria-hidden="true">☆</span> מעקב אחרי הענף`}</button>`);
   }
+  if (h === "home") html = html.replace("<h2>במעקב שלי</h2>", `<h2>במעקב שלי</h2><a href="#following">לכל המעקב</a>`);
   // The visible badge is aria-hidden; screen readers get "מעקב, N עדכונים חדשים" from the link text.
   const n = followFeed(badgeSince).length, badge = $("followBadge"), sr = $("followBadgeSr");
   if (badge) { badge.hidden = !n; badge.textContent = n > 9 ? "9+" : String(n); }

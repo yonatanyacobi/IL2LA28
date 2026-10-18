@@ -92,13 +92,14 @@ def validate(data):
     if len(data["changes"]) > 30:
         err(f"changes: {len(data['changes'])} entries, max 30")
     extra = set(data) - {"schemaVersion", "generatedAt", "lastRun", "sports", "athletes", "competitions", "changes",
-                         "launchAt", "corrections"}
+                         "launchAt", "corrections", "sessions"}
     if extra:
         err(f"top level: unexpected keys {sorted(extra)}")
     errors.extend(validate_corrections(data.get("corrections", []), data.get("launchAt")))
 
     sport_ids = {s.get("id") for s in data["sports"] if isinstance(s, dict)}
     athlete_ids = {a.get("id") for a in data["athletes"] if isinstance(a, dict)}
+    errors.extend(validate_sessions(data.get("sessions", []), data["competitions"], athlete_ids))
 
     def check(obj, spec, path):
         if not isinstance(obj, dict):
@@ -220,6 +221,64 @@ def validate_corrections(rows, launch_at):
         strings = [json.dumps(v, ensure_ascii=False) for k, v in c.items() if k != "source"]
         if any(EMAIL.search(s) for s in strings):
             err(f"{path}: contains an email address; data.json is public")
+    return errors
+
+
+SESSION_KEYS = {"id", "competitionId", "date", "startUtc", "athleteIds", "phase", "source", "result", "resultSource",
+                "resultAt"}
+
+
+def validate_sessions(rows, competitions, athlete_ids):
+    """data.json "sessions" (optional): docs/design/sessions-contract.md §3, strict."""
+    if not isinstance(rows, list):
+        return ["sessions: expected a list"]
+    errors = []
+    err = errors.append
+    comps = {c.get("id"): c for c in competitions if isinstance(c, dict)}
+    seen, prev = set(), None
+    utc = lambda v: isinstance(v, str) and v.endswith("Z") and is_iso(v)
+    for i, s in enumerate(rows):
+        path = f"sessions[{i}]"
+        if not isinstance(s, dict):
+            err(f"{path}: expected an object")
+            continue
+        path += f"({s.get('id')})"
+        if set(s) != SESSION_KEYS:
+            err(f"{path}: keys must be exactly {sorted(SESSION_KEYS)}; extra {sorted(set(s) - SESSION_KEYS)},"
+                f" missing {sorted(SESSION_KEYS - set(s))}")
+            continue
+        if not (isinstance(s["id"], str) and s["id"]) or s["id"] in seen:
+            err(f"{path}.id: missing or duplicate")
+        seen.add(s["id"])
+        comp = comps.get(s["competitionId"])
+        if not comp:
+            err(f"{path}.competitionId: unknown competition {s['competitionId']!r}")
+        if not is_date(s["date"]):
+            err(f"{path}.date: expected YYYY-MM-DD, got {s['date']!r}")
+        elif comp and not (comp.get("start", "") <= s["date"] <= (comp.get("end") or comp.get("start", ""))):
+            err(f"{path}.date: outside {comp.get('id')} ({comp.get('start')}–{comp.get('end')})")
+        if not (s["startUtc"] is None or utc(s["startUtc"])):
+            err(f"{path}.startUtc: expected null or ISO with Z, got {s['startUtc']!r}")
+        ids = s["athleteIds"]
+        if not (isinstance(ids, list) and ids and len(set(map(str, ids))) == len(ids) and all(a in athlete_ids for a in ids)):
+            err(f"{path}.athleteIds: expected a non-empty list of unique known athlete ids, got {ids!r}")
+        for k, required in (("phase", True), ("result", False)):
+            v = s[k]
+            if not (isinstance(v, str) and len(v) <= 120 and (v.strip() or not required)):
+                err(f"{path}.{k}: expected {'a non-empty ' if required else ''}string of at most 120 chars")
+        if not (isinstance(s["source"], str) and s["source"].startswith("https://") and len(s["source"]) > 8):
+            err(f"{path}.source: expected an https:// URL, got {s['source']!r}")
+        if s["result"]:
+            if not (isinstance(s["resultSource"], str) and s["resultSource"].startswith("https://") and len(s["resultSource"]) > 8):
+                err(f"{path}.resultSource: a result needs an https:// source, got {s['resultSource']!r}")
+            if not utc(s["resultAt"]):
+                err(f"{path}.resultAt: a result needs an ISO time with Z, got {s['resultAt']!r}")
+        elif s["resultSource"] != "" or s["resultAt"] != "":
+            err(f"{path}: resultSource and resultAt must be \"\" without a result")
+        key = (str(s["date"]), s["startUtc"] is None, str(s["startUtc"] or ""), str(s["id"]))
+        if prev and key < prev:
+            err(f"{path}: not in order (date, startUtc with untimed last, id)")
+        prev = key
     return errors
 
 

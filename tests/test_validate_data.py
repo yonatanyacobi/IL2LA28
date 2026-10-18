@@ -74,6 +74,42 @@ class ValidateTest(unittest.TestCase):
             self.assertTrue(errors, needle)
             self.assertIn(needle, "\n".join(errors), needle)
 
+    def test_sessions(self):
+        comp = self.good["competitions"][0]
+        aid = self.good["athletes"][0]["id"]
+        s = {"id": "s1", "competitionId": comp["id"], "date": comp["start"], "startUtc": comp["start"] + "T06:15:00Z",
+             "athleteIds": [aid], "phase": "מוקדמות", "source": "https://x.org/schedule",
+             "result": "", "resultSource": "", "resultAt": ""}
+        untimed = {**s, "id": "s2", "startUtc": None}
+        done = {**s, "id": "s0", "startUtc": comp["start"] + "T05:00:00Z", "result": "מקום 3",
+                "resultSource": "https://x.org/results", "resultAt": comp["start"] + "T09:00:00Z"}
+        with_s = lambda rows: lambda d: d.__setitem__("sessions", rows)
+        self.assertEqual(self.broken(with_s([done, s, untimed])), [])
+        self.assertEqual(self.broken(with_s([])), [])
+        cases = [
+            ("keys must be exactly", [{**s, "quota": True}]),
+            ("keys must be exactly", [{k: v for k, v in s.items() if k != "resultAt"}]),
+            ("duplicate", [s, {**s}]),
+            ("unknown competition", [{**s, "competitionId": "nope"}]),
+            ("outside", [{**s, "date": "1999-01-01"}]),
+            ("startUtc", [{**s, "startUtc": comp["start"] + "T09:15:00+03:00"}]),
+            ("athleteIds", [{**s, "athleteIds": []}]),
+            ("athleteIds", [{**s, "athleteIds": ["ghost"]}]),
+            ("athleteIds", [{**s, "athleteIds": [aid, aid]}]),
+            ("phase", [{**s, "phase": " "}]),
+            ("phase", [{**s, "phase": "א" * 121}]),
+            ("source", [{**s, "source": "http://x.org"}]),
+            ("resultSource", [{**done, "resultSource": ""}]),
+            ("resultAt", [{**done, "resultAt": ""}]),
+            ("must be \"\" without a result", [{**s, "resultSource": "https://x.org/r"}]),
+            ("not in order", [untimed, s]),
+            ("sessions: expected a list", {"s1": s}),
+        ]
+        for needle, rows in cases:
+            errors = self.broken(with_s(rows))
+            self.assertTrue(errors, needle)
+            self.assertIn(needle, "\n".join(errors), needle)
+
     def test_rank_fields(self):
         def setr(**kw):
             return lambda d: d["athletes"][0].update(kw)
