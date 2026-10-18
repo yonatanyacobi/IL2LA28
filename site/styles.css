@@ -265,3 +265,8 @@ div.track{background:none}
   .links::-webkit-scrollbar{display:none}
   .links a{padding-block:10px}
 }
+
+/* stakes line ("מה זה אומר") */
+.stakes{font-size:14px;color:var(--ink);border-inline-start:3px solid var(--sun);padding-inline-start:8px;overflow-wrap:anywhere}
+.stakes b{color:var(--sun-ink)}
+.rows .t small.stakes{color:var(--ink);margin-top:4px}

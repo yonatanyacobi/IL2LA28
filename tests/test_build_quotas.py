@@ -27,6 +27,11 @@ class BuildQuotasTest(unittest.TestCase):
         self.assertTrue(all("review" not in i for i in out["items"]))
         self.assertEqual(out["updatedAt"], "2026-10-18")
 
+    def test_stakes_passes_through(self):
+        q = load("tests", "fixtures", "quotas.json")["items"][1]
+        master = {"updatedAt": "2026-10-18", "items": [{**q, "stakes": "מקום בגמר", "review": {"status": "ok"}}]}
+        self.assertEqual(build_quotas.build(master)["items"][0]["stakes"], "מקום בגמר")
+
     def test_built_real_master_passes_validator(self):
         out = build_quotas.build(self.master)
         self.assertTrue(out["items"])
