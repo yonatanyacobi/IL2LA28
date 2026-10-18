@@ -380,7 +380,13 @@ function viewHome(){
   const colors = ["var(--stage0)", "var(--blue)", "var(--sun)", "var(--ok)"];
   const verified = S.athletes.filter(a => trustOf(a) !== "auto").length;
   // PM on #171: a quota earned in the last 7 days is the biggest news, so it goes above "היום".
-  const wonFirst = hub && S.quotas.some(q => q.israelStatus === "earned" && q.earnedAt >= addDays(t, -6) && q.earnedAt <= t);
+  const wonWeek = hub ? S.quotas.filter(q => q.israelStatus === "earned" && q.earnedAt >= addDays(t, -6) && q.earnedAt <= t) : [];
+  const wonFirst = wonWeek.length > 0;
+  // PM on #171 (Gil P2): on phones the full panel would push "היום" off the first screen, so a one-line link
+  // stands in above it and the panel moves below the results (CSS order; desktop keeps it on top).
+  const wonLine = !wonWeek.length ? "" : wonWeek.length === 1
+    ? `<p class="won-compact"><a href="#sport-${esc(wonWeek[0].sportId)}">✓ מכסה חדשה לישראל: ${esc(sportName(wonWeek[0].sportId))} · <bdi>${esc(wonWeek[0].event)}</bdi> (${fmtShort(wonWeek[0].earnedAt)})</a></p>`
+    : `<p class="won-compact"><a href="#quotas">✓ ${wonWeek.length} מכסות חדשות לישראל ב־7 הימים האחרונים</a></p>`;
   return `
   <section class="hero">
     <div>
@@ -391,8 +397,7 @@ function viewHome(){
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
-  ${wonFirst ? wonPanel() : ""}
-  ${hub ? homeNow() : ""}
+  ${wonFirst ? `${wonLine}<div class="home-top">${wonPanel()}${homeNow()}</div>` : hub ? homeNow() : ""}
   ${mine.length ? `<section class="panel">
       <div class="sec-head"><h2>במעקב שלי</h2>${mineNew ? `<span class="new">${mineNew} עודכנו מאז הביקור הקודם</span>` : ""}</div>
       <div class="cards">${mine.map(athleteCard).join("")}</div></section>`
