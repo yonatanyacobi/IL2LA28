@@ -17,7 +17,7 @@ HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}
-QUOTA_OPTIONAL = {"stakes", "earnedAt"}
+QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt"}
 STAKES_MAX = 140
 
 # key -> (kind, required); kinds: str, date ("" or YYYY-MM-DD), url ("" or https://), iso ("" or ISO datetime with timezone, as export_data.iso())
@@ -260,6 +260,8 @@ def validate_quotas(q, data):
             err(f"{path}.israelStatus: expected one of {sorted(QUOTA_STATUSES)}, got {status!r}")
         elif status == "earned" and it.get("sportId") not in staged:
             err(f"{path}.israelStatus: \"earned\" but no athlete in {it.get('sportId')!r} has stage >= 2 in data.json")
+        if "checkedAt" in it and not is_date(it["checkedAt"]):
+            err(f"{path}.checkedAt: expected YYYY-MM-DD, got {it['checkedAt']!r}")
         if "stakes" in it:
             v = it["stakes"]
             if not (isinstance(v, str) and v.strip() and "\n" not in v and len(v) <= STAKES_MAX):
