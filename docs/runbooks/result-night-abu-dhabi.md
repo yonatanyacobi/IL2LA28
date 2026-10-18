@@ -10,11 +10,11 @@ IJF WRL PDF.
 
 | Day | Athlete | id | Category |
 |---|---|---|---|
-| 29.10 | יצחק אשפיז | `izhak-ashpiz` | 60- ק״ג גברים |
-| 29.10 | גפן פרימו | `gefen-primo` | 52- ק״ג נשים |
-| 29.10 | תמנע נלסון לוי | `timna-nelson-levy` | 57- ק״ג נשים |
-| 30.10 | יהונתן אלבז | `yonatan-elbaz` | 73- ק״ג גברים |
-| 31.10 | רז הרשקו | `raz-hershko` | 78+ ק״ג נשים |
+| 29.10 | יצחק אשפיז | `izhak-ashpiz` | 60- ק״ג (גברים) |
+| 29.10 | גפן פרימו | `gefen-primo` | 52- ק״ג (נשים) |
+| 29.10 | תמנע נלסון לוי | `timna-nelson-levy` | 57- ק״ג (נשים) |
+| 30.10 | יהונתן אלבז | `yonatan-elbaz` | 73- ק״ג (גברים) |
+| 31.10 | רז הרשקו | `raz-hershko` | 78+ ק״ג (נשים) |
 
 Not entered (IJF list, 18.10): כרם פרימו (63-), ענבר לניר (78-). Re-check all of this after the draw.
 
@@ -37,7 +37,7 @@ Not entered (IJF list, 18.10): כרם פרימו (63-), ענבר לניר (78-).
 
 1. **Athlete write** through `job/athlete_patch.py` (cur.json = the athlete as read), then `update` with its
    `if_version`: `"result": {"at": "<YYYY-MM-DD of their day>", "text": <history text>, "source": "https://www.ijf.org/competition/3157/results"}`.
-   `rank` and `rankNum` don't change.
+   `rank` and `rankNum` don't change; `next`/`nextDate` per Values.
 2. **Session**: `result`, `resultSource` = https://www.ijf.org/competition/3157/results, `resultAt` =
    `date -u +%Y-%m-%dT%H:%M:%SZ`; all three, or the export blanks the result. Day 1 holds three judoka: join as
    `<name>: <result> · <name>: <result> · <name>: <result>`. A final-block session gets only the judoka in it.
@@ -46,25 +46,25 @@ Not entered (IJF list, 18.10): כרם פרימו (63-), ענבר לניר (78-).
 
 ## Values
 
-History text (publishing.md), one per judoka who fought:
+History text (publishing.md):
 
-`<זהב|כסף|ארד|מקום 5|מקום 7|הודח/ה בסיבוב <n>> בגרנד סלאם אבו דאבי, <weight> (<DD>.10.2026)`
+`<זהב|כסף|ארד|מקום 5|מקום 7|הודח/ה <ROUND>> בגרנד סלאם אבו דאבי, <weight> (<DD> באוק׳ 2026)`
 
-- `<weight>` = the category in the table above; `<DD>` = 29, 30 or 31.
+- `<weight>` = the category without the bracket, e.g. `57- ק״ג`; `<DD>` = 29, 30 or 31. The date is in the job's
+  style, so the job doesn't record it twice.
+- `<ROUND>` as in abu-dhabi-outcomes.md, e.g. `בסיבוב הראשון`, `ברבע הגמר`.
 - Gender: הודח for Ashpiz and Elbaz, הודחה for G. Primo, Nelson Levy and Hershko.
-- Session `result`: the same outcome word (`זהב`, `כסף`, `ארד`, `מקום 5`, `מקום 7`, `הודח/ה בסיבוב <n>`).
+- Session `result`: the same outcome words (`זהב`, `כסף`, `ארד`, `מקום 5`, `מקום 7`, `הודח/ה <ROUND>`).
 - Didn't fight (withdrew, DNS): no entry.
+- In the same write: `next` = `""`, `nextDate` = `""`, unless an official entry list for the next event already
+  has them (then that event and its start date).
 
-Example (made up): `ארד בגרנד סלאם אבו דאבי, 57- ק״ג נשים (29.10.2026)`; "מה התעדכן":
-`ג׳ודו: תמנע נלסון לוי – ארד בגרנד סלאם אבו דאבי, 57- ק״ג נשים (29.10.2026)`.
+Example (made up): `ארד בגרנד סלאם אבו דאבי, 57- ק״ג (29 באוק׳ 2026)`; "מה התעדכן":
+`ג׳ודו: תמנע נלסון לוי – ארד בגרנד סלאם אבו דאבי, 57- ק״ג (29 באוק׳ 2026)`.
 
 Quota `stakes` after the event: the texts (א)–(ד) in abu-dhabi-outcomes.md, with `<PTS>` from its IJF table.
 
-## Open (ask Roni / Shira before 28.10)
+## Decided (coordinator, 18.10)
 
-- **Date format:** the history template uses `(29.10.2026)`, but the job and abu-dhabi-outcomes.md write
-  `(29 באוק׳ 2026)`. One style should be chosen before the first entry.
-- **Round wording:** `בסיבוב <n>` (publishing.md) vs `<ROUND>`, e.g. `ברבע הגמר` (abu-dhabi-outcomes.md).
-- **`next`/`nextDate` after their day:** neither plan says. abu-dhabi-outcomes.md names Grand Slam Tokyo 5–6.12
-  (or Grand Prix Zagreb 13–15.11 if Israelis enter) as the next quota event.
-- **Elbaz's name:** abu-dhabi-outcomes.md has "יונתן אלבז"; the DB has "יהונתן אלבז". Use the DB name.
+Date in the job's style; rounds from abu-dhabi-outcomes.md; `next`/`nextDate` cleared unless an official entry
+exists; Elbaz is יהונתן (the DB name; abu-dhabi-outcomes.md has יונתן).
