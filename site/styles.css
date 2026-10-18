@@ -293,3 +293,6 @@ div.track{background:none}
 .adm-todo{background:var(--sun-soft);border:1px solid var(--sun);border-radius:10px;padding:10px 14px;display:grid;gap:6px}
 .adm-todo h3{font-family:var(--f-body);font-size:16px;font-weight:700;color:var(--sun-ink)}
 .adm-todo ul{margin:0;padding-inline-start:18px;overflow-wrap:anywhere}
+/* home: "הבא בתור" (round3 §5b) */
+.next-up{margin-top:8px;font-size:15px;overflow-wrap:anywhere}
+.next-up b{color:var(--sun-ink)}

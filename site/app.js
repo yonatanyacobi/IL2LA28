@@ -254,6 +254,65 @@ function todayStrip(rows){
   </section>`;
 }
 
+// ---------- home: next quota chances + "הבא בתור" (round3.md §5) ----------
+const CLOSE_MAX = 5, CLOSE_EVENTS = 3;
+// Sorted by date only: the data says when the next chance is, not how close anyone is to a quota.
+function closestGroups(rows, t = today()){
+  if (!S.quotasLoaded || S.quotasError) return [];
+  const inStrip = q => rows.some(r => r.comp && r.comp.sportId === q.sportId
+    && r.comp.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (r.comp.end || r.comp.start));
+  // nxt() already drops past events, so items awaiting results never get here.
+  const groups = new Map();
+  for (const q of S.quotas) {
+    if (q.israelStatus !== "in-contention" || !nxt(q, t) || inStrip(q)) continue;
+    const k = [q.sportId, q.nextQuotaEvent.start, q.nextQuotaEvent.name].join("|");
+    if (!groups.has(k)) groups.set(k, {sportId: q.sportId, start: q.nextQuotaEvent.start, name: q.nextQuotaEvent.name, items: []});
+    groups.get(k).items.push({q, as: quotaAthletes(q)});
+  }
+  const fav = g => g.items.some(i => i.as.some(a => S.follows.has(a.id))) ? 0 : 1;
+  const matched = g => g.items.some(i => i.as.length) ? 0 : 1;
+  for (const g of groups.values()) g.items.sort((x, y) => (y.as.length > 0) - (x.as.length > 0) || heCmp(x.q.event, y.q.event));
+  return [...groups.values()].sort((x, y) => x.start.localeCompare(y.start) || fav(x) - fav(y) || matched(x) - matched(y)
+    || heCmp(sportName(x.sportId), sportName(y.sportId))).slice(0, CLOSE_MAX);
+}
+
+function closestPanel(rows){
+  const t = today(), groups = closestGroups(rows, t);
+  if (!groups.length) return "";
+  const when = s => s < t ? "מתקיים עכשיו" : s === t ? "היום" : s === addDays(t, 1) ? "מחר" : `בעוד ${dayNo(t, s) - 1} ימים`;
+  const item = ({q, as}) => `<bdi>${esc(q.event)}</bdi>${as.length ? ` (${as.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")})` : ""}`;
+  const row = g => {
+    const more = g.items.length - CLOSE_EVENTS;
+    return `<li><span class="d">${fmtShort(g.start)}</span>
+      <span class="t"><a href="#sport-${esc(g.sportId)}">${esc(sportName(g.sportId))}</a> · ${esc(g.name)}
+        <small>${g.items.slice(0, CLOSE_EVENTS).map(item).join(" · ")}${more > 0 ? ` · ועוד ${more} מקצים` : ""}</small>
+        ${g.items.length === 1 ? stakesLine(g.items[0].q, "stakes", "small") : ""}</span>
+      <span class="muted">${when(g.start)}</span></li>`;
+  };
+  return `<section class="panel today" aria-labelledby="closeH">
+    <h2 id="closeH">ההזדמנויות הקרובות למכסה</h2>
+    <ul class="rows">${groups.map(row).join("")}</ul>
+    <p class="foot">מקצים שבהם ישראל במרוץ למכסה, לפי אירוע המכסה הבא. <a href="#quotas">לכל תמונת המכסות</a></p>
+  </section>`;
+}
+
+// Only on days without a strip: the strip already answers "what's next" on event days.
+function nextUpLine(rows){
+  if (rows.length) return "";
+  const t = today(), end = c => c.end || c.start;
+  const cands = S.comps.filter(c => c.start > t && dayNo(c.start, end(c)) <= SERIES_DAYS && athletesOf(c.sportId).length)
+    .map(c => ({c, who: athletesOf(c.sportId).filter(a => isDate(a.nextDate) && c.start <= a.nextDate && a.nextDate <= end(c))}));
+  if (!cands.length) return "";
+  const withWho = cands.filter(x => x.who.length);
+  const pick = (withWho.length ? withWho : cands).sort((x, y) => x.c.start.localeCompare(y.c.start) || y.who.length - x.who.length
+    || (y.c.qualifying ? 1 : 0) - (x.c.qualifying ? 1 : 0) || heCmp(x.c.name, y.c.name))[0];
+  const {c, who} = pick, n = athletesOf(c.sportId).length;
+  const names = who.length === 0 ? (n === 1 ? "ישראלי/ת אחד/ת במעקב בענף" : `${n} ישראלים במעקב בענף`)
+    : who.length > 3 ? `${who.length} ישראלים`
+    : who.sort((a, b) => heCmp(a.name, b.name)).map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
+  return `<p class="next-up"><b>הבא בתור:</b> <a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${esc(c.name)} · ${fmtRange(c.start, c.end)} · ${names}${c.qualifying ? ` · <span class="pill open">העפלה</span>` : ""}</p>`;
+}
+
 // ---------- views ----------
 function viewHome(){
   const {counts, html: bar} = stageBar(S.athletes);
@@ -273,10 +332,12 @@ function viewHome(){
       <h1 tabindex="-1">הדרך ללוס אנג׳לס 28</h1>
       <p class="muted">מעקב אחרי מסלול ההעפלה של ספורטאיות, ספורטאים ונבחרות מישראל לאולימפיאדת לוס אנג׳לס, 14–30 ביולי 2028.<span class="tag">מעקב לא רשמי</span></p>
       ${freshness()}
+      ${nextUpLine(rows)}
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
   ${todayStrip(rows)}
+  ${closestPanel(rows)}
   ${reviewPanel()}
   <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
   <p class="sr" id="qCount" aria-live="polite"></p>

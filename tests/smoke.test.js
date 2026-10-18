@@ -733,6 +733,58 @@ test("date matrix: strip, #quotas and sport page follow the event calendar; no s
   }
 });
 
+// round3.md §5: "ההזדמנויות הקרובות למכסה" panel and the hero "הבא בתור" line.
+const closeOf = html => html.split('id="closeH"')[1]?.split("</section>")[0] || "";
+const nextUpOf = html => html.match(/<p class="next-up">[\s\S]*?<\/p>/)?.[0] || "";
+const liOf = html => [...html.matchAll(/<li>([\s\S]*?)<\/li>/g)].map(m => m[1]);
+
+test("closest panel + next-up on 18.10: strip day, triathlon first, judo grouped, no team final", async () => {
+  const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-18T08:00:00Z"});
+  const home = view("home");
+  assert.ok(stripOf(home).length && !nextUpOf(home), "strip shown, next-up hidden");
+  const rows = liOf(closeOf(home));
+  assert.strictEqual(rows.length, 5);
+  assert.ok(rows[0].includes("#sport-triathlon") && rows[0].includes("בעוד 6 ימים"), "row 1 = triathlon");
+  assert.ok(rows[0].includes('class="stakes"'), "single-item group keeps its stakes line");
+  assert.ok(!closeOf(home).includes("קבוצתי גברים"), "team final is in the strip, not here");
+  const judo = rows.find(r => r.includes("#sport-judo"));
+  assert.strictEqual((judo.match(/<bdi>/g) || []).length, 3);
+  assert.ok(judo.includes("ועוד 4 מקצים") && !judo.includes('class="stakes"'), "judo: 3 items + more, no stakes");
+  assert.ok(judo.includes('href="#a-'), "matched athletes linked");
+  assert.deepStrictEqual(rows.map(r => r.match(/#sport-([\w-]+)/)[1]), ["triathlon", "judo", "lacrosse", "surfing", "sailing"]);
+  assert.ok(closeOf(home).includes('href="#quotas"'));
+});
+
+test("next-up on 26.10 skips weightlifting (no entrants) and names judo", async () => {
+  const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
+  const line = nextUpOf(view("home"));
+  assert.ok(line.includes("#sport-judo") && line.includes("5 ישראלים") && line.includes("pill open"), line);
+  assert.ok(!line.includes("weightlifting"));
+});
+
+test("next-up fallback with no entrants never says מתחרים; quotas error hides the panel", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.forEach(a => { a.nextDate = ""; });
+  const {view} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
+  const line = nextUpOf(view("home"));
+  assert.ok(/במעקב בענף/.test(line) && !line.includes("מתחרים"), line);
+
+  const failed = await boot({quotas: "fail", now: "2026-10-26T08:00:00Z"});
+  const home = failed.view("home");
+  assert.ok(home.length > 200 && !home.includes('id="closeH"') && nextUpOf(home), "page renders without the panel");
+});
+
+test("closest panel and next-up escape names", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const judoComp = data.competitions.find(x => x.sportId === "judo" && x.start === "2026-10-29");
+  judoComp.name = "<img src=x onerror=alert(1)>";
+  const items = [{...QUOTAS.items[0], sportId: "sailing", event: "<b>ev</b>", israelStatus: "in-contention",
+    nextQuotaEvent: {name: "<i>q</i>", start: "2026-12-01"}}];
+  const {view} = await boot({data, quotas: {updatedAt: "2026-10-25", items}, now: "2026-10-26T08:00:00Z"});
+  const home = view("home");
+  assert.ok(!/<img|<b>ev|<i>q/i.test(home) && closeOf(home).includes("&lt;b&gt;ev") && nextUpOf(home).includes("&lt;img"));
+});
+
 (async () => {
   let failed = 0;
   for (const {name, fn} of tests) {
