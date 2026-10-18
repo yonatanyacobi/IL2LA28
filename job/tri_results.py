@@ -1,9 +1,12 @@
 """Triathlon results-assist (G-5): plan the daily job's writes after a triathlon competition with Israeli entrants.
 
-Usage: python3 tri_results.py <data.json> [--today YYYY-MM-DD] [--days N]
+Usage: python3 tri_results.py <data.json> [--db <dump_dir>] [--today YYYY-MM-DD] [--days N]
+<data.json> supplies competitions. --db is an ArtifactData athletes dump (out_dir); the athletes come from there,
+so dedupe and notes use the live records. Without --db no notes proposal is made.
 Reads the World Triathlon API through triathlon_api.py (key file only; see that module) and prints a JSON plan:
-  {"warnings": [...], "updates": [{"athleteId", "historyEntry"}], "proposals": [{"id", "doc"}]}
-The job applies each update through athlete_patch.py, and creates each proposal only if it doesn't exist yet.
+  {"warnings": [...], "updates": [{"athleteId", "result": {at, text, source}}], "proposals": [{"id", "doc"}]}
+The job sends each update's {"result": …} through athlete_patch.py, and creates each proposal only if it doesn't
+exist yet.
 Never a stage or quota change: a result goes into history directly, and anything it implies for the record is a
 proposal for a person. A World Cup awards no quota (docs/research/2026-10-18-ofir-triathlon.md, #95).
 Only a final list counts, meaning every row has validated=true. Otherwise there's a warning and nothing to write.
@@ -12,6 +15,13 @@ import json, re, sys
 from datetime import date, timedelta
 
 DISTANCE = {"sprint": "ספרינט", "standard": "מרחק אולימפי", "super-sprint": "ספרינט קצר"}
+# The site's date style: fmt() in app.js, he-IL {day: numeric, month: short, year: numeric} → "24 באוק׳ 2026".
+HE_MONTHS = ["בינו׳", "בפבר׳", "במרץ", "באפר׳", "במאי", "ביוני", "ביולי", "באוג׳", "בספט׳", "באוק׳", "בנוב׳", "בדצמ׳"]
+
+
+def he_date(iso_day):
+    d = date.fromisoformat(iso_day)
+    return f"{d.day} {HE_MONTHS[d.month - 1]} {d.year}"
 PROFILE = re.compile(r"triathlon\.org/athletes/profile/(\d+)")
 SLUG = re.compile(r"triathlon\.org/events/([a-z0-9-]+)")
 
@@ -58,15 +68,16 @@ def result_text(row, comp_name, distance, day):
     pos = row.get("position")
     if isinstance(pos, int) or str(pos).isdigit():
         dist = f"{DISTANCE[distance]}, " if distance in DISTANCE else ""
-        return int(pos), f"מקום {int(pos)} ב{comp_name} ({dist}{day})"
+        return int(pos), f"מקום {int(pos)} ב{comp_name} ({dist}{he_date(day)})"
     if str(pos).upper() == "DNF":
-        return "DNF", f"לא סיים/ה את {comp_name} ({day})"
+        return "DNF", f"לא סיים/ה את {comp_name} ({he_date(day)})"
     if str(pos).upper() == "DSQ":
-        return "DSQ", f"נפסל/ה ב{comp_name} ({day})"
+        return "DSQ", f"נפסל/ה ב{comp_name} ({he_date(day)})"
     return None, None  # DNS or unknown: Ofir's outcome D, no entry
 
 
-def plan(data, fetch, today, days=4):
+def plan(data, fetch, today, days=4, propose=True):
+    """propose: data["athletes"] are the DB records (main(): --db), so a notes patch can be built from them."""
     out = {"warnings": [], "updates": [], "proposals": []}
     for comp in due_competitions(data, today, days):
         tag = f"{comp['name']} ({comp.get('end') or comp['start']})"
@@ -100,15 +111,14 @@ def plan(data, fetch, today, days=4):
             pos, text = result_text(r, comp["name"], dist, day)
             if not text:
                 continue
-            entry = {"at": day, "kind": "result", "text": text, "source": page}
             if any(h.get("at") == day and h.get("text") == text for h in a.get("history") or [] if isinstance(h, dict)):
                 continue  # already logged on an earlier run
-            out["updates"].append({"athleteId": a["id"], "historyEntry": entry})
+            out["updates"].append({"athleteId": a["id"], "result": {"at": day, "text": text, "source": page}})
             note = f"מקום {pos} ב{comp['name']} {day[:4]}"
             notes = str(a.get("notes") or "").strip()
-            # Podium only (Ofir's plan): the note is a judgment call, so a person approves it. Never a proposal with
-            # an empty or unchanged patch: approving one would still bump updatedAt and undo verification.
-            if isinstance(pos, int) and pos <= 3 and note not in notes:
+            # Podium only (Ofir's plan): the note is a judgment call, so a person approves it. The patch replaces the
+            # whole notes field, so it is built only from the DB record (propose=True), never from the published copy.
+            if propose and isinstance(pos, int) and pos <= 3 and note not in notes:
                 pid = f"{a['id']}-{day.replace('-', '')}-result"
                 out["proposals"].append({"id": pid, "doc": {
                     "kind": "update", "target": a["id"],
@@ -119,8 +129,14 @@ def plan(data, fetch, today, days=4):
     return out
 
 
+def db_athletes(dump_dir):
+    """Athlete records from an ArtifactData list with out_dir (bare or {id, data} files); archived ones left out."""
+    from export_data import load
+    return [{**a, "id": aid} for aid, a in sorted(load(dump_dir, "athletes", []).items()) if not a.get("archived")]
+
+
 def main(argv):
-    args, opts = [], {"--today": None, "--days": "4"}
+    args, opts = [], {"--today": None, "--days": "4", "--db": None}
     it = iter(argv[1:])
     for a in it:
         if a in opts:
@@ -130,13 +146,17 @@ def main(argv):
     from quota_due import israel_today
     today = as_date(opts["--today"]) if opts["--today"] else israel_today()
     if len(args) != 1 or not today or not str(opts["--days"]).isdigit():
-        print("usage: python3 tri_results.py <data.json> [--today YYYY-MM-DD] [--days N]", file=sys.stderr)
+        print("usage: python3 tri_results.py <data.json> [--db <dump_dir>] [--today YYYY-MM-DD] [--days N]", file=sys.stderr)
         return 1
     import triathlon_api as api
     with open(args[0], encoding="utf-8") as f:
         data = json.load(f)
+    if opts["--db"]:
+        data["athletes"] = db_athletes(opts["--db"])
     try:
-        result = plan(data, api.get, today, int(opts["--days"]))
+        result = plan(data, api.get, today, int(opts["--days"]), propose=bool(opts["--db"]))
+        if not opts["--db"] and result["updates"]:
+            result["warnings"].append("תוצאות טריאתלון: הורץ בלי --db, ולכן לא נבנו הצעות להערות")
     except (api.ApiKeyError, api.ApiError) as e:  # messages carry no key (triathlon_api)
         result = {"warnings": [f"תוצאות טריאתלון: ה־API לא זמין ({e}); לבדוק ידנית"], "updates": [], "proposals": []}
     print(json.dumps(result, ensure_ascii=False, indent=1))
