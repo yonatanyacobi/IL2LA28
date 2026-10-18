@@ -85,8 +85,12 @@ function sessionRow(s, d){
   const chip = {wait: `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`,
     live: `<span class="pill s-live">מתחרה היום</span>`, before: `<span class="pill s-before">לפני התחרות</span>`}[status] || "";
   const when = s.startUtc ? hhmm(s.startUtc) : s.timed ? "השעה תפורסם" : "תאריך בלבד";
+  // Keyed by day, competition and athletes, so the same session on #day and #c- is one row; the chip is left out
+  // of the signature because it changes with the clock.
+  const mark = rowMark(`sess|${d}|${s.comp?.id || ""}|${s.athletes.map(a => a.id).join(",")}|${s.phase}`,
+    [s.result, s.resultSource, s.resultAt, s.startUtc, s.athletes.map(a => a.name).join(",")].join("\u241f"));
   return `<li><span class="d">${when}</span>
-    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${res}</span>
+    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${res}${mark}</span>
     <span>${chip}</span></li>`;
 }
 

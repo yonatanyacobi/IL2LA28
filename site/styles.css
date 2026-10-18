@@ -362,6 +362,7 @@ div.track{background:none}
 .pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
 .pill.s-wait{background:var(--blue-soft);color:var(--blue)}
+.pill.chg{background:var(--sun-soft);color:var(--sun-ink);margin-inline-start:4px}
 @media (max-width:640px){.day-nav h1{flex-basis:100%;order:-2}}
 
 /* following (#following): nav badge */
