@@ -67,6 +67,26 @@ both genders. All three items still carry per-gender totals.
 as worded. Next step: ask the Olympic Committee of Israel and the Israeli canoe and rowing federations which
 athletes raced 2026 ranking events.
 
+## Follow-up on 28/30 and 41 (stopped when the sprint ended)
+
+**Athletics (28/30): the full LA28 system was not found, and there is no official date for it.**
+- [WA-240] §2.1.3, 2026-03-19: the LA28 system and entry standards "will be submitted to Council for approval
+  prior to the next Council meeting". That next meeting was the 241st, on 2026-07-01 and 2026-07-02. Its
+  decisions page (https://worldathletics.org/news/press-releases/decisions-made-241st-council-meeting,
+  2026-07-03) says nothing about LA28 qualification.
+- The Beijing 27 system (published 2026-05-26) does not mention LA28. It sets the 2027 Worlds periods
+  only: marathon from 2025-11-03 to 2027-05-02, other events from 2026-08-23 to 2027-08-22. **Do not reuse these
+  for LA28.**
+- A search snippet says athletics went to the IOC Executive Board in June 2026. I could not confirm this:
+  olympics.com and the IOC copy of the PDF (`ATH-LA28-Qualification-System.pdf` at the stillmed host) timed out
+  every time today.
+- **Proposal:** keep 28/30 unpublished (❓). Optionally publish them with only the [WA-240] wording from §1,
+  which states no quota, periods or standards. Next step: fetch the IOC PDF from another network, or ask the
+  Olympic Committee of Israel.
+
+**Item 41 (470): not done.** The sailing.org report (2026-08-17) lists only the medallists. The full results
+(470.org / manage2sail) are still to be checked.
+
 ## Still open
 1. World Athletics LA28 qualification system document (items 28 and 30). Check the IOC host above, or World
    Athletics' LA28 page, after the June 2026 IOC EB approval.
