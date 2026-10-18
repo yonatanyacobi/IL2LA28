@@ -522,11 +522,36 @@ test("#digest: page, entry points and the week's text", async () => {
   assert.deepStrictEqual(boldLines(text).slice(1), ["*מה התעדכן*", "*ישראלים מתחרים השבוע*", "*אירועי מכסה בשבועיים הקרובים*"]);
   assert.ok(text.includes("מתן רודיטי פרש"), "this week's change");
   const competing = text.split("*ישראלים מתחרים השבוע*")[1].split("\n\n")[0];
-  assert.match(competing, /• 18 באוק׳ · .+ \(התעמלות מכשירים\)/, "athlete competing this week");
+  assert.match(competing, /• 18 באוק׳ · .+ \(אתלטיקה\): מרתון אמסטרדם/, "athlete competing this week");
   assert.ok(!competing.includes("רז הרשקו"), "29 Oct is outside the 7-day window");
   assert.ok(text.includes("גרנד סלאם אבו דאבי"), "quota event inside 14 days");
   assert.ok(lines.at(-2).startsWith("לכל הפרטים: https://claude.ai/artifact/") && lines.at(-1).startsWith("אתר לא רשמי"));
   assert.ok(page.includes(text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")), "textarea holds the text");
+});
+
+const digestSection = (text, title) => (text.split(`*${title}*\n`)[1] || "").split("\n\n")[0];
+
+test("#digest: athletes in a competition under way are listed under it", async () => {
+  // 20 Oct: day 4 of the gymnastics Worlds; the gymnasts' nextDate (18–19 Oct) has passed.
+  const {text} = await digestOf({now: "2026-10-20T09:00:00Z"});
+  const competing = digestSection(text, "ישראלים מתחרים השבוע");
+  const bullets = competing.split("\n• ");
+  const gym = bullets.find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026"));
+  assert.ok(gym && gym.includes("עד 25 באוק׳") && gym.includes("מתקיימת עכשיו"), competing);
+  for (const n of ["ארטיום דולגופיאט", "ליהיא רז", "יהלי שושני"]) assert.strictEqual(count(competing, n), 1, n);
+  assert.ok(competing.includes("שחר שגיב"), "upcoming athletes still listed");
+});
+
+test("#digest: one bullet per quota event, classes and athletes under it", async () => {
+  const {text} = await digestOf({now: "2026-10-29T09:00:00Z"});
+  const quotas = digestSection(text, "אירועי מכסה בשבועיים הקרובים");
+  const judo = quotas.split("\n• ").filter(b => b.includes("גרנד סלאם אבו דאבי"));
+  assert.strictEqual(judo.length, 1, quotas);
+  assert.match(judo[0], /ג׳ודו: גרנד סלאם אבו דאבי\n  מקצים: .*78\+ ק״ג נשים/);
+  assert.match(judo[0], /\n  ישראלים: .*רז הרשקו/);
+  assert.strictEqual(count(judo[0], "מה זה אומר"), 1, "shared stakes lead once");
+  assert.ok(!judo[0].includes("הרשקו (1)"), "per-class detail stays on the sport page");
+  assert.ok(quotas.split("\n").every(l => l.length <= 160));
 });
 
 test("#digest: ≤3500 chars with 60 long changes, no data asterisks, bullets cut at 160", async () => {
