@@ -15,13 +15,29 @@ CUR = {"name": "רז הרשקו", "rank": "1 בעולם (IJF, אוק׳ 2026)", "
 
 class AthletePatchTest(unittest.TestCase):
     def test_unchanged_rewrite_is_empty(self):
-        same = {k: CUR[k] for k in ap.VISIBLE + ap.SILENT}
+        same = {k: CUR[k] for k in ap.VISIBLE + ap.SILENT if k in CUR}
         self.assertEqual(ap.build(CUR, {**same, "source": "https://other.example/new-url"}, NOW), {})
 
     def test_cosmetic_differences_are_not_changes(self):
         proposed = {"rank": "  1 בעולם (IJF, אוק' 2026) ", "rankNum": "1", "notes": CUR["notes"] + "\n",
                     "historyEntry": {"at": "2026-10-19", "kind": "rank", "text": "1 בעולם", "source": ""}}
         self.assertEqual(ap.build(CUR, proposed, NOW), {})  # apostrophe vs geresh, padding, "1" vs 1
+
+    def test_olympic_rank_fields_follow_rank_rules(self):
+        cur = {**CUR, "olympicRankNum": 3, "olympicRankList": "IJF Olympic Ranking List", "olympicRankAsOf": "2026-10-13"}
+        # Same number, new list date: written silently, updatedAt untouched (as rankAsOf).
+        self.assertEqual(ap.build(cur, {"olympicRankNum": "3", "olympicRankAsOf": "2026-10-20"}, NOW),
+                         {"olympicRankAsOf": "2026-10-20"})
+        # A new number is visible: updatedAt moves, the list and date come along.
+        patch = ap.build(cur, {"olympicRankNum": 2, "olympicRankList": "IJF Olympic Ranking List",
+                               "olympicRankAsOf": "2026-10-20"}, NOW)
+        self.assertEqual(patch, {"olympicRankNum": 2, "olympicRankAsOf": "2026-10-20", "updatedAt": NOW, "updatedBy": "auto"})
+        # First Olympic rank on a record that had none.
+        self.assertIn("updatedAt", ap.build(CUR, {"olympicRankNum": 17, "olympicRankList": "x", "olympicRankAsOf": "2026-10-20"}, NOW))
+        # Unchanged world and Olympic ranks: nothing to write.
+        self.assertEqual(ap.build(cur, {"rankNum": 1, "olympicRankNum": 3}, NOW), {})
+        with self.assertRaises(ValueError):
+            ap.build(cur, {"olympicRank": 3}, NOW)
 
     def test_silent_fields_update_without_bumping(self):
         self.assertEqual(ap.build(CUR, {"rankNum": 1, "rankAsOf": "2026-10-20"}, NOW), {"rankAsOf": "2026-10-20"})
