@@ -7,7 +7,9 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/sessions.js", "site/day.js", "site/event.js", "site/home.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+// The page's own script order (as tests/bench.js), so a new site/*.js can't be left out; a missing file throws.
+const SCRIPTS = [...fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8").matchAll(/<script src="([\w.-]+\.js)">/g)]
+  .map(m => path.join(ROOT, "site", m[1]));
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // The fixture is a real export and gets refreshed (tests/README.md). A test that needs a precondition the real data
 // may lose (no ranks, a given nextDate…) sets it on its own copy instead of relying on the snapshot.
@@ -234,7 +236,7 @@ test("empty data renders empty states", async () => {
   const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}});
   assert.ok(view("home").includes("אין תחרויות קרובות ידועות."));
   assert.ok(view("home").includes("עוד אין עדכונים"));
-  assert.ok(view("sport-judo").includes("אין כרגע ספורטאים או נבחרות מישראל במעקב"));
+  assert.ok(view("sport-judo").includes("אין כרגע ספורטאים או נבחרות מישראל ברשימה"));
   assert.ok(view("calendar").includes("אין תחרויות שמתאימות לסינון"));
   assert.ok(view("updates").includes("עוד אין עדכונים"));
   assert.ok(view("sports").length > 0);
@@ -274,10 +276,24 @@ test("empty states (S5): p.muted lines, each table row's way on, no \"במאגר
 const rowsOf = strip => strip.split("<li>").slice(1);
 const count = (s, needle) => s.split(needle).length - 1;
 
+test("S1: \"במעקב\" is only the viewer's own follow; stage 0 and the site's list have their own words", async () => {
+  const {view} = await boot();
+  assert.ok(view("about").includes("<b>לפני חלון ההעפלה</b>"), "stage 0 name");
+  assert.ok(/<b>\d+<\/b> ספורטאים ונבחרות ברשימה/.test(view("home")), "home KPI: ברשימה");
+  // Every remaining "במעקב" in the site code is personal-follow copy.
+  const files = fs.readdirSync(path.join(ROOT, "site")).filter(n => n.endsWith(".js"));
+  assert.ok(files.includes("home.js") && files.includes("app.js"), "scans the new home code too");
+  for (const f of files) {
+    const bad = fs.readFileSync(path.join(ROOT, "site", f), "utf8").split("\n")
+      .filter(l => /במעקב/.test(l) && !/במעקב (שלך|שלי)|עוד אין (ענפים|ספורטאים או נבחרות) במעקב|שבמעקב שלך|ענפים במעקב:|ענף במעקב:/.test(l));
+    assert.deepStrictEqual(bad, [], f);
+  }
+});
+
 test("home KPI uses the singular for one athlete and one verified record", async () => {
   const one = {...FIXTURE.athletes[0], verifiedAt: "2026-10-01", updatedAt: "2026-09-01"};
   const kpi = (await boot({data: {...FIXTURE, athletes: [one]}})).view("home").match(/<p class="kpi">.*?<\/p>/)[0];
-  assert.ok(kpi.includes("ספורטאי/ת או נבחרת אחת במעקב") && !kpi.includes("ספורטאים ונבחרות"), kpi);
+  assert.ok(kpi.includes("ספורטאי/ת או נבחרת אחת ברשימה") && !kpi.includes("ספורטאים ונבחרות"), kpi);
   assert.ok(kpi.includes("נבדק/ה ידנית"), kpi);
 });
 
@@ -903,7 +919,7 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   noIsraelis.sessions = [];
   noIsraelis.athletes = noIsraelis.athletes.filter(a => a.sportId !== "shooting" || a.id === "sergey-richter");
   const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z", {data: noIsraelis})).out;
-  assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת במעקב בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
+  assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת ברשימה בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
   assert.ok(doha.includes('id="evStakesH"') && doha.includes("הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
   const dohaItems = doha.split('id="evStakesH"')[1].split("</section>")[0].split("<li>").slice(1);
   for (const li of dohaItems) assert.ok(li.includes("q-in-contention") || !li.includes("מה זה אומר"), "stakes only for in-contention items");
@@ -1387,7 +1403,7 @@ test("#digest: results logged in athlete history count, even after nextDate move
 
 test("#digest: this week's results group ended competitions with their changes", async () => {
   const empty = digestSection((await digestOf()).text, "תוצאות השבוע");
-  assert.strictEqual(empty, "לא הסתיימו השבוע תחרויות בענפים שבמעקב.");
+  assert.strictEqual(empty, "לא הסתיימו השבוע תחרויות בענפים שברשימה.");
 
   const data = JSON.parse(JSON.stringify(FIXTURE));
   data.changes.unshift(
@@ -1608,7 +1624,7 @@ test("next-up fallback with no entrants never says מתחרים; quotas error hi
   data.athletes.forEach(a => { a.nextDate = ""; });
   const {view} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
   const line = nextUpOf(view("home"));
-  assert.ok(/במעקב בענף/.test(line) && !line.includes("מתחרים"), line);
+  assert.ok(/ברשימה בענף/.test(line) && !line.includes("מתחרים"), line);
 
   const failed = await boot({quotas: "fail", now: "2026-10-26T08:00:00Z"});
   const home = failed.view("home");
@@ -1921,6 +1937,7 @@ test("changed rows: marked after auto-refresh on #a- and #day, one announcement,
   assert.strictEqual(marks(), 2, "rank and the new history row");
   assert.strictEqual(run(`$("updateNote").textContent`), "הנתונים עודכנו ב־02:00 · 2 פריטים השתנו בדף הזה", "one announcement with the count");
   assert.ok(els.view.innerHTML.includes(`השתנה ב־<time datetime="2099-01-01T00:00:00Z">02:00</time>`), "the export's Israel time");
+  assert.ok(els.view.innerHTML.includes(`מקום 5 במקבילים<span class="pill chg"><span class="sr"> · </span>השתנה ב־`), "sr separator: the rank and the mark aren't read as one word");
 
   // A later export that doesn't touch her keeps the marks and announces no new rows.
   next = exportWith("2099-01-02T00:00:00Z", d => { const a = ath(d, "yali-shoshani");
@@ -2381,6 +2398,25 @@ test("render budget: each main route under 50 ms at 3x today's data", async () =
   const slow = ["home", "today", "c-judo-gs-abu-dhabi-2026", "a-raz-hershko", "following", "sports", "calendar", "quotas", "day-2026-12-24"]
     .map(r => [r, bench.timeRoute(b, r, 5)]).filter(([, ms]) => ms > 50);
   assert.deepStrictEqual(slow.map(([r, ms]) => `#${r} ${ms.toFixed(0)} ms`), []);
+});
+
+// Pairs from the published data of 18.10: [free text, official name, the text names the competition].
+test("sameName: a city, year, parenthetical or dash style doesn't make a second link name (Gil, 14-day rows)", async () => {
+  const {run} = await boot();
+  const pairs = [
+    ["אליפות העולם בהתעמלות מכשירים, רוטרדם", "אליפות העולם בהתעמלות מכשירים 2026", true],
+    ["אליפות העולם בהתעמלות מכשירים, רוטרדם – מוקדמות נשים (קרב־רב)", "אליפות העולם בהתעמלות מכשירים 2026", true],
+    ["גביע העולם בטריאתלון, טונגיונג", "גביע העולם בטריאתלון טונגיונג", true],
+    ["אליפות העולם בשייט – מקצי זוגות, גדיניה", "אליפות העולם בשייט - מקצי זוגות (49er/FX, 470, נאקרה)", true],
+    ["טורנירי טרום-מוקדמות אולימפיים FIBA", "טורנירי טרום־מוקדמות אולימפיים FIBA – אירופה (גברים)", true],
+    ["גרנד סלאם אבו דאבי", "גרנד סלאם אבו דאבי", true],
+    // The official name adds what the text lacks (gender, discipline, sport): it stays as the link beside the text.
+    ["אליפות אירופה בלקרוס סיקסס – סאלו, ספרד", "אליפות אירופה בלקרוס סיקסס – נשים", false],
+    ["אליפות העולם באקווטיקה בודפשט", "אליפות העולם באקווטיקה 2027 – מים פתוחים", false],
+    ["אליפות העולם רוטרדם – גמר קבוצתי גברים", "אליפות העולם בהתעמלות מכשירים 2026", false],
+    ["2026", "אליפות העולם 2026", false],
+  ];
+  for (const [x, y, want] of pairs) assert.strictEqual(run(`sameName(${JSON.stringify(x)}, ${JSON.stringify(y)})`), want, `${x} || ${y}`);
 });
 
 // tests/probe.js: every route on 7 dates, visitor and with follows; ~1 s on the fixture.
