@@ -86,6 +86,16 @@ A page-specific status goes **inside** the card, as the last line, never between
 <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הסשנים</h2>…</section>
 ```
 
+## 8. Ranked row and cut line — `<ol class="rows standings">` (standings.md)
+**Use for** an ordered list against a threshold (rank vs. the quota line). `.d` holds the number and stays on the row at
+every width (`.rows.standings li{grid-template-columns:3.5ch 1fr auto}`, also at ≤ 640px).
+```html
+<li><span class="d">5</span><span class="t">★ <a href="#a-izhak-ashpiz">יצחק אשפיז</a><span class="sr">, מעל קו המכסה</span></span><span></span></li>
+<li class="cutline" aria-hidden="true">קו המכסה: מקום 17</li>
+```
+The cut line appears only when at least one row is on its list. A caveat shared by several blocks is said once, at the
+end of the panel.
+
 ## Checks (smoke)
 - No output contains `class="now"` or `נתונים חיים`.
 - On `#day` and `#c-` every `<h2>`/`<h3>` link has `class="hlink"`.
