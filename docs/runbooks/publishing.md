@@ -130,13 +130,13 @@ The Publisher prepares the call and the coordinator runs it. The page itself is 
    > Publish to https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT with file_path = site/index.html and
    > files = {"app.js": "site/app.js", "admin.js": "site/admin.js", "quotas.js": "site/quotas.js",
    > "digest.js": "site/digest.js", "corrections.js": "site/corrections.js", "sessions.js": "site/sessions.js",
-   > "day.js": "site/day.js", "event.js": "site/event.js", "following.js": "site/following.js",
+   > "day.js": "site/day.js", "event.js": "site/event.js", "home.js": "site/home.js", "following.js": "site/following.js",
    > "styles.css": "site/styles.css", "quotas.json": "site/quotas.json"}.
    > Don't pass force, capabilities, icon or contract.
 
-   `data.json` is not in the list. It was published in step 3, and files left out are kept. If a new `site/*.js` or
-   asset was added in the merge, add it to the map, and also check it has a `<script>` tag in `index.html`.
-   The map must list every `<script src>` in `index.html`: `grep -o 'src="[^"]*"' site/index.html`.
+   `data.json` is not in the list. It was published in step 3, and files left out are kept. The map must name every
+   `<script src>` in `index.html` (`grep -o 'src="[^"]*"' site/index.html`; the smoke test checks this); a new
+   `site/*.js` goes into both, and into `SCRIPTS` in `tests/smoke.test.js`.
 3. Note in the PR thread: the published SHA and the time.
 
 ### 6. Live check at 400px

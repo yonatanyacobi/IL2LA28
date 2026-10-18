@@ -217,6 +217,19 @@ test("hostile strings are escaped and unsafe links dropped", async () => {
   assert.ok(outs[3].includes("&lt;img"), "athlete page should show the escaped name");
 });
 
+// The full-site publish map (publishing.md step 5) and SCRIPTS must name every script index.html loads, or a new
+// file (e.g. sessions.js) is tested but never published, or published but never tested.
+test("every <script src> in index.html is in SCRIPTS and in the publish map", () => {
+  const html = fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8");
+  const runbook = fs.readFileSync(path.join(ROOT, "docs/runbooks/publishing.md"), "utf8");
+  const srcs = [...html.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]);
+  assert.ok(srcs.length >= 8, "index.html scripts found");
+  for (const f of srcs) {
+    assert.ok(SCRIPTS.includes(path.join(ROOT, "site", f)), `${f}: not in SCRIPTS`);
+    assert.ok(runbook.includes(`"${f}": "site/${f}"`), `${f}: not in the publishing.md files map`);
+  }
+});
+
 test("empty data renders empty states", async () => {
   const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}});
   assert.ok(view("home").includes("אין תחרויות קרובות ידועות."));
