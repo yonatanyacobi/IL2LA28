@@ -10,7 +10,7 @@ covered yet" note no longer applies). This page only says whether we go, who doe
 ## People
 | Role | Who | Tonight |
 |---|---|---|
-| Decision, only DB writer, publishes | coordinator | 16:30 call; writes and the same-night export |
+| Decision, only DB writer, publishes | coordinator | 16:00 call; writes and the same-night export |
 | Session sign-off, start lists | Dana | both sessions before 17:00; sub 10 start list before 21:10 |
 | Official results, values | Roni | from ~23:30 until the Official PDFs are in |
 | Values check | Tamar | each of Roni's value sets, before any write |
