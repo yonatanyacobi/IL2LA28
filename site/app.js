@@ -160,7 +160,7 @@ function quotaSection(id){
       QUOTA_STATUSES.map(k => n[k] ? `<i class="q-${k}" style="width:${(n[k] / items.length * 100).toFixed(2)}%"></i>` : "").join("")}</div>
     <ul class="legend">${QUOTA_STATUSES.map(k => n[k] ? `<li><i class="q-${k}"></i>${Q_LABEL[k][1]} <b>${n[k]}</b></li>` : "").join("")}</ul>
     ${n.unknown === items.length ? `<p class="muted">עוד אין מידע על מצב ישראל במקצים האלה.</p>` : ""}
-    ${n.earned && !athletesOf(id).some(a => stageOf(a) >= 2) ? `<p class="foot">המכסה הושגה למדינה. שלב הספורטאים יתעדכן אחרי אישור ידני.</p>` : ""}
+    ${n.earned && !athletesOf(id).some(a => stageOf(a) >= 2) ? `<p class="foot">${n.earned === 1 ? "המכסה הושגה" : "המכסות הושגו"} למדינה. שלב הספורטאים והנבחרות יתעדכן אחרי בדיקה ידנית.</p>` : ""}
     <ul class="qlist">${items.map(q => {
       const tot = q.totalQuotas, max = q.maxPerNOC, e = nxt(q), w = awaitingOf(q), src = linkOut(q.source, host(q.source));
       const meta = [tot != null && `${plural(tot, "מכסה אחת", "מכסות")} בעולם`, max != null && `עד ${plural(max, "מכסה אחת", "מכסות")} למדינה`].filter(Boolean).join(" · ");
@@ -222,10 +222,10 @@ function athleteQuotaFacts(a){
   if (!items.length) return "";
   const line = q => {
     const w = awaitingOf(q), e = nxt(q), s = q.israelStatus;
-    if (s === "earned") return `המכסה שייכת למדינה, לא לספורטאי/ת.${isDate(q.earnedAt) ? ` הושגה ב־${fmt(q.earnedAt)}` : ""}`;
+    if (s === "earned") return `המכסה שייכת למדינה, לא לספורטאי/ת.${isDate(q.earnedAt) ? ` היא הושגה ב־${fmt(q.earnedAt)}.` : ""}`;
     if (w) return awaitingLine(w);
     if (s === "in-contention") return e ? `אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}` : "";
-    return s === "outside" ? "לפי המצב הנוכחי, מחוץ למקומות המכסה." : "עוד אין מידע על מצב ישראל במקצה הזה.";
+    return s === "outside" ? "לפי המצב הנוכחי, ישראל מחוץ למקומות המכסה." : "עוד אין מידע על מצב ישראל במקצה הזה.";
   };
   return `<dt>מכסה</dt><dd class="stack">${items.map(q => { const l = line(q); return `
     <span>${quotaStatusPill(q.israelStatus)} <bdi>${esc(q.event)}</bdi>${awaitingOf(q) ? AWAIT_PILL : ""}</span>${l ? `
@@ -274,7 +274,7 @@ function todayStrip(rows){
       .sort((x, y) => rank(x) - rank(y));
     const onLine = stakes.slice(0, STAKES_MAX).map(q => awaitingOf(q)
       ? (w => `<small class="stakes awaiting"><b>${AWAITING}:</b> <bdi>${esc(q.event)}</bdi> · ${fmtRange(w.start, w.end)}</small>`)(awaitingOf(q))
-      : `<small class="stakes"><b>מה זה אומר:</b> ${esc(q.event)}: ${esc(q.stakes)}</small>`).join("")
+      : `<small class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</small>`).join("")
       + (stakes.length > STAKES_MAX ? `<small>ועוד ${stakes.length - STAKES_MAX} מקצים — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
       <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small>${onLine}</span>
