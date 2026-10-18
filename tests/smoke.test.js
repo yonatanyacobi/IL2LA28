@@ -956,6 +956,33 @@ test("#admin last-run panel shows the newest run's warnings, escaped", async () 
   assert.ok(!quiet.view("admin").includes('id="runWarnings"'), "no box without warnings");
 });
 
+test("#admin last-run panel: changes and checked sources from run_log.py, escaped and https only", async () => {
+  const sources = [{source: "https://www.ijf.org/wrl", checkedAt: "2026-10-19T04:20:00Z", sportId: "judo"},
+    {source: "javascript:alert(1)", checkedAt: "2026-10-19T04:21:00Z"},
+    ...Array.from({length: 9}, (_, i) => ({source: `https://example.org/s${i}`, checkedAt: "2026-10-19T04:22:00Z"}))];
+  const runs = [{id: "2026-10-19", status: "done", started: "2026-10-19T04:13:05Z", ended: "2026-10-19T04:41:00Z",
+    published: true, changes: ["ג׳ודו: רז הרשקו <b>ראשונה</b>"], sources}, {id: "2026-10-18", status: "done",
+    started: "2026-10-18T04:13:00Z", published: true, changes: ["א", "ב"]}];
+  const {run, view} = await boot({now: "2026-10-19T08:00:00Z"});
+  run(`S.isAdmin = true; S.live = true; S.db = {collection: () => ({orderBy: () => ({limit: () => ({
+    onSnapshot: ok => ok({docs: ${JSON.stringify(runs)}.map(r => ({id: r.id, data: () => r}))})})})})}`);
+  const out = view("admin");
+  const ch = out.split('id="runChanges"')[1].split("</dd>")[0], src = out.split('id="runSources"')[1].split("</dd>")[0];
+  assert.ok(ch.includes("&lt;b&gt;ראשונה") && !ch.includes("<b>"), "changes escaped");
+  assert.ok(src.includes('href="https://www.ijf.org/wrl"') && src.includes("ג׳ודו"), "source link + sport");
+  assert.ok(!src.includes("javascript:"), "non-https source dropped");
+  assert.strictEqual((src.match(/<a /g) || []).length, 8, "at most 8 listed");
+  assert.ok(src.includes("ועוד 2"), "the rest counted");
+  assert.ok(out.includes("<th scope=\"col\">שינויים</th>") && /<td>2<\/td><\/tr>/.test(out), "changes column in the table");
+
+  const old = await boot({now: "2026-10-19T08:00:00Z"});
+  old.run(`S.isAdmin = true; S.live = true; S.db = {collection: () => ({orderBy: () => ({limit: () => ({
+    onSnapshot: ok => ok({docs: [{id: "2026-10-19", data: () => ({status: "done", started: "2026-10-19T04:13:00Z", published: true})}]})})})})}`);
+  const o = old.view("admin");
+  assert.ok(o.split('id="runChanges"')[1].startsWith(">אין") && o.split('id="runSources"')[1].startsWith(">לא תועדו"),
+    "runs written before run_log.py still render");
+});
+
 test("#admin launch readiness: counts link to where each issue is fixed", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
   const [a, b, c] = data.athletes;
