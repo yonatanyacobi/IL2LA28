@@ -20,12 +20,21 @@ function fakeEl(id){
   };
 }
 
-// `data` is the fetch payload; `fetchFails` makes fetch reject.
-async function boot({data = FIXTURE, fetchFails = false} = {}){
+// A Date whose "now" is pinned, so today() (Israel time) is deterministic.
+function fixedDate(iso){
+  const NOW = Date.parse(iso);
+  return class extends Date {
+    constructor(...a){ a.length ? super(...a) : super(NOW); }
+    static now(){ return NOW; }
+  };
+}
+
+// `data` is the fetch payload; `fetchFails` makes fetch reject; `now` pins the clock (ISO instant).
+async function boot({data = FIXTURE, fetchFails = false, now} = {}){
   const els = {};
   const mem = new Map();
   const ctx = {
-    console, URL, Intl, Date, Math, JSON, Promise, setTimeout, clearTimeout,
+    console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, setTimeout, clearTimeout,
     setInterval: () => 0, clearInterval(){},
     location: {hash: ""},
     history: {replaceState(){}},
@@ -125,6 +134,36 @@ test("empty data renders empty states", async () => {
   assert.ok(view("calendar").includes("אין תחרויות שמתאימות לסינון"));
   assert.ok(view("updates").includes("עוד אין עדכונים"));
   assert.ok(view("sports").length > 0);
+});
+
+const STRIP = "ישראלים מתחרים היום";
+const stripOf = html => html.split('class="panel today-strip"')[1]?.split("</section>")[0] || "";
+
+test("today strip: mid-way through a multi-day competition", async () => {
+  // 21:30 UTC on 19 Oct is already 20 Oct in Israel; gymnastics Worlds run 17–25 Oct.
+  const {view, run} = await boot({now: "2026-10-19T21:30:00Z"});
+  assert.strictEqual(run("today()"), "2026-10-20");
+  const strip = stripOf(view("home"));
+  assert.ok(strip.includes(STRIP) && strip.includes("תוצאות יתעדכנו בעדכון היומי"), "strip/label missing");
+  assert.ok(strip.includes('href="#a-artem-dolgopyat"'), "athlete whose nextDate is inside the competition");
+  assert.ok(strip.includes("אליפות העולם בהתעמלות מכשירים 2026"), "competition name");
+  assert.ok(!strip.includes("raz-hershko"), "judo athlete competing on 29 Oct");
+});
+
+test("today strip: nextDate == today, ordered by sport", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  Object.assign(data.athletes.find(a => a.id === "adva-cohen"), {nextDate: "2026-10-29", next: "מרוץ בדיקה", event: "<img src=x onerror=alert(1)>"});
+  const {view} = await boot({data, now: "2026-10-29T08:00:00Z"});
+  const strip = stripOf(view("home"));
+  assert.ok(strip.includes("גרנד סלאם אבו דאבי") && strip.includes("מרוץ בדיקה"));
+  assert.ok(strip.indexOf("adva-cohen") < strip.indexOf("raz-hershko"), "אתלטיקה sorts before ג׳ודו");
+  assert.ok(!/<img/i.test(strip) && strip.includes("&lt;img"), "event must be escaped");
+});
+
+test("today strip: hidden on a day with no competitions", async () => {
+  const {view} = await boot({now: "2026-10-27T08:00:00Z"});
+  const home = view("home");
+  assert.ok(home.length > 200 && !home.includes(STRIP));
 });
 
 test("fetch failure shows the retry view", async () => {

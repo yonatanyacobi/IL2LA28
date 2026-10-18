@@ -107,6 +107,31 @@ function changeRow(c){
   return `<li><span class="d">${fmt(str(c.at).slice(0, 10))}</span><span class="t">${body}</span><span></span></li>`;
 }
 
+// From the schedule, not live results: an athlete counts as competing on every day of a running
+// competition in their sport whose dates contain their nextDate.
+function competingToday(){
+  const t = today();
+  return S.athletes.flatMap(a => {
+    if (!isDate(a.nextDate)) return [];
+    const c = S.comps.find(c => c.sportId === a.sportId && c.start <= t && t <= (c.end || c.start)
+      && c.start <= a.nextDate && a.nextDate <= (c.end || c.start));
+    return c || a.nextDate === t ? [{a, comp: c ? c.name : a.next}] : [];
+  }).sort((x, y) => heCmp(sportName(x.a.sportId), sportName(y.a.sportId)) || heCmp(x.a.name, y.a.name));
+}
+
+function todayStrip(){
+  const list = competingToday();
+  if (!list.length) return "";
+  const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
+  const when = ts ? new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
+  return `<section class="panel today-strip">
+    <h2>ישראלים מתחרים היום</h2>
+    <p class="foot">${when ? `לפי הנתונים מ־${when}` : "לפי לוח התחרויות"}, תוצאות יתעדכנו בעדכון היומי</p>
+    <ul class="rows">${list.map(({a, comp}) => `<li><span class="d">${esc(sportName(a.sportId))}</span>
+      <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${[a.event, comp].filter(Boolean).map(esc).join(" · ")}</small></span><span></span></li>`).join("")}</ul>
+  </section>`;
+}
+
 // ---------- views ----------
 function viewHome(){
   const {counts, html: bar} = stageBar(S.athletes);
@@ -127,6 +152,7 @@ function viewHome(){
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
+  ${todayStrip()}
   ${reviewPanel()}
   <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
   <p class="sr" id="qCount" aria-live="polite"></p>
