@@ -113,3 +113,52 @@ In `dl.facts`, after `דירוג או הישג`:
 
 Last: `<a href="#sport-{id}">לכל המכסות בענף</a>` (once). At 400px `.facts` keeps `auto 1fr`; pills wrap.
 The matcher is heuristic, so the line never says "שלו/שלה" — the quota is the event's, not the athlete's.
+
+## 4. `#admin` — quota events that ended and weren't re-checked (Itai, after the result-night checklist)
+
+Today `quotaHealthPanel()` has one flag, `past` ("אירוע המכסה הבא כבר עבר"). It fires on every item
+whose event is over, even right after a fact-checker re-reviewed it, and it doesn't say how urgent it is.
+This section replaces that flag.
+
+### Data: per-item check date
+`job/build_quotas.py` publishes `checkedAt = review.at` (date only; `review.by` stays private).
+`applyQuotas()`: `checkedAt: isDate(q.checkedAt) ? q.checkedAt : ""`. One shared helper, also used by §1
+instead of the file-level `S.quotasUpdatedAt` once `checkedAt` exists:
+```js
+const checkedOf = q => q.checkedAt || str(S.quotasUpdatedAt).slice(0, 10);
+// Event over, item not reviewed since its last day.
+const unchecked = (q, t = today()) => { const end = quotaEventEnd(q); return !!(q.nextQuotaEvent && end && end < t && checkedOf(q) <= end); };
+```
+An item re-checked after its event but still showing that past event as "next" isn't flagged here: the
+reviewer kept it on purpose. Those still lose their next-event line publicly (`nxt()`).
+
+### Panel
+Two flags replace `past`, inside the same `quotaHealthPanel()` and in the same `.stack` + `.rows` markup:
+
+| key | label | items | alert |
+|---|---|---|---|
+| `overdue` | `אירוע מכסה עבר לפני יותר מ־14 יום ולא נבדק מחדש` | `unchecked(q)` and `dayNo(end, t) - 1 > AWAIT_DAYS` | yes (`adm-bad`, panel `adm-alert`) |
+| `awaiting` | `ממתינים לבדיקה אחרי אירוע מכסה` | `unchecked(q)` and within `AWAIT_DAYS` | no (pill "תזכורת") |
+
+Order: `overdue` → `awaiting` → existing `earned` → `soon`. Within a flag: oldest event end first.
+
+Row (`.rows li`):
+```html
+<li><span class="d"><a href="#sport-{id}">{sport}</a></span>
+  <span class="t">{event}<small>{name} הסתיים ב־{fmt(end)} · לפני {n} ימים · נבדק לאחרונה {fmt(checkedOf(q))}</small></span>
+  <span>{quotaStatusPill(q.israelStatus)}</span></li>
+```
+- "לפני {n} ימים": `n = dayNo(end, t) - 1`; n = 1 → `אתמול`.
+- Status pill so the editor sees what visitors currently see ("◐ במרוץ למכסה" + public "ממתינים לתוצאות").
+- Footer of each flag (`.foot`, once): `לעדכן את data/quotas/quotas.json (סטטוס, אירוע מכסה הבא, review.at) ולהריץ את build_quotas.py.`
+- Empty flags are omitted (as today); if neither fires and nothing else does, the panel pill stays "תקין".
+
+### Tile
+Add one tile to `.adm-tiles`, linking to the panel: `tile("#admin", overdue + awaiting, "אירועי מכסה שלא נבדקו מחדש")`
+→ href `#quotaHealth` won't work (only bare `#token` hashes route), so the tile stays on `#admin` and the
+panel is already above the tiles. If `overdue > 0` the tile is `hot`.
+
+### Done when
+- Smoke: an item with an ended event and `checkedAt` before the end appears under `awaiting`; 15 days later
+  under `overdue` (panel `adm-alert`); with `checkedAt` after the end it appears in neither.
+- `python3 -m py_compile job/build_quotas.py`; build test asserts `checkedAt` is published and `review` is not.
