@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:31:56Z",
+ "updatedAt": "2026-10-18T12:48:05Z",
  "items": [
   {
    "sportId": "judo",
@@ -623,6 +623,38 @@
    "checkedAt": "2026-10-18"
   },
   {
+   "sportId": "shooting",
+   "event": "רובה אוויר 10 מ׳ גברים",
+   "totalQuotas": 29,
+   "maxPerNOC": 2,
+   "allocation": "בדוחא 2026: 3 מכסות במקצה, אחת לכל היותר למדינה; אחר כך אליפות עולם וגביעי עולם 2027, אליפויות אירופה 2027/2028 (2+2), המשחקים האירופיים (1) ודירוג אולימפי.",
+   "israelStatus": "unknown",
+   "israelNote": "סרגיי ריכטר: מקום 17 בגביע העולם בהאנגג׳ואו 2026; רשום לאליפות העולם בדוחא (ISSF, 3.10.2026)",
+   "stakes": "אליפות העולם בדוחא (רובה אוויר גברים, 3 בנוב׳ 2026): 3 מכסות, אחת לכל היותר למדינה; נדרשת תוצאה של 613.0 לפחות",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בקליעה, דוחא",
+    "start": "2026-11-03"
+   },
+   "source": "https://www.asia-shooting.org/wp-content/uploads/2026/07/Qualification-System-01Jul26-ISSF.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "shooting",
+   "event": "רובה אוויר 10 מ׳ נשים",
+   "totalQuotas": 29,
+   "maxPerNOC": 2,
+   "allocation": "בדוחא 2026: 3 מכסות במקצה, אחת לכל היותר למדינה; אחר כך אליפות עולם וגביעי עולם 2027, אליפויות אירופה 2027/2028 (2+2), המשחקים האירופיים (1) ודירוג אולימפי.",
+   "israelStatus": "in-contention",
+   "israelNote": "Olga Tashtchiev מדורגת 22 בעולם (ISSF, 1.10.2026); רשומה לאליפות העולם בדוחא (ISSF, 3.10.2026)",
+   "stakes": "אליפות העולם בדוחא (רובה אוויר נשים, 3 בנוב׳ 2026): 3 מכסות, אחת לכל היותר למדינה; נדרשת תוצאה של 613.0 לפחות",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בקליעה, דוחא",
+    "start": "2026-11-03"
+   },
+   "source": "https://www.asia-shooting.org/wp-content/uploads/2026/07/Qualification-System-01Jul26-ISSF.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
    "sportId": "archery",
    "event": "קשת מסורתית (רקרב) – אישי, קבוצות ומעורב",
    "totalQuotas": 104,
@@ -830,5 +862,5 @@
    "checkedAt": "2026-10-18"
   }
  ],
- "unpublished": 5
+ "unpublished": 3
 }
