@@ -37,13 +37,16 @@ function followFeed(since){
   }).sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(x.a.name, y.a.name)).slice(0, FEED_MAX);
 }
 
+// Athletes followed only through their sport have no star, so their feed rows say why they're there.
+const viaSport = a => S.follows.has(a.id) ? "" : `<small>ענף במעקב: ${esc(sportName(a.sportId))}</small>`;
+
 const compLinkOr = c => typeof compLink === "function" ? compLink(c, esc(c.name)) : esc(c.name);
 
 function followUpcoming(){
   const t = today();
   const athletes = followedAthletes().filter(a => isDate(a.nextDate) && a.nextDate >= t)
     .map(a => ({k: `up|a|${a.id}`, d: a.nextDate, chip: a.nextDate === t ? statusChip("competing") : "",
-      html: `<a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))}${a.next ? ` · ${esc(a.next)}` : ""}</small>`}));
+      html: `<a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))}${a.next ? ` · ${nextCompFact(a)}` : ""}</small>`}));
   const comps = upcoming().filter(c => S.followSports.has(c.sportId))
     .map(c => ({k: `up|c|${c.id}`, d: c.start, chip: c.start <= t ? `<span class="pill s-live">מתקיימת עכשיו</span>` : "",
       html: `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLinkOr(c)}<small>${esc(c.location)}</small>`}));
@@ -63,21 +66,26 @@ function viewFollowing(tab = ""){
     <a href="#following" ${tab ? "" : `aria-current="page"`}>ספורטאים ונבחרות (${athletes.length})</a>
     <a href="#following-sports" ${tab ? `aria-current="page"` : ""}>ענפים (${sports.length})</a></nav>`;
   const foot = `<p class="foot">המעקב נשמר רק בדפדפן הזה, בלי חשבון.</p>`;
-  const empty = `<div class="empty"><p>עוד אין כאן אף אחד. לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב.</p></div>`;
+  const todayLink = typeof viewDay === "function" ? `<a href="#today">היום</a>` : "היום";
+  // Replaces `foot`, whose limit line it already says.
+  const empty = `<div class="empty">
+    <p><b>מה מקבלים:</b> תג עם מספר השינויים מאז הביקור הקודם, רשימת עדכונים, ומי שבמעקב שלך מופיעים ראשונים בדף ${todayLink}.</p>
+    <p><b>איך:</b> לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף.</p>
+    <p><b>שימו לב:</b> המעקב נשמר רק בדפדפן הזה, בלי חשבון.</p></div>`;
   const emptyTab = tab ? `<div class="empty"><p>עוד אין ענפים במעקב. לחצו על ☆ בדף של ענף כדי לעקוב.</p></div>`
     : `<div class="empty"><p>עוד אין ספורטאים או נבחרות במעקב. לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב.</p></div>`;
   if (!athletes.length && !sports.length) {
     const t = today(), seen = new Set(), picks = [];
     for (const g of closestGroups(todayRows(), t)) for (const {as} of g.items) for (const a of as) if (!seen.has(a.id) && picks.length < 3) { seen.add(a.id); picks.push(a); }
     return `${head}${empty}
-    ${picks.length ? `<section class="panel"><h2>הצעות למעקב</h2><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}${foot}`;
+    ${picks.length ? `<section class="panel"><h2>הצעות למעקב</h2><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}`;
   }
   const feed = followFeed(followSeenAtLoad), next = followUpcoming();
   return `${head}
   <section class="panel" aria-labelledby="feedH">
     <h2 id="feedH">מאז הביקור הקודם (${feed.length})</h2>
     ${feed.length ? `<ul class="rows">${feed.map(({a, h}) => `<li><span class="d">${fmt(h.at)}</span>
-      <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small>${(k => rowMark(k, k))(`feed|${a.id}|${h.at}|${h.text}`)}</span><span></span></li>`).join("")}</ul>`
+      <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small>${viaSport(a)}${(k => rowMark(k, k))(`feed|${a.id}|${h.at}|${h.text}`)}</span><span></span></li>`).join("")}</ul>`
       : `<p class="muted">${followSeenAtLoad ? "אין עדכונים חדשים מאז הביקור הקודם." : "עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."}</p>`}
   </section>
   ${next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>

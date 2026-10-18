@@ -15,23 +15,30 @@ const SESSION_WINDOW_H = 3;          // a timed session counts as "now" from its
 const asDate = d => new Date(d + "T12:00:00");
 const isUtc = v => typeof v === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d+)?)?Z$/.test(v) && !isNaN(Date.parse(v));
 const dayTitle = d => asDate(d).toLocaleDateString("he-IL", {weekday: "short", day: "numeric", month: "short", year: "numeric"});
-const hhmm = iso => new Date(iso).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
-const ilDate = iso => new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Jerusalem"}).format(new Date(iso));
+// Built once; a new Intl.DateTimeFormat per call dominated #day (docs/perf/2026-10.md). IL_DAY comes from app.js.
+const HHMM = new Intl.DateTimeFormat("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
+const IL_HOUR = new Intl.DateTimeFormat("en-GB", {timeZone: "Asia/Jerusalem", hour: "numeric", hourCycle: "h23"});
+const hhmm = iso => HHMM.format(new Date(iso));
+const ilDate = iso => IL_DAY.format(new Date(iso));
 
 // The ≤ 31-day competition of a sport that contains day d (season-long series don't count).
-const compOn = (sid, d) => S.comps.find(c => c.sportId === sid && c.start <= d && d <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS) || null;
+const compOn = (sid, d) => (IDX.compsBySport().get(sid) || []).find(c => c.start <= d && d <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS) || null;
 
 // data.json.sessions, re-checked as defense in depth: unknown competition or no known athlete → dropped; a result
 // without its proof (https source + resultAt) is not shown. Read from the public snapshot, which editors load too.
-function exportedSessions(){
+// Validated once per data load and indexed by Israel day (docs/perf/2026-10.md); callers don't mutate the result.
+const sessionsIdx = memoOn(() => [typeof publicSnapshot !== "undefined" ? publicSnapshot?.sessions : undefined, S.comps, S.athletes],
+  () => { const all = buildExportedSessions(); return {all, byDay: groupOn(all, s => s.day)}; });
+const exportedSessions = () => sessionsIdx().all;
+function buildExportedSessions(){
   const list = typeof publicSnapshot !== "undefined" && Array.isArray(publicSnapshot?.sessions) ? publicSnapshot.sessions : [];
   return list.filter(s => s && typeof s === "object" && isDate(s.date)).map(s => {
     const comp = S.comps.find(c => c.id === s.competitionId);
-    const athletes = (Array.isArray(s.athleteIds) ? s.athleteIds : []).map(id => S.athletes.find(a => a.id === id)).filter(Boolean);
+    const athletes = (Array.isArray(s.athleteIds) ? s.athleteIds : []).map(athleteById).filter(Boolean);
     const proven = str(s.result).trim() && safeUrl(s.resultSource) && isUtc(s.resultAt);
     return comp && athletes.length ? {comp, athletes, sportId: comp.sportId, phase: str(s.phase).slice(0, 120),
       source: safeUrl(s.source), checkedAt: isUtc(s.checkedAt) ? s.checkedAt : "",
-      startUtc: isUtc(s.startUtc) ? s.startUtc : null, day: isUtc(s.startUtc) ? ilDate(s.startUtc) : s.date, timed: true,
+      startUtc: isUtc(s.startUtc) ? s.startUtc : null, day: isUtc(s.startUtc) ? ilDate(s.startUtc) : s.date,
       result: proven ? str(s.result).slice(0, 120) : "", resultSource: proven ? s.resultSource : "", resultAt: proven ? s.resultAt : ""} : null;
   }).filter(Boolean);
 }
@@ -41,11 +48,19 @@ const historyResult = (a, d) => (Array.isArray(a.history) ? a.history : [])
   .find(h => h.kind === "result" && h.at === d && str(h.text).trim() && safeUrl(h.source));
 
 // Fallback pseudo-sessions for day d, one per athlete (deduped by athlete + day; a recorded result wins).
+// Athletes with a nextDate or a result on a day, in S.athletes order: the empty-day look-ahead asks for 120 days.
+const athletesByDay = memoOn(() => [S.athletes], as => {
+  const m = new Map(), add = (d, a) => { if (!isDate(d)) return; const l = m.get(d); l ? l[l.length - 1] !== a && l.push(a) : m.set(d, [a]); };
+  for (const a of as) { add(a.nextDate, a); for (const h of Array.isArray(a.history) ? a.history : []) if (h?.kind === "result") add(h.at, a); }
+  return m;
+});
+
 function fallbackSessions(d){
   const out = new Map();
-  for (const a of S.athletes) {
+  for (const a of athletesByDay().get(d) || []) {
     const res = historyResult(a, d);
-    const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null, timed: false};
+    if (!res && a.nextDate !== d) continue;   // most athletes have nothing that day: skip compOn() (docs/perf/2026-10.md)
+    const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null};
     if (res) out.set(a.id, {...base, result: str(res.text).slice(0, 120), resultSource: res.source, resultAt: ""});
     else if (a.nextDate === d) out.set(a.id, {...base, result: ""});
   }
@@ -58,7 +73,7 @@ function fallbackSessions(d){
 function daySessions(d){
   const all = exportedSessions();
   const inComp = new Set(all.flatMap(s => s.athletes.map(a => `${s.comp.id}|${a.id}`)));
-  const real = all.filter(s => s.day === d).map(s => {
+  const real = (sessionsIdx().byDay.get(d) || []).map(s => {
     if (s.result) return s;
     const found = s.athletes.map(a => [a, historyResult(a, d)]).filter(([, h]) => h);
     if (!found.length) return s;
@@ -86,7 +101,7 @@ const hostLink = (u, label) => safeUrl(u)
 function windowEnd(s, d){
   if (s.startUtc) return Date.parse(s.startUtc) + SESSION_WINDOW_H * 36e5;
   const next = Date.parse(addDays(d, 1) + "T00:00:00Z");
-  const ilHour = Number(new Intl.DateTimeFormat("en-GB", {timeZone: "Asia/Jerusalem", hour: "numeric", hourCycle: "h23"}).format(next));
+  const ilHour = Number(IL_HOUR.format(next));
   return next - ilHour * 36e5;
 }
 
@@ -134,19 +149,21 @@ function freshLine(hasToday){
 
 // A group in which no session has a time says "תאריך בלבד" once, in its heading, instead of on every row
 // (components.md §1). In a mixed group an untimed row keeps its own label (coordinator, #208).
-const dateOnly = list => list.length > 0 && list.every(s => !s.startUtc && !s.timed);
+const dateOnly = list => list.length > 0 && list.every(s => !s.startUtc);
 const DATE_ONLY = `<span class="muted"> · תאריך בלבד</span>`;
 
-function sessionRow(s, d, groupDateOnly = false){
+// `extra`: markup after the names (the home adds the competition link).
+function sessionRow(s, d, groupDateOnly = false, extra = ""){
   const names = s.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   const state = sessionState(s, d);
-  const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : s.timed ? "השעה תפורסם" : groupDateOnly ? "" : "תאריך בלבד";
+  // Untimed is always "תאריך בלבד", never a promised time (components.md §1); an all-untimed group says it in its heading.
+  const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : groupDateOnly ? "" : "תאריך בלבד";
   // Keyed by day, competition and athletes, so the same session on #day and #c- is one row. The signature leaves out
   // what changes with the clock or a run without news (the status chip, checkedAt).
   const mark = rowMark(`sess|${d}|${s.comp?.id || ""}|${s.athletes.map(a => a.id).join(",")}|${s.phase}`,
     [s.result, s.resultSource, s.resultAt, s.startUtc, s.athletes.map(a => a.name).join(",")].join("\u241f"));
   return `<li><span class="d">${when}</span>
-    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${sessionDetail(s, state)}${mark}</span>
+    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${extra}${sessionDetail(s, state)}${mark}</span>
     <span>${statusChip(state)}</span></li>`;
 }
 
