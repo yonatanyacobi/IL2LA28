@@ -43,9 +43,13 @@ Hudayriyat Island, elite women 14:00, elite men 16:00, mixed relay 2026-11-14 16
  "end": "2026-11-14",
  "notes": "ספרינט; נשים ב־14:00 וגברים ב־16:00 ב־13.11, שליחים מעורבים ב־14.11 ב־16:15 (שעון אבו דאבי)",
  "source": "https://triathlon.org/events/2026-wtcs-abu-dhabi/race-info",
- "qualifying": true
+ "qualifying": true,
+ "review": {"status": "ok", "by": "tamar", "at": "2026-10-18"}
 }
 ```
+Signed off by Tamar (also checked against World Triathlon API event 195143). `review` is the fact-check marker, the
+same as on quota items and sessions. `export_data.py` exports only `COMP_FIELDS` + `qualifying`, so it never reaches
+data.json.
 `qualifying: true`: it awards up to 1000 points on the individual Olympic qualification ranking (21 places on
 2028-05-18). Source: https://triathlon.org/news/the-olympic-qualification-pathways-to-the-la28-start-line
 

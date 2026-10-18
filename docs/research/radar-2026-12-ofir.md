@@ -13,6 +13,29 @@ Window: 2026-12-01 to 2026-12-31. Sports: athletics, sailing, rowing, canoe, sur
 | Dubai Women's Cup (World Triathlon Cup) | 2026-12-05 to 2026-12-06 | No Israeli woman tracked | https://triathlon.org/news/world-triathlon-expands-the-2026-world-cup-calendar-and-confirms-winter-championships-in-padola | **none** | Women's OQR points; no tracked athlete |
 | World Rowing: continental qualification regatta venues announced | by 2026-12-31 | None tracked | https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf §H | n/a | Milestone. When announced, add the European regatta (3 places per gender in the single scull) to the radar |
 
+## Proposed competition record: `wsl-pipe-masters-2026` (for Tamar's sign-off)
+For Lelior on `#day`. The fields match the existing records. Dates and venue come from the official WSL event
+page: "Upcoming Dec 8 - Dec 20", CT Stop 12, Banzai Pipeline, Oahu. The full 24-woman field returns, per WSL's
+schedule post. `qualifying: false`: only the 2028 CT counts for LA28 (item 42).
+
+```json
+{
+ "id": "wsl-pipe-masters-2026",
+ "sportId": "surfing",
+ "name": "Lexus Pipe Masters – סיום סבב ה-CT של ה-WSL",
+ "location": "באנזאי פייפליין, אואהו, הוואי, ארה״ב",
+ "start": "2026-12-08",
+ "end": "2026-12-20",
+ "notes": "תקופת המתנה: מקצים נקבעים מדי יום לפי הגלים",
+ "source": "https://www.worldsurfleague.com/events/2026/ct/446/lexus-pipe-masters/main",
+ "qualifying": false,
+ "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"}
+}
+```
+Sessions: none until WSL publishes a day's call with Lelior's heat (tz `Pacific/Honolulu`). After the record exists,
+`anat-lelior.next`/`nextDate` (Pipe Masters, 2026-12-08) points to a known competition.
+Schedule source: https://www.worldsurfleague.com/posts/546310/world-surf-league-releases-2026-championship-tour-schedule-and-formats
+
 ## Checked, nothing for Israelis in December
 - **Triathlon (men):** no Olympic-route event. The only men's elite event in December is the T100 Qatar Finals
   (2026-12-11 to 2026-12-12), long distance and outside the LA28 ranking. Sagiv's next is decided after Abu Dhabi.
