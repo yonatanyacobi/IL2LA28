@@ -1,0 +1,45 @@
+# Visitor guide: "איך לקרוא את האתר" (draft for #about)
+
+Draft for Shira's review, then the owner (launch). A new `#about` section between "ארבעת השלבים" and the trust
+block. Every label below is the one the site shows today (`STAGES`, `Q_LABEL`, `trustChip`, the nav); if a label
+changes in code, change it here too. Not covered yet: "השתנה ב־" (#193) until it merges.
+
+Rules followed: gender-neutral forms, geresh ׳, „” quotes, no "live" wording, no promises about times.
+
+## Copy
+
+```
+איך לקרוא את האתר
+
+כל ספורטאי/ת ונבחרת במעקב מקבלים כרטיס. בכרטיס:
+• השלב: במעקב, בחלון ההעפלה, מכסה הושגה או נבחר/ה לנבחרת (הסבר למעלה).
+• דירוג או הישג: דירוג עולמי רשמי כשיש כזה. אחרת, התוצאה הבולטת האחרונה, מסומנת „מיקום, לא דירוג”.
+• התחרות הבאה, כשהיא ידועה.
+בדף הספורטאי/ת מופיע אם הרשומה ✓ נבדקה ידנית מול המקור, או ◌ טרם נבדקה ידנית: נאספה אוטומטית, וכדאי לבדוק מול המקור.
+
+מכסות. בכל ענף יש „תמונת מכסות”, מקצה אחרי מקצה:
+✓ מכסה הושגה · ◐ במרוץ למכסה · ○ מחוץ למכסות כרגע · ? אין מידע עדיין.
+ברוב הענפים המכסה שייכת למדינה, לא לספורטאי/ת. „מה זה אומר” מסביר מה מוכרע בתחרות הקרובה.
+◷ בהמתנה לתוצאות: התחרות הסתיימה, והמכסות יתעדכנו רק אחרי הודעה רשמית.
+
+היום ולוח התחרויות. „היום” מראה מי מישראל מתחרה היום, ואת השעה כשהיא ידועה, לפי שעון ישראל. לכל תחרות יש דף משלה, עם הספורטאים והנבחרות מישראל שידוע עליהם, לוח הזמנים והתוצאות כשהן מתפרסמות.
+
+תוצאות. האתר מתעדכן פעם ביום, ולפעמים גם בערב תחרות. אין כאן תוצאות תוך כדי התחרות. התוצאה מופיעה אחרי שפורסמה רשמית, עם קישור למקור ועם מועד העדכון.
+
+מעקב. לחיצה על ☆ בדף של ספורטאי/ת, נבחרת או ענף מוסיפה אותם ל„מעקב”. שם מופיע מה השתנה מאז הביקור הקודם. המעקב נשמר רק בדפדפן הזה, בלי חשבון.
+
+שיתוף. בדפי הספורטאים והתחרויות יש קישור להעתקה. מדף „עדכונים” אפשר להגיע לתקציר שבועי מוכן להדבקה בוואטסאפ.
+
+טעות? כל נתון מגיע עם קישור למקור. אם משהו לא תואם, אפשר לדווח במייל, בכתובת שמופיעה למטה.
+```
+
+## Decided (coordinator)
+
+- "ולפעמים גם בערב תחרות" stays.
+- "ועם מועד העדכון" (history entries have a date only).
+- "וכל תיקון נרשם" is out until launch, when the corrections log is linked; add it back then.
+
+## Notes
+
+- In code, every glyph (✓ ◐ ○ ? ◷ ◌ ☆) goes in `<span aria-hidden="true">`, as the pills and chips already do; the words carry the meaning.
+- About 1,350 characters. If it's too long for `#about`, the first three paragraphs are enough on their own.

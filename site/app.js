@@ -15,7 +15,7 @@ const FIX_FIELDS = ["name", "event", "rank", "next", "nextDate", "notes", "stage
 const FIX_MAX = 300;
 const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "rankNum", "rankList", "rankAsOf", "next", "nextDate", "notes", "source"];
 const RANK_MAX_AGE_D = 60;
-const HISTORY_MAX = 20;
+const HISTORY_MAX = 20, RESULTS_MAX = 60;   // = job/athlete_patch.py HISTORY_MAX, RESULTS_MAX
 const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
 
 const $ = id => document.getElementById(id);
@@ -429,7 +429,7 @@ function nextUpLine(rows){
     || (y.c.qualifying ? 1 : 0) - (x.c.qualifying ? 1 : 0) || heCmp(x.c.name, y.c.name))[0];
   const {c, who} = pick, n = athletesOf(c.sportId).length;
   const names = who.length === 0 ? (n === 1 ? "ספורטאי/ת או נבחרת אחת במעקב בענף" : `${n} ספורטאים ונבחרות במעקב בענף`)
-    : who.length > 3 ? `${who.length} ישראלים`
+    : who.length > 3 ? `${who.length} ספורטאים ונבחרות`
     : who.sort((a, b) => heCmp(a.name, b.name)).map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   return `<p class="next-up"><b>הבא בתור:</b> <a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLink(c, esc(c.name))} · ${fmtRange(c.start, c.end)} · ${names}${c.qualifying ? ` · <span class="pill open">העפלה</span>` : ""}</p>`;
 }
@@ -633,7 +633,7 @@ function calendarResults(){
   return rows.length ? Object.keys(months).sort().map(m => `<section class="month">
       <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}<span class="sr"> ${months[m].length === 1 ? "תחרות" : "תחרויות"}</span></span></h2>
       ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
-    : `<div class="empty">אין תחרויות שמתאימות לסינון.</div>`;
+    : `<div class="empty">אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה.</div>`;
 }
 
 function viewCalendar(sportFilter = ""){
@@ -727,7 +727,7 @@ function trustBlock(){
   </section>`;
 }
 
-const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
+const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p>ייתכן שהקישור ישן או שהרשומה הוסרה.</p><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
 
 function freshness(){
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
@@ -738,6 +738,7 @@ function freshness(){
 }
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
 
+let lastBanner = "";
 function banner(){
   if (S.liveLost) return `<div class="banner">החיבור לנתונים החיים נותק. מוצגת הגרסה הציבורית האחרונה. רעננו את הדף כדי להתחבר מחדש.</div>`;
   const ts = S.generatedAt;
@@ -751,7 +752,7 @@ function reviewPanel(){
   const pend = S.proposals.filter(p => p.status === "pending");
   const note = `<p class="foot">את/ה רואה נתונים חיים. הציבור רואה את הפרסום האחרון, שמתעדכן בכל ריצה של העדכון היומי.</p>`;
   if (!pend.length) return `<section class="panel">${note}</section>`;
-  return `<section class="panel review"><h2>ממתינים לאישורך (${pend.length})</h2>${note}
+  return `<section class="panel review"><h2>הצעות לאישורך (${pend.length})</h2>${note}
     <div class="stack">${pend.map(p => {
       const t = S.athletes.find(a => a.id === p.target);
       const who = p.kind === "create" ? `ספורטאי/ת חדש/ה: ${esc(p.patch?.name)}` : esc(t?.name || p.target);
@@ -775,7 +776,12 @@ function describePatch(p, t){
   }).join("");
 }
 
-const historyWith = (a, entry) => [...(Array.isArray(a?.history) ? a.history : []), entry].slice(-HISTORY_MAX);
+// Results are the game log (#186): kept apart from the cap of 20 with their own cap, as job/athlete_patch.py does.
+function historyWith(a, entry){
+  const all = [...(Array.isArray(a?.history) ? a.history : []), entry], isRes = h => h?.kind === "result";
+  let dropRes = all.filter(isRes).length - RESULTS_MAX, dropOther = all.length - all.filter(isRes).length - HISTORY_MAX;
+  return all.filter(h => isRes(h) ? !(dropRes-- > 0) : !(dropOther-- > 0));
+}
 
 async function decide(id, approve, btn){
   const p = S.proposals.find(x => x.id === id);
@@ -965,7 +971,7 @@ function route(){
   const h = currentRoute();
   renderedDay = today();
   let html, nav;
-  if (S.failed && !S.loaded) html = `<div class="empty">לא הצלחנו לטעון את הנתונים. <button class="btn small" data-retry>נסו שוב</button></div>`, nav = "";
+  if (S.failed && !S.loaded) html = `<div class="empty" role="alert"><h1 tabindex="-1">לא הצלחנו לטעון את הנתונים</h1><p>ייתכן שמדובר בתקלה זמנית. אפשר לנסות שוב בעוד רגע.</p><p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
   else if (!S.loaded) html = `<div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div>`, nav = "home";
   else if (h === "home") html = viewHome(), nav = "home";
   else if (h === "sports") html = viewSports(), nav = "sports";
@@ -989,7 +995,11 @@ function route(){
   else html = notFound();
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
   if (typeof followingDecorate === "function") html = followingDecorate(h, html);
-  $("view").innerHTML = banner() + html;
+  const b = banner();
+  $("view").innerHTML = b + html;
+  // The banner is rebuilt on every render; announce it through one persistent status only when its text changes.
+  const bt = b.replace(/<[^>]*>/g, "");
+  if (bt !== lastBanner) { lastBanner = bt; const st = $("bannerStatus"); if (st) st.textContent = bt; }
   $("fixLink").innerHTML = fixLogLive() ? ` · <a href="#corrections">יומן התיקונים</a>` : "";
   if (focusTrust && S.loaded) {   // once per arrival, so data refreshes don't steal focus
     focusTrust = false;
@@ -1069,7 +1079,7 @@ document.addEventListener("click", e => {
   if (t.dataset.verify) { t.disabled = true; return markVerified(t.dataset.verify, t); }
   if (t.dataset.act) { t.disabled = true; return decide(t.closest(".prop").dataset.id, t.dataset.act === "approve", t); }
   if (t.dataset.follow) { toggleFollow(t.dataset.follow); route(); return $("view").querySelector("[data-follow]")?.focus(); }
-  if ("retry" in t.dataset) { S.failed = false; route(); return loadPublic(); }
+  if ("retry" in t.dataset) { S.failed = false; route(); $("view").focus({preventScroll: true}); return loadPublic(); }
   if (t.dataset.copy) {
     const input = $(t.dataset.copy);
     const msg = $(t.dataset.copyMsg || (t.dataset.copy === "mailAddr" ? "copyMsg2" : "copyMsg"));

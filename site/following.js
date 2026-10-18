@@ -42,7 +42,7 @@ const compLinkOr = c => typeof compLink === "function" ? compLink(c, esc(c.name)
 function followUpcoming(){
   const t = today();
   const athletes = followedAthletes().filter(a => isDate(a.nextDate) && a.nextDate >= t)
-    .map(a => ({d: a.nextDate, chip: a.nextDate === t ? statusChip("live") : "",
+    .map(a => ({d: a.nextDate, chip: a.nextDate === t ? statusChip("competing") : "",
       html: `<a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))}${a.next ? ` · ${esc(a.next)}` : ""}</small>`}));
   const comps = upcoming().filter(c => S.followSports.has(c.sportId))
     .map(c => ({d: c.start, chip: c.start <= t ? `<span class="now">מתקיימת עכשיו</span>` : "",

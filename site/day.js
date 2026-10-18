@@ -1,7 +1,7 @@
 // Daily view: #today, #day and #day-YYYY-MM-DD (docs/design/daily-and-following.md §1; copy: Shira).
-// Loaded after app.js and sessions.js (data, status and rows). Results arrive with the job run, so the page says
-// when, never "live".
+// Loaded after app.js and sessions.js (sessions, near-live labels and rows).
 "use strict";
+
 const DAY_STRIP = 3;                 // chips on each side of the selected date
 const DAY_LOOKAHEAD = 120;           // how far the empty state searches for the next day with Israelis
 
@@ -48,16 +48,15 @@ function viewDay(d){
   let after = "";
   if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && !after; i++) if (hasIsraelis(addDays(d, i))) after = addDays(d, i);
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
-  const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun), tsOk = ts && !isNaN(Date.parse(ts));
   return `<div class="day-nav">
       <h1 tabindex="-1">${isToday ? `היום, ${dayTitle(d)}` : dayTitle(d)}</h1>
       <a class="day-prev" href="#day-${prev}"><span aria-hidden="true">→</span> ${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
       <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"}<span class="sr">, ${chipName(next)}</span> <span aria-hidden="true">←</span></a>
     </div>
+  ${freshLine(isToday && sessions.length > 0)}
   <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = hasIsraelis(x);
     return `<a href="#day-${x}" class="${has ? "has" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}<span class="sr"> · ${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}</span></a>`; }).join("")}
     ${isToday ? "" : `<a href="#today">היום</a>`}</nav>
-  <p class="foot">${tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)} · ` : ""}${CADENCE}</p>
   ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
       <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
