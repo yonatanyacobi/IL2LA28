@@ -25,3 +25,15 @@ Quota-relevant events in the next 30 days for shooting, surfing, triathlon and w
 - Tongyeong: confirm Sagiv on the official start list once it is published, since a "Next events" listing may be a wait-list entry.
 - The Doha entry list is dated 03.10.2026; recheck it for late changes.
 - Ningbo: an editor should open the IWF Start Book (id=3004) in a browser. Note the Israeli names, categories and session dates, then set `celia-gold` next/nextDate (and add any new lifters via `proposals`).
+
+## Olga Tashtchiev (D5): Hebrew name and Doha schedule (2026-10-18)
+- **Hebrew name: no source found.** Searched the Israeli press (Walla, Sport1, Sport5), the Olympic Committee of Israel site and the Israel Shooting Federation, with Hebrew and English queries. None mentions her in Hebrew.
+  The only official sources are ISSF ("TASHTCHIEV Olga", ISR, born 2004). The spelling "אולגה טשצ׳ייב" is a transliteration, not sourced.
+  Next step: ask the Israel Shooting Federation, or hold D5 with `name` pending.
+- **Doha events (ISSF entry list as of 03.10.2026):** 10m Air Rifle Women (ARW) and 10m Air Rifle Mixed Team (ARMT, with Richter). Local times:
+  - ARW qualification on 2026-11-03, relay 1 at 13:00 and relay 2 at 15:00; final at 18:00.
+  - ARMT qualification on 2026-11-04, relay 1 at 09:00 and relay 2 at 10:30; final at 13:00.
+  - Only ARW carries a quota: 3 places, max 1 per NOC. The mixed team has no quota.
+  - Sources: the entry list and final schedule links in the Doha row above.
+- **Ranking:** ISSF World Ranking 22 (ARW, 2026-10-01), https://www.issf-sports.org/competitions/worldranking/ARW
+- **Side note:** Walla spells the weightlifter "סיליה גולד" (https://sports.walla.co.il/item/3572237); the DB has "צליה גולד". Check the spelling.
