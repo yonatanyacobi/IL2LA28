@@ -52,7 +52,7 @@ function digestText(t = today()){
       const resultsOf = a => (Array.isArray(a.history) ? a.history : []).filter(h => h && h.kind === "result" && inComp(h.at));
       const who = S.athletes.filter(a => a.sportId === c.sportId && (inComp(a.nextDate) || resultsOf(a).length));
       const loggedBy = who.filter(a => resultsOf(a).length);
-      const logged = loggedBy.flatMap(a => resultsOf(a).map(h => [h.at, waCut(`  – ${waText(a.name)}: ${waText(h.text)}`)]))
+      const logged = loggedBy.flatMap(a => resultsOf(a).map(h => [h.at, waCut(`  – ${waText(a.name)}: ${waText(inCompText(h.text, c))}`)]))
         .sort((x, y) => x[0].localeCompare(y[0]) || heCmp(x[1], y[1])).map(([, line]) => line);
       const fromJob = resChanges.filter(x => !used.has(x) && changeSport(x) === c.sportId && day(x) >= c.start);
       fromJob.forEach(x => used.add(x));

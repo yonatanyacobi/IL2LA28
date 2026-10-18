@@ -40,6 +40,9 @@ const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } ca
 // Match key for search: keyboards type ' and " where the data has ׳ and ״ (and vice versa).
 const searchKey = s => str(s).normalize("NFD").replace(/[֑-ׇֽֿׁׂׅׄ]/g, "")
   .replace(/[׳'`’‘]/g, "'").replace(/[״"“”]/g, '"').replace(/\s+/g, " ").trim().toLowerCase();
+// Under a competition's own heading, a result written as "{outcome} · {competition}" (tri_results.py, #163) drops
+// the repeated name; older entries and other wordings are left as they are.
+const inCompText = (text, c) => str(text).endsWith(" · " + str(c?.name)) && c.name ? str(text).slice(0, -(c.name.length + 3)) : str(text);
 const linkOut = (u, label = "מקור") => safeUrl(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}<span class="sr"> (נפתח בחלון חדש)</span></a>` : "";
 
 // Per-viewer conveniences only; the page must work when storage is blocked.

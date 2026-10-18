@@ -1233,6 +1233,21 @@ test("#digest: results logged in athlete history count, even after nextDate move
   assert.ok(!tri.includes("במקום 7 בטונגיונג") && !text.includes("במקום 7 בטונגיונג"), "an editor's change about a logged result isn't repeated anywhere");
 });
 
+test("#digest: the new tri_results wording drops the competition its bullet already names (#163)", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.competitions.push({id: "tri-tongyeong-2026", sportId: "triathlon", name: "גביע העולם בטריאתלון טונגיונג",
+    location: "טונגיונג", start: "2026-10-24", end: "2026-10-24", qualifying: true});
+  Object.assign(data.athletes.find(a => a.id === "shachar-sagiv"), {nextDate: "2026-11-13", history: [
+    {at: "2026-10-24", kind: "result", text: "מקום 7 בספרינט · גביע העולם בטריאתלון טונגיונג", source: "https://triathlon.org/x"}]});
+  const b = await boot({data, now: "2026-10-25T09:00:00Z"});
+  const tri = digestSection(b.run("digestText()"), "תוצאות השבוע").split("\n• ").find(x => x.includes("טונגיונג"));
+  assert.ok(/  – שחר שגיב: מקום 7 בספרינט($|\n)/.test(tri), tri);
+  assert.strictEqual(tri.split("גביע העולם בטריאתלון טונגיונג").length - 1, 1, "the name once, in the bullet");
+  assert.ok(b.view("a-shachar-sagiv").includes("מקום 7 בספרינט · גביע העולם בטריאתלון טונגיונג"), "athlete page keeps it");
+  assert.strictEqual(b.run(`inCompText("מקום 7 בגביע העולם בטריאתלון טונגיונג (ספרינט, 24 באוק׳ 2026)", {name: "גביע העולם בטריאתלון טונגיונג"})`),
+    "מקום 7 בגביע העולם בטריאתלון טונגיונג (ספרינט, 24 באוק׳ 2026)", "old wording untouched");
+});
+
 test("#digest: this week's results group ended competitions with their changes", async () => {
   const empty = digestSection((await digestOf()).text, "תוצאות השבוע");
   assert.strictEqual(empty, "לא הסתיימו השבוע תחרויות בענפים שבמעקב.");
