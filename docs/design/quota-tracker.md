@@ -1,38 +1,41 @@
 # Quota tracker + event-day strip — design spec
 
-Status: ready for implementation · Owner: UX · Base: `main` @ 65d362d
-Scope: (1) quota tracker on `#sport-<id>`, compact summary on `#sports` cards and on home;
-(2) "ישראלים מתחרים היום" strip on home. Read-only for visitors; no new routes.
+Status: **as built** on `main` @ a74b99b (sections 0–2 describe shipped code; deviations from the
+original proposal are noted) · Owner: UX
+Scope: (1) quota tracker on `#sport-<id>`, compact summary on `#sports` cards and home, and the
+`#quotas` overview route; (2) "ישראלים מתחרים היום" strip on home. Read-only for visitors.
 
-## 0. Data
+## 0. Data (as built)
 
-`site/quotas.json`, published next to `data.json` (not tracked, like `data.json`):
+`site/quotas.json` is hand-curated and tracked in the repo (unlike `data.json`):
 
 ```json
-{"generatedAt": "2026-10-18T14:00:00Z",
- "items": [{"sportId": "judo", "event": "עד 57 ק״ג (נשים)", "totalQuotas": 18, "maxPerNOC": 1,
+{"updatedAt": "2026-10-18T10:33:44Z",
+ "items": [{"sportId": "judo", "event": "60- ק״ג גברים", "totalQuotas": null, "maxPerNOC": 1,
             "allocation": "…", "israelStatus": "in-contention", "israelNote": "…",
-            "nextQuotaEvent": {"name": "גרנד סלאם אבו דאבי", "start": "2026-10-29"}, "source": "https://…"}]}
+            "nextQuotaEvent": {"name": "…", "start": "2026-10-29"}, "source": "https://…"}]}
 ```
 
-Load in parallel with `data.json` (`loadQuotas()`); failure is **non-fatal**: set `S.quotasFailed = true`,
-never touch `S.failed`. Accept a bare array too (`Array.isArray(d) ? d : d?.items`). Normalise each item:
+`loadQuotas()` runs in parallel with `data.json` and never delays or fails the main render.
+A 404 counts as an empty file; any other failure, or a body without an `items` array, sets
+`S.quotasError = true`. `applyQuotas()` **drops** an invalid item (nothing is mapped to `unknown`).
+An item is kept only if all of these hold:
 
 | Field | Rule |
 |---|---|
-| `sportId` | drop the item if `!sportById(sportId)` |
-| `israelStatus` | one of `earned`, `in-contention`, `outside`, `unknown`; anything else → `unknown` |
-| `totalQuotas`, `maxPerNOC` | `Number.isInteger(n) && n > 0` else `null` (text part is omitted) |
-| `nextQuotaEvent` | kept only if `name` and `isDate(start)` and `start >= today()`; else `null` |
-| `source` | rendered only through `linkOut()` |
+| `sportId` | `sportById(sportId)` exists |
+| `israelStatus` | one of `QUOTA_STATUSES` |
+| `source` | passes `safeUrl()` (https) |
+| `totalQuotas`, `maxPerNOC` | `null` or an integer `>= 0`; a real `0` is shown ("0 מכסות בעולם") |
+| `nextQuotaEvent` | `null` or an object with `isDate(start)`; past events are kept for `#admin` and hidden in the UI |
 
-State: `S.quotas = []`, `S.quotasAt = ""`, `S.quotasLoaded = false`. Re-render via `refresh()` when loaded.
-Smoke-test shim returns the same payload for every fetch, so a `data.json` body must normalise to `[]`.
+State: `S.quotas` (validated items only), `S.quotasUpdatedAt` (the file's `updatedAt`, empty when no
+items), `S.quotasLoaded`, `S.quotasError`. Re-render via `refresh()` when loaded.
 
 Status vocabulary (one constant, used everywhere; symbol + text, never colour alone):
 
 ```js
-const Q_ORDER = ["earned", "in-contention", "outside", "unknown"];
+const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
 const Q_LABEL = {earned: ["✓", "מכסה הושגה"], "in-contention": ["◐", "במרוץ למכסה"],
                  outside: ["○", "מחוץ למכסות כרגע"], unknown: ["?", "אין מידע עדיין"]};
 ```
@@ -41,10 +44,10 @@ const Q_LABEL = {earned: ["✓", "מכסה הושגה"], "in-contention": ["◐"
 
 Hebrew plurals: `plural(n, "מקצה אחד", "מקצים")` → "מקצה אחד" / "3 מקצים"; same for "מכסה אחת"/"מכסות".
 
-## 1a. Sport page — section "מכסות לישראל"
+## 1a. Sport page — section "מכסות לישראל" (as built: `quotaSection()`)
 
 Position: new `<section class="panel">` right **after** "שיטת ההעפלה", before "ספורטאים ונבחרות".
-Sort items by `Q_ORDER`, then `nextQuotaEvent.start` (null last), then `heCmp(event)`.
+Sort items by `QUOTA_STATUSES`, then `nextQuotaEvent.start` (null last), then `heCmp(event)`.
 
 ```html
 <section class="panel" aria-labelledby="qH">
@@ -63,26 +66,24 @@ Sort items by `Q_ORDER`, then `nextQuotaEvent.start` (null last), then `heCmp(ev
         <p>{allocation}</p><p class="foot">{linkOut(source, host(source))}</p></details>  <!-- omit details if both empty -->
     </li>
   </ul>
-  <p class="foot">ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת; הוועד האולימפי בישראל בוחר בהמשך מי ישתמש בה. נתוני מכסות עודכנו: {fmt(quotasAt)}.</p>
+  <p class="foot">ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת; הוועד האולימפי בישראל בוחר בהמשך מי ישתמש בה. נתוני מכסות עודכנו: {fmt(S.quotasUpdatedAt)}.</p>  <!-- sentence omitted if no valid date -->
 </section>
 ```
 
 `maxPerNOC` copy: 1 → "עד מכסה אחת למדינה"; n → "עד n מכסות למדינה". `totalQuotas` → "n מכסות בעולם".
 
-States:
+States (as built — the sport page never shows an error or empty panel; that lives on `#quotas`):
 
 | State | Render |
 |---|---|
-| quotas not loaded yet | nothing (no skeleton; the section appears on `refresh()`) |
-| load failed | panel with h2 + `<p class="muted">נתוני המכסות לא נטענו כרגע. שאר הדף מעודכן.</p>` |
-| loaded, no items for sport | panel with h2 + `<p class="muted">עוד לא נאספו נתוני מכסות לענף הזה.</p>` |
-| all items `unknown` | bar is all hatched; line above list: `<p class="muted">עוד אין מידע על מצב ישראל במקצים האלה.</p>` |
+| not loaded, load failed, or no items for this sport | section omitted |
+| all items `unknown` | bar is all hatched; `<p class="muted">עוד אין מידע על מצב ישראל במקצים האלה.</p>` above the list |
 | ≥1 `earned` | normal; the `q-earned` chip carries the message — no confetti, no extra banner |
 
-## 1b. `#sports` card — compact summary
+## 1b. `#sports` card — compact summary (as built: `quotaCardSummary()`)
 
 Inside `a.sport`, after the stage bar, before `.meta`. Text only (card is one link: no nested
-interactive elements, no extra `role=img`). Show non-zero counts in `Q_ORDER`, skip `unknown` unless it is the only one:
+interactive elements, no extra `role=img`). Show non-zero counts in `QUOTA_STATUSES`, skip `unknown` unless it is the only one:
 
 ```html
 <span class="qsum"><span class="sr">מכסות: </span>
@@ -90,32 +91,48 @@ interactive elements, no extra `role=img`). Show non-zero counts in `Q_ORDER`, s
 ```
 
 All unknown → `<span class="qsum">מכסות: אין מידע עדיין</span>`. No items / not loaded → omit the line.
+The `#sports` intro line gains `<a href="#quotas">תמונת המכסות</a>` when any items exist.
 
-## 1c. Home — one KPI line
+## 1c. Home — one KPI line (as built: `quotaKpi()`)
 
-In the existing "התקדמות" panel, new `<p class="kpi">` directly after the current KPI line. Counts are
-**events across sports** (not athletes), so the copy says "מקצים":
+In the "התקדמות" panel, directly after the existing KPI line. Counts are **events across sports**
+(not athletes), so the copy says "מקצים"; `k` = sports with an earned or in-contention item:
 
-- earned ≥ 1: `<b>{e}</b> מקצים עם מכסה לישראל · <b>{c}</b> במרוץ למכסה · ב־{k} ענפים · <a href="#sports">לפי ענף</a>`
-- earned = 0: `טרם הושגו מכסות לישראל · <b>{c}</b> מקצים במרוץ למכסה ב־{k} ענפים · <a href="#sports">לפי ענף</a>`
-- no items / not loaded / failed: omit.
+- earned ≥ 1: `<b>{e}</b> מקצים עם מכסה לישראל · <b>{c}</b> במרוץ למכסה · ב־{k} ענפים · <a href="#quotas">תמונת המכסות</a>`
+- earned = 0: `טרם הושגו מכסות לישראל · <b>{c}</b> מקצים במרוץ למכסה ב־{k} ענפים · <a href="#quotas">תמונת המכסות</a>`
+- no items / not loaded / failed: omitted.
 
-Add to `#about` under "ארבעת השלבים": `<p><b>מכסה לפי מקצה</b>: מקום אולימפי שישראל השיגה במקצה מסוים. השלב של ספורטאי/ת והמכסה של המקצה מתעדכנים בנפרד, ולכן המספרים יכולים להיות שונים.</p>`
-(Mismatches, e.g. an `earned` quota with no stage-2 athlete in that sport, belong on `#admin`; out of scope here.)
+Not yet built (proposal): add to `#about` under "ארבעת השלבים": `<p><b>מכסה לפי מקצה</b>: מקום אולימפי שישראל השיגה במקצה מסוים. השלב של ספורטאי/ת והמכסה של המקצה מתעדכנים בנפרד, ולכן המספרים יכולים להיות שונים.</p>`
+(Mismatches, e.g. an `earned` quota with no stage-2 athlete in that sport, belong on `#admin`.)
 
-## 2. Home — event-day strip "ישראלים מתחרים היום"
+## 1d. `#quotas` overview (as built: `viewQuotas()` in `site/quotas.js`)
 
-Inputs (`t = today()`): `athToday = athletes with nextDate === t`; `compsToday = comps with start <= t <= (end||start)`
-**and** `athletesOf(c.sportId).length > 0`. Grouping, so nothing appears twice:
+Nav highlights "ענפים"; crumb `← כל הענפים`; h1 `תמונת המכסות`. Then:
 
-1. One row per `compsToday` item; the athletes of `athToday` with the same `sportId` are listed inside it.
-2. Remaining `athToday` (no running comp in their sport) → one row each.
-3. Order: rows containing a followed athlete first, then by sport name. Followed names get `★`.
-4. Cap at 6 rows; then `<a href="#calendar">ועוד {n} בלוח התחרויות</a>`.
+1. Summary panel: all four counts, zeros included (`<b>0</b> מכסה הושגה · …`), and
+   `הספירה היא לפי מקצים, לא לפי ספורטאים. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת. נכון ל־{date}.`
+2. `אירועי המכסה הקרובים`: the next 5 future `nextQuotaEvent`s (date · name · sport link · event · status pill).
+3. One panel per non-empty status, h2 = status pill + count; rows = sport link · event · `israelNote` · next date.
 
-Render **nothing** when both lists are empty (no empty state on home). Position: directly after `.hero`,
-before `reviewPanel()`. Heading: `ישראלים מתחרים היום` if `athToday.length`, otherwise `היום בענפים שבמעקב`.
-When the strip shows athletes, start the "14 הימים הקרובים" list from tomorrow (`a.nextDate > t`).
+States: error → `נתוני המכסות לא נטענו כרגע. שאר האתר מעודכן.`; loading → `טוען נתוני מכסות…`;
+no items → `עוד לא נאספו נתוני מכסות.`
+
+## 2. Home — event-day strip "ישראלים מתחרים היום" (as built: `todayRows()` / `todayStrip()`)
+
+Built from the schedule, not live results. `t = today()` (Israel date).
+
+- `running` = competitions with `start <= t <= end`, **duration ≤ 31 days** (`SERIES_DAYS`), and at least
+  one tracked athlete in the sport. The 31-day cap keeps season-long series (e.g. a 16-month World Cup)
+  from filling the strip every day.
+- Each athlete with a `nextDate` joins the running competition in their sport whose date range contains
+  `nextDate` (so day 2 of a Grand Slam still lists athletes who start on day 3); if none contains it but
+  `nextDate === t`, they join the sport's first running competition; otherwise, if `nextDate === t`,
+  they get their own row. Each athlete appears at most once.
+- Order: rows with a followed athlete first, then sport name, then competition/athlete name. Followed names get `★`.
+- Cap `TODAY_MAX = 6` rows, then `<p><a href="#calendar">ועוד {n} בלוח התחרויות</a></p>`.
+- Render **nothing** when there are no rows. Position: directly after `.hero`.
+- Heading: `ישראלים מתחרים היום` if any row has athletes, otherwise `היום בענפים שבמעקב`.
+- Athletes shown in the strip are excluded from "ישראלים בפעולה ב־14 הימים הקרובים".
 
 ```html
 <section class="panel today" aria-labelledby="todayH">
@@ -128,18 +145,23 @@ When the strip shows athletes, start the "14 הימים הקרובים" list fro
     <li><span class="d">היום</span>
       <span class="t"><a href="#a-…">{name}</a><small>{sportName} · {next}</small></span><span></span></li>
   </ul>
-  <p class="foot">לפי התאריך בישראל. שעות מדויקות ותוצאות: באתר התחרות.</p>
+  <p class="foot">לפי הנתונים מ־{when}, תוצאות יתעדכנו בעדכון היומי</p>
 </section>
 ```
 
-Comp row without any `athToday` in that sport: `<small>` reads `{location} · {n} ישראלים במעקב בענף` —
-never "מתחרים", because we don't know they are entered. Day index: `Math.round((Date(t) - Date(start)) / 864e5) + 1`, total likewise to `end`.
+Not-live label: the foot line says the strip is a snapshot, never "live". `{when}` is `lastRun` for
+editors in live mode, otherwise `generatedAt || lastRun`, formatted `he-IL` day, month, hour:minute.
+With no timestamp it reads `לפי לוח התחרויות, תוצאות יתעדכנו בעדכון היומי`.
 
-Midnight: in the existing 60 s interval, if `today()` changed since last render, call `refresh()`.
+Comp row with no listed athletes: `<small>` reads `{location} · {n} ישראלים במעקב בענף`
+(`ישראלי/ת אחד/ת במעקב בענף` for 1), never "מתחרים", because we don't know they are entered.
+Day index: `dayNo(start, t)`; total `dayNo(start, end)`.
+
+Midnight: the 60 s interval calls `refresh()` when `today() !== renderedDay`.
 
 ## 3. CSS (append to `site/styles.css`; tokens only)
 
-One new token, because `--ok` on `--ok-soft` is 4.29:1 in light (fails AA for 12px text):
+As built. One new token, because `--ok` on `--ok-soft` is 4.29:1 in light (fails AA for 12px text):
 add `--ok-ink:#11693c` to `:root` (5.83:1) and `--ok-ink:#5fd18f` to **both** dark blocks.
 Borders use `var(--line-ui, var(--stage0))` so this works before and after `dev/shira/copy-a11y` merges.
 
@@ -221,7 +243,7 @@ Home, event day:
 │ ┃ ─────────────────────────────────  │
 │ ┃ היום                                │
 │ ┃ {שם} — שייט · {next}                │
-│ ┃ לפי התאריך בישראל. שעות ותוצאות…   │
+│ ┃ לפי הנתונים מ־18 באוק׳, 14:00, תוצ…│
 │ [ חיפוש ספורטאי/ת, נבחרת או ענף    ] │
 └──────────────────────────────────────┘
 ```
@@ -229,5 +251,5 @@ Home, event day:
 ## 6. Done when
 
 - `node --check site/app.js` and `node tests/smoke.test.js` pass; new smoke cases: quotas fetch fails
-  (page still renders, sport page shows "לא נטענו"), all-unknown sport, fixture with today's `nextDate`.
+  (page still renders, `#quotas` shows "לא נטענו"), all-unknown sport, fixture with today's `nextDate`.
 - Checked at 400px in light and dark: no horizontal scroll, chips wrap, hatch visible in both themes.
