@@ -1,4 +1,4 @@
-# Backlog 18.10–1.11.2026 (rolling 2-week event calendar)
+# Backlog 18.10–5.11.2026 (rolling 2-week event calendar)
 
 Owner: PM. It's re-planned after each event below and rolled forward 2 weeks every Sunday.
 Sprint 18.10 (quota story MVP, today strip, digest, quota health, QA P2s) is done: see main @ 2701d63, the QA rounds in
@@ -56,8 +56,43 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 ### L3. Weekly digest ritual (owner + PM, S, every Sunday from 25.10)
 - Copy `#digest`, check it against the calendar above, then share it. Log the shares and error reports for the metrics.
 
+## Post-launch 22.10–5.11
+
+### Calendar additions
+| Dates | Event | At stake | Israelis | Prep owner, due |
+|---|---|---|---|---|
+| 2–9.11 | Lacrosse sixes Europeans, women (Salou) | Continental route | Women's team | Roni, 30.10 |
+| 3.11 / 4.11 | Doha: 10 m air rifle M and W / mixed team | **3 quotas each in ARM and ARW, max 1 per NOC** | Richter; Tashtchiev (D5) | Yael + Tamar, 31.10 |
+| 3–7.11 | BMX freestyle Worlds | Quota event | Entrants unknown | Yael, 1.11 |
+| 6–15.11 | ISA World Surfing Games (Peru) | 1 place per gender, by team ranking | Not confirmed (Lelior?) | Yael, 4.11 |
+
+### First: clear the review queue (lead + PM, daily from 22.10)
+There are about 30 open PRs. New work waits until they're merged or closed in this order:
+1. Launch: #88 (runbook), #89 (corrections log spec), #43, #57.
+2. Event-critical before 29.10: #67 (quota-event coverage test), #82 + #84 (rank fields and backfill),
+   #78 (verification batch 1), #63 (weightlifting), #65/#86/#68 (round-3 states, needed for Doha).
+3. Everything else, oldest first. The PM closes PRs that don't fit the strategy: #60 (English scope) gets
+   closed as "no English until mid-2027" (D9).
+
+### Stories
+| # | Story | Who | Size | Due | Done when |
+|---|---|---|---|---|---|
+| PL1 | **Corrections log** (#89): `corrections` collection, editor form, export with `LAUNCH_AT`, `#corrections` page | Maya (data/export), Noa (page + form) | M + M | 24.10 | First real correction appears; smoke tests for `{speed}` and empty state |
+| PL2 | **"View as visitor" toggle** for editors | Itai | S | 22.10 (in progress) | An editor sees exactly the signed-out page |
+| PL3 | **Quota proposal kind** (D-R2, #76 P1) + `#admin` shows `runs.warnings` and quota proposals | Maya, Itai | M + S | 1.11, if D-R2 is approved by 25.10 | The job files a quota proposal from a saved Abu Dhabi or Rotterdam page in a test |
+| PL4 | **Rank tie-break** (#73) in the strip and digest | Noa | S | 28.10 | On fake 29.10, Hershko's item shows first |
+| PL5 | **Doha readiness:** Tashtchiev record (if D5) + women's air rifle quota item, Richter `next` 3.11, both verified | Yael, Tamar | S | 31.10 | The strip on fake 3.11 shows both shooters with stakes |
+| PL6 | **Verification drive 2:** the remaining ~69 records, 7 a day, alternating Dana and Tamar | Dana, Tamar | L (split into days) | 1.11 for 80% (stretch), 8.11 for 90% | M2 in the weekly log |
+| PL7 | **Report triage in week 1:** the launch-day runbook flow, then a review on 25.10 of report count, P0/P1 split and fix time | Dana/Tamar, PM | S | 25.10 | Decide whether the 48 h target holds |
+| PL8 | **Weekly digest + metrics log**, Sunday 25.10 and 1.11 | Omer (publisher), PM | S | Sundays | Digest shared; W43/W44 logs on main |
+| PL9 | **New-sport onboarding** design (tennis, using #74's research) | UX | M | 30.10 | Spec covers the sport record, quota item, empty sport page and first athletes |
+
+### Explicitly not in this window
+- English version and Paralympics (D9).
+- Comments or accounts.
+- Live scores.
+
 ## P2: quality and next sprint
 - The 5 ❓ quota items (athletics ×2, sailing ×3): re-check when World Athletics publishes its LA28 system or the 2026
   sailing placings are verified (Roni, standing).
-- Next calendar roll (1–15.11): surfing ISA (6.11), lacrosse sixes Europeans (2–18.11), BMX freestyle Worlds (3.11),
-  Doha results.
+- Next calendar roll (5–19.11): Doha results and reallocation, surfing ISA results, men's lacrosse sixes (10–18.11), WTCS Abu Dhabi (13–14.11).
