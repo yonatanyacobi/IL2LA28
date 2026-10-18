@@ -351,6 +351,25 @@ test("quota stakes in the today strip: matched by sport + date, at most 2", asyn
   assert.ok(none.length && !none.includes("מה זה אומר"), "no quotas file, no stakes line");
 });
 
+test("today strip stakes order: followed athletes, then athletes in the row, then file order", async () => {
+  const base = QUOTAS.items[0];   // judo, valid
+  const item = (event, israelNote) => ({...base, event, israelNote, stakes: `stake ${event}`, israelStatus: "in-contention",
+    nextQuotaEvent: {name: "גרנד סלאם", start: "2026-10-29"}});
+  const quotas = {updatedAt: "2026-10-29", items: [
+    item("63- ק״ג נשים", "כרם פרימו מדורגת 13"),    // not in the row (no nextDate)
+    item("78- ק״ג נשים", ""),                        // nobody linked
+    item("60- ק״ג גברים", ""),                       // in the row, linked by weight class only
+    item("78+ ק״ג נשים", "רז הרשקו מדורגת 1"),      // in the row, linked by name
+  ]};
+  const shown = async follows => {
+    const row = rowsOf(stripOf((await boot({quotas, follows, now: "2026-10-29T08:00:00Z"})).view("home"))).find(r => r.includes("גרנד סלאם אבו דאבי"));
+    return [...row.matchAll(/<small class="stakes"><b>מה זה אומר:<\/b> ([^:]+):/g)].map(m => m[1]);
+  };
+  assert.deepStrictEqual(await shown([]), ["60- ק״ג גברים", "78+ ק״ג נשים"], "athletes listed in the row first, file order among them");
+  assert.deepStrictEqual(await shown(["raz-hershko"]), ["78+ ק״ג נשים", "60- ק״ג גברים"], "followed first");
+  assert.deepStrictEqual(await shown(["kerem-primo"]), ["63- ק״ג נשים", "60- ק״ג גברים"], "followed even when not listed in the row");
+});
+
 test("quota section: all-unknown note; hidden without items", async () => {
   const {view} = await boot({quotas: SPORT_QUOTAS});
   const shooting = view("sport-shooting");
