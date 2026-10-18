@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js", "site/event.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js", "site/event.js", "site/gamelog.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
 // (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
@@ -926,6 +926,45 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   assert.strictEqual(s.split('class="sess-day"').length - 1, 1, "Doha: only the day with a session");
   assert.ok(s.includes("ב־13 ימים נוספים בתחרות לא ידועים סשנים של ישראלים."), "13 empty days in one line");
   assert.ok(s.includes("08:30") && s.includes('href="#a-sergey-richter"') && s.includes("לפני התחרות"), "timed session (Israel time)");
+});
+
+// Game log data (#178): gameLog(a) only; the UI comes with the UX spec.
+test("gameLog: none, one, several (newest first), dedupe with sessions, team results, raw text", async () => {
+  const AD = "judo-gs-abu-dhabi-2026", SRC = "https://www.ijf.org/r";
+  const logOf = async (data, id) => JSON.parse((await boot({data})).run(`JSON.stringify(gameLog(S.athletes.find(a => a.id === ${JSON.stringify(id)})).map(r => ({...r, comp: r.comp?.id || null})))`));
+  const base = () => JSON.parse(JSON.stringify(FIXTURE));
+  assert.deepStrictEqual(await logOf(base(), "raz-hershko"), [], "no results");
+
+  const one = base();
+  one.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-10-29", kind: "result", text: " <b>ארד</b> ", source: SRC},
+    {at: "2026-10-28", kind: "rank", text: "1 בעולם"}, {at: "bad", kind: "result", text: "x"}, {at: "2026-10-27", kind: "result", text: "  "}];
+  assert.deepStrictEqual(await logOf(one, "raz-hershko"),
+    [{date: "2026-10-29", comp: AD, phase: "", result: "<b>ארד</b>", source: SRC, resultAt: ""}], "one result, matched to Abu Dhabi, raw text");
+
+  const many = base();
+  many.athletes.find(a => a.id === "raz-hershko").history = [
+    {at: "2026-10-29", kind: "result", text: "ארד (מההיסטוריה)", source: SRC},
+    {at: "2026-02-06", kind: "result", text: "זהב", source: "javascript:alert(1)"},
+    {at: "2027-02-20", kind: "result", text: "כסף"}];
+  many.sessions = [
+    {competitionId: AD, date: "2026-10-29", startUtc: "2026-10-29T06:00:00Z", athleteIds: ["raz-hershko"], phase: "מעל 78 ק״ג",
+      result: "ארד", resultSource: "https://www.ijf.org/s", resultAt: "2026-10-29T15:40:00Z"},
+    {competitionId: AD, date: "2026-10-31", athleteIds: ["raz-hershko", "yuli-alma-mishiner"], phase: "קבוצתי", result: "ניצחון",
+      resultSource: "https://www.ijf.org/t", resultAt: "2026-10-31T16:00:00Z"},
+    {competitionId: AD, date: "2026-10-30", athleteIds: ["raz-hershko"], phase: "x", result: "unproven"}];
+  const log = await logOf(many, "raz-hershko");
+  assert.deepStrictEqual(log.map(r => r.date), ["2027-02-20", "2026-10-31", "2026-10-29", "2026-02-06"], "newest first; an unproven session result is not listed");
+  assert.strictEqual(log[1].result, "ניצחון", "a team's official result is each member's");
+  const yuli = await logOf(many, "yuli-alma-mishiner");
+  assert.deepStrictEqual(yuli.map(r => r.result), ["ניצחון"], "the teammate's log has only the team result");
+  assert.deepStrictEqual(log[2], {date: "2026-10-29", comp: AD, phase: "מעל 78 ק״ג", result: "ארד", source: "https://www.ijf.org/s",
+    resultAt: "2026-10-29T15:40:00Z"}, "session and history for the same day and competition are one row; the session wins");
+  assert.strictEqual(log[3].source, "", "non-https source dropped");
+  assert.strictEqual(log[0].comp, "judo-gs-baku-2027", "matched to the competition running that day");
+  const heats = base();
+  heats.sessions = ["רבע גמר", "חצי גמר"].map((phase, i) => ({competitionId: AD, date: "2026-10-29", athleteIds: ["raz-hershko"], phase,
+    result: `ניצחון ${i}`, resultSource: SRC, resultAt: `2026-10-29T1${i}:00:00Z`}));
+  assert.strictEqual((await logOf(heats, "raz-hershko")).length, 2, "two sessions on one day stay two rows");
 });
 
 test("fetch failure shows the retry view", async () => {
