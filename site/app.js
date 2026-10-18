@@ -234,7 +234,8 @@ function todayStrip(rows){
     // Matched by sport + date (names are free text). Not via stakesLine: the event may have started before today.
     // Followed athletes' items first, then items of athletes listed in this row, then file order (stable sort).
     const rank = q => { const as = quotaAthletes(q); return as.some(a => S.follows.has(a.id)) ? 0 : as.some(a => athletes.includes(a)) ? 1 : 2; };
-    const stakes = quotasOf(sportId).filter(q => q.stakes && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
+    const stakes = quotasOf(sportId).filter(q => q.stakes && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start)
+      && quotaEventEnd(q) >= t)   // a one-day final inside a longer championship is over once its day passes
       .sort((x, y) => rank(x) - rank(y));
     const onLine = stakes.slice(0, STAKES_MAX).map(q => `<small class="stakes"><b>מה זה אומר:</b> ${esc(q.event)}: ${esc(q.stakes)}</small>`).join("")
       + (stakes.length > STAKES_MAX ? `<small>ועוד ${stakes.length - STAKES_MAX} מקצים — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
