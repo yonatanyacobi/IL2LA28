@@ -19,7 +19,8 @@ The home's `ועוד {n} סשנים היום` → `#today` therefore leads from 
   `#day-<date>` is the link for a fixed date. Strip chips and prev/next always go to dated `#day-<d>`.
 - **Date:** Israel's `today()` at render. When an open `#today` page re-renders after Israel midnight (auto-refresh or
   navigation), it moves to the new day. A `#day-<date>` page never moves.
-- **Nav:** `nav = "day"` for `#today`, for `#day` and for `#day-<today>`. The nav's "היום" link (review item 10, Shira)
+- **Nav:** `nav = "today"` (the `data-nav` of the "היום" link, #208) for `#today`, for `#day` and for `#day-<today>`;
+  other dates use `nav = "calendar"`. The nav's "היום" link (review item 10, Shira)
   gets `aria-current="page"` on those three. Another date leaves it unmarked.
 - **`#day-<today>` and `#today` render identically.** The only difference is the URL.
 
