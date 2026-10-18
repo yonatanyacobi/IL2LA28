@@ -121,6 +121,40 @@
    "checkedAt": "2026-10-18"
   },
   {
+   "sportId": "judo",
+   "event": "70- ק״ג נשים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; מכסות יבשתיות לפי דירוג יבשתי.",
+   "israelStatus": "in-contention",
+   "israelNote": "מאיה גושן מדורגת 57 בעולם ו־35 בדירוג האולימפי (IJF, 12 באוק׳ 2026) – מחוץ ל־17; המסלול האפשרי הוא היבשתי",
+   "stakes": "גרנד סלאם אבו דאבי, 30 באוק׳ 2026: נקודות לדירוג IJF, לא מכסה ישירה; גושן (57 בעולם) רשומה",
+   "nextQuotaEvent": {
+    "name": "גרנד סלאם אבו דאבי",
+    "start": "2026-10-29",
+    "end": "2026-10-31"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "judo",
+   "event": "100- ק״ג גברים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "17 הראשונים בדירוג האולימפי של IJF עולים ישירות; מכסות יבשתיות לפי דירוג יבשתי.",
+   "israelStatus": "in-contention",
+   "israelNote": "יוסיף סימין מדורג 23 בעולם ו־7 בדירוג האולימפי (IJF, 12 באוק׳ 2026) – בתוך 17",
+   "stakes": "גרנד סלאם אבו דאבי, 31 באוק׳ 2026: נקודות לדירוג IJF, לא מכסה ישירה; סימין (23 בעולם) רשום",
+   "nextQuotaEvent": {
+    "name": "גרנד סלאם אבו דאבי",
+    "start": "2026-10-29",
+    "end": "2026-10-31"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
    "sportId": "taekwondo",
    "event": "49- ק״ג נשים",
    "totalQuotas": 16,
@@ -187,6 +221,22 @@
    "israelNote": "יובל פרייליך מדורג 262 בעולם (FIE, אוק׳ 2026); תקופת הדירוג נפתחת ב־1 באפר׳ 2027",
    "nextQuotaEvent": null,
    "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "weightlifting",
+   "event": "נשים (קטגוריה ורישום לא אומתו)",
+   "totalQuotas": 10,
+   "maxPerNOC": 1,
+   "allocation": "8 הראשונות בדירוג OQR בכל קטגוריה (3 טוטאלים מתקופה 1 + 2 מתקופה 2, 27 ביולי 2026–7 במאי 2028) + מקום יבשתי אחד.",
+   "israelStatus": "unknown",
+   "israelNote": "סיליה גולד: הקטגוריה האולימפית (69 או 77 ק״ג) לא אומתה, ואין רישום מאושר שלה לאליפות העולם בנינגבו",
+   "stakes": "אליפות העולם (מ־27 באוק׳ 2026) היא אחד מ־6 אירועי תקופה 1; לא אומת שישראלית רשומה אליה",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם",
+    "start": "2026-10-27"
+   },
+   "source": "https://cdn.nocnsf.nl/media/nlsj0xsh/wlf-la28-qualification-system.pdf",
    "checkedAt": "2026-10-18"
   },
   {
@@ -779,6 +829,23 @@
    "checkedAt": "2026-10-18"
   },
   {
+   "sportId": "lacrosse",
+   "event": "סיקסס גברים ונשים",
+   "totalQuotas": 12,
+   "maxPerNOC": 2,
+   "allocation": "לכל מגדר (6 קבוצות, אחת למדינה): אליפויות יבשתיות 2026 (באירופה: 5 הראשונות בסאלו עולות ישירות) ← אליפות העולם בסיקסס 2027 (4 מקומות, חובה טופ 12) ← טורניר העפלה אחרון ב־2028 (מקום אחד).",
+   "israelStatus": "in-contention",
+   "israelNote": "שתי הנבחרות ישחקו באליפות אירופה בסיקסס בסאלו (נשים מ־2 בנוב׳, גברים מ־10 בנוב׳ 2026)",
+   "stakes": "אליפות אירופה בסאלו (נשים מ־2 בנוב׳, גברים מ־10 בנוב׳ 2026) מעפילה לאליפות העולם 2027, שבה 4 מקומות לאולימפיאדת לוס אנג׳לס 2028 לכל מגדר",
+   "nextQuotaEvent": {
+    "name": "אליפות אירופה בלקרוס סיקסס, סאלו (נשים וגברים)",
+    "start": "2026-11-02",
+    "end": "2026-11-18"
+   },
+   "source": "https://worldlacrosse.sport/lacrosse-qualification-set-for-olympic-games-los-angeles-2028/",
+   "checkedAt": "2026-10-18"
+  },
+  {
    "sportId": "baseball",
    "event": "גברים",
    "totalQuotas": 6,
@@ -847,5 +914,5 @@
    "checkedAt": "2026-10-18"
   }
  ],
- "unpublished": 8
+ "unpublished": 4
 }
