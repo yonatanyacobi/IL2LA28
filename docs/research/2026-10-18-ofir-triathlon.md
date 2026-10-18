@@ -46,9 +46,12 @@ change, and no stage proposal. If the job proposes one, reject it.
 **Before the race:**
 - Confirm Sagiv is on the elite men start list (event page → Start Lists). He is listed in [PROFILE], but I did
   not see the start list itself.
-- Get the race start time from the event's schedule. Korea is 6 hours ahead of Israel on 2026-10-24.
-- The fixture has no 2026 Tongyeong or 2026 WTCS Abu Dhabi competition record, only 2027 events. Add both to
-  `competitions` (qualifying: true, source [EVENT] / the WTCS event page) so the today strip and digest show them.
+- Start time: men at 10:30 Korea time, which is 04:30 in Israel. Source: main's fixture
+  (`tri-world-cup-tongyeong-2026`, from the event's race-info page). The final results should be up by
+  Israeli morning.
+- Main's fixture already has Tongyeong. WTCS Abu Dhabi 2026 (2026-11-13 to 2026-11-14) is still missing. Add it
+  to `competitions` (qualifying: true, source https://triathlon.org/events/2026-wtcs-abu-dhabi) before Tongyeong
+  result night, so the switch to `next` points at a known competition.
 
 **Official source on the night:** the results tab on [EVENT] (World Triathlon results). Copy its exact URL when
 it goes live. Use only a list marked final. TriathlonLIVE and news stories are not sources.
@@ -103,7 +106,8 @@ In all four cases:
 - The rank update (`rank`, `rankNum`, `rankAsOf`) waits for the first OQR list dated after 2026-10-24.
 
 ## Open
-- Sagiv's entry on the Tongyeong and Abu Dhabi start lists (not seen yet).
-- The race start time in Tongyeong.
+- Sagiv's entry on the Tongyeong start list: check on 2026-10-22 (not published as of 2026-10-18).
+- Sagiv's entry on the Abu Dhabi start list.
+- Add WTCS Abu Dhabi 2026 to `competitions`.
 - The World Cup points scale by place (only the winner's 500 is confirmed). Don't publish points per place
   until checked against the WT ranking rules.
