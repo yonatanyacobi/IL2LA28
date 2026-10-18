@@ -362,7 +362,7 @@ div.track{background:none}
 .pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
 .pill.s-wait{background:var(--blue-soft);color:var(--blue)}
-/* "עודכן עכשיו" sits on the row's top edge, out of the flow, so marking a row never moves text (#177). */
+/* The "עודכן ב־" pill sits on the row's top edge, out of the flow, so marking a row never moves text (#177). */
 .rows li,.facts dd{position:relative}
 .pill.chg{position:absolute;top:0;inset-inline-end:0;transform:translateY(-50%);z-index:1;pointer-events:none;
   font-size:11px;line-height:14px;padding:0 6px;background:var(--sun-soft);color:var(--sun-ink)}

@@ -35,14 +35,18 @@ const daysSince = iso => (Date.now() - new Date(str(iso))) / 864e5;
 const stageOf = a => Math.min(3, Math.max(0, Number(a.stage) | 0));
 const heCmp = (a, b) => str(a).localeCompare(str(b), "he");
 const plural = (n, one, many) => n === 1 ? one : `${n} ${many}`;
-// "עודכן עכשיו" (docs/design/changed-rows.md): a row whose signature differs from the previous render of the same page,
-// compared only on an auto-refresh render, stays marked until the next navigation. Rows that are new count too.
-const rowSigs = new Map(), changedRows = new Set();
+// "עודכן ב־HH:MM" (docs/design/changed-rows.md): a row whose signature differs from the previous render of the same
+// page, compared only on an auto-refresh render, stays marked until the next navigation. Rows that are new count too.
+// The time is the export's (as in #updateNote), kept from the refresh that first marked the row.
+const rowSigs = new Map(), changedRows = new Map();
 let diffRender = false, newlyChanged = 0;
+const ilTime = ts => new Date(ts).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
 function rowMark(key, sig){
-  if (diffRender && rowSigs.get(key) !== sig && !changedRows.has(key)) { changedRows.add(key); newlyChanged++; }
+  const ts = S.generatedAt || S.lastRun;
+  if (diffRender && rowSigs.get(key) !== sig && !changedRows.has(key) && ts && !isNaN(Date.parse(ts))) { changedRows.set(key, ts); newlyChanged++; }
   rowSigs.set(key, sig);
-  return changedRows.has(key) ? `<span class="pill chg">עודכן עכשיו</span>` : "";   // out of the flow: see styles.css
+  const at = changedRows.get(key);
+  return at ? `<span class="pill chg">עודכן ב־<time datetime="${esc(at)}">${ilTime(at)}</time></span>` : "";   // out of the flow: see styles.css
 }
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };
@@ -1229,14 +1233,14 @@ async function checkForUpdate(){
 }
 // A small visible note (also the screen-reader announcement), shown only when the export changed; it hides itself.
 let noteTimer = 0;
-// `marked`: rows newly marked "עודכן עכשיו"; the note is their only announcement, so the rows themselves stay quiet.
+// `marked`: rows newly marked "עודכן ב־"; the note is their only announcement, so the rows themselves stay quiet.
 function showUpdateNote(marked = 0){
   const n = $("updateNote");
   if (!n) return;
   // The export's own time (Israel), not the moment the tab noticed it.
   const ts = S.generatedAt || S.lastRun, ok = ts && !isNaN(Date.parse(ts));
-  n.textContent = (ok ? `הנתונים עודכנו ב־${new Date(ts).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"})}` : "הנתונים עודכנו")
-    + (marked ? ` · ${plural(marked, "שורה אחת סומנה", "שורות סומנו")} „עודכן עכשיו”` : "");
+  n.textContent = (ok ? `הנתונים עודכנו ב־${ilTime(ts)}` : "הנתונים עודכנו")
+    + (marked ? ` · ${marked === 1 ? "פריט אחד השתנה" : `${marked} פריטים השתנו`} בדף הזה` : "");
   n.hidden = false;
   clearTimeout(noteTimer);
   noteTimer = setTimeout(() => { n.hidden = true; }, 8000);

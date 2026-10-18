@@ -1715,14 +1715,14 @@ test("auto-refresh: re-renders on a new export, keeps focus/scroll, skips unchan
   assert.ok(calls.includes("data.json"), "visible again: checks immediately");
 });
 
-// "עודכן עכשיו" (docs/design/changed-rows.md): only rows changed by an auto-refresh, until the next navigation.
+// "עודכן ב־HH:MM" (docs/design/changed-rows.md): only rows changed by an auto-refresh, until the next navigation.
 test("changed rows: marked after auto-refresh on #a- and #day, one announcement, cleared on navigation", async () => {
   const b = await boot({quotas: QUOTAS, now: "2026-10-19T08:00:00Z"});
   const {ctx, run, els} = b;
   let next = FIXTURE;
   ctx.fetch = async url => ({ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(url === "quotas.json" ? QUOTAS : next))});
   const go = h => { ctx.location.hash = "#" + h; run("navigate()"); return els.view.innerHTML; };
-  const marks = () => (els.view.innerHTML.match(/עודכן עכשיו/g) || []).length;
+  const marks = () => (els.view.innerHTML.match(/עודכן ב־<time datetime="[^"]+">\d\d:\d\d<\/time>/g) || []).length;
   const exportWith = (gen, edit) => { const d = JSON.parse(JSON.stringify(FIXTURE)); d.generatedAt = gen; edit(d); return d; };
   const ath = (d, id) => d.athletes.find(a => a.id === id);
 
@@ -1733,7 +1733,8 @@ test("changed rows: marked after auto-refresh on #a- and #day, one announcement,
     a.rank = "מקום 5 במקבילים"; a.history = [...(a.history || []), {at: "2026-10-19", kind: "result", text: "מקום 5 במקבילים", source: "https://example.org/r.pdf"}]; });
   await run("checkForUpdate()");
   assert.strictEqual(marks(), 2, "rank and the new history row");
-  assert.strictEqual(run(`$("updateNote").textContent`), "הנתונים עודכנו ב־02:00 · 2 שורות סומנו „עודכן עכשיו”", "one announcement with the count");
+  assert.strictEqual(run(`$("updateNote").textContent`), "הנתונים עודכנו ב־02:00 · 2 פריטים השתנו בדף הזה", "one announcement with the count");
+  assert.ok(els.view.innerHTML.includes(`עודכן ב־<time datetime="2099-01-01T00:00:00Z">02:00</time>`), "the export's Israel time");
 
   // A later export that doesn't touch her keeps the marks and announces no new rows.
   next = exportWith("2099-01-02T00:00:00Z", d => { const a = ath(d, "yali-shoshani");
@@ -1758,7 +1759,7 @@ test("changed rows: marked after auto-refresh on #a- and #day, one announcement,
     a.history = [...(a.history || []), {at: "2026-10-19", kind: "result", text: "מקום 5 במקבילים", source: "https://example.org/r.pdf"}]; });
   await run("checkForUpdate()");
   assert.strictEqual(marks(), 1, "only Shoshani's row");
-  assert.ok(/יהלי שושני[\s\S]*?עודכן עכשיו<\/span><\/span>/.test(els.view.innerHTML), "the mark is inside her row");
+  assert.ok(/יהלי שושני[\s\S]*?<\/time><\/span><\/span>/.test(els.view.innerHTML), "the mark is inside her row");
   // The pill must not take space in the row, or marking it would move text under the cursor.
   const css = fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8");
   assert.ok(/\.pill\.chg\{[^}]*position:absolute/.test(css) && /\.rows li,\.facts dd\{position:relative\}/.test(css), "pill is out of the flow");
