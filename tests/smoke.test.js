@@ -931,6 +931,105 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   assert.ok(s.includes("08:30") && s.includes('href="#a-sergey-richter"') && s.includes("לפני התחרות"), "timed session (Israel time)");
 });
 
+// Athlete game log (#178; docs/design/athlete-game-log.md §5).
+const GL_AD = "judo-gs-abu-dhabi-2026", GL_SRC = "https://www.ijf.org/r";
+const glBase = () => JSON.parse(JSON.stringify(FIXTURE));
+const glPanel = html => html.split('id="logH"')[1]?.split("</section>")[0] || "";
+const glRows = html => glPanel(html).split("<li>").slice(1);
+const glSess = (date, startUtc, phase, result, ids = ["raz-hershko"]) => ({competitionId: GL_AD, date, startUtc, athleteIds: ids, phase,
+  result, resultSource: GL_SRC, resultAt: `${date}T18:00:00Z`});
+
+test("game log: rows per competition, newest row first, entries oldest first, links, one shared source", async () => {
+  const data = glBase();
+  data.sessions = [glSess("2026-10-29", "2026-10-29T12:00:00Z", "גמר", "ארד"), glSess("2026-10-29", "2026-10-29T06:00:00Z", "מוקדמות", "עלתה")];
+  data.athletes.find(a => a.id === "raz-hershko").history = [
+    {at: "2026-02-06", kind: "result", text: "זהב", source: "https://www.ijf.org/p"},
+    {at: "2026-01-02", kind: "start", text: "נכנסה למעקב"}];
+  const out = (await boot({data, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko");
+  const rows = glRows(out);
+  assert.strictEqual(rows.length, 2, "2 rows");
+  assert.ok(rows[0].includes(`<a href="#c-${GL_AD}">גרנד סלאם אבו דאבי</a>`), "newest row first, linked to #c-");
+  assert.ok(rows[0].indexOf("מוקדמות") < rows[0].indexOf("גמר"), "entries oldest first");
+  assert.strictEqual(rows[0].split("מקור: ijf.org").length - 1, 1, "a shared source is shown once");
+  assert.ok(rows[0].includes('<time datetime="2026-10-29">29 באוק׳</time>'), "date without the current year");
+  assert.ok(glPanel(out).includes("3 תוצאות בתחרות אחת") && glPanel(out).includes("כל תוצאה מופיעה עם המקור שלה · מתעדכן פעם ביום"),
+    "a row with no known competition isn't counted as a competition (Gil P3)");
+  // Gil P3: a range within one month names the month once.
+  const range = glBase();
+  range.sessions = [glSess("2026-10-29", null, "מוקדמות", "עלתה"), glSess("2026-10-31", null, "גמר", "ארד")];
+  const r = glRows((await boot({data: range, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko"))[0];
+  assert.ok(r.includes('<time datetime="2026-10-29">29</time>–<time datetime="2026-10-31">31 באוק׳</time>'), "29–31 באוק׳");
+  const loose = glBase();
+  loose.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-02-06", kind: "result", text: "זהב", source: GL_SRC}];
+  const lp = glPanel((await boot({data: loose, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko"));
+  assert.ok(lp.includes('<p class="kpi muted">תוצאה אחת</p>'), "no known competition: no competition count");
+  const hist = out.split("<h2>היסטוריה</h2>")[1].split("</section>")[0];
+  assert.ok(!hist.includes("זהב") && hist.includes("נכנסה למעקב"), "results leave the history timeline");
+});
+
+test("game log: dedupe, team vs merged text, dropped sources, no competition, escaping, empty", async () => {
+  const data = glBase();
+  data.sessions = [glSess("2026-10-29", null, "57- ק״ג", "ארד (מהסשן)"),
+    glSess("2026-10-30", null, "קבוצתי", "ניצחון קבוצתי", ["raz-hershko", "yuli-alma-mishiner"])];
+  data.athletes.find(a => a.id === "raz-hershko").history = [
+    {at: "2026-10-29", kind: "result", text: "ארד (מההיסטוריה)", source: GL_SRC},
+    {at: "2026-09-12", kind: "result", text: "<b>מקום 7</b>", source: "https://www.ijf.org/z"},
+    {at: "2026-09-01", kind: "result", text: "בלי מקור", source: "http://x.example"}];
+  data.athletes.find(a => a.id === "timna-nelson-levy").history = [{at: "2026-10-29", kind: "result", text: "כסף", source: GL_SRC}];
+  data.athletes.find(a => a.id === "inbal-shemesh").nextDate = "2026-10-29";
+  const b = await boot({data, now: "2026-11-01T08:00:00Z"});
+  const raz = glPanel(b.view("a-raz-hershko"));
+  assert.ok(raz.includes("ארד (מהסשן)") && !raz.includes("ארד (מההיסטוריה)"), "same day: once, the session wins");
+  assert.ok(raz.includes("ניצחון קבוצתי") && glPanel(b.view("a-yuli-alma-mishiner")).includes("ניצחון קבוצתי"), "a team result is each member's");
+  assert.ok(!raz.includes("בלי מקור"), "a history result without an https source isn't in the log");
+  const razHist = b.view("a-raz-hershko").split("<h2>היסטוריה</h2>")[1].split("</section>")[0];
+  assert.ok(razHist.includes("בלי מקור") && !razHist.includes("מקום 7"), "...it stays in the timeline; logged results leave it");
+  assert.ok(raz.includes('<span class="muted">תחרות שאינה ברשימה</span>') && raz.includes("&lt;b&gt;מקום 7&lt;/b&gt;") && !raz.includes("<b>מקום 7"), "no competition; escaped");
+  const inbal = glPanel(b.view("a-inbal-shemesh"));
+  assert.ok(!inbal.includes("כסף") && inbal.includes("עוד לא תועדו תוצאות של ענבל שמש בתחרויות."), "a teammate's result never shows; empty state");
+  for (const h of ["a-raz-hershko", "a-inbal-shemesh"]) assert.ok(!/חי\b|בזמן אמת/.test(glPanel(b.view(h))));
+});
+
+test("game log: a same-day history result dedupes only against her session in the same competition; no cap", async () => {
+  const data = glBase();
+  // Her session on 3.11 is at Doha; no judo competition runs that day, so her history result is a different one.
+  data.sessions = [{competitionId: DOHA, date: "2026-11-03", startUtc: null, athleteIds: ["raz-hershko"], phase: "", result: "מהסשן",
+    resultSource: GL_SRC, resultAt: "2026-11-03T18:00:00Z"}];
+  data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-11-03", kind: "result", text: "מההיסטוריה", source: GL_SRC},
+    ...Array.from({length: 60}, (_, i) => ({at: `2025-${String(1 + (i % 12)).padStart(2, "0")}-${String(1 + Math.floor(i / 12)).padStart(2, "0")}`,
+      kind: "result", text: `ישן ${i}`, source: GL_SRC}))];
+  const {run} = await boot({data, now: "2026-11-05T08:00:00Z"});
+  const log = run(`gameLog(athleteById("raz-hershko")).map(r => r.result)`);
+  assert.ok(log.includes("מהסשן") && log.includes("מההיסטוריה"), "different competitions: both kept");
+  assert.strictEqual(log.length, 62, "60 history results plus 2: nothing cut");
+});
+
+test("game log: two results added to one row by an auto-refresh show one change mark (Gil on #268)", async () => {
+  const b = await boot({now: "2026-11-01T08:00:00Z"});
+  const {ctx, run, els} = b;
+  const next = glBase();
+  next.generatedAt = "2099-01-01T00:00:00Z";
+  next.sessions = [glSess("2026-10-29", "2026-10-29T06:00:00Z", "מוקדמות", "עלתה"), glSess("2026-10-29", "2026-10-29T12:00:00Z", "גמר", "ארד")];
+  ctx.location.hash = "#a-raz-hershko"; run("navigate()");
+  ctx.fetch = async () => ({ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(next))});
+  await run("checkForUpdate()");
+  const rows = glRows(els.view.innerHTML);
+  assert.ok(rows[0].includes("עלתה") && rows[0].includes("ארד"), "both results in one row");
+  assert.strictEqual(rows[0].split("השתנה ב־").length - 1, 1, "one mark per row");
+  assert.ok(rows[0].lastIndexOf("השתנה ב־") > rows[0].indexOf("ארד"), "on the row's last line");
+});
+
+test("game log: 12 rows show 10 and a details with the rest's result count", async () => {
+  const data = glBase();
+  data.athletes.find(a => a.id === "raz-hershko").history = Array.from({length: 12}, (_, i) =>
+    ({at: `2025-${String(i + 1).padStart(2, "0")}-15`, kind: "result", text: `תוצאה ${i}`, source: GL_SRC}));
+  const panel = glPanel((await boot({data, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko"));
+  const [visible, hidden] = panel.split("<details>");
+  assert.strictEqual(visible.split("<li>").length - 1, 10, "10 rows visible");
+  assert.ok(hidden.includes("<summary>הצגת עוד 2 תוצאות</summary>") && hidden.split("<li>").length - 1 === 2, "2 rows in details");
+  assert.ok(visible.includes('<time datetime="2025-12-15">15 בדצמ׳ 2025</time>'), "the year when it isn't this year");
+});
+
 test("lookup indexes follow data replacement; athletesOf/quotasOf return copies", async () => {
   const {run} = await boot({quotas: QUOTAS});
   assert.strictEqual(run(`athleteById("raz-hershko").name`), "רז הרשקו");
