@@ -48,6 +48,7 @@ function eventStakes(c){
 function scrollToTodayOnArrival(id){
   if (str($("view")?.innerHTML).includes(`data-event="${esc(id)}"`)) return;
   setTimeout(() => {
+    if ((typeof scrollY === "number" ? scrollY : 0) > 0) return;   // the reader already scrolled (e.g. while data loaded)
     const day = document.querySelector('#view .sess-day a[aria-current="date"]')?.closest(".sess-day");
     const reduce = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
     day?.scrollIntoView({block: "start", behavior: reduce ? "auto" : "smooth"});

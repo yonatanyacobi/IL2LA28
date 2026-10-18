@@ -955,6 +955,11 @@ test("#c-: arrival scrolls today's day into view once; the athletes panel points
   b.view("home"); b.view("c-judo-gs-abu-dhabi-2026"); await tick();
   assert.strictEqual(b.run("__scrolls.length"), 2, "coming back scrolls again");
   assert.strictEqual(b.run("__scrolls[0].block"), "start");
+  b.ctx.scrollY = 300;
+  b.view("home"); b.view("c-judo-gs-abu-dhabi-2026"); await tick();
+  assert.strictEqual(b.run("__scrolls.length"), 2, "no scroll when the reader already scrolled");
+  const css = fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8");
+  assert.ok(/\.sess-day\{scroll-margin-top:64px\}/.test(css) && /max-width:640px\)\{\.sess-day\{scroll-margin-top:110px\}/.test(css), "clears the sticky nav");
 
   const data = JSON.parse(JSON.stringify(FIXTURE));
   data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-10-29", kind: "result", text: "ארד"}];

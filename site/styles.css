@@ -377,4 +377,6 @@ div.track{background:none}
 .event-head{display:grid;gap:6px}
 .event-head .pills{display:flex;flex-wrap:wrap;gap:6px}
 .sess-day h3{font-size:16px;font-family:var(--f-body);font-weight:700}
+.sess-day{scroll-margin-top:64px}   /* scrolled to on arrival: clear the sticky nav (two rows on mobile) */
+@media (max-width:640px){.sess-day{scroll-margin-top:110px}}
 .sess-day h3 a[aria-current="date"]{color:var(--ink);text-decoration-thickness:3px;text-decoration-color:var(--sun)}
