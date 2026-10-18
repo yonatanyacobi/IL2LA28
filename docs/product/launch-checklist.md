@@ -1,6 +1,6 @@
 # Public launch: go/no-go checklist
 
-Owner of this list: PM. Status as of 2026-10-18 16:30, main @ e62319d.
+Owner of this list: PM. Status as of 2026-10-18 15:45 (sprint 2), main @ 791a6c1.
 "Public launch" means sharing the artifact link outside the team (WhatsApp groups, social, federations).
 The site stays read-only for visitors; every gate below is about what they see.
 
@@ -21,9 +21,9 @@ The full decision list is in PR #57 (owner decisions).
 
 | # | Gate | Status | Owner |
 |---|---|---|---|
-| G1 | **Audit corrections applied.** All 25 ✏️ corrections from `docs/audit/2026-10-18.md` are in the DB, including the 5 top-harm items (flag football, Bluman/Bond, Vered-Vilenchik, Shoshani, basketball men) | 🟢 applied 18.10 by the coordinator under the owner's delegation; spot-check the next published data.json | Owner |
-| G2 | **❓ records aren't shown as checked.** None of the 27 ❓ records has `verifiedAt` unless its open claim was checked. Unverified records keep the "אוטומטי" chip, which is acceptable for launch | 🟡 owner to confirm | Owner + Dana |
-| G3 | **First-seen records verified.** ≥ 27 of the 30 records in the verification drive are marked "נבדק ידנית", including all 10 in batch B1 (the Rotterdam gymnasts, Sagiv and Gold). Dana and Tamar sign off; the coordinator writes `verifiedAt`. Batches due 19–21.10 (plan in PR #71) | 🔴 0/99 today | Dana, Tamar → coordinator |
+| G1 | **Audit corrections applied.** All 25 ✏️ corrections from `docs/audit/2026-10-18.md` are in the DB, including the 5 top-harm items (flag football, Bluman/Bond, Vered-Vilenchik, Shoshani, basketball men) | 🟢 applied 18.10 by the coordinator under the owner's delegation; spot-check the next published data.json | Coordinator |
+| G2 | **❓ records aren't shown as checked.** None of the 27 ❓ records has `verifiedAt` unless its open claim was checked. Unverified records keep the "אוטומטי" chip, which is acceptable for launch | 🟡 coordinator marks only ✅ rows (drive rule) | Dana, Tamar → coordinator |
+| G3 | **First-seen records verified.** ≥ 27 of the 30 records in the verification drive are marked "נבדק ידנית", including all 10 in batch B1 (the Rotterdam gymnasts, Sagiv and Gold). Dana and Tamar sign off; the coordinator writes `verifiedAt`. Batches due 19–21.10 (plan in PR #71) | 🟡 17/30 on 18.10 afternoon | Dana, Tamar → coordinator |
 | G4 | **5 ❓ quota items stay unpublished** (athletics ×2: no WA system yet; sailing ×3: 2026 placings not verified). `build_quotas.py` publishes only `ok`/`fixed`, so this is green while nobody flips them without sources | 🟢 enforced by build | Roni/Yael, Dana |
 | G5 | **Dedicated contact address live.** `CONTACT_EMAIL` is replaced by a dedicated address (memo: PR #53) | 🔴 owner to create the address | Owner → dev |
 | G6 | **QA final regression is green** on the launch commit: no P0/P1, smoke + Python tests pass, 400px and 1280px, light and dark | 🟡 15:00 round pending; R2-1 fixed | Gil |
@@ -45,8 +45,9 @@ The full decision list is in PR #57 (owner decisions).
 - Hebrew copy/a11y pass merged (skip link, 44px targets, contrast). Mobile nav is now 92px.
 - Quota tracker publishes 52 fact-checked items. The validator blocks `earned` without a stage ≥ 2 athlete.
 
-## Launch-day steps (owner)
-1. 12:00 go/no-go on G1–G8; the lead merges and the publisher publishes.
+## Launch-day steps
+Full sequence in `docs/runbooks/launch-day.md` (PR #88).
+1. 12:00 go/no-go on G1–G8 (coordinator); the lead merges and the publisher publishes.
 2. Open the artifact signed out on a phone. Check the home strip, `#quotas` and one athlete page.
 3. Share `#digest` text plus the link. Start the weekly metrics log.
 
