@@ -96,6 +96,14 @@ every width (`.rows.standings li{grid-template-columns:3.5ch 1fr auto}`, also at
 The cut line appears only when at least one row is on its list. A caveat shared by several blocks is said once, at the
 end of the panel.
 
+## 9. Empty and error state — `div.empty`
+**Use for** a page or section with nothing to show. Say what is missing, why if known, and a way on; never a bare "אין".
+A whole-page failure gets an h1 and `role="alert"`; a section's empty line is a plain `<p class="muted">`.
+```html
+<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p>ייתכן שהקישור ישן או שהרשומה הוסרה.</p><p><a href="#home">חזרה לדף הראשי</a></p></div>
+```
+After a negation: "ספורטאים **או** נבחרות" (Shira).
+
 ## Checks (smoke)
 - No output contains `class="now"` or `נתונים חיים`.
 - On `#day` and `#c-` every `<h2>`/`<h3>` link has `class="hlink"`.
