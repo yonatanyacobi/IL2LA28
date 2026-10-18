@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js", "site/event.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
 // (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
@@ -857,6 +857,75 @@ test("QA F1/F2: blocked storage says the follow wasn't saved; footer has its own
   assert.ok(foot.includes('<a class="foot-link" href="#about">אודות ואיך הנתונים נאספים</a>') && foot.split('href="#about"').length === 2, "one About link in the footer");
   assert.ok(!html.split("<footer")[0].includes('href="#about"'), "About is not in the nav");
   assert.ok(/\.site-foot \.foot-link\{[^}]*min-height:44px/.test(fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8")), "44px target");
+});
+
+// Competition page (docs/design/event-page.md §6). Rendered through viewEvent() until the router line lands (#152).
+const AD = "judo-gs-abu-dhabi-2026", DOHA = "issf-wch-doha-2026";
+const eventAt = async (id, now, opts = {}) => {
+  const b = await boot({now, quotas: REAL_QUOTAS, ...opts});
+  return {b, out: b.run(`viewEvent(${JSON.stringify(id)})`)};
+};
+
+test("#c- Abu Dhabi (fallback data): header, 3 days, athletes once each, quota items, unknown id", async () => {
+  const {b, out} = await eventAt(AD, "2026-10-29T08:00:00Z");
+  assert.ok(out.includes('<h1 tabindex="-1">גרנד סלאם אבו דאבי</h1>') && out.includes('<a href="#sport-judo">→ ג׳ודו</a>'));
+  assert.ok(out.includes("מתקיימת עכשיו · יום 1 מתוך 3") && out.includes('<span class="pill open">העפלה</span>'));
+  assert.strictEqual(out.split('class="sess-day"').length - 1, 1, "only the day with sessions");
+  assert.ok(out.includes("ב־2 ימים נוספים בתחרות לא ידועים סשנים של ישראלים."), "empty days collapsed into one line");
+  assert.ok(out.includes('<a href="#day-2026-10-29" aria-current="date">'), "today's group marked");
+  const sched = out.split('id="evSchedH"')[1].split("</section>")[0];
+  for (const id of ["gefen-primo", "izhak-ashpiz", "raz-hershko", "timna-nelson-levy", "yonatan-elbaz"])
+    assert.strictEqual(sched.split(`href="#a-${id}"`).length - 1, 1, `${id} once in the schedule`);
+  assert.ok(out.includes('<h2 id="evAthH">הישראלים בתחרות (5)</h2>') && out.includes("5 ספורטאים ונבחרות"), "athletes panel and kpi");
+  assert.ok(out.includes('<bdi><a href="https://allsportdb.com/Sports/Judo"'), "source host isolated");
+  const stakes = out.split('id="evStakesH"')[1]?.split("</section>")[0] || "";
+  assert.ok(stakes.includes("<bdi>78+ ק״ג נשים</bdi>") && stakes.includes('<a href="#sport-judo">לכל המכסות בענף</a>'), "judo quota items");
+  assert.ok(out.includes(`value="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT#c-${AD}"`) && out.includes('data-copy-msg="evShareMsg"'), "share box");
+  assert.ok(b.run(`viewEvent("nope")`).includes(NOT_FOUND));
+  assert.ok(b.view(`c-${AD}`).includes("גרנד סלאם אבו דאבי") && b.view("c-nope").includes(NOT_FOUND), "#c- route and unknown id");
+});
+
+test("#c- status by date, escaped results, earned items, series, Doha with no known Israelis and with a session", async () => {
+  assert.ok((await eventAt(AD, "2026-10-20T08:00:00Z")).out.includes('<span class="pill s-before">מתחילה ב־29 באוק׳ 2026</span>'), "before");
+  assert.ok((await eventAt(AD, "2026-11-05T08:00:00Z")).out.includes("הסתיימה · בהמתנה לתוצאות"), "after, awaiting");
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-10-29", kind: "result", text: "<b>ארד</b>"}];
+  const res = (await eventAt(AD, "2026-10-30T08:00:00Z", {data})).out;
+  assert.ok(res.includes("&lt;b&gt;ארד&lt;/b&gt;") && !res.includes("<b>ארד</b>"), "result escaped");
+  assert.ok(res.includes("תוצאה אחת") && !res.includes("1 תוצאות"), "kpi counts the result, singular");
+  const athPanel = res.split('id="evAthH"')[1].split("</section>")[0];
+  assert.ok(!athPanel.includes("ארד"), "no unsourced result line in the athletes panel");
+
+  const q = JSON.parse(JSON.stringify(REAL_QUOTAS));
+  const won = q.items.find(i => i.sportId === "judo" && i.nextQuotaEvent?.start === "2026-10-29");
+  Object.assign(won, {israelStatus: "earned", stakes: "stake earned"});
+  const earned = (await eventAt(AD, "2026-10-29T08:00:00Z", {quotas: q})).out.split('id="evStakesH"')[1].split("</section>")[0];
+  assert.ok(earned.includes("pill q-earned") && !earned.includes("<b>מכסה הושגה</b>") && !earned.includes("stake earned"), "earned: the pill only, no stakes");
+
+  const series = JSON.parse(JSON.stringify(FIXTURE));
+  series.competitions.push({id: "long-series", sportId: "judo", name: "סדרה ארוכה", location: "", start: "2026-09-01", end: "2027-03-01", notes: "", source: "", qualifying: false});
+  const longOut = (await eventAt("long-series", "2026-10-29T08:00:00Z", {data: series})).out;
+  assert.ok(longOut.includes('<span class="pill ended">סדרה עונתית</span>') && longOut.includes('<span class="pill s-live">מתקיימת עכשיו</span>') && !longOut.includes("מתוך"), "series: no day X of Y");
+  // Gil P2-1: a shared session; only Timna has a result.
+  const shared = JSON.parse(JSON.stringify(FIXTURE));
+  shared.sessions = [{competitionId: AD, date: "2026-10-29", athleteIds: ["timna-nelson-levy", "inbal-shemesh"], phase: "57- ק״ג"}];
+  shared.athletes.find(a => a.id === "timna-nelson-levy").history = [{at: "2026-10-29", kind: "result", text: "ארד"}];
+  const sh = (await eventAt(AD, "2026-10-30T08:00:00Z", {data: shared})).out;
+  assert.ok(sh.includes("תוצאה אחת") && !sh.includes("2 תוצאות"), "results counted per athlete");
+  const inbal = sh.split('id="evAthH"')[1].split('<div class="stack"><a class="card" href="#a-').find(x => x.startsWith("inbal-shemesh")) || "";
+  assert.ok(inbal.includes("pill s-wait") && !inbal.includes("ארד"), "Inbal: her own chip, not Timna's result");
+
+  const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z")).out;
+  assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת במעקב בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
+  assert.ok(doha.includes('id="evStakesH"') && doha.includes("הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
+  const dohaItems = doha.split('id="evStakesH"')[1].split("</section>")[0].split("<li>").slice(1);
+  for (const li of dohaItems) assert.ok(li.includes("q-in-contention") || !li.includes("מה זה אומר"), "stakes only for in-contention items");
+  const withSess = {...JSON.parse(JSON.stringify(FIXTURE)), sessions: [{competitionId: DOHA, date: "2026-11-03", startUtc: "2026-11-03T06:30:00Z",
+    athleteIds: ["sergey-richter"], phase: "מוקדמות רובה אוויר"}]};
+  const s = (await eventAt(DOHA, "2026-11-02T08:00:00Z", {data: withSess})).out;
+  assert.strictEqual(s.split('class="sess-day"').length - 1, 1, "Doha: only the day with a session");
+  assert.ok(s.includes("ב־13 ימים נוספים בתחרות לא ידועים סשנים של ישראלים."), "13 empty days in one line");
+  assert.ok(s.includes("08:30") && s.includes('href="#a-sergey-richter"') && s.includes("לפני התחרות"), "timed session (Israel time)");
 });
 
 test("fetch failure shows the retry view", async () => {
