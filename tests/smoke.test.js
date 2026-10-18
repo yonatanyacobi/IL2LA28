@@ -936,7 +936,11 @@ test("entry points link to #c-<id>: calendar rows, today strip, #day heading, at
   assert.ok(stripOf(view("home")).includes(AD_LINK), "today strip");
   assert.ok(view("day-2026-10-29").includes(`<h3>${AD_LINK}</h3>`), "#day heading");
   const raz = view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
-  assert.ok(raz.includes('<a href="#c-judo-gs-abu-dhabi-2026">'), "athlete: next competition links to its page");
+  assert.ok(raz.startsWith(`<dd>${AD_LINK}`) && raz.split("גרנד סלאם").length === 2, "athlete: same text as the competition: one link, no repeat");
+  const differ = JSON.parse(JSON.stringify(FIXTURE));
+  differ.athletes.find(a => a.id === "raz-hershko").next = "GS <Abu Dhabi>";
+  const d = (await boot({data: differ, now: "2026-10-29T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
+  assert.ok(d.startsWith(`<dd>GS &lt;Abu Dhabi&gt; · ${AD_LINK}`), "different text: her text plain, the link shows the competition's name");
   const data = JSON.parse(JSON.stringify(FIXTURE));
   Object.assign(data.athletes.find(a => a.id === "raz-hershko"), {next: "אימון", nextDate: "2026-09-01"});
   const none = (await boot({data, now: "2026-08-01T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];

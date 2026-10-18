@@ -211,6 +211,15 @@ function quotaSection(id){
 // Entry points to the competition page (event-page.md §3): the name links to #c-<id> when event.js is loaded.
 const compLink = (c, text) => c?.id && typeof viewEvent === "function" ? `<a href="#c-${esc(c.id)}">${text}</a>` : text;
 
+// The athlete's "next" is free text and the competition is inferred from her nextDate, so the link shows the
+// competition's own name (link text = target), with her text beside it unless they are the same.
+function nextCompFact(a){
+  const c = isDate(a.nextDate) && typeof compOn === "function" ? compOn(a.sportId, a.nextDate) : null;
+  const link = compLink(c, esc(c?.name));
+  if (!c || link === esc(c.name)) return esc(a.next);
+  return str(a.next).trim() === c.name ? link : `${esc(a.next)} · ${link}`;
+}
+
 function compRow(c, withSport){
   const t = today(), end = c.end || c.start, live = c.start <= t && end >= t, past = end < t;
   return `<div class="comp ${past ? "past" : ""}">
@@ -561,7 +570,7 @@ function viewAthlete(id){
       <dt>ענף</dt><dd><a href="#sport-${esc(a.sportId)}">${esc(sp?.he || a.sportId)}</a>${a.event ? ` · ${esc(a.event)}` : ""}</dd>
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}</dd>` : ""}
       ${athleteQuotaFacts(a)}
-      ${a.next ? `<dt>התחרות הבאה</dt><dd>${compLink(isDate(a.nextDate) && typeof compOn === "function" ? compOn(a.sportId, a.nextDate) : null, esc(a.next))}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}</dd>` : ""}
+      ${a.next ? `<dt>התחרות הבאה</dt><dd>${nextCompFact(a)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}</dd>` : ""}
       <dt>בדיקה</dt><dd class="stack">${trustNote(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
       ${safeUrl(a.source) ? `<dt>מקור</dt><dd>${linkOut(a.source, host(a.source))}</dd>` : ""}
