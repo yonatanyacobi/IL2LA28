@@ -12,7 +12,7 @@ planned (D6). The check is repeated on request, or after any red gate turns gree
 The decisions these gates rely on (PR #57):
 - **`earned`:** approved by both fact-checkers, Dana and Tamar, with no owner approval (D4).
 - **New athletes:** a fact-checker signs off and the coordinator writes the record (D5).
-- **Contact:** the owner opens a dedicated address (D2). Until then, new code uses the `{REPORT_EMAIL}` placeholder.
+- **Contact:** the dedicated address (D2) is il2la28.site@gmail.com, in `CONTACT_EMAIL` (app.js) and the footer. New code uses `CONTACT_EMAIL`, with no `{REPORT_EMAIL}` placeholder.
 
 ## Hard gates (all must be green)
 

@@ -18,4 +18,4 @@ cd site && python3 -c 'import http.server as h; H=h.SimpleHTTPRequestHandler; H.
 ואז לפתוח את http://localhost:8000.
 
 אין לאתר קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של המשחקים או לוועד האולימפי בישראל.
-דיווח על טעויות: yacobiyonatan@gmail.com
+דיווח על טעויות: il2la28.site@gmail.com
