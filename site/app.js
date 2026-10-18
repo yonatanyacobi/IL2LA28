@@ -95,6 +95,7 @@ const S = {
   quotas: [], quotasUpdatedAt: "", quotasLoaded: false, quotasError: false, quotasUnpublished: null,   // empty when quotas.json is missing or bad: quota UI must not render
   db: null, uid: null, isAdmin: false,
   cal: {sport: "", qual: false, past: false},
+  fixOpen: new Set(),   // #corrections: older months the viewer expanded; reset on navigation
   q: "",
   follows: new Set(store.get("la28.follows", [])),
   // Previous visit; a first visit sets the baseline silently, so nothing is marked new.
@@ -1042,6 +1043,7 @@ function navigate(){
   // Filters last only while you stay on the calendar: arriving at it (from elsewhere or another sport) starts clean.
   const next = currentRoute();
   if (next !== lastRoute && /^calendar(-|$)/.test(next)) S.cal = {sport: "", qual: false, past: false};
+  if (next !== lastRoute && /^corrections(-|$)/.test(next)) S.fixOpen = new Set();
   if (next !== lastRoute && next === "about-trust") focusTrust = true;
   if (next !== lastRoute) { rowSigs.clear(); changedRows.clear(); }
   const h = route();

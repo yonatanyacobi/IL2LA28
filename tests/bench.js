@@ -36,9 +36,10 @@ function dataAt(scale){
     for (const s of sessions.slice(0, 10)) sessions.push({...s, athleteIds: s.athleteIds.map(id => `${id}-x${k}`)});
   }
   d.sessions = sessions;
-  // A live corrections log with one entry per athlete.
-  d.launchAt = "2026-10-01T00:00:00Z";
-  d.corrections = d.athletes.map((a, i) => ({id: `fx${i}`, at: `2026-10-${String(2 + (i % 26)).padStart(2, "0")}T10:00:00Z`, reportedAt: "",
+  // A live corrections log with one entry per athlete, spread over the 11 months since launch.
+  d.launchAt = "2025-12-01T00:00:00Z";
+  const month = i => ["2025-12", ...Array.from({length: 10}, (_, k) => `2026-${String(k + 1).padStart(2, "0")}`)][i % 11];
+  d.corrections = d.athletes.map((a, i) => ({id: `fx${i}`, at: `${month(i)}-${String(2 + (i % 26)).padStart(2, "0")}T10:00:00Z`, reportedAt: "",
     by: "reader", source: "https://www.ijf.org/wrl", target: {kind: "athlete", id: a.id, name: a.name}, changes: [{field: "rank", wrong: "א", right: "ב"}]}));
   return d;
 }

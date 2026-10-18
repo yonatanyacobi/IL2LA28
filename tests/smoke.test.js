@@ -556,6 +556,25 @@ const LAUNCH = "2026-10-22T09:00:00Z";
 const bootFixes = async (corrections = CORRECTIONS) => boot({data: {...JSON.parse(JSON.stringify(FIXTURE)), corrections, launchAt: LAUNCH}});
 const entriesOf = html => html.split('<article class="fix">').slice(1);
 
+test("#corrections: newest months whole up to 100 entries, older months behind a button, reset on navigation", async () => {
+  // 5 months × 30 entries: Nov–Aug are shown (90 after Sep, so Aug comes in whole, 120), July is collapsed.
+  const many = ["2026-11", "2026-10", "2026-09", "2026-08", "2026-07"].flatMap((m, k) => Array.from({length: 30}, (_, i) =>
+    fix({id: `m${k}-${i}`, at: `${m}-${String(1 + (i % 28)).padStart(2, "0")}T10:00:00Z`}, [{field: "rank", wrong: "a", right: "b"}])));
+  const data = {...JSON.parse(JSON.stringify(FIXTURE)), corrections: many, launchAt: "2026-07-01T00:00:00Z"};
+  const {view, run, ctx} = await boot({data, now: "2026-11-20T08:00:00Z"});
+  const out = view("corrections");
+  assert.strictEqual(entriesOf(out).length, 120, "Nov, Oct, Sep, Aug whole: the month that crosses 100 is never split");
+  const jul = out.split('id="m-2026-07"')[1];
+  assert.ok(jul.includes('data-fix-month="2026-07">הצגת 30 התיקונים מיולי 2026</button>') && !jul.includes('class="fix"'), "July collapsed, with its count");
+  assert.ok(out.includes('<h2 id="m-2026-07" tabindex="-1">'), "the heading takes focus after expanding");
+  run(`S.fixOpen.add("2026-07"); route()`);
+  assert.strictEqual(entriesOf(ctx.document.getElementById("view").innerHTML).length, 150, "expanded in place");
+  const go = h => { ctx.location.hash = "#" + h; run("navigate()"); return ctx.document.getElementById("view").innerHTML; };
+  go("corrections"); run(`S.fixOpen.add("2026-07"); route()`); go("home");
+  assert.strictEqual(entriesOf(go("corrections")).length, 120, "navigating away and back resets the expanded months");
+  assert.strictEqual(entriesOf(view("corrections-raz-hershko")).length, 120, "#corrections-<id> uses the same rule");
+});
+
 test("#corrections: months newest first, diffs, labels, speed, escaping, invalid entries dropped", async () => {
   const {view} = await bootFixes();
   const out = view("corrections");
