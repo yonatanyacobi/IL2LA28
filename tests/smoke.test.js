@@ -736,10 +736,10 @@ const withHistory = (id, entries) => {
 test("following a sport persists across reloads and shows on #following-sports", async () => {
   const b = await boot();
   const off = b.view("sport-judo");
-  assert.ok(off.includes('data-follow-sport="judo" aria-pressed="false"><span aria-hidden="true">☆</span> מעקב אחרי הענף</button>'));
+  assert.ok(off.includes('data-follow-sport="judo" aria-pressed="false" aria-label="מעקב אחרי ג׳ודו"><span aria-hidden="true">☆</span> מעקב אחרי הענף</button>'));
   b.fire("click", {closest: () => ({dataset: {followSport: "judo"}})});
   assert.strictEqual(b.ctx.localStorage.getItem("la28.followSports"), '["judo"]');
-  assert.ok(b.view("sport-judo").includes('aria-pressed="true"><span aria-hidden="true">★</span> הענף במעקב שלך</button>'));
+  assert.ok(b.view("sport-judo").includes('aria-pressed="true" aria-label="ג׳ודו במעקב שלך"><span aria-hidden="true">★</span> הענף במעקב שלך</button>'));
   const again = await boot({storage: {"la28.followSports": '["judo"]'}});
   const tab = again.view("following-sports");
   assert.ok(tab.includes("ענפים (1)") && tab.includes('<a class="sport" href="#sport-judo">') && tab.includes('aria-current="page">ענפים (1)'));
@@ -748,7 +748,7 @@ test("following a sport persists across reloads and shows on #following-sports",
 
 test("#following feed and nav badge: counts changes since the last visit, clears on visit, caps at 9+", async () => {
   const data = withHistory("raz-hershko", [{at: "2026-10-15", kind: "rank", text: "דירוג <img src=x onerror=alert(1)>"}, {at: "2026-10-01", kind: "rank", text: "ישן"}]);
-  const b = await boot({data, follows: ["raz-hershko"], now: "2026-10-18T08:00:00Z", storage: {"la28.followingSeen": '"2026-10-10T00:00:00Z"'}});
+  const b = await boot({data, follows: ["raz-hershko"], now: "2026-10-18T20:00:00Z", storage: {"la28.followingSeen": '"2026-10-10T00:00:00Z"'}});
   b.view("home");
   assert.ok(!b.els.followBadge.hidden && b.els.followBadge.textContent === "1" && b.els.followBadgeSr.textContent === ", עדכון חדש אחד", "badge before the visit");
   const page = b.view("following");
@@ -777,6 +777,26 @@ test("#following: first visit, empty state with suggestions, sport followers see
   const sport = await boot({data, now: "2026-10-18T08:00:00Z", storage: {"la28.followSports": '["judo"]', "la28.followingSeen": '"2026-10-10T00:00:00Z"'}});
   assert.ok(sport.view("following").includes("ארד"), "a followed sport's athletes feed in");
   assert.ok(sport.view("following-nope").includes(NOT_FOUND));
+});
+
+test("#following review fixes (#138): per-tab empty states, updatedAt fallback row, sport cards, home link", async () => {
+  const athletesOnly = await boot({follows: ["raz-hershko"], now: "2026-10-18T20:00:00Z"});
+  const sportsTab = athletesOnly.view("following-sports");
+  assert.ok(sportsTab.includes("עוד אין ענפים במעקב. לחצו על ☆ בדף של ענף כדי לעקוב.") && !sportsTab.includes("עוד אין כאן אף אחד"));
+  assert.ok(athletesOnly.view("home").includes('<h2>במעקב שלי</h2><a href="#following">לכל המעקב</a>'), "home link");
+  const sportsOnly = await boot({storage: {"la28.followSports": '["judo"]'}, quotas: SPORT_QUOTAS});
+  const athTab = sportsOnly.view("following");
+  assert.ok(athTab.includes("עוד אין ספורטאים או נבחרות במעקב. לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב."));
+  assert.ok(sportsOnly.view("following-sports").includes('class="qsum"'), "sports tab cards carry the quota summary");
+  const none = (await boot({now: "2026-10-28T08:00:00Z"})).view("following");
+  assert.ok(!none.includes("<h3>הצעות למעקב</h3>"), "suggestions heading is an h2");
+  // History has only the snapshot's own entries before the last visit; the record itself changed after it.
+  const data = withHistory("raz-hershko", [{at: "2026-10-01", kind: "start", text: "נכנסה למעקב"}]);
+  const b = await boot({data, follows: ["raz-hershko"], now: "2026-10-18T20:00:00Z", storage: {"la28.followingSeen": '"2026-10-12T00:00:00Z"'}});
+  b.view("home");
+  assert.strictEqual(b.els.followBadge.textContent, "1", "fallback row counts");
+  const page = b.view("following");
+  assert.ok(page.includes('<a href="#a-raz-hershko">רז הרשקו</a><small>הפרטים עודכנו</small>') && page.includes("18 באוק׳ 2026"), "dated by updatedAt");
 });
 
 test("fetch failure shows the retry view", async () => {
