@@ -39,6 +39,25 @@ Don't launch while a result night is in progress, or during the daily job's publ
 - `LAUNCH_AT` (`2026-10-27T10:00:00Z`, since Israel is on UTC+2 after 25.10);
 - the dates in this runbook's timeline.
 
+## Gate report, 22.10 11:00 (template)
+The PM fills it in and posts it to the coordinator. One screen only: the status is 🟢/🟡/🔴, every status names
+where it was checked, and anything not green has an owner and an ETA before 12:00.
+Pre-filled values are as of 18.10 ~16:30; **re-check every row on the day**.
+
+| Gate | Status | Checked in (source) | Owner | If not green |
+|---|---|---|---|---|
+| G1 audit corrections in the DB | 🟢 (applied 18.10) | Spot-check 3 top-harm records (flag football, Shoshani, basketball men) in the published data.json | Coordinator | – |
+| G2 no ❓ record shown as checked | 🟢 | Drive log `docs/audit/2026-10-verification-drive.md`: every marked record has a ✅ row | Dana, Tamar → coordinator | Unmark it |
+| G3 drive ≥ 27/30, all of B1 | 🔴 **28/30, B1 incomplete**: missing `ilia-liubimov`, `celia-gold` | DB `athletes.verifiedAt` vs the drive list (Tashtchiev not in DB; `israel-basketball-women` counts as the alternate) | Dana → coordinator | Sign off and mark both by 11:30, or NO-GO |
+| G4 5 ❓ quota items unpublished | 🟢 (`site/quotas.json`: 55 published, `unpublished`: 5) | `#admin` launch panel / `site/quotas.json` | Roni, Ofir; Dana, Tamar | – |
+| G5 dedicated contact address | 🔴 `CONTACT_EMAIL` is still the personal Gmail; memo #53 open | `site/app.js` on the launch commit, and the error box on the live page | Owner (address) → dev (swap) | NO-GO unless swapped and published by 11:45 |
+| G6 QA regression green | ⬜ | Gil's live check at 10:00 (`docs/qa/`) | Gil | Any P0/P1 → NO-GO |
+| G7 pipeline publishes cleanly | ⬜ (`check_live_sync.py` merged, #91) | `#admin` last 2 runs + `python3 job/check_live_sync.py` | Lead | Run it now; NO-GO only if data.json is invalid |
+| G8 Rotterdam result live | ⬜ | `#sport-artistic-gymnastics`, `#quotas`, home agree; official FIG URL. `earned` per owner decision D4 (pending) | Omer; Dana, Tamar | Not live → NO-GO |
+| M2 (for the record) | 28/99 verified | DB | PM | – |
+
+**Recommendation:** GO / NO-GO (fallback 27.10), plus one line naming the reason and the reddest gate.
+
 ## Rollback
 **Save these at 09:30** (lead, in a Claude Code session at the repo root):
 - `git tag pre-launch origin/main`. This is the site code currently live, if nothing merged since the last publish.
