@@ -714,10 +714,11 @@ function freshness(){
 }
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
 
+let lastBanner = "";
 function banner(){
-  if (S.liveLost) return `<div class="banner" role="status">החיבור לנתונים החיים נותק. מוצגת הגרסה הציבורית האחרונה. רעננו את הדף כדי להתחבר מחדש.</div>`;
+  if (S.liveLost) return `<div class="banner">החיבור לנתונים החיים נותק. מוצגת הגרסה הציבורית האחרונה. רעננו את הדף כדי להתחבר מחדש.</div>`;
   const ts = S.generatedAt;
-  if (!S.live && ts && daysSince(ts) > 2) return `<div class="banner" role="status">הנתונים לא עודכנו כבר ${Math.floor(daysSince(ts))} ימים, וייתכן שחלקם אינם עדכניים.</div>`;
+  if (!S.live && ts && daysSince(ts) > 2) return `<div class="banner">הנתונים לא עודכנו כבר ${Math.floor(daysSince(ts))} ימים, וייתכן שחלקם אינם עדכניים.</div>`;
   return "";
 }
 
@@ -941,7 +942,7 @@ function route(){
   const h = currentRoute();
   renderedDay = today();
   let html, nav;
-  if (S.failed && !S.loaded) html = `<div class="empty" role="alert"><h1 tabindex="-1">לא הצלחנו לטעון את הנתונים</h1><p>ייתכן שיש בעיה בחיבור לאינטרנט. אפשר לנסות שוב בעוד רגע.</p><p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
+  if (S.failed && !S.loaded) html = `<div class="empty" role="alert"><h1 tabindex="-1">לא הצלחנו לטעון את הנתונים</h1><p>ייתכן שמדובר בתקלה זמנית. אפשר לנסות שוב בעוד רגע.</p><p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
   else if (!S.loaded) html = `<div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div>`, nav = "home";
   else if (h === "home") html = viewHome(), nav = "home";
   else if (h === "sports") html = viewSports(), nav = "sports";
@@ -962,7 +963,11 @@ function route(){
   else html = notFound();
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
   if (typeof followingDecorate === "function") html = followingDecorate(h, html);
-  $("view").innerHTML = banner() + html;
+  const b = banner();
+  $("view").innerHTML = b + html;
+  // The banner is rebuilt on every render; announce it through one persistent status only when its text changes.
+  const bt = b.replace(/<[^>]*>/g, "");
+  if (bt !== lastBanner) { lastBanner = bt; const st = $("bannerStatus"); if (st) st.textContent = bt; }
   $("fixLink").innerHTML = fixLogLive() ? ` · <a href="#corrections">יומן התיקונים</a>` : "";
   if (focusTrust && S.loaded) {   // once per arrival, so data refreshes don't steal focus
     focusTrust = false;
