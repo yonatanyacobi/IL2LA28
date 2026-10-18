@@ -33,6 +33,8 @@ ATHLETE = {
     "history": ("history", True), "verifiedAt": ("iso", False),
     # Sortable world rank (docs/product/spec-rank-tiebreak.md); a set rankNum needs both companions (checked below).
     "rankNum": ("rankNum", False), "rankList": ("rankList", False), "rankAsOf": ("date", False),
+    # The Olympic qualification list, kept apart from the world rank (#218); same rules.
+    "olympicRankNum": ("rankNum", False), "olympicRankList": ("rankList", False), "olympicRankAsOf": ("date", False),
 }
 RANK_LIST_MAX = 80
 HISTORY = {"at": ("date!", True), "kind": ("kind", True), "text": ("str!", True), "source": ("url", True)}
@@ -151,11 +153,12 @@ def validate(data):
         for i, row in enumerate(data[coll]):
             path = f"{coll}[{i}]" + (f"({row.get('id')})" if isinstance(row, dict) and "id" in row else "")
             check(row, spec, path)
-            if coll == "athletes" and isinstance(row, dict) and type(row.get("rankNum")) is int:
-                if not (isinstance(row.get("rankList"), str) and row["rankList"].strip()):
-                    err(f"{path}.rankList: required when rankNum is set")
-                if not is_date(row.get("rankAsOf")):
-                    err(f"{path}.rankAsOf: YYYY-MM-DD required when rankNum is set")
+            for p in ("rank", "olympicRank"):
+                if coll == "athletes" and isinstance(row, dict) and type(row.get(p + "Num")) is int:
+                    if not (isinstance(row.get(p + "List"), str) and row[p + "List"].strip()):
+                        err(f"{path}.{p}List: required when {p}Num is set")
+                    if not is_date(row.get(p + "AsOf")):
+                        err(f"{path}.{p}AsOf: YYYY-MM-DD required when {p}Num is set")
             if "id" in spec and isinstance(row, dict):
                 rid = row.get("id")
                 if isinstance(rid, str) and rid in seen:
