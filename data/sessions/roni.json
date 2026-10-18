@@ -1,6 +1,49 @@
 {
- "updatedAt": "2026-10-18T14:05:09Z",
+ "updatedAt": "2026-10-18T14:09:33Z",
  "sessions": [
+  {
+   "id": "ag-worlds-2026-20261019-wag-q-sub7",
+   "competitionId": "ag-worlds-2026",
+   "date": "2026-10-19",
+   "timeLocal": "16:00",
+   "tz": "Europe/Amsterdam",
+   "athleteIds": [
+    "yali-shoshani"
+   ],
+   "phase": "אליפות העולם בהתעמלות מכשירים – מוקדמות נשים, סבב 7 (מקבילים מדורגים)",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_24017",
+   "result": "",
+   "resultSource": "",
+   "resultAt": "",
+   "notes": "FIG Drawing of Lots (עדכון 12.10.2026): ישראל בקבוצת קרב־רב AA 1 → סבב 10; שושני ב־AS Group 1 (מקבילים) → סבב 7. השעות לפי ה־Work Plan של FIG, שעון רוטרדם.",
+   "review": {
+    "status": "unchecked",
+    "by": "roni",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "ag-worlds-2026-20261019-wag-q-sub10",
+   "competitionId": "ag-worlds-2026",
+   "date": "2026-10-19",
+   "timeLocal": "21:10",
+   "tz": "Europe/Amsterdam",
+   "athleteIds": [
+    "lihie-raz",
+    "roni-shamay"
+   ],
+   "phase": "אליפות העולם בהתעמלות מכשירים – מוקדמות נשים, סבב 10 (קרב־רב)",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_24017",
+   "result": "",
+   "resultSource": "",
+   "resultAt": "",
+   "notes": "FIG Drawing of Lots (עדכון 12.10.2026): ישראל בקבוצת קרב־רב AA 1 → סבב 10; שושני ב־AS Group 1 (מקבילים) → סבב 7. השעות לפי ה־Work Plan של FIG, שעון רוטרדם.",
+   "review": {
+    "status": "unchecked",
+    "by": "roni",
+    "at": "2026-10-18"
+   }
+  },
   {
    "id": "judo-gs-abu-dhabi-2026-20261029-prelims",
    "competitionId": "judo-gs-abu-dhabi-2026",
@@ -94,6 +137,46 @@
    "phase": "גרנד סלאם אבו דאבי – בלוק הגמרים, יום 3",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "addWhen": "ישראלי/ת מאותו יום עולה לבלוק הגמרים (חצי גמר/תקומה), לפי תוצאות IJF"
+  },
+  {
+   "competitionId": "ag-worlds-2026",
+   "date": "2026-10-24",
+   "timeLocal": "14:00",
+   "tz": "Europe/Amsterdam",
+   "phase": "אליפות העולם בהתעמלות מכשירים – גמר קרקע גברים",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
+   "athleteIds": [
+    "artem-dolgopyat",
+    "noam-berkovich"
+   ],
+   "addWhen": "כשתוצאות המוקדמות הרשמיות של FIG/Longines (סטטוס Official) מאשרות את העלייה של דולגופיאט וברקוביץ (#134)"
+  },
+  {
+   "competitionId": "ag-worlds-2026",
+   "date": "2026-10-23",
+   "timeLocal": "19:30",
+   "tz": "Europe/Amsterdam",
+   "phase": "אליפות העולם בהתעמלות מכשירים – גמר קרב־רב נשים",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
+   "addWhen": "אם רז או שמאי עולות לגמר לפי התוצאות הרשמיות של המוקדמות (19.10)"
+  },
+  {
+   "competitionId": "ag-worlds-2026",
+   "date": "2026-10-24",
+   "timeLocal": "14:00",
+   "tz": "Europe/Amsterdam",
+   "phase": "אליפות העולם בהתעמלות מכשירים – גמרי מכשירים, יום 1 (מקבילים מדורגים נשים)",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
+   "addWhen": "אם שושני (או רז/שמאי) עולה לגמר המקבילים; השעה המדויקת של המכשיר רק מתוך מסמך FIG"
+  },
+  {
+   "competitionId": "ag-worlds-2026",
+   "date": "2026-10-25",
+   "timeLocal": "14:00",
+   "tz": "Europe/Amsterdam",
+   "phase": "אליפות העולם בהתעמלות מכשירים – גמרי מכשירים, יום 2 (קורה/קרקע נשים)",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
+   "addWhen": "אם רז או שמאי עולות לגמר קורה או קרקע לפי התוצאות הרשמיות"
   }
  ]
 }
