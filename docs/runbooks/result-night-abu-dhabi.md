@@ -33,7 +33,7 @@ quotas PR doesn't change for them.
 | an Israeli reaches the final block (semi-final or repechage) | Move that day's block from `pendingFinalBlocks` to `sessions` (17:00 Asia/Dubai = 15:00 Israel) with their `athleteIds`; Dana signs | Roni → Dana → coordinator |
 | each day, 15:00 → end of the final block | Final block | – |
 | each evening, once IJF shows the day's results | Values below → Dana | Roni |
-| after Dana, **before the 23:45 daily run** | Steps 1–3 below | coordinator |
+| after Dana, **before the next morning's 07:13 daily run** | Steps 1–3 below | coordinator |
 | next morning | `runs/<next day>`: no second Abu Dhabi entry for that athlete. There is no judo results script, so the job's wording can differ; if it wrote one, delete the job's entry and tell Maya | Roni |
 | 1.11 | One quotas.json PR for all 7 judo items (`stakes`, `nextQuotaEvent`) per abu-dhabi-outcomes.md, through result-night.md. Until it is live the items show "◷ בהמתנה לתוצאות" | Roni → Dana → lead |
 
