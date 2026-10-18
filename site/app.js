@@ -117,11 +117,14 @@ function trustChip(a){
   return `<span class="trust ${t}">${t === "auto" ? "◌ איסוף אוטומטי" : t === "ok" ? `✓ נבדק ידנית ${d}` : `✓ נבדק ${d} · עודכן מאז`}</span>`;
 }
 
-// Past quota events are hidden here; the loader keeps them for #admin checks.
+// Past quota events are hidden in the UI; the loader keeps them for #admin checks.
+const nxt = q => q.nextQuotaEvent?.name && q.nextQuotaEvent.start >= today() ? q.nextQuotaEvent : null;
+// "What it means" for Israel at the next quota event; meaningless once that event is past.
+const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
+
 function quotaSection(id){
   const items = quotasOf(id);
   if (!items.length) return "";
-  const nxt = q => q.nextQuotaEvent?.name && q.nextQuotaEvent.start >= today() ? q.nextQuotaEvent : null;
   items.sort((a, b) => QUOTA_STATUSES.indexOf(qStatus(a.israelStatus)) - QUOTA_STATUSES.indexOf(qStatus(b.israelStatus))
     || (nxt(a)?.start || "9999").localeCompare(nxt(b)?.start || "9999") || heCmp(a.event, b.event));
   const n = quotaCounts(items);
@@ -139,6 +142,7 @@ function quotaSection(id){
         ${meta ? `<p class="q-meta">${meta}</p>` : ""}
         ${q.israelNote ? `<p>${esc(q.israelNote)}</p>` : ""}
         ${e ? `<p class="q-meta">אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}</p>` : ""}
+        ${stakesLine(q)}
         ${q.allocation || src ? `<details><summary>איך מחולקות המכסות</summary><p>${q.allocation ? esc(q.allocation) : `<span class="muted">פרטי השיטה טרם נאספו.</span>`}</p>${src ? `<p class="foot">${src}</p>` : ""}</details>` : ""}
       </li>`;
     }).join("")}</ul>
@@ -173,7 +177,7 @@ function changeRow(c){
   return `<li><span class="d">${fmt(str(c.at).slice(0, 10))}</span><span class="t">${body}</span><span></span></li>`;
 }
 
-const TODAY_MAX = 6, SERIES_DAYS = 31;
+const TODAY_MAX = 6, SERIES_DAYS = 31, STAKES_MAX = 2;   // STAKES_MAX: quota lines per strip row
 const dayNo = (from, to) => Math.round((new Date(to + "T12:00:00") - new Date(from + "T12:00:00")) / 864e5) + 1;
 
 // From the schedule, not live results. One row per running competition in a tracked sport, listing the
@@ -207,8 +211,12 @@ function todayStrip(rows){
     const total = dayNo(c.start, c.end || c.start);
     const small = [athletes.length ? athletes.sort((a, b) => heCmp(a.name, b.name)).map(who).join(", ") : "",
       esc(c.location), athletes.length ? "" : (n => n === 1 ? "ישראלי/ת אחד/ת במעקב בענף" : `${n} ישראלים במעקב בענף`)(athletesOf(sportId).length), linkOut(c.source)].filter(Boolean).join(" · ");
+    // Matched by sport + date (names are free text). Not via stakesLine: the event may have started before today.
+    const stakes = quotasOf(sportId).filter(q => q.stakes && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start));
+    const onLine = stakes.slice(0, STAKES_MAX).map(q => `<small class="stakes"><b>מה זה אומר:</b> ${esc(q.event)}: ${esc(q.stakes)}</small>`).join("")
+      + (stakes.length > STAKES_MAX ? `<small>ועוד ${stakes.length - STAKES_MAX} מקצים — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
-      <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small></span>
+      <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small>${onLine}</span>
       <span class="now">מתקיימת עכשיו</span></li>`;
   };
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
@@ -711,7 +719,7 @@ document.addEventListener("click", e => {
   if ("retry" in t.dataset) { S.failed = false; route(); return loadPublic(); }
   if (t.dataset.copy) {
     const input = $(t.dataset.copy);
-    const msg = $(t.dataset.copy === "mailAddr" ? "copyMsg2" : "copyMsg");
+    const msg = $(t.dataset.copyMsg || (t.dataset.copy === "mailAddr" ? "copyMsg2" : "copyMsg"));
     const done = ok => { msg.textContent = ok ? "הועתק." : "לא ניתן להעתיק אוטומטית. הטקסט מסומן, אפשר להעתיק ידנית."; if (!ok) input.select(); };
     try { navigator.clipboard.writeText(input.value).then(() => done(true), () => done(false)); } catch { done(false); }
   }
@@ -737,13 +745,15 @@ function applySnapshot(d){
 // Re-applied whenever sports change, since an item needs a known sportId.
 let quotaFile = null;
 const quotaCount = v => v == null || (Number.isInteger(v) && v >= 0);
+// Optional; an over-long line is dropped but the item is kept.
+const stakesOf = q => { const v = str(q.stakes).trim(); return v.length <= 140 ? v : ""; };
 function applyQuotas(){
   const items = Array.isArray(quotaFile?.items) ? quotaFile.items : [];
   S.quotas = items.filter(q => q && typeof q === "object" && sportById(q.sportId) && QUOTA_STATUSES.includes(q.israelStatus)
       && safeUrl(q.source) && quotaCount(q.totalQuotas) && quotaCount(q.maxPerNOC)
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
-      allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source,
+      allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start} : null}));
   S.quotasUpdatedAt = S.quotas.length ? str(quotaFile.updatedAt) : "";
 }
