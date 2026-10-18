@@ -23,7 +23,7 @@ function digestText(t = today()){
       + (waText(q.stakes) ? "\n" + waCut(`  מה זה אומר: ${waText(q.stakes)}`) : ""));
   const sections = [["מה התעדכן", changes], ["ישראלים מתחרים השבוע", competing], ["אירועי מכסה בשבועיים הקרובים", quotas]]
     .filter(([, items]) => items.length).map(([title, items]) => ({title, items, cut: 0}));
-  const head = [`*הדרך ללוס אנג׳לס 28 · תקציר שבועי*`, `${fmt(from)} – ${fmt(t)}${isDate(dataTs) ? ` · נכון ל־${fmt(dataTs)}` : ""}`,
+  const head = [`*הדרך ללוס אנג׳לס 28 · תקציר שבועי*`, `${fmtRange(from, t)}${isDate(dataTs) ? ` · נכון ל־${fmt(dataTs)}` : ""}`,
     ...(isDate(dataTs) && dataTs < addDays(t, -2) ? [`שימו לב: הנתונים לא עודכנו מאז ${fmt(dataTs)}.`] : [])];
   const foot = ["", `לכל הפרטים: ${SITE_URL}`, "אתר לא רשמי. הנתונים ממקורות פומביים, כדאי לבדוק מול המקור."];
   const build = () => [...head,
@@ -44,7 +44,7 @@ function viewDigest(){
   const t = today(), text = digestText(t);
   return `<p class="crumb"><a href="#updates">→ עדכונים</a></p>
   <h1 tabindex="-1">תקציר שבועי</h1>
-  <p class="muted">טקסט מוכן להדבקה בוואטסאפ או בכל מקום אחר. ${fmt(addDays(t, -6))} – ${fmt(t)}.</p>
+  <p class="muted">טקסט מוכן להדבקה בוואטסאפ או בכל מקום אחר. ${fmtRange(addDays(t, -6), t)}.</p>
   <section class="panel digest" aria-labelledby="dgH">
     <h2 id="dgH" class="sr">טקסט התקציר</h2>
     <textarea id="digestText" readonly rows="16" aria-labelledby="dgH" aria-describedby="dgCount">${esc(text)}</textarea>
