@@ -35,6 +35,19 @@ const daysSince = iso => (Date.now() - new Date(str(iso))) / 864e5;
 const stageOf = a => Math.min(3, Math.max(0, Number(a.stage) | 0));
 const heCmp = (a, b) => str(a).localeCompare(str(b), "he");
 const plural = (n, one, many) => n === 1 ? one : `${n} ${many}`;
+// "השתנה ב־HH:MM" (docs/design/changed-rows.md): a row whose signature differs from the previous render of the same
+// page, compared only on an auto-refresh render, stays marked until the next navigation. Rows that are new count too.
+// The time is the export's (as in #updateNote), kept from the refresh that first marked the row.
+const rowSigs = new Map(), changedRows = new Map();
+let diffRender = false, newlyChanged = 0;
+const ilTime = ts => new Date(ts).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
+function rowMark(key, sig){
+  const ts = S.generatedAt || S.lastRun;
+  if (diffRender && rowSigs.get(key) !== sig && !changedRows.has(key) && ts && !isNaN(Date.parse(ts))) { changedRows.set(key, ts); newlyChanged++; }
+  rowSigs.set(key, sig);
+  const at = changedRows.get(key);
+  return at ? `<span class="pill chg">השתנה ב־<time datetime="${esc(at)}">${ilTime(at)}</time></span>` : "";   // out of the flow: see styles.css
+}
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };
 // Match key for search: keyboards type ' and " where the data has ׳ and ״ (and vice versa).
@@ -227,11 +240,15 @@ function compRow(c, withSport){
     <span class="when">${fmtRange(c.start, c.end)}</span>
     <span class="what"><b>${withSport ? `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ` : ""}${compLink(c, esc(c.name))}</b>
       <span>${esc(c.location)}${c.notes ? " · " + esc(c.notes) : ""}${safeUrl(c.source) ? " · " + linkOut(c.source) : ""}</span></span>
-    <span>${live ? `<span class="now">מתקיימת עכשיו</span>` : past ? `<span class="pill ended">הסתיימה</span>` : c.qualifying ? `<span class="pill open">העפלה</span>` : ""}</span>
+    <span>${live ? `<span class="pill s-live">מתקיימת עכשיו</span>` : past ? `<span class="pill ended">הסתיימה</span>` : c.qualifying ? `<span class="pill open">העפלה</span>` : ""}</span>
   </div>`;
 }
 
-function athleteCard(a){
+// Followed marker for every component (components.md): visible ★ plus screen-reader text.
+const STAR = `<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span>`;
+
+// components.md §6: a card for grids; a page-specific status goes inside it, as the last line.
+function athleteCard(a, status = ""){
   const s = stageOf(a), fav = S.follows.has(a.id);
   return `<a class="card" href="#a-${esc(a.id)}">
     <span class="nm">${fav ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : ""}${esc(a.name)}${isNew(a) ? ` <span class="new">חדש</span>` : ""}</span>
@@ -239,7 +256,14 @@ function athleteCard(a){
     <span><span class="pill st${s}">${STAGES[s]}</span> ${trustChip(a, "card")}</span>
     ${a.rank ? `<span class="ln"><span>דירוג או הישג: </span>${esc(a.rank)}</span>` : ""}
     ${a.next ? `<span class="ln"><span>התחרות הבאה: </span>${esc(a.next)}${isDate(a.nextDate) ? ` (${fmtShort(a.nextDate)})` : ""}</span>` : ""}
+    ${status ? `<span class="ln">${status}</span>` : ""}
   </a>`;
+}
+
+// components.md §6: a row for side columns or more than 4 athletes, in <ul class="rows">; the status is the last cell.
+function athleteRow(a, status = ""){
+  return `<li><span class="d"></span><span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${
+    a.event ? `<small><bdi>${esc(a.event)}</bdi></small>` : ""}</span><span>${status}</span></li>`;
 }
 
 function changeRow(c){
@@ -491,7 +515,7 @@ function viewSport(id){
   const ws = winStatus(s.window), w = s.window;
   const comps = upcomingIn(id);
   return `
-  <p class="crumb"><a href="#sports">→ כל הענפים</a></p>
+  <p class="crumb"><a href="#sports"><span aria-hidden="true">→</span>&nbsp;כל הענפים</a></p>
   <div class="sec-head"><h1 tabindex="-1">${esc(s.he)}</h1>${S.isAdmin ? `<button class="btn small" data-add="${esc(id)}">+ הוספת ספורטאי/ת</button>` : ""}</div>
   <section class="panel">
     <div class="sec-head"><h2>שיטת ההעפלה</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</div>
@@ -519,7 +543,7 @@ function viewAthlete(id){
   const hist = (Array.isArray(a.history) ? a.history : []).filter(h => isDate(h.at)).slice().reverse();
   const link = `${SITE_URL}#a-${id}`;
   return `
-  <p class="crumb"><a href="#sport-${esc(a.sportId)}">→ ${esc(sp?.he || "ענף")}</a></p>
+  <p class="crumb"><a href="#sport-${esc(a.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sp?.he || "ענף")}</a></p>
   <div class="sec-head">
     <div><h1 tabindex="-1">${esc(a.name)}</h1>${a.name_en ? `<p class="muted" dir="ltr" style="text-align:right">${esc(a.name_en)}</p>` : ""}</div>
     <div class="actions">
@@ -532,9 +556,9 @@ function viewAthlete(id){
     <ol class="track-labels">${STAGES.map((x, i) => `<li ${i === s ? `class="cur" aria-current="step"` : ""}>${x}${i === s ? `<span class="sr"> (שלב נוכחי)</span>` : ""}</li>`).join("")}</ol>
     <dl class="facts">
       <dt>ענף</dt><dd><a href="#sport-${esc(a.sportId)}">${esc(sp?.he || a.sportId)}</a>${a.event ? ` · ${esc(a.event)}` : ""}</dd>
-      ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}</dd>` : ""}
+      ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}${rowMark(`rank|${id}`, a.rank)}</dd>` : ""}
       ${athleteQuotaFacts(a)}
-      ${a.next ? `<dt>התחרות הבאה</dt><dd>${nextCompFact(a)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}</dd>` : ""}
+      ${a.next ? `<dt>התחרות הבאה</dt><dd>${nextCompFact(a)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}${rowMark(`next|${id}`, a.next + a.nextDate)}</dd>` : ""}
       <dt>בדיקה</dt><dd class="stack">${trustNote(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
       ${safeUrl(a.source) ? `<dt>מקור</dt><dd>${linkOut(a.source, host(a.source))}</dd>` : ""}
@@ -546,7 +570,7 @@ function viewAthlete(id){
   <section class="panel">
     <h2>היסטוריה</h2>
     ${hist.length ? `<ol class="timeline">${hist.map(h => `<li class="k-${esc(h.kind)}"><span class="d">${fmt(h.at)}</span>
-      <span>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</span></li>`).join("")}</ol>`
+      <span>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}${(k => rowMark(k, k))(`hist|${id}|${h.at}|${h.kind}|${h.text}`)}</span></li>`).join("")}</ol>`
       : `<p class="muted">עוד אין אירועים מתועדים.</p>`}
   </section>
   <section class="stack">
@@ -933,7 +957,10 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
-  else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") html = viewDay(h === "today" || h === "day" ? today() : h.slice(4)), nav = "calendar";
+  else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") {
+    const d = h === "today" || h === "day" ? today() : h.slice(4);
+    html = viewDay(d), nav = d === today() ? "today" : "calendar";
+  }
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
   else if (/^following(-|$)/.test(h) && typeof viewFollowing === "function") html = viewFollowing(h.slice(10)), nav = "following";
@@ -972,6 +999,7 @@ function navigate(){
   const next = currentRoute();
   if (next !== lastRoute && /^calendar(-|$)/.test(next)) S.cal = {sport: "", qual: false, past: false};
   if (next !== lastRoute && next === "about-trust") focusTrust = true;
+  if (next !== lastRoute) { rowSigs.clear(); changedRows.clear(); }
   const h = route();
   if (h === lastRoute) return;
   const first = lastRoute === null;
@@ -1198,18 +1226,21 @@ async function checkForUpdate(){
     if (S.live || !d || (str(d.generatedAt) === S.generatedAt && str(d.lastRun) === S.lastRun)) { if (quotasChanged) refresh(); return; }
     publicSnapshot = d;
     applySnapshot(d);
-    refresh();
-    showUpdateNote();
+    diffRender = true; newlyChanged = 0;
+    try { refresh(); } finally { diffRender = false; }
+    showUpdateNote(newlyChanged);
   } catch { /* keep what is on screen; freshness() turns stale after 1.5 days */ }
 }
 // A small visible note (also the screen-reader announcement), shown only when the export changed; it hides itself.
 let noteTimer = 0;
-function showUpdateNote(){
+// `marked`: rows newly marked "השתנה ב־"; the note is their only announcement, so the rows themselves stay quiet.
+function showUpdateNote(marked = 0){
   const n = $("updateNote");
   if (!n) return;
   // The export's own time (Israel), not the moment the tab noticed it.
   const ts = S.generatedAt || S.lastRun, ok = ts && !isNaN(Date.parse(ts));
-  n.textContent = ok ? `הנתונים עודכנו ב־${new Date(ts).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"})}` : "הנתונים עודכנו";
+  n.textContent = (ok ? `הנתונים עודכנו ב־${ilTime(ts)}` : "הנתונים עודכנו")
+    + (marked ? ` · ${marked === 1 ? "פריט אחד השתנה" : `${marked} פריטים השתנו`} בדף הזה` : "");
   n.hidden = false;
   clearTimeout(noteTimer);
   noteTimer = setTimeout(() => { n.hidden = true; }, 8000);

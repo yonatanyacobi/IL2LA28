@@ -122,7 +122,7 @@ function digestText(t = today()){
 
 function viewDigest(){
   const t = today(), text = digestText(t);
-  return `<p class="crumb"><a href="#updates">→ עדכונים</a></p>
+  return `<p class="crumb"><a href="#updates"><span aria-hidden="true">→</span>&nbsp;עדכונים</a></p>
   <h1 tabindex="-1">תקציר שבועי</h1>
   <p class="muted">טקסט מוכן להדבקה בוואטסאפ או בכל מקום אחר. ${fmtRange(addDays(t, -6), t)}.</p>
   <section class="panel digest" aria-labelledby="dgH">

@@ -34,7 +34,7 @@ function homeToday(){
   const where = s => `<small>${s.comp ? compA(s.comp) : sportLink(s.sportId)}</small>`;
   // "תאריך בלבד" once per run of untimed rows in one competition; the rest keep it for screen readers only.
   const rows = (list, d) => `<ul class="rows sess">${list.map((s, i) => {
-    const html = sessionRow(s, d, where(s)), prev = list[i - 1];
+    const html = sessionRow(s, d, false, where(s)), prev = list[i - 1];
     return prev && !s.timed && !prev.timed && prev.comp === s.comp
       ? html.replace('<span class="d">תאריך בלבד</span>', '<span class="d"><span class="sr">תאריך בלבד</span></span>') : html;
   }).join("")}</ul>`;
