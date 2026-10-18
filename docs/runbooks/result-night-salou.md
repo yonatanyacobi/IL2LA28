@@ -19,7 +19,7 @@ decided. Salou gives **no Olympic quota**: the quota item stays `in-contention`,
 |---|---|---|
 | 26.10 | The women's session row is on HOLD (no schedule as of 18.10). Once ELF/World Lacrosse publish groups and times: one session per Israeli game day, `timeLocal` as printed, `tz` Europe/Madrid; Dana signs. Same for the men before 10.11 | Yael → Dana → coordinator |
 | 26.10 | Name the **official results source** (ELF/World Lacrosse game pages). None is named in any plan yet; nothing is recorded without one | Yael |
-| 26.10 | Where ELF/World Lacrosse will announce the World Sixes 2027 qualifiers; "עלתה לאליפות העולם" waits for that statement | Yael |
+| 26.10 | Where ELF will officially confirm the World Sixes 2027 qualifiers; "עלתה לאליפות העולם" waits for that confirmation | Yael |
 | 1.11 | Wording for the drafts below approved | Yael → Shira |
 
 ## Each game day
@@ -36,13 +36,13 @@ decided. Salou gives **no Olympic quota**: the quota item stays `in-contention`,
 |---|---|
 | Final placing from the official standings → Dana | Yael |
 | Team write through `job/athlete_patch.py`: `"result": {"at": "<last day>", "text": …, "source": <standings>}`; `next`/`nextDate` → `""` unless an official entry for the next event exists | coordinator |
-| Top 5: "מה התעדכן" line (below), `athleteId` = the team id, **only after an official ELF/World Lacrosse statement** that the team is in the World Sixes 2027; the final standings alone are not enough | Yael → Dana → coordinator |
+| Top 5: "מה התעדכן" line (below), `athleteId` = the team id, **only after ELF's official confirmation** that the team is in the World Sixes 2027; the final standings alone are not enough | Yael → Dana → coordinator |
 | quotas.json PR: the item's `israelNote` / `stakes` / `nextQuotaEvent` after both tournaments (men's ends 18.11), `review` `unchecked`, through result-night.md | Yael → Dana → lead |
 
 ## Drafts (Yael / Shira to approve)
 
-Dates in the job's style. Score with Israel's goals first.
-- Session `result` per game: `ניצחון <IL>–<OPP> על <נבחרת>` / `הפסד <IL>–<OPP> ל<נבחרת>`
+Dates in the job's style. Score as `<HI>:<LO>`, the higher score first (a dash flips in RTL).
+- Session `result` per game: `ניצחון <HI>:<LO> על <נבחרת>` / `הפסד <HI>:<LO> ל<נבחרת>`
 - History (women): `מקום <N> באליפות אירופה בלקרוס סיקסס – נשים, סאלו (9 בנוב׳ 2026)`
 - History (men): `מקום <N> באליפות אירופה בלקרוס סיקסס – גברים, סאלו (18 בנוב׳ 2026)`
 - "מה התעדכן", top 5 only:

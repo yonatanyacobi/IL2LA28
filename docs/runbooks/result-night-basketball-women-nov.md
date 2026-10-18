@@ -41,9 +41,9 @@ second entry; if there is one, delete the job's and tell Maya.
 
 ## Drafts (Yael / Shira to approve)
 
-Dates in the job's style; Israel's points first.
-- History: `ניצחון <IL>–<OPP> על פולין במוקדמות יורובאסקט נשים 2027 (11 בנוב׳ 2026)` /
-  `הפסד <IL>–<OPP> לפולין במוקדמות יורובאסקט נשים 2027 (11 בנוב׳ 2026)`; same for טורקיה (14.11) and מונטנגרו (17.11).
-- Session `result`: `ניצחון <IL>–<OPP>` / `הפסד <IL>–<OPP>`.
+Dates in the job's style. Score as `<HI>:<LO>`, the higher score first (a dash flips in RTL), e.g. `ניצחון 78:65 על פולין`, `הפסד 78:65 לפולין`.
+- History: `ניצחון <HI>:<LO> על פולין במוקדמות יורובאסקט נשים 2027 (11 בנוב׳ 2026)` /
+  `הפסד <HI>:<LO> לפולין במוקדמות יורובאסקט נשים 2027 (11 בנוב׳ 2026)`; same for טורקיה (14.11) and מונטנגרו (17.11).
+- Session `result`: `ניצחון <HI>:<LO> על פולין` / `הפסד <HI>:<LO> לפולין`.
 
 The men's window (27.11 The Hague, 30.11 Riga) gets its own runbook when it enters the 14-day window.
