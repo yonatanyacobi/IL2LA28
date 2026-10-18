@@ -367,3 +367,11 @@ div.track{background:none}
 .nav-badge{display:inline-block;min-width:18px;margin-inline-start:4px;padding:0 5px;border-radius:99px;background:var(--sun);color:var(--on-sun);font-size:11px;font-weight:700;line-height:18px;text-align:center}
 @media (max-width:640px){.links a{padding-inline:8px}}
 .site-foot .foot-link{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px}   /* "אודות" left the nav: keep a full tap target */
+
+/* competition page (#c-<id>; event-page.md §4) */
+.event-cols{display:grid;gap:22px}
+@media (min-width:900px){.event-cols{grid-template-columns:2fr 1fr;align-items:start}}
+.event-head{display:grid;gap:6px}
+.event-head .pills{display:flex;flex-wrap:wrap;gap:6px}
+.sess-day h3{font-size:16px;font-family:var(--f-body);font-weight:700}
+.sess-day h3 a[aria-current="date"]{color:var(--ink);text-decoration-thickness:3px;text-decoration-color:var(--sun)}
