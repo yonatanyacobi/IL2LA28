@@ -428,6 +428,28 @@ test("#admin last-run panel shows the newest run's warnings, escaped", async () 
   assert.ok(!quiet.view("admin").includes('id="runWarnings"'), "no box without warnings");
 });
 
+test("#admin launch readiness: counts link to where each issue is fixed", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const [a, b, c] = data.athletes;
+  a.source = "javascript:alert(1)"; b.nextDate = "2026-10-01"; c.verifiedAt = "2026-10-17T00:00:00Z";
+  const {run, view} = await boot({data, quotas: {...QUOTAS, unpublished: 5}, now: "2026-10-18T08:00:00Z"});
+  run(`S.isAdmin = true; S.live = true; S.proposals = [{id: "p1", status: "pending"}, {id: "p2", status: "pending"}]`);
+  const panel = view("admin").split('id="launch"')[1].split("</section>")[0];
+  const num = label => { const before = panel.split(label)[0]; return before.slice(before.lastIndexOf('digits">') + 8).split("<")[0]; };
+  assert.strictEqual(num("הצעות ממתינות"), "2");
+  assert.strictEqual(num("פריטי מכסות שלא פורסמו"), "5");
+  assert.strictEqual(num("בלי אימות ידני"), String(data.athletes.filter(x => !x.verifiedAt).length));
+  assert.strictEqual(num("תאריך התחרות הבאה עבר"), String(data.athletes.filter(x => /^\d{4}-\d\d-\d\d$/.test(x.nextDate || "") && x.nextDate < "2026-10-18").length));
+  for (const href of ["#home", "#admin-nosource", "#admin-noverified", "#admin-pastnext"]) assert.ok(panel.includes(`href="${href}"`), href);
+  const list = view("admin-nosource");
+  assert.ok(list.includes(`href="#a-${a.id}"`) && !list.includes(`href="#a-${c.id}"`), "list rows link to the athlete page");
+  assert.ok(view("admin-pastnext").includes(`href="#a-${b.id}"`));
+
+  const plain = await boot({quotas: QUOTAS});
+  plain.run(`S.isAdmin = true; S.live = true`);
+  assert.ok(plain.view("admin").split('id="launch"')[1].includes("לא ידוע"), "no count in quotas.json → unknown, not 0");
+});
+
 test("#admin quota health: stale file, past/soon events, earned without a stage-2 athlete", async () => {
   const base = QUOTAS.items[0];   // judo, valid
   const item = (sportId, event, israelStatus, start) => ({...base, sportId, event, israelStatus,

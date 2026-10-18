@@ -97,8 +97,33 @@ function quotaHealthPanel(){
   </section>`;
 }
 
+// Launch checks get their own #admin-<key> lists but no tile or per-sport column.
+const LAUNCH_CHECKS = {
+  nosource: {label: "בלי קישור למקור", test: a => !safeUrl(a.source), why: () => "אין מקור https"},
+  noverified: {label: "בלי אימות ידני (verifiedAt)", test: a => !a.verifiedAt, why: () => "לא נבדק/ה ידנית אף פעם"},
+  pastnext: {label: "תאריך התחרות הבאה עבר", test: a => isDate(a.nextDate) && a.nextDate < today(), why: a => "התחרות הבאה: " + fmt(a.nextDate)},
+};
+
+function launchPanel(){
+  const pend = S.proposals.filter(p => p.status === "pending").length;
+  const unpub = S.quotasUnpublished;
+  const n = k => S.athletes.filter(LAUNCH_CHECKS[k].test).length;
+  const rows = [
+    {num: pend, label: "הצעות ממתינות לאישור", fix: `<a href="#home">לתור האישורים</a>`},
+    {num: unpub, label: "פריטי מכסות שלא פורסמו (ממתינים לבדיקת עובדות)",
+      fix: unpub == null ? "לא ידוע: quotas.json באתר לא כולל את הספירה" : `<span dir="ltr">data/quotas/quotas.json</span> → <span dir="ltr">job/build_quotas.py</span>`},
+    ...Object.keys(LAUNCH_CHECKS).map(k => ({num: n(k), label: `ספורטאים ${LAUNCH_CHECKS[k].label}`, fix: `<a href="#admin-${k}">לרשימה</a>`})),
+  ];
+  const open = rows.filter(r => r.num !== 0).length;
+  return `<section class="panel" id="launch">
+    <div class="sec-head"><h2>מוכנות להשקה</h2><span class="pill ${open ? "soon" : "open"}">${open ? `${open} נושאים פתוחים` : "מוכן"}</span></div>
+    <ul class="rows">${rows.map(r => `<li><span class="d"><b class="digits">${r.num == null ? "?" : r.num}</b></span>
+      <span class="t">${r.label}<small>${r.fix}</small></span><span></span></li>`).join("")}</ul>
+  </section>`;
+}
+
 function admList(key, sportId){
-  const c = CHECKS[key];
+  const c = CHECKS[key] || LAUNCH_CHECKS[key];
   if (!c || (sportId && !sportById(sportId))) return notFound();
   const list = S.athletes.filter(a => c.test(a) && (!sportId || a.sportId === sportId))
     .sort((a, b) => heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.name, b.name));
@@ -120,6 +145,7 @@ function viewAdmin(sub){
   return `<h1 tabindex="-1">בקרת נתונים</h1>
   <p class="muted">לעורכים בלבד. ${S.athletes.length} רשומות פעילות במאגר החי.</p>
   ${runPanel()}
+  ${launchPanel()}
   ${quotaHealthPanel()}
   <div class="adm-tiles">
     ${tile("#home", pend, "הצעות ממתינות לאישור")}
