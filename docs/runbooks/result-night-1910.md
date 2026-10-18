@@ -35,7 +35,7 @@ No Official PDFs by the morning of 20.10: wait. Don't record anything from anoth
    One write per result. An athlete who also makes the bars final gets a second write with the bars row.
 2. **Session** `sessions/<session id>`: `result` = the session text below, `resultSource` = the Official PDF,
    `resultAt` = `date -u +%Y-%m-%dT%H:%M:%SZ`. All three, or the export blanks the result. Sub 10 holds both Raz
-   and Shamai, so its `result` is `ליהיא רז: <text>; רוני שמאי: <text>`.
+   and Shamai, so its `result` is `ליהיא רז: <text> · רוני שמאי: <text>`.
 3. **"מה התעדכן"**, for a Q or a reserve only (not-qualified goes to history only): prepend the athlete's line
    from the drafts below to `meta/status` `changes` (`{"at": "2026-10-19", "text": …, "athleteId": …}`, `at` is
    the competition day even after midnight), `if_version` from your read, keep 30.
@@ -71,18 +71,18 @@ A later change (a reserve moving up, the per-country limit) is a new entry, not 
 
 ## Drafts for "מה התעדכן" (`meta/status`)
 
-Only for a qualification or a reserve. The same `result.text`, with the sport and name in front, as in the judo
-lines in publishing.md.
+Only for a qualification or a reserve. The date is in `at`, so the line doesn't repeat it. Keep the
+`התעמלות מכשירים: ` prefix exactly: the digest matches the sport by it (`changeSport()` in digest.js).
 
 **ליהיא רז** (`lihie-raz`)
-- Q: `התעמלות מכשירים: ליהיא רז – מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב`
+- Q: `התעמלות מכשירים: ליהיא רז עלתה לגמר הקרב־רב באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
 
 **רוני שמאי** (`roni-shamay`)
-- Q: `התעמלות מכשירים: רוני שמאי – מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב`
+- Q: `התעמלות מכשירים: רוני שמאי עלתה לגמר הקרב־רב באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
 
 **יהלי שושני** (`yali-shoshani`)
-- Q: `התעמלות מכשירים: יהלי שושני – מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר המקבילים`
-- Reserve: `התעמלות מכשירים: יהלי שושני – מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר המקבילים`
+- Q: `התעמלות מכשירים: יהלי שושני עלתה לגמר המקבילים באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- Reserve: `התעמלות מכשירים: יהלי שושני מחליפה <R> לגמר המקבילים באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
 
 ## Not covered yet
 
