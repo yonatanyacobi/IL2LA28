@@ -106,7 +106,7 @@ function compBlock(comp, sessions, sid, d){
   // Stakes: in-contention items whose quota event covers this day (an earned item mustn't show pre-event stakes).
   const stakes = quotasOf(sid).filter(q => q.israelStatus === "in-contention" && q.stakes && q.nextQuotaEvent
     && q.nextQuotaEvent.start <= d && d <= quotaEventEnd(q)).slice(0, STAKES_MAX);
-  return `<h3>${compLink(comp, esc(comp.name))}</h3>
+  return `<h3>${compLink(comp, esc(comp.name), "hlink")}</h3>
     ${now ? `<p class="now">מתקיימת עכשיו${total > 1 ? ` · יום ${dayNo(comp.start, d)} מתוך ${total}` : ""}</p>` : ""}
     ${list}
     ${stakes.map(q => `<p class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</p>`).join("")}
