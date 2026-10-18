@@ -46,7 +46,7 @@ const store = {
 const S = {
   loaded: false, live: false, failed: false, liveLost: false, generatedAt: "", lastRun: "",
   sports: [], athletes: [], comps: [], changes: [], proposals: [],
-  quotas: [], quotasUpdatedAt: "", quotasLoaded: false, quotasError: false,   // empty when quotas.json is missing or bad: quota UI must not render
+  quotas: [], quotasUpdatedAt: "", quotasLoaded: false, quotasError: false, quotasUnpublished: null,   // empty when quotas.json is missing or bad: quota UI must not render
   db: null, uid: null, isAdmin: false,
   cal: {sport: "", qual: false, past: false},
   q: "",
@@ -791,6 +791,7 @@ function applyQuotas(){
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
         ...(isDate(q.nextQuotaEvent.end) && q.nextQuotaEvent.end >= q.nextQuotaEvent.start ? {end: q.nextQuotaEvent.end} : {})} : null}));
   S.quotasUpdatedAt = S.quotas.length ? str(quotaFile.updatedAt) : "";
+  S.quotasUnpublished = Number.isInteger(quotaFile?.unpublished) && quotaFile.unpublished >= 0 ? quotaFile.unpublished : null;
 }
 
 async function loadQuotas(){
