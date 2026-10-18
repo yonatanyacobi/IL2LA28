@@ -35,7 +35,7 @@ const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.
 // `quotas`: quotas.json payload; undefined → 404, "fail" → that fetch rejects.
 // `now` pins the clock (ISO instant); `follows` seeds localStorage.
 // Start hidden like their markup in index.html, so tests see what the app un-hides.
-const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar"];
+const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar", "visitorChip", "visitorMsg"];
 // `claude` stands in for window.claude (editor tests); `storage` seeds localStorage.
 async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = [], claude, storage = {}} = {}){
   const els = {}, listeners = {};
@@ -1140,7 +1140,7 @@ test("view as visitor: editors get a toggle; visitor mode runs on data.json with
   const e = await boot({claude: ed});
   assert.ok(e.run("S.live && S.isAdmin"), "editor mode is live");
   e.view("home");
-  assert.ok(!hid(e, "visitorBtn") && !hid(e, "adminChip") && !hid(e, "adminLink") && hid(e, "visitorBar"));
+  assert.ok(!hid(e, "visitorBtn") && !hid(e, "adminChip") && !hid(e, "adminLink") && hid(e, "visitorBar") && hid(e, "visitorChip"));
   assert.ok(e.view("home").includes("את/ה רואה נתונים חיים"), "review queue for editors");
   e.run("setVisitorView(true)");
   assert.strictEqual(e.run(`localStorage.getItem("la28.viewAsVisitor")`), "true");
@@ -1151,7 +1151,7 @@ test("view as visitor: editors get a toggle; visitor mode runs on data.json with
   assert.ok(!vc.calls.includes("db"), "the DB is never opened");
   assert.ok(v.run("!S.live && !S.isAdmin && S.db === null && S.loaded"), "public snapshot only");
   const home = v.view("home");
-  assert.ok(!hid(v, "visitorBar") && hid(v, "adminLink") && hid(v, "adminChip") && hid(v, "visitorBtn"),
+  assert.ok(!hid(v, "visitorBar") && !hid(v, "visitorChip") && hid(v, "adminLink") && hid(v, "adminChip") && hid(v, "visitorBtn"),
     "bar shown; chip, toggle and בקרה hidden");
   assert.ok(!home.includes("את/ה רואה נתונים חיים") && !home.includes("data-edit") && !home.includes("data-add"));
   assert.ok(!v.view("sport-judo").includes("data-add") && !v.view("a-raz-hershko").includes("data-edit"));
@@ -1162,6 +1162,39 @@ test("view as visitor: editors get a toggle; visitor mode runs on data.json with
 
   const pub = await boot({storage: {"la28.viewAsVisitor": "true"}});   // a real visitor with a leftover flag
   assert.ok(hid(pub, "visitorBar") && hid(pub, "visitorBtn"), "no bar or toggle for non-editors");
+});
+
+test("visitor bar markup: inside the sticky nav, not a live region; short toggle keeps its full name", async () => {
+  const html = fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8");
+  const nav = html.split('<nav class="nav"')[1].split("</nav>")[0];
+  const bar = nav.match(/<div class="visitor-bar"[^>]*>/)?.[0] || "";
+  assert.ok(bar.includes('id="visitorBar"') && !/\brole=/.test(bar), "bar inside <nav>, no role");
+  assert.ok(nav.includes('id="visitorChip"'));
+  assert.ok(/id="visitorBtn"[^>]*aria-label="צפייה באתר כגולש\/ת"/.test(nav) || /aria-label="צפייה באתר כגולש\/ת"[^>]*id="visitorBtn"/.test(nav));
+});
+
+test("view-as-visitor toggle with blocked storage shows a message instead of reloading", async () => {
+  const e = await boot({claude: fakeEditor()});
+  e.run(`localStorage.setItem = () => { throw new Error("blocked"); }; localStorage.getItem = () => { throw new Error("blocked"); }`);
+  e.run("setVisitorView(true)");
+  assert.ok(!e.ctx.reloads, "no reload");
+  assert.ok(!e.run(`$("visitorMsg").hidden`) && e.run(`$("visitorMsg").textContent`).includes("חוסם שמירה מקומית"));
+  const ok = await boot({claude: fakeEditor()});
+  ok.run("setVisitorView(true)");
+  assert.ok(ok.ctx.reloads === 1 && ok.run(`$("visitorMsg").hidden`), "normal storage: reload, no message");
+});
+
+test("home order: search right under the hero; chances panel caps at 3 rows on phones", async () => {
+  const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-18T08:00:00Z"});
+  const home = view("home");
+  const q = home.indexOf('id="q"');
+  assert.ok(q > home.indexOf("</section>") && q < home.indexOf('id="todayH"') && q < home.indexOf('id="closeH"'), "search before strip and panel");
+  const panel = home.split('id="closeH"')[1].split("</section>")[0];
+  assert.ok(panel.includes('class="rows closest"') && panel.includes('<span class="sm-only"> (עוד 2)</span>'), "5 groups → (עוד 2)");
+  const few = {updatedAt: "2026-10-18", items: [{...QUOTAS.items[0], sportId: "sailing", event: "x", israelStatus: "in-contention",
+    nextQuotaEvent: {name: "אירוע", start: "2026-12-01"}}]};
+  const one = (await boot({quotas: few, now: "2026-10-18T08:00:00Z"})).view("home").split('id="closeH"')[1].split("</section>")[0];
+  assert.ok(!one.includes("sm-only"), "≤ 3 groups: no suffix");
 });
 
 (async () => {
