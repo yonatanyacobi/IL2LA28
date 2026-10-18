@@ -609,7 +609,7 @@ function calendarResults(){
   return rows.length ? Object.keys(months).sort().map(m => `<section class="month">
       <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}<span class="sr"> ${months[m].length === 1 ? "תחרות" : "תחרויות"}</span></span></h2>
       ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
-    : `<div class="empty">אין תחרויות שמתאימות לסינון.</div>`;
+    : `<div class="empty">אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה.</div>`;
 }
 
 function viewCalendar(sportFilter = ""){
@@ -703,7 +703,7 @@ function trustBlock(){
   </section>`;
 }
 
-const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
+const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p>ייתכן שהקישור ישן או שהרשומה הוסרה.</p><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
 
 function freshness(){
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
@@ -715,9 +715,9 @@ function freshness(){
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
 
 function banner(){
-  if (S.liveLost) return `<div class="banner">החיבור לנתונים החיים נותק. מוצגת הגרסה הציבורית האחרונה. רעננו את הדף כדי להתחבר מחדש.</div>`;
+  if (S.liveLost) return `<div class="banner" role="status">החיבור לנתונים החיים נותק. מוצגת הגרסה הציבורית האחרונה. רעננו את הדף כדי להתחבר מחדש.</div>`;
   const ts = S.generatedAt;
-  if (!S.live && ts && daysSince(ts) > 2) return `<div class="banner">הנתונים לא עודכנו כבר ${Math.floor(daysSince(ts))} ימים, וייתכן שחלקם אינם עדכניים.</div>`;
+  if (!S.live && ts && daysSince(ts) > 2) return `<div class="banner" role="status">הנתונים לא עודכנו כבר ${Math.floor(daysSince(ts))} ימים, וייתכן שחלקם אינם עדכניים.</div>`;
   return "";
 }
 
@@ -941,7 +941,7 @@ function route(){
   const h = currentRoute();
   renderedDay = today();
   let html, nav;
-  if (S.failed && !S.loaded) html = `<div class="empty">לא הצלחנו לטעון את הנתונים. <button class="btn small" data-retry>נסו שוב</button></div>`, nav = "";
+  if (S.failed && !S.loaded) html = `<div class="empty" role="alert"><h1 tabindex="-1">לא הצלחנו לטעון את הנתונים</h1><p>ייתכן שיש בעיה בחיבור לאינטרנט. אפשר לנסות שוב בעוד רגע.</p><p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
   else if (!S.loaded) html = `<div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div>`, nav = "home";
   else if (h === "home") html = viewHome(), nav = "home";
   else if (h === "sports") html = viewSports(), nav = "sports";
@@ -1042,7 +1042,7 @@ document.addEventListener("click", e => {
   if (t.dataset.verify) { t.disabled = true; return markVerified(t.dataset.verify, t); }
   if (t.dataset.act) { t.disabled = true; return decide(t.closest(".prop").dataset.id, t.dataset.act === "approve", t); }
   if (t.dataset.follow) { toggleFollow(t.dataset.follow); route(); return $("view").querySelector("[data-follow]")?.focus(); }
-  if ("retry" in t.dataset) { S.failed = false; route(); return loadPublic(); }
+  if ("retry" in t.dataset) { S.failed = false; route(); $("view").focus({preventScroll: true}); return loadPublic(); }
   if (t.dataset.copy) {
     const input = $(t.dataset.copy);
     const msg = $(t.dataset.copyMsg || (t.dataset.copy === "mailAddr" ? "copyMsg2" : "copyMsg"));
