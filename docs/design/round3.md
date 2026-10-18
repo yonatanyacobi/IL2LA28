@@ -1,7 +1,19 @@
 # Round 3 — after a quota event
 
-Status: §1 ready for implementation (Noa, now); §2–§3 follow · Owner: UX · Base: `main` @ 2701d63
-Existing classes and tokens only, except the one pill in §1. Works at 400px, in light and dark.
+Status: single source for round 3, replacing the copies in #44 (merged, §1–§3) and #56 (§4) · Owner: UX
+Base: `main` @ c2ce543 · Existing tokens only; new CSS is listed per section. Works at 400px, in light and dark.
+
+| § | Topic | Implementer | State |
+|---|---|---|---|
+| 1 | Awaiting results | Noa | in review (#65) |
+| 2 | Quota earned (`earnedAt`) | — | spec |
+| 3 | Athlete-page quota line | — | spec |
+| 4 | `#admin` past quota events (`checkedAt`) | Itai | spec; next after the result-night checklist |
+| 5 | Home: next quota chances + "הבא בתור" | Itai | spec; after §4 |
+| 6 | Verification status for visitors | — | spec |
+
+Shared helpers across sections: `nxt()`, `quotaEventEnd()`, `awaitingOf()` (§1), `checkedOf()` (§4; once
+`checkedAt` ships, §1 uses it instead of `S.quotasUpdatedAt`), `quotaAthletes()`, `todayRows()`.
 
 ## 1. "Awaiting results" — the event ended, quotas.json not updated yet
 
@@ -12,7 +24,7 @@ const AWAIT_DAYS = 14;
 const awaitingOf = (q, t = today()) => {
   const e = q.nextQuotaEvent, end = quotaEventEnd(q);
   if (!e?.name || !end || end >= t || q.israelStatus === "earned") return null;
-  if (str(S.quotasUpdatedAt).slice(0, 10) > end) return null;   // curated after the event: trust the status
+  if (str(S.quotasUpdatedAt).slice(0, 10) > end) return null;   // curated after the event: trust the status (§4: checkedOf(q) > end)
   return dayNo(end, t) - 1 <= AWAIT_DAYS ? {...e, end} : null;     // after 2 weeks: stop saying "soon"
 };
 ```
@@ -116,9 +128,58 @@ In `dl.facts`, after `דירוג או הישג`:
 Last: `<a href="#sport-{id}">לכל המכסות בענף</a>` (once). At 400px `.facts` keeps `auto 1fr`; pills wrap.
 The matcher is heuristic, so the line never says "שלו/שלה" — the quota is the event's, not the athlete's.
 
+## 4. `#admin` — quota events that ended and weren't re-checked (Itai, after the result-night checklist)
+
+Today `quotaHealthPanel()` has one flag, `past` ("אירוע המכסה הבא כבר עבר"). It fires on every item
+whose event is over, even right after a fact-checker re-reviewed it, and it doesn't say how urgent it is.
+This section replaces that flag.
+
+### Data: per-item check date
+`job/build_quotas.py` publishes `checkedAt = review.at` (date only; `review.by` stays private).
+`applyQuotas()`: `checkedAt: isDate(q.checkedAt) ? q.checkedAt : ""`. One shared helper, also used by §1
+instead of the file-level `S.quotasUpdatedAt` once `checkedAt` exists:
+```js
+const checkedOf = q => q.checkedAt || str(S.quotasUpdatedAt).slice(0, 10);
+// Event over, item not reviewed since its last day.
+const unchecked = (q, t = today()) => { const end = quotaEventEnd(q); return !!(q.nextQuotaEvent && end && end < t && checkedOf(q) <= end); };
+```
+An item re-checked after its event but still showing that past event as "next" isn't flagged here: the
+reviewer kept it on purpose. Those still lose their next-event line publicly (`nxt()`).
+
+### Panel
+Two flags replace `past`, inside the same `quotaHealthPanel()` and in the same `.stack` + `.rows` markup:
+
+| key | label | items | alert |
+|---|---|---|---|
+| `overdue` | `אירוע מכסה עבר לפני יותר מ־14 יום ולא נבדק מחדש` | `unchecked(q)` and `dayNo(end, t) - 1 > AWAIT_DAYS` | yes (`adm-bad`, panel `adm-alert`) |
+| `awaiting` | `בהמתנה לבדיקה אחרי אירוע מכסה` | `unchecked(q)` and within `AWAIT_DAYS` | no (pill "תזכורת") |
+
+Order: `overdue` → `awaiting` → existing `earned` → `soon`. Within a flag: oldest event end first.
+
+Row (`.rows li`):
+```html
+<li><span class="d"><a href="#sport-{id}">{sport}</a></span>
+  <span class="t"><bdi>{event}</bdi><small>{name} ({fmtRange(start, end)}) · לפני {n} ימים · בדיקה ידנית אחרונה: {fmt(checkedOf(q))}</small></span>
+  <span>{quotaStatusPill(q.israelStatus)}</span></li>
+```
+- "לפני {n} ימים": `n = dayNo(end, t) - 1`; n = 1 → `אתמול`.
+- Status pill so the editor sees what visitors currently see ("◐ במרוץ למכסה" + public "בהמתנה לתוצאות").
+- Footer of each flag (`.foot`, once): `לעדכן את data/quotas/quotas.json (סטטוס, אירוע מכסה הבא, review.at) ולהריץ את build_quotas.py.`
+- Empty flags are omitted (as today); if neither fires and nothing else does, the panel pill stays "תקין".
+
+### Tile
+Add one tile to `.adm-tiles`, linking to the panel: `tile("#admin", overdue + awaiting, "אירועי מכסה שלא נבדקו מחדש")`
+→ href `#quotaHealth` won't work (only bare `#token` hashes route), so the tile stays on `#admin` and the
+panel is already above the tiles. If `overdue > 0` the tile is `hot`.
+
+### Done when
+- Smoke: an item with an ended event and `checkedAt` before the end appears under `awaiting`; 15 days later
+  under `overdue` (panel `adm-alert`); with `checkedAt` after the end it appears in neither.
+- `python3 -m py_compile job/build_quotas.py`; build test asserts `checkedAt` is published and `review` is not.
+
 ## 5. Home: next quota chances and "הבא בתור" (Itai, after §4)
 
-Implements fixes #1 and #2 from `heuristics-2026-10-18.md`. §4 (`#admin` past events) is in PR #56. The
+Implements fixes #1 and #2 from `heuristics-2026-10-18.md`. The
 title changes from "הכי קרובים למכסה" to **"ההזדמנויות הקרובות למכסה"**: the data has no measure of how
 close anyone is, only when the next chance is. The panel sorts by date, so the title must not promise a ranking.
 
