@@ -67,16 +67,34 @@ def matches(athlete, row):
     return bool(name) and name == str(row.get("athlete_title") or "").strip().lower()
 
 
-def result_text(row, comp_name, distance, day):
+def outcome(row):
     pos = row.get("position")
     if isinstance(pos, int) or str(pos).isdigit():
+        return int(pos)
+    return str(pos).upper() if str(pos).upper() in ("DNF", "DSQ") else None  # DNS or unknown: Ofir's outcome D, no entry
+
+
+def result_text(row, comp_name, distance):
+    """"{outcome} · {competition}" (#163). Pages and the digest that already head the line with the competition drop
+    the " · {competition}" suffix (inCompText in site/app.js); the athlete page and #following keep it. The entry's
+    own date replaces the date the old text repeated."""
+    pos, dist = outcome(row), DISTANCE.get(distance)
+    if pos is None:
+        return None, None
+    text = (f"מקום {pos}" + (f" ב{dist}" if dist else "") if isinstance(pos, int)
+            else ("לא סיים/ה" if pos == "DNF" else "נפסל/ה") + (f" ({dist})" if dist else ""))
+    return pos, f"{text} · {comp_name}"
+
+
+def legacy_text(row, comp_name, distance, day):
+    """The wording before #163, still in history (e.g. Tongyeong 24.10): the dedupe accepts it, so no re-write."""
+    pos = outcome(row)
+    if isinstance(pos, int):
         dist = f"{DISTANCE[distance]}, " if distance in DISTANCE else ""
-        return int(pos), f"מקום {int(pos)} ב{comp_name} ({dist}{he_date(day)})"
-    if str(pos).upper() == "DNF":
-        return "DNF", f"לא סיים/ה את {comp_name} ({he_date(day)})"
-    if str(pos).upper() == "DSQ":
-        return "DSQ", f"נפסל/ה ב{comp_name} ({he_date(day)})"
-    return None, None  # DNS or unknown: Ofir's outcome D, no entry
+        return f"מקום {pos} ב{comp_name} ({dist}{he_date(day)})"
+    if pos == "DNF":
+        return f"לא סיים/ה את {comp_name} ({he_date(day)})"
+    return f"נפסל/ה ב{comp_name} ({he_date(day)})" if pos == "DSQ" else None
 
 
 def plan(data, fetch, today, days=4, propose=True):
@@ -111,11 +129,12 @@ def plan(data, fetch, today, days=4, propose=True):
                     out["warnings"].append(f"תוצאות טריאתלון: {a.get('name') or a['id']} לא נמצא/ה בתוצאות של {tag}")
                 continue
             r, dist, day = hit
-            pos, text = result_text(r, comp["name"], dist, day)
+            pos, text = result_text(r, comp["name"], dist)
             if not text:
                 continue
-            if any(h.get("at") == day and h.get("text") == text for h in a.get("history") or [] if isinstance(h, dict)):
-                continue  # already logged on an earlier run
+            known = {text, legacy_text(r, comp["name"], dist, day)}
+            if any(h.get("at") == day and h.get("text") in known for h in a.get("history") or [] if isinstance(h, dict)):
+                continue  # already logged on an earlier run, in either wording
             out["updates"].append({"athleteId": a["id"], "result": {"at": day, "text": text, "source": page}})
             note = f"מקום {pos} ב{comp['name']} {day[:4]}"
             notes = str(a.get("notes") or "").strip()

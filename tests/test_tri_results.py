@@ -52,7 +52,7 @@ class TriResultsTest(unittest.TestCase):
     def test_podium_history_and_notes_proposal_only(self):
         out = run(FakeApi([row(2)]))
         self.assertEqual(out["updates"], [{"athleteId": "shachar-sagiv", "result": {
-            "at": "2026-10-24", "text": "מקום 2 בגביע העולם בטריאתלון טונגיונג (ספרינט, 24 באוק׳ 2026)", "source": PAGE}}])
+            "at": "2026-10-24", "text": "מקום 2 בספרינט · גביע העולם בטריאתלון טונגיונג", "source": PAGE}}])
         (p,) = out["proposals"]
         self.assertEqual(p["id"], "shachar-sagiv-20261024-result")
         self.assertEqual(p["doc"]["patch"], {"notes": "זכייה בגביע העולם בהואטולקו 2025. מקום 2 בגביע העולם בטריאתלון טונגיונג 2026"})
@@ -66,9 +66,9 @@ class TriResultsTest(unittest.TestCase):
                 self.assertNotIn(key, raw, pos)
 
     def test_outcomes(self):
-        cases = {40: "מקום 40 בגביע העולם בטריאתלון טונגיונג (ספרינט, 24 באוק׳ 2026)",
-                 "DNF": "לא סיים/ה את גביע העולם בטריאתלון טונגיונג (24 באוק׳ 2026)",
-                 "DSQ": "נפסל/ה בגביע העולם בטריאתלון טונגיונג (24 באוק׳ 2026)"}
+        cases = {40: "מקום 40 בספרינט · גביע העולם בטריאתלון טונגיונג",
+                 "DNF": "לא סיים/ה (ספרינט) · גביע העולם בטריאתלון טונגיונג",
+                 "DSQ": "נפסל/ה (ספרינט) · גביע העולם בטריאתלון טונגיונג"}
         for pos, text in cases.items():
             out = run(FakeApi([row(pos)]))
             self.assertEqual([u["result"]["text"] for u in out["updates"]], [text], pos)
@@ -117,6 +117,20 @@ class TriResultsTest(unittest.TestCase):
         again = run(FakeApi([row(2)]), data={**DATA, "athletes": [logged]})
         self.assertEqual((again["updates"], again["proposals"]), ([], []), "next morning: nothing new")
         self.assertEqual(athlete_patch.build(logged, {"result": result}, "x"), {})
+
+    def test_entries_in_the_old_wording_are_not_written_again(self):
+        """#163 migration: Tongyeong 24.10 is in history as "מקום 2 בגביע העולם … (ספרינט, 24 באוק׳ 2026)"."""
+        old = {"at": "2026-10-24", "kind": "result", "text": "מקום 2 בגביע העולם בטריאתלון טונגיונג (ספרינט, 24 באוק׳ 2026)",
+               "source": PAGE}
+        logged = {**SAGIV, "history": [old], "notes": SAGIV["notes"] + ". מקום 2 בגביע העולם בטריאתלון טונגיונג 2026"}
+        self.assertEqual(run(FakeApi([row(2)]), data={**DATA, "athletes": [logged]})["updates"], [])
+        moved = {**logged, "history": [{**old, "text": old["text"].replace("מקום 2", "מקום 3")}]}
+        self.assertEqual(len(run(FakeApi([row(2)]), data={**DATA, "athletes": [moved]})["updates"]), 1, "a different result is new")
+
+    def test_no_distance(self):
+        self.assertEqual(tr.result_text(row(5), "X", None), (5, "מקום 5 · X"))
+        self.assertEqual(tr.result_text(row("DNF"), "X", "unknown"), ("DNF", "לא סיים/ה · X"))
+        self.assertEqual(tr.result_text(row("DNS"), "X", "sprint"), (None, None))
 
     def test_site_date_style(self):
         # fmt() in site/app.js: toLocaleDateString("he-IL", {day: "numeric", month: "short", year: "numeric"})
