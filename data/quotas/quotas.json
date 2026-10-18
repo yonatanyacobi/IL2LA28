@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T13:23:28Z",
+ "updatedAt": "2026-10-18T13:25:07Z",
  "items": [
   {
    "sportId": "judo",
@@ -784,7 +784,7 @@
    "event": "470 מעורב",
    "totalQuotas": 19,
    "maxPerNOC": 1,
-   "allocation": "8 מדינות באליפות העולם 2027 בגדיניה, אחת באירוע יבשתי אירופי, 4 בתחרות ההזדמנות האחרונה 2028.",
+   "allocation": "8 מדינות באליפות העולם 2027 בגדיניה, 6 באירועים יבשתיים (אחת לאירופה), 4 בתחרות ההזדמנות האחרונה 2028, ומקום מארחת.",
    "israelStatus": "unknown",
    "israelNote": "לוי/גל מקום 14 וחסון/טיאנו מקום 16 מתוך 74 באליפות העולם 2026 באנושימה (לא חולקו בה מכסות)",
    "nextQuotaEvent": {
@@ -793,8 +793,8 @@
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "ofir",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
