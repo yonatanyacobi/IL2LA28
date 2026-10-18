@@ -254,6 +254,14 @@ main{min-width:0}
 h1,.card,.panel p,.panel dd{overflow-wrap:anywhere}
 /* .track.s1 etc. would otherwise pick up the stage-bar fills from .s0–.s3 and colour the gaps. */
 div.track{background:none}
+/* Mobile header, ~92px: brand row (44px) + one full-bleed scrolling links row (47px), faded at both
+   edges as the scroll cue; app.js scrolls the current link into view. */
 @media (max-width:640px){
-  .links{flex-wrap:wrap;overflow-x:visible}
+  .nav-in{row-gap:0}
+  .brand{min-height:44px;padding-block:0;display:inline-flex;align-items:center}
+  .links{order:3;flex:1 0 100%;margin-inline:-16px;padding-inline:16px;scroll-padding-inline:24px;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(to left,transparent,#000 16px,#000 calc(100% - 16px),transparent);
+    mask-image:linear-gradient(to left,transparent,#000 16px,#000 calc(100% - 16px),transparent)}
+  .links::-webkit-scrollbar{display:none}
+  .links a{padding-block:10px}
 }
