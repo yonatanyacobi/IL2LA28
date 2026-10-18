@@ -2553,7 +2553,7 @@ test("standings: judo 60 kg — 5, the line, 41; unranked listed; links; sr stat
   const {block, page} = await standingsAt({ranks: {"izhak-ashpiz": rank(5), "j-second": rank(41)}, follows: ["izhak-ashpiz"]});
   assert.ok(page.indexOf('id="standH"') > page.indexOf("שיטת ההעפלה") && page.indexOf('id="standH"') < page.indexOf("תחרויות קרובות בענף"), "position");
   assert.ok(block.includes("<h3><bdi>60- ק״ג גברים</bdi></h3>") && (block.match(/<h3>/g) || []).length === 1, "only items with a cutoff");
-  assert.ok(block.includes('<a href="https://www.ijf.org/wrl_olympic" target="_blank" rel="noopener">IJF Olympic Ranking List<span class="sr"> (נפתח בחלון חדש)</span></a>'), "list → cutoff.url");
+  assert.ok(block.includes('<bdi><a href="https://www.ijf.org/wrl_olympic" target="_blank" rel="noopener">IJF Olympic Ranking List<span class="sr"> (נפתח בחלון חדש)</span></a></bdi> · '), "list → cutoff.url, in <bdi> (Shira)");
   assert.ok(block.includes('rel="noopener">שיטת ההעפלה<span class="sr">') && block.includes('href="https://www.ausjudo.com.au/'), "system → q.source");
   const ol = block.split('<ol class="rows standings">')[1].split("</ol>")[0];
   const order = ['<span class="d">5</span>', 'class="cutline"', '<span class="d">41</span>'].map(x => ol.indexOf(x));
@@ -2601,7 +2601,7 @@ test("standings: Olympic rank first, world rank as fallback; athlete page shows 
   assert.ok(ol.indexOf('<span class="d">2</span>') < ol.indexOf("cutline") && ol.indexOf("cutline") < ol.indexOf('<span class="d">20</span>'), ol);
   assert.ok(!ol.includes('<span class="d">13</span>') && !block.includes("בדירוג אחר"), "the world rank isn't placed when an Olympic one is");
   const page = b.view("a-izhak-ashpiz");
-  assert.ok(page.includes("<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt><dd>2 (<bdi>IJF Olympic Ranking List</bdi>, נכון ל־18 באוק׳ 2026)</dd>"), "Olympic line");
+  assert.ok(page.includes("<dt>דירוג ההעפלה האולימפי</dt><dd>מקום 2 (<bdi>IJF Olympic Ranking List</bdi>, נכון ל־18 באוק׳ 2026)</dd>"), "Olympic line");
   assert.ok(page.includes('<a href="#sport-judo">מקום 2 · הקו: מקום 17</a>'), "standing uses the Olympic rank");
 });
 
@@ -2709,15 +2709,15 @@ test("standings copy (Gil on #266): no LA28 in public text; a rank without a dat
   const row = block.split("<li>").find(li => li.includes('href="#a-j-second"')) || "";
   assert.ok(row && !row.includes("pill") && !block.includes("תאריך לא ידוע"), row);
   const page = b.view("a-izhak-ashpiz");
-  assert.ok(!/LA28/.test(visibleText(block + page)) && page.includes("<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt>"), "copy-rules: the Games' name");
+  assert.ok(!/LA28/.test(visibleText(block + page)) && page.includes("<dt>דירוג ההעפלה האולימפי</dt>"), "copy-rules: no LA28; Shira's short label");
 });
 
 test("standings (Noa on #266): the athlete page flags a stale rank like the sport page; a future date is never fresh", async () => {
   const {b, block} = await standingsAt({ranks: {"izhak-ashpiz": {olympicRankNum: 2, olympicRankList: OLY, olympicRankAsOf: "2026-08-04"},
     "j-second": {olympicRankNum: 20, olympicRankList: OLY, olympicRankAsOf: "2026-11-30"}}});
   const page = b.view("a-izhak-ashpiz");
-  const facts = page.split("<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt>")[1].split("</dl>")[0];
-  assert.ok(facts.includes('2 (<bdi>IJF Olympic Ranking List</bdi> <span class="pill ended">דירוג מ־4 באוג׳ 2026</span>)') && !facts.includes("נכון ל־4 באוג׳"), facts);
+  const facts = page.split("<dt>דירוג ההעפלה האולימפי</dt>")[1].split("</dl>")[0];
+  assert.ok(facts.includes('מקום 2 (<bdi>IJF Olympic Ranking List</bdi> <span class="pill ended">דירוג מ־4 באוג׳ 2026</span>)') && !facts.includes("נכון ל־4 באוג׳"), facts);
   assert.ok(facts.includes('<bdi>IJF Olympic Ranking List</bdi> <span class="pill ended">דירוג מ־4 באוג׳ 2026</span></dd>'), "the standing fact too");
   const future = block.split("<li>").find(li => li.includes('href="#a-j-second"')) || "";
   assert.ok(future.includes('<span class="pill ended">דירוג מ־30 בנוב׳ 2026</span>'), "future date flagged: " + future);

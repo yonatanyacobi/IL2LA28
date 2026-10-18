@@ -27,7 +27,7 @@ function standingsGroups(q){
 function standingsItem(q){
   const c = q.cutoff, t = today();
   const head = `<h3><bdi>${esc(q.event)}</bdi></h3>
-    <p class="foot">${[linkOut(c.url, c.list), linkOut(q.source, "שיטת ההעפלה")].filter(Boolean).join(" · ")}</p>`;
+    <p class="foot">${[safeUrl(c.url) ? `<bdi>${linkOut(c.url, c.list)}</bdi>` : "", linkOut(q.source, "שיטת ההעפלה")].filter(Boolean).join(" · ")}</p>`;
   if (c.opens && t < c.opens) return head + `<p class="muted">תקופת הדירוג להעפלה נפתחת ב־${fmt(c.opens)}.</p>`;
   const {placed, other, none} = standingsGroups(q);
   const above = placed.filter(({r}) => r.n <= c.rank).length;
@@ -55,7 +55,7 @@ function standingsPanel(sid){
 // athlete is ranked in on the cutoff's own list.
 function standingsFact(a){
   const o = rankOn(a.olympicRankNum, a.olympicRankList, a.olympicRankAsOf);
-  const olympic = o ? `<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt><dd>${o.n} (<bdi>${esc(o.list)}</bdi>${rankWhen(o, d => `, נכון ל־${d}`)})</dd>` : "";
+  const olympic = o ? `<dt>דירוג ההעפלה האולימפי</dt><dd>מקום ${o.n} (<bdi>${esc(o.list)}</bdi>${rankWhen(o, d => `, נכון ל־${d}`)})</dd>` : "";
   return olympic + quotasOf(a.sportId).map(q => [q, q.cutoff && quotaAthletes(q).includes(a) && ranksOf(a).find(r => r.list === q.cutoff.list)])
     .filter(([, r]) => r)
     .map(([q, r]) => `<dt>מול קו המכסה</dt><dd><a href="#sport-${esc(a.sportId)}">מקום ${r.n} · הקו: מקום ${q.cutoff.rank}</a> · <bdi>${esc(q.cutoff.list)}</bdi>${rankWhen(r, d => `, ${d}`)}</dd>`).join("");
