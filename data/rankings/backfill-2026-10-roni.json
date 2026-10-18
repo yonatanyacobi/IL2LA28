@@ -1,0 +1,470 @@
+{
+ "updatedAt": "2026-10-18T15:15:02Z",
+ "athletes": [
+  {
+   "athleteId": "izhak-ashpiz",
+   "rankNum": 5,
+   "rankList": "IJF Olympic Ranking List",
+   "rankAsOf": "2026-10-18",
+   "source": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=1&nation=&q_name=&view=simple&limit=100&page=0",
+   "notes": "מקום 5, 763 נק׳. IJF \"Ranking for Olympic Games\" (WRL OG), read 2026-10-18T15:12Z from the IJF site data feed behind https://www.ijf.org/wrl_olympic. The feed publishes no list date, so rankAsOf is the read date.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "yonatan-elbaz",
+   "rankNum": 12,
+   "rankList": "IJF Olympic Ranking List",
+   "rankAsOf": "2026-10-18",
+   "source": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=3&nation=&q_name=&view=simple&limit=100&page=0",
+   "notes": "מקום 12, 542 נק׳. IJF \"Ranking for Olympic Games\" (WRL OG), read 2026-10-18T15:12Z from the IJF site data feed behind https://www.ijf.org/wrl_olympic. The feed publishes no list date, so rankAsOf is the read date.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "gefen-primo",
+   "rankNum": 5,
+   "rankList": "IJF Olympic Ranking List",
+   "rankAsOf": "2026-10-18",
+   "source": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=9&nation=&q_name=&view=simple&limit=100&page=0",
+   "notes": "מקום 5, 776 נק׳. IJF \"Ranking for Olympic Games\" (WRL OG), read 2026-10-18T15:12Z from the IJF site data feed behind https://www.ijf.org/wrl_olympic. The feed publishes no list date, so rankAsOf is the read date.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "timna-nelson-levy",
+   "rankNum": 12,
+   "rankList": "IJF Olympic Ranking List",
+   "rankAsOf": "2026-10-18",
+   "source": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=10&nation=&q_name=&view=simple&limit=100&page=0",
+   "notes": "מקום 12, 441 נק׳. IJF \"Ranking for Olympic Games\" (WRL OG), read 2026-10-18T15:12Z from the IJF site data feed behind https://www.ijf.org/wrl_olympic. The feed publishes no list date, so rankAsOf is the read date.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "inbal-shemesh",
+   "rankNum": 26,
+   "rankList": "IJF Olympic Ranking List",
+   "rankAsOf": "2026-10-18",
+   "source": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=10&nation=&q_name=&view=simple&limit=100&page=0",
+   "notes": "מקום 26, 231 נק׳. IJF \"Ranking for Olympic Games\" (WRL OG), read 2026-10-18T15:12Z from the IJF site data feed behind https://www.ijf.org/wrl_olympic. The feed publishes no list date, so rankAsOf is the read date.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "kerem-primo",
+   "rankNum": 2,
+   "rankList": "IJF Olympic Ranking List",
+   "rankAsOf": "2026-10-18",
+   "source": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=11&nation=&q_name=&view=simple&limit=100&page=0",
+   "notes": "מקום 2, 1038 נק׳. IJF \"Ranking for Olympic Games\" (WRL OG), read 2026-10-18T15:12Z from the IJF site data feed behind https://www.ijf.org/wrl_olympic. The feed publishes no list date, so rankAsOf is the read date.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "inbar-lanir",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://www.ijf.org/wrl_olympic",
+   "notes": "לא מופיעה ברשימה האולימפית ב־78- (אין לה נקודות בתקופה מ־15.6.2026). IJF \"Ranking for Olympic Games\" (WRL OG), read 2026-10-18T15:12Z from the IJF site data feed behind https://www.ijf.org/wrl_olympic. The feed publishes no list date, so rankAsOf is the read date.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "raz-hershko",
+   "rankNum": 2,
+   "rankList": "IJF Olympic Ranking List",
+   "rankAsOf": "2026-10-18",
+   "source": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=14&nation=&q_name=&view=simple&limit=100&page=0",
+   "notes": "מקום 2, 1396 נק׳. IJF \"Ranking for Olympic Games\" (WRL OG), read 2026-10-18T15:12Z from the IJF site data feed behind https://www.ijf.org/wrl_olympic. The feed publishes no list date, so rankAsOf is the read date.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "yuli-alma-mishiner",
+   "rankNum": 14,
+   "rankList": "IJF Olympic Ranking List",
+   "rankAsOf": "2026-10-18",
+   "source": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=14&nation=&q_name=&view=simple&limit=100&page=0",
+   "notes": "מקום 14, 506 נק׳. IJF \"Ranking for Olympic Games\" (WRL OG), read 2026-10-18T15:12Z from the IJF site data feed behind https://www.ijf.org/wrl_olympic. The feed publishes no list date, so rankAsOf is the read date.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "rivka-bayech",
+   "rankNum": 21,
+   "rankList": "WT Olympic Ranking",
+   "rankAsOf": "2026-10-11",
+   "source": "https://results.worldtaekwondo.org/resultbooks/paris-2026-world-taekwondo-grand-prix-result-book-6acf30b155e45.pdf",
+   "notes": "BAYECH Rivka ISR-1815: Rank WT Olympic 21 (seeding 19), W-49kg. Seeding table of the official WT result book, Paris 2026 GP, dated \"As of 11 OCT 2026\". The month of the ranking WT used is not printed.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "alexandra-dan",
+   "rankNum": 37,
+   "rankList": "WT Olympic Ranking",
+   "rankAsOf": "2026-10-11",
+   "source": "https://results.worldtaekwondo.org/resultbooks/paris-2026-world-taekwondo-grand-prix-result-book-6acf30b155e45.pdf",
+   "notes": "DAN Oleksandra ISR-2245: Rank WT Olympic 37 (seeding 29), W-49kg. As Bayech. WT spells the first name \"Oleksandra\"; the DB has \"Alexandra\".",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "avishag-semberg",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://worldtkd.simplycompete.com/playerRankingV2",
+   "notes": "not in the Paris (Oct) or Muju (Sep) 2026 GP result books. The full WT ranking is only on simplycompete, which refuses automated reads (403, not bypassed).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "ariel-vigdor",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://worldtkd.simplycompete.com/playerRankingV2",
+   "notes": "not in the Paris (Oct) or Muju (Sep) 2026 GP result books. The full WT ranking is only on simplycompete, which refuses automated reads (403, not bypassed).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "nimrod-krivitsky",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://worldtkd.simplycompete.com/playerRankingV2",
+   "notes": "not in the Paris (Oct) or Muju (Sep) 2026 GP result books. The full WT ranking is only on simplycompete, which refuses automated reads (403, not bypassed).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "yuval-freilich",
+   "rankNum": 262,
+   "rankList": "FIE Senior Individual Ranking",
+   "rankAsOf": "2026-10-18",
+   "source": "https://fie.org/athletes/24944",
+   "notes": "FIE page: \"World ranking #262 - Israel - Epee\", season 2027, 4.250 pts. FIE gives no list date; rankAsOf is the read date. This is not the LA28 list (the AOR, from 1.4.2027), so it shows as \"other list\".",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "alon-sarid",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://fie.org/athletes",
+   "notes": "team ranking not readable here. A team-only fencer has no individual LA28 rank; the team list opens on 1.4.2027.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "dov-vilensky",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://fie.org/athletes",
+   "notes": "team ranking not readable here. A team-only fencer has no individual LA28 rank; the team list opens on 1.4.2027.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "yehonatan-mesika",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://fie.org/athletes",
+   "notes": "team ranking not readable here. A team-only fencer has no individual LA28 rank; the team list opens on 1.4.2027.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "yonatan-cohen",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://fie.org/athletes",
+   "notes": "team ranking not readable here. A team-only fencer has no individual LA28 rank; the team list opens on 1.4.2027.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  }
+ ],
+ "cutoffs": [
+  {
+   "sportId": "judo",
+   "event": "60- ק״ג גברים",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "notes": "IJF B/D: top 17 per weight on the WRL OG; final list by 15.6.2028; period 15.6.2026-12.6.2028. One per NOC per weight, plus continental places (Europe 13+13).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "judo",
+   "event": "73- ק״ג גברים",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "notes": "IJF B/D: top 17 per weight on the WRL OG; final list by 15.6.2028; period 15.6.2026-12.6.2028. One per NOC per weight, plus continental places (Europe 13+13).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "judo",
+   "event": "52- ק״ג נשים",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "notes": "IJF B/D: top 17 per weight on the WRL OG; final list by 15.6.2028; period 15.6.2026-12.6.2028. One per NOC per weight, plus continental places (Europe 13+13).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "judo",
+   "event": "57- ק״ג נשים",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "notes": "IJF B/D: top 17 per weight on the WRL OG; final list by 15.6.2028; period 15.6.2026-12.6.2028. One per NOC per weight, plus continental places (Europe 13+13).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "judo",
+   "event": "63- ק״ג נשים",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "notes": "IJF B/D: top 17 per weight on the WRL OG; final list by 15.6.2028; period 15.6.2026-12.6.2028. One per NOC per weight, plus continental places (Europe 13+13).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "judo",
+   "event": "78- ק״ג נשים",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "notes": "IJF B/D: top 17 per weight on the WRL OG; final list by 15.6.2028; period 15.6.2026-12.6.2028. One per NOC per weight, plus continental places (Europe 13+13).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "judo",
+   "event": "78+ ק״ג נשים",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "notes": "IJF B/D: top 17 per weight on the WRL OG; final list by 15.6.2028; period 15.6.2026-12.6.2028. One per NOC per weight, plus continental places (Europe 13+13).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "taekwondo",
+   "event": "49- ק״ג נשים",
+   "cutoff": {
+    "rank": 5,
+    "list": "WT Olympic Ranking",
+    "url": "https://worldtkd.simplycompete.com/playerRankingV2",
+    "final": "2028-01-06",
+    "opens": "2026-07-01"
+   },
+   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
+   "notes": "WT D.1: top 5 per weight in the Olympic Ranking published 6.1.2028 (timeline G); points phase 2 from 7.2026 (WT news nid=142099). Plus the Grand Slam leader and continental qualifiers (Europe 2 per weight).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "taekwondo",
+   "event": "57- ק״ג נשים",
+   "cutoff": {
+    "rank": 5,
+    "list": "WT Olympic Ranking",
+    "url": "https://worldtkd.simplycompete.com/playerRankingV2",
+    "final": "2028-01-06",
+    "opens": "2026-07-01"
+   },
+   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
+   "notes": "WT D.1: top 5 per weight in the Olympic Ranking published 6.1.2028 (timeline G); points phase 2 from 7.2026 (WT news nid=142099). Plus the Grand Slam leader and continental qualifiers (Europe 2 per weight).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "taekwondo",
+   "event": "68- ק״ג גברים",
+   "cutoff": {
+    "rank": 5,
+    "list": "WT Olympic Ranking",
+    "url": "https://worldtkd.simplycompete.com/playerRankingV2",
+    "final": "2028-01-06",
+    "opens": "2026-07-01"
+   },
+   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
+   "notes": "WT D.1: top 5 per weight in the Olympic Ranking published 6.1.2028 (timeline G); points phase 2 from 7.2026 (WT news nid=142099). Plus the Grand Slam leader and continental qualifiers (Europe 2 per weight).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "fencing",
+   "event": "דקר קבוצתי גברים",
+   "cutoff": {
+    "rank": 4,
+    "list": "FIE Senior Team Ranking",
+    "url": "https://fie.org/athletes",
+    "final": "2028-04-01",
+    "opens": "2027-04-01"
+   },
+   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
+   "notes": "FIE D.1: the 4 top teams on the team ranking of 1.4.2028 (competitions 1.4.2027-1.4.2028), plus the best team per zone among 5th-24th.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "fencing",
+   "event": "דקר אישי גברים",
+   "cutoff": {
+    "rank": 2,
+    "list": "FIE Senior Individual Adjusted Official Ranking (AOR)",
+    "url": "https://fie.org/athletes",
+    "final": "2028-04-01",
+    "opens": "2027-04-01"
+   },
+   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
+   "notes": "FIE D.2: the 2 top eligible athletes on the AOR of 1.4.2028 (team-qualified NOCs removed, one per NOC), then one per zone and the zonal qualifiers.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  }
+ ]
+}

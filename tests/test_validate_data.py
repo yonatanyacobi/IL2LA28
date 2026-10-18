@@ -129,6 +129,14 @@ class ValidateTest(unittest.TestCase):
             self.assertTrue(errors, bad)
             self.assertIn(needle, "\n".join(errors), bad)
 
+    def test_history_caps_per_kind(self):
+        res = lambda n: [{"at": "2026-01-01", "kind": "result", "text": f"r{i}", "source": "https://x.org"} for i in range(n)]
+        oth = lambda n: [{"at": "2026-02-01", "kind": "rank", "text": f"o{i}", "source": ""} for i in range(n)]
+        set_h = lambda h: lambda d: d["athletes"][0].__setitem__("history", h)
+        self.assertEqual(self.broken(set_h(res(60) + oth(10))), [])
+        self.assertIn("11 non-result entries, max 10", "\n".join(self.broken(set_h(res(5) + oth(11)))))
+        self.assertIn("61 result entries, max 60", "\n".join(self.broken(set_h(res(61)))))
+
     def test_rank_fields(self):
         def setr(**kw):
             return lambda d: d["athletes"][0].update(kw)

@@ -17,7 +17,8 @@ HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}
-QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt"}
+QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt", "cutoff"}
+CUTOFF_KEYS, CUTOFF_OPTIONAL = {"rank", "list", "url", "final"}, {"opens"}   # docs/design/standings.md §1 (#194)
 STAKES_MAX = 140
 # Stakes style (site date format, maqaf). A year-less date needs a 2-digit month so decimals like 9.58 pass.
 DOTTED_DATE = re.compile(r"(?<![\d.])\d{1,2}\.(?:\d{1,2}\.\d{2,4}|0[1-9]|1[0-2])(?![\d.])", re.ASCII)
@@ -142,8 +143,11 @@ def validate(data):
             elif kind == "history":
                 for i, h in enumerate(v):
                     check(h, HISTORY, f"{where}[{i}]")
-                if len(v) > 10:
-                    err(f"{where}: {len(v)} entries, max 10")
+                n_res = sum(1 for h in v if isinstance(h, dict) and h.get("kind") == "result")
+                if len(v) - n_res > 10:   # = export_data.HISTORY_PUBLIC
+                    err(f"{where}: {len(v) - n_res} non-result entries, max 10")
+                if n_res > 60:            # = export_data.RESULTS_PUBLIC
+                    err(f"{where}: {n_res} result entries, max 60")
                 dates = [h.get("at") for h in v if isinstance(h, dict)]
                 if all(isinstance(d, str) for d in dates) and dates != sorted(dates):
                     err(f"{where}: not sorted by date")
@@ -285,6 +289,30 @@ def validate_sessions(rows, competitions, athlete_ids):
     return errors
 
 
+def check_cutoff(c, path):
+    """A quota item's direct-quota line on an official ranking list: {rank, list, url, final, opens?}."""
+    if not isinstance(c, dict):
+        return [f"{path}: expected an object {{rank, list, url, final, opens?}}"]
+    errs = []
+    missing, extra = CUTOFF_KEYS - set(c), set(c) - CUTOFF_KEYS - CUTOFF_OPTIONAL
+    if missing or extra:
+        errs.append(f"{path}: missing {sorted(missing)}, unknown {sorted(extra)}")
+    if "rank" in c and not (type(c["rank"]) is int and c["rank"] >= 1):
+        errs.append(f"{path}.rank: expected an int >= 1, got {c['rank']!r}")
+    if "list" in c and not (isinstance(c["list"], str) and c["list"].strip() and "\n" not in c["list"]
+                            and len(c["list"]) <= RANK_LIST_MAX):
+        errs.append(f"{path}.list: expected the list name as athletes' rankList writes it (≤ {RANK_LIST_MAX} chars)")
+    if "url" in c and not (isinstance(c["url"], str) and c["url"].startswith("https://") and len(c["url"]) > 8):
+        errs.append(f"{path}.url: expected the official https ranking page, got {c['url']!r}")
+    if "final" in c and not is_date(c["final"]):
+        errs.append(f"{path}.final: expected YYYY-MM-DD, got {c['final']!r}")
+    if "opens" in c and not is_date(c["opens"]):
+        errs.append(f"{path}.opens: expected YYYY-MM-DD, got {c['opens']!r}")
+    elif "opens" in c and is_date(c.get("final")) and c["opens"] > c["final"]:
+        errs.append(f"{path}.opens: {c['opens']} is after final {c['final']}")
+    return errs
+
+
 def validate_quotas(q, data):
     """Same per-item rules as the page's quota loader, plus: "earned" needs an athlete at stage >= 2 in that sport."""
     if not isinstance(q, dict):
@@ -342,6 +370,8 @@ def validate_quotas(q, data):
                 err(f"{path}.stakes: hyphen in {m.group()!r}; use a maqaf (־) after a Hebrew letter")
         if "earnedAt" in it and not (is_date(it["earnedAt"]) and status == "earned"):
             err(f"{path}.earnedAt: expected YYYY-MM-DD on an \"earned\" item, got {it['earnedAt']!r}")
+        if "cutoff" in it:
+            errors.extend(check_cutoff(it["cutoff"], f"{path}.cutoff"))
         src = it.get("source")
         if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
             err(f"{path}.source: expected an https:// URL, got {src!r}")

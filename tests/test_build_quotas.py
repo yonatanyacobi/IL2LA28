@@ -46,6 +46,16 @@ class BuildQuotasTest(unittest.TestCase):
         item = {**fx["items"][1], "checkedAt": "20.10.2026"}
         self.assertTrue(any("checkedAt" in e for e in validate_data.validate_quotas({**fx, "items": [item]}, self.data)))
 
+    def test_cutoff_passes_through_signed_items_only(self):
+        q = load("tests", "fixtures", "quotas.json")["items"][1]
+        cutoff = {"rank": 17, "list": "IJF Olympic Ranking List", "url": "https://www.ijf.org/wrl", "final": "2028-06-15"}
+        master = {"updatedAt": "2026-10-19", "items": [
+            {**q, "event": "signed", "cutoff": cutoff, "review": {"status": "ok", "by": "dana", "at": "2026-10-19"}},
+            {**q, "event": "draft", "cutoff": cutoff, "review": {"status": "unchecked", "by": "roni", "at": "2026-10-19"}}]}
+        out = build_quotas.build(master)
+        self.assertEqual([(i["event"], i["cutoff"]) for i in out["items"]], [("signed", cutoff)])
+        self.assertEqual(validate_data.validate_quotas(out, self.data), [])
+
     def test_stakes_passes_through(self):
         q = load("tests", "fixtures", "quotas.json")["items"][1]
         master = {"updatedAt": "2026-10-18", "items": [{**q, "stakes": "מקום בגמר", "review": {"status": "ok"}}]}
