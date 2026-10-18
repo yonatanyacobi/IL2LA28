@@ -15,8 +15,10 @@ Usage: python3 job/apply_rankings.py <db_dump_dir> data/quotas/quotas.json data/
              an Olympic qualification list goes to olympicRankNum/olympicRankList/olympicRankAsOf, any other
              list to rankNum/rankList/rankAsOf (the world rank the page's "rank" text names).
   unchanged  athlete ids whose rankNum/rankList/rankAsOf already match
+  warnings   rows whose list name looks Olympic ("olymp", "AOR") but doesn't match the routing rule, so they go to
+             the world rank; check the name before writing
 """
-import json, os, sys
+import json, os, re, sys
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -37,6 +39,12 @@ def fields_for(rank_list):
     name = rank_list.lower()
     return OLYMPIC_FIELDS if "olympic" in name or "adjusted official ranking" in name else RANK_FIELDS
 RANK_LIST_MAX = 80  # as validate_data / export_data
+LOOKS_OLYMPIC = re.compile(r"olymp|\bAOR\b", re.IGNORECASE)
+
+
+def misrouted(rank_list):
+    """A name that reads as an Olympic list but that fields_for() sends to the world rank (e.g. "FIE AOR")."""
+    return bool(LOOKS_OLYMPIC.search(rank_list)) and fields_for(rank_list) is RANK_FIELDS
 
 
 def check_cutoff(c, path):
@@ -71,7 +79,8 @@ def shape(r, keys, path):
 
 def plan(files, quota_items, athletes, now):
     """files: [(name, parsed json)]; quota_items: the quotas master items; athletes: DB docs by id."""
-    out = {"errors": [], "skipped": [], "unranked": [], "noCutoff": [], "cutoffs": [], "cutoffsUnchanged": [], "changes": [], "unchanged": []}
+    out = {"errors": [], "skipped": [], "unranked": [], "noCutoff": [], "cutoffs": [], "cutoffsUnchanged": [], "changes": [], "unchanged": [],
+           "warnings": []}
     err = out["errors"].append
     today = now[:10]
     items = {}
@@ -155,6 +164,9 @@ def plan(files, quota_items, athletes, now):
                 out["errors"] += errs
                 continue
             target = fields_for(r["rankList"])
+            if misrouted(r["rankList"]):
+                out["warnings"].append(f"{path}.rankList: {r['rankList']!r} looks like an Olympic list but goes to the world rank"
+                                       " (rankNum); use the list's full name, e.g. \"… Adjusted Official Ranking (AOR)\"")
             patch = build(athletes[aid], {t: r[k] for t, k in zip(target, RANK_FIELDS)}, now)
             prior = next((c for c in out["changes"] if c["doc_id"] == aid), None)   # its world + Olympic rows
             if patch and prior:
@@ -188,7 +200,7 @@ def main(argv):
             print(f"cannot read {p}: {e}", file=sys.stderr)
     out = plan(files, quota_items, athletes, now)
     print(json.dumps(out, ensure_ascii=False, indent=1))
-    print(f"errors={len(out['errors'])} cutoffs={len(out['cutoffs'])} changes={len(out['changes'])} "
+    print(f"errors={len(out['errors'])} warnings={len(out['warnings'])} cutoffs={len(out['cutoffs'])} changes={len(out['changes'])} "
           f"unchanged={len(out['unchanged'])} skipped={len(out['skipped'])}", file=sys.stderr)
     return 1 if out["errors"] else 0
 
