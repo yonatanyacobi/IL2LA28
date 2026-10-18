@@ -362,6 +362,14 @@ div.track{background:none}
 .rows.sess li{grid-template-columns:70px 1fr auto}
 .res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px;color:var(--muted)}
 .res b{color:var(--ink)}
+.home-now{display:grid;gap:22px}
+.won-compact{display:none;margin:0;font-weight:700}
+.home-top{display:flex;flex-direction:column;gap:22px}
+@media (max-width:640px){.won-compact{display:block}.home-top > .won{order:1}}
+.hero-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 4px}
+/* home-today.md §1: the "היום" h2 and its first row fit the first screen at 400×800 (the subtitle is on #about) */
+@media (max-width:640px){.hero{gap:8px}.hero h1{font-size:24px}.hero-sub{display:none}.count{padding:4px 12px}.count b{font-size:20px}}
+@media (min-width:900px){.home-now{grid-template-columns:3fr 2fr;align-items:start}}
 .day-sport h3{font-family:var(--f-body);font-size:16px;font-weight:700;overflow-wrap:anywhere}
 .pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
