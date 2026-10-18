@@ -253,6 +253,20 @@ test("quota section: all-unknown note; hidden without items", async () => {
   assert.ok(!view("sport-surfing").includes("מכסות לישראל"));
 });
 
+// The published, hand-curated file: the loader must keep every item and every quota page must render.
+test("site/quotas.json: all items load and render", async () => {
+  const real = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+  const {run, view} = await boot({quotas: real});
+  assert.strictEqual(run("S.quotas.length"), real.items.length, "loader dropped items");
+  const all = view("quotas");
+  assert.ok(!all.includes(NOT_FOUND) && all.length > 1000);
+  for (const sid of new Set(real.items.map(q => q.sportId))) {
+    const out = view("sport-" + sid);
+    assert.ok(out.includes("מכסות לישראל"), sid);
+    assert.strictEqual((out.match(/<li>\s*<div class="q-top">/g) || []).length, real.items.filter(q => q.sportId === sid).length, sid);
+  }
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));
