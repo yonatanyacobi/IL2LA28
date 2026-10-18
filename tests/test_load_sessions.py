@@ -1,4 +1,4 @@
-import copy, json, os, subprocess, sys, tempfile, unittest
+import copy, json, os, subprocess, sys, tempfile, time, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 JOB = os.path.join(HERE, "..", "job")
@@ -124,6 +124,52 @@ class LoadSessionsTest(unittest.TestCase):
             self.assertEqual(r.returncode, 1)
             r = subprocess.run([sys.executable, script, good], capture_output=True, text=True)
             self.assertEqual(r.returncode, 2)
+
+    def dump(self, tmp, age_min):
+        """A dump dir whose files were all written age_min minutes ago."""
+        db = os.path.join(tmp, "db")
+        for coll, docs in (("competitions", COMPS), ("athletes", ATHLETES)):
+            os.makedirs(os.path.join(db, coll))
+            for k, v in docs.items():
+                p = os.path.join(db, coll, k + ".json")
+                with open(p, "w", encoding="utf-8") as f:
+                    json.dump(v, f, ensure_ascii=False)
+                t = time.time() - age_min * 60
+                os.utime(p, (t, t))
+        return db
+
+    def test_dump_age(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = self.dump(tmp, 45)
+            os.utime(os.path.join(db, "athletes", "raz-hershko.json"))   # the newest file sets the age
+            self.assertLess(ls.dump_age_min(db), 1)
+            os.makedirs(os.path.join(tmp, "empty"))
+            self.assertIsNone(ls.dump_age_min(os.path.join(tmp, "empty")))
+        self.assertEqual((ls.fmt_age(47.4), ls.fmt_age(185)), ("47 min", "3.1 h"))
+        out = {"errors": ["a.competitionId: not in the DB: 'x'", "a.athleteIds: 'y' is not an athlete in the DB",
+                          "a.source: expected the official https schedule"]}
+        self.assertEqual(ls.stale_hints(copy.deepcopy(out), 47)["errors"],
+                         ["a.competitionId: not in the DB: 'x' (dump may be stale: age 47 min)",
+                          "a.athleteIds: 'y' is not an athlete in the DB (dump may be stale: age 47 min)",
+                          "a.source: expected the official https schedule"])
+        self.assertEqual(ls.stale_hints(copy.deepcopy(out), None), out)
+
+    def test_cli_stale_dump(self):
+        script = os.path.join(JOB, "load_sessions.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            db, good = self.dump(tmp, 45), os.path.join(tmp, "roni.json")
+            new_athlete = item(athleteIds=["new-judoka"])   # written to the DB after this dump
+            with open(good, "w", encoding="utf-8") as f:
+                json.dump(batch([new_athlete]), f, ensure_ascii=False)
+            r = subprocess.run([sys.executable, script, db, good], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 1)
+            self.assertRegex(r.stderr, r"WARN: the DB dump .* is 45 min old \(newest file\), over --max-age 30 min")
+            self.assertIn("'new-judoka' is not an athlete in the DB (dump may be stale: age 45 min)", r.stdout)
+            r = subprocess.run([sys.executable, script, "--max-age", "60", db, good], capture_output=True, text=True)
+            self.assertNotIn("WARN", r.stderr)
+            self.assertIn("(dump may be stale: age 45 min)", r.stdout, "the hint names the age even under --max-age")
+            for bad in (["--max-age"], ["--max-age", "soon", db, good]):
+                self.assertEqual(subprocess.run([sys.executable, script, *bad], capture_output=True).returncode, 2, bad)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 """Validate a public data.json produced by export_data.py (shipped next to it).
 
-Usage: python3 validate_data.py <data.json>  -> exit 0 if valid, 1 with one error per line otherwise.
+Usage: python3 validate_data.py <data.json>  -> exit 0 if valid, 1 with one error per line otherwise;
+       WARN lines (suspect rank dates) never change the exit code.
        python3 validate_data.py --quotas <quotas.json> <data.json>  -> checks the hand-curated quotas.json;
        data.json is context for sportId and the "earned" cross-check.
 Checks the contract the exporter guarantees; unknown keys are errors so a private field can't leak silently.
@@ -17,7 +18,9 @@ HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}
-QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt"}
+QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt", "cutoff", "teamRank"}
+TEAM_RANK_KEYS = {"num", "asOf", "source"}   # a team event's own rank on its cutoff list (standings.md §1)
+CUTOFF_KEYS, CUTOFF_OPTIONAL = {"rank", "list", "url", "final"}, {"opens"}   # docs/design/standings.md §1 (#194)
 STAKES_MAX = 140
 # Stakes style (site date format, maqaf). A year-less date needs a 2-digit month so decimals like 9.58 pass.
 DOTTED_DATE = re.compile(r"(?<![\d.])\d{1,2}\.(?:\d{1,2}\.\d{2,4}|0[1-9]|1[0-2])(?![\d.])", re.ASCII)
@@ -33,6 +36,8 @@ ATHLETE = {
     "history": ("history", True), "verifiedAt": ("iso", False),
     # Sortable world rank (docs/product/spec-rank-tiebreak.md); a set rankNum needs both companions (checked below).
     "rankNum": ("rankNum", False), "rankList": ("rankList", False), "rankAsOf": ("date", False),
+    # The Olympic qualification list, kept apart from the world rank (#218); same rules.
+    "olympicRankNum": ("rankNum", False), "olympicRankList": ("rankList", False), "olympicRankAsOf": ("date", False),
 }
 RANK_LIST_MAX = 80
 HISTORY = {"at": ("date!", True), "kind": ("kind", True), "text": ("str!", True), "source": ("url", True)}
@@ -140,28 +145,65 @@ def validate(data):
             elif kind == "history":
                 for i, h in enumerate(v):
                     check(h, HISTORY, f"{where}[{i}]")
-                if len(v) > 10:
-                    err(f"{where}: {len(v)} entries, max 10")
+                n_res = sum(1 for h in v if isinstance(h, dict) and h.get("kind") == "result")
+                if len(v) - n_res > 10:   # = export_data.HISTORY_PUBLIC
+                    err(f"{where}: {len(v) - n_res} non-result entries, max 10")
+                if n_res > 60:            # = export_data.RESULTS_PUBLIC
+                    err(f"{where}: {n_res} result entries, max 60")
                 dates = [h.get("at") for h in v if isinstance(h, dict)]
                 if all(isinstance(d, str) for d in dates) and dates != sorted(dates):
                     err(f"{where}: not sorted by date")
 
+    days = export_days(data.get("generatedAt"))
     for coll, spec in (("sports", SPORT), ("athletes", ATHLETE), ("competitions", COMP), ("changes", CHANGE)):
         seen = set()
         for i, row in enumerate(data[coll]):
             path = f"{coll}[{i}]" + (f"({row.get('id')})" if isinstance(row, dict) and "id" in row else "")
             check(row, spec, path)
-            if coll == "athletes" and isinstance(row, dict) and type(row.get("rankNum")) is int:
-                if not (isinstance(row.get("rankList"), str) and row["rankList"].strip()):
-                    err(f"{path}.rankList: required when rankNum is set")
-                if not is_date(row.get("rankAsOf")):
-                    err(f"{path}.rankAsOf: YYYY-MM-DD required when rankNum is set")
+            for p in ("rank", "olympicRank"):
+                if coll != "athletes" or not isinstance(row, dict):
+                    continue
+                if type(row.get(p + "Num")) is int:
+                    if not (isinstance(row.get(p + "List"), str) and row[p + "List"].strip()):
+                        err(f"{path}.{p}List: required when {p}Num is set")
+                    if not is_date(row.get(p + "AsOf")):
+                        err(f"{path}.{p}AsOf: YYYY-MM-DD required when {p}Num is set")
+                as_of = row.get(p + "AsOf")
+                if is_date(as_of) and days and as_of > days[-1]:
+                    err(f"{path}.{p}AsOf: {as_of} is after the export ({days[-1]})")
             if "id" in spec and isinstance(row, dict):
                 rid = row.get("id")
                 if isinstance(rid, str) and rid in seen:
                     err(f"{path}: duplicate id")
                 seen.add(rid)
     return errors
+
+
+def export_days(generated_at):
+    """The export's UTC and Israel dates, ascending: a rank read "today" may carry either."""
+    if not (isinstance(generated_at, str) and STAMP.fullmatch(generated_at)):
+        return []
+    from zoneinfo import ZoneInfo
+    t = datetime.fromisoformat(generated_at[:-1] + "+00:00")
+    return sorted({t.strftime("%Y-%m-%d"), t.astimezone(ZoneInfo("Asia/Jerusalem")).strftime("%Y-%m-%d")})
+
+
+def warnings(data):
+    """Suspect but not provably wrong, so these never block publishing. A ranking list is published before it's
+    read, so an AsOf equal to the export day is usually the read date instead of the list's (IJF, 18.10).
+    A list name without a date is what the exporter leaves when a DB date is malformed (it nulls the Num)."""
+    days, out = export_days(data.get("generatedAt")), []
+    athletes = data.get("athletes") if isinstance(data.get("athletes"), list) else []
+    for i, a in enumerate(athletes):
+        if not isinstance(a, dict):
+            continue
+        for p in ("rank", "olympicRank"):
+            where = f"athletes[{i}]({a.get('id')}).{p}AsOf"
+            if type(a.get(p + "Num")) is int and a.get(p + "AsOf") in days:
+                out.append(f"{where}: {a[p + 'AsOf']} is the export day; check the date printed on {a.get(p + 'List')!r}")
+            elif isinstance(a.get(p + "List"), str) and a[p + "List"].strip() and not is_date(a.get(p + "AsOf")):
+                out.append(f"{where}: missing although {p}List is set; fix the date in the DB")
+    return out
 
 
 def validate_corrections(rows, launch_at):
@@ -282,6 +324,30 @@ def validate_sessions(rows, competitions, athlete_ids):
     return errors
 
 
+def check_cutoff(c, path):
+    """A quota item's direct-quota line on an official ranking list: {rank, list, url, final, opens?}."""
+    if not isinstance(c, dict):
+        return [f"{path}: expected an object {{rank, list, url, final, opens?}}"]
+    errs = []
+    missing, extra = CUTOFF_KEYS - set(c), set(c) - CUTOFF_KEYS - CUTOFF_OPTIONAL
+    if missing or extra:
+        errs.append(f"{path}: missing {sorted(missing)}, unknown {sorted(extra)}")
+    if "rank" in c and not (type(c["rank"]) is int and c["rank"] >= 1):
+        errs.append(f"{path}.rank: expected an int >= 1, got {c['rank']!r}")
+    if "list" in c and not (isinstance(c["list"], str) and c["list"].strip() and "\n" not in c["list"]
+                            and len(c["list"]) <= RANK_LIST_MAX):
+        errs.append(f"{path}.list: expected the list name as athletes' rankList writes it (≤ {RANK_LIST_MAX} chars)")
+    if "url" in c and not (isinstance(c["url"], str) and c["url"].startswith("https://") and len(c["url"]) > 8):
+        errs.append(f"{path}.url: expected the official https ranking page, got {c['url']!r}")
+    if "final" in c and not is_date(c["final"]):
+        errs.append(f"{path}.final: expected YYYY-MM-DD, got {c['final']!r}")
+    if "opens" in c and not is_date(c["opens"]):
+        errs.append(f"{path}.opens: expected YYYY-MM-DD, got {c['opens']!r}")
+    elif "opens" in c and is_date(c.get("final")) and c["opens"] > c["final"]:
+        errs.append(f"{path}.opens: {c['opens']} is after final {c['final']}")
+    return errs
+
+
 def validate_quotas(q, data):
     """Same per-item rules as the page's quota loader, plus: "earned" needs an athlete at stage >= 2 in that sport."""
     if not isinstance(q, dict):
@@ -339,6 +405,15 @@ def validate_quotas(q, data):
                 err(f"{path}.stakes: hyphen in {m.group()!r}; use a maqaf (־) after a Hebrew letter")
         if "earnedAt" in it and not (is_date(it["earnedAt"]) and status == "earned"):
             err(f"{path}.earnedAt: expected YYYY-MM-DD on an \"earned\" item, got {it['earnedAt']!r}")
+        if "cutoff" in it:
+            errors.extend(check_cutoff(it["cutoff"], f"{path}.cutoff"))
+        if "teamRank" in it:
+            t = it["teamRank"]
+            if not (isinstance(t, dict) and set(t) == TEAM_RANK_KEYS and type(t["num"]) is int and t["num"] >= 1
+                    and is_date(t["asOf"]) and isinstance(t["source"], str) and t["source"].startswith("https://")):
+                err(f"{path}.teamRank: expected {{num: int >= 1, asOf: YYYY-MM-DD, source: https URL}}, got {t!r}")
+            elif "cutoff" not in it:
+                err(f"{path}.teamRank: only with a cutoff (it's a rank on the cutoff's list)")
         src = it.get("source")
         if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
             err(f"{path}.source: expected an https:// URL, got {src!r}")
@@ -376,6 +451,9 @@ def main(argv):
         errors = validate_quotas(docs[0], docs[1] if isinstance(docs[1], dict) else {})
     else:
         errors = validate(docs[0])
+        if isinstance(docs[0], dict):
+            for w in warnings(docs[0]):
+                print(f"WARN: {w}")
     for e in errors:
         print(f"INVALID: {e}")
     if not errors:

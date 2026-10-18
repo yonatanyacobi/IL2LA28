@@ -33,7 +33,7 @@ The order of evaluation matters: a result wins, then the clock. The window and t
 |---|---|---|---|
 | **result** | `result` (with `resultSource` + `resultAt`, enforced by the loader) | none | `<b>תוצאה:</b> {result} · עודכן ב־{when(resultAt)} · <a>מקור: {host(resultSource)}</a>` |
 | **result, date only** (fallback from history) | result without `resultAt` | none | `<b>תוצאה:</b> {text} · <a>מקור: {host}</a>`, with no time |
-| **before** | `now < startUtc`, or an untimed future day | `לפני התחרות` | the time column shows `HH:MM`, or `השעה תפורסם` / `תאריך בלבד` |
+| **before** | `now < startUtc`, or an untimed future day | `לפני התחרות` | the time column shows `HH:MM`, or `תאריך בלבד` |
 | **competing** | inside `[startUtc, +3h)`, or untimed today | `מתחרה היום` | none |
 | **awaiting, fresh** | past the window, and the check time is **before** the window end | `◷ בהמתנה לתוצאה` | `התוצאה תתעדכן {NEXT_CHECK}` |
 | **awaiting, checked** | past the window, and the check time is **after** the window end | `◷ בהמתנה לתוצאה` | `נבדק לאחרונה ב־{when(check)} · התוצאה עוד לא פורסמה במקור הרשמי` |
@@ -64,10 +64,19 @@ When stale, the line becomes:
 - Days without sessions never show stale.
 
 **Auto-refresh (#152).** When new `data.json` arrives, the page re-renders in place. The re-render updates
-`נכון ל־` and the rows, and it never moves focus or scroll. A new result is not highlighted beyond the row's normal
-result line:
+`נכון ל־` and the rows, and it never moves focus or scroll. A new result gets no highlight of its own beyond the
+row's normal result line:
 - no flashing;
 - `prefers-reduced-motion` doesn't matter, because nothing animates.
+
+**Changed rows (#177, built in #193, `docs/design/changed-rows.md`).** The one allowed mark: a row whose content really
+changed in an auto-refresh gets `<span class="pill chg">השתנה ב־<time datetime="{ISO}">{HH:MM}</time></span>` until the
+next navigation.
+- **A timestamp, never "עכשיו":** it stays true however long the page stays open.
+- **Only a real change:** the row's content differs from the previous render. Clock-driven chips (`מתחרה היום` →
+  `◷ בהמתנה לתוצאה`), first renders, ordinary navigation and editors' live snapshots never mark.
+- **Quiet:** out of the text flow, so marking moves nothing. One polite note announces the count; the pills are not
+  live regions.
 
 #152's "יש עדכון" notice, if kept, is a polite `aria-live` text, not a toast with a timer.
 
@@ -99,7 +108,7 @@ freshLine(rowsToday)      // §3 line, stale-aware
   - the detail line is `--muted`, except `<b>תוצאה:</b>`, which is `--ink`;
   - the source link uses the normal link colour.
   - No new colours: contrast is as in phase 1 (`--muted` on `--surface` is 5.6:1 light, 6.6:1 dark).
-- **Time column:** `HH:MM` fits the 70px column. `השעה תפורסם` wraps onto two lines, which is fine.
+- **Time column:** `HH:MM` fits the 70px column. `תאריך בלבד` fits it too.
 
 ## 7. Copy table (for Shira's review)
 | Key | Hebrew |

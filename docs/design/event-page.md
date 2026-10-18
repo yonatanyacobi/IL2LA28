@@ -29,9 +29,8 @@ As in phase 1: no live scores and no field results. The cadence string is the sh
 │ גרנד סלאם אבו דאבי                   │  ← h1
 │ 29–31 באוק׳ 2026 · אבו דאבי          │
 │ [מתקיימת עכשיו · יום 2 מתוך 3] [העפלה]│  ← competition status + qualifying pill
-│ [☆ מעקב אחרי התחרות]                 │
 │ ┌ בקצרה ────────────────────────────┐│
-│ │ 5 ישראלים · 2 תוצאות · 3 בהמתנה   ││
+│ │ 5 ספורטאים ונבחרות · 2 תוצאות     ││
 │ └────────────────────────────────────┘│
 │ ┌ מה על הכף ────────────────────────┐│  ← only if quota items match
 │ │ 57- ק״ג נשים  [◐ במרוץ למכסה]      ││
@@ -44,7 +43,7 @@ As in phase 1: no live scores and no field results. The cadence string is the sh
 │ │ 09:30 · ★ רז הרשקו · 57- ק״ג       ││
 │ │ תוצאה: ארד · עודכן ב־29 באוק׳, 18:40││
 │ │ יום ו׳, 30 באוק׳  (יום 2)          ││
-│ │ השעה תפורסם · {שם} · 63- ק״ג       ││
+│ │ תאריך בלבד · {שם} · 63- ק״ג        ││
 │ │ [מתחרה היום]                       ││
 │ └────────────────────────────────────┘│
 │ ┌ הישראלים בתחרות (5) ──────────────┐│
@@ -69,24 +68,24 @@ This uses the existing `.grid2` rule, `grid-template-columns:2fr 1fr` under the 
   | after, otherwise | `<span class="pill ended">הסתיימה</span>` |
 - **Pills:** `<span class="pill open">העפלה</span>` when `qualifying`. A competition longer than 31 days also gets
   `<span class="pill ended">סדרה עונתית</span>`, and its schedule groups by month, not by day.
-- **Follow button:** `<button class="btn ghost follow" data-follow-comp="{id}" aria-pressed>` with the labels
+- **Follow button (deferred, §2):** `<button class="btn ghost follow" data-follow-comp="{id}" aria-pressed>` with the labels
   `☆ מעקב אחרי התחרות` / `★ התחרות במעקב שלך`.
 
 ### "בקצרה"
 One `.kpi` line, built from the sessions of this competition:
-- `{plural(n, "ישראלי/ת אחד/ת", "ישראלים")}`
+- `{plural(n, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות")}`
 - `· {r} תוצאות` when r > 0
 - `· {w} בהמתנה לתוצאה` when w > 0
 - `· {b} לפני התחרות` when b > 0
 
-With no sessions and no fallback athletes: `אין ספורטאים ונבחרות מישראל ידועים בתחרות הזו.`, plus
-`{n} ישראלים במעקב בענף` linking to the sport. Never claim they compete.
+With no sessions and no fallback athletes: `לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.`, plus
+`{n} ספורטאים ונבחרות במעקב בענף` linking to the sport. Never claim they compete.
 
 ### "מה על הכף" (quota link)
 - **Items:** `quotasOf(sportId)` where `nextQuotaEvent.start` falls in `[start, end]` (the strip's matching rule),
   plus items that are `awaitingOf()` with that event.
 - **Row:** `.qlist`-style (`<bdi>{event}</bdi>`, status pill, awaiting pill), then `stakesLine(q)` for in-contention
-  items. An earned item shows `<b>מכסה הושגה</b>` and no stakes (round3-qa QA-2).
+  items. An earned item shows its `✓ מכסה הושגה` status pill and no stakes (round3-qa QA-2).
 - **Footer link:** `<a href="#sport-{id}">לכל המכסות בענף</a>`.
 - **No items:** the section is omitted. A qualifying competition gets one line under the header instead:
   `תחרות שנספרת להעפלה. <a href="#sport-{id}">שיטת ההעפלה בענף</a>`.
@@ -96,13 +95,14 @@ With no sessions and no fallback athletes: `אין ספורטאים ונבחרו
   Each group holds a `<ul class="rows sess">` of the shared `sessionRow(s)`. Followed athletes go first within a
   day, then by time.
 - **No sessions yet, before start:** `הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי.`
-  With the fallback athletes, list them under their `nextDate` day with `השעה תפורסם`.
+  With the fallback athletes, list them under their `nextDate` day with `תאריך בלבד`.
 - **Today's group** gets `aria-current="date"` on its h3 link, and the page scrolls it into view on arrival
   (route hook; respects `prefers-reduced-motion`).
 
 ### "הישראלים בתחרות"
 - **Cards:** `athleteCard(a)` for every athlete with a session or fallback entry. After the card, the athlete's latest
-  status in *this* competition: the result line, or a chip.
+  status in *this* competition as a chip. A result is shown only in its schedule row, next to its source
+  (near-live §4).
 - **Order:** followed first, then by `heCmp(name)`.
 
 ### Footer and share
@@ -110,7 +110,9 @@ With no sessions and no fallback athletes: `אין ספורטאים ונבחרו
 - **Share:** the existing `.share` box with `${SITE_URL}#c-${id}` and a copy button (`data-copy` +
   `data-copy-msg`). Clipboard may be refused, so the input is selectable.
 
-## 2. Follow a competition
+## 2. Follow a competition (deferred)
+Deferred by the PM (#170): no follow button on `#c-`, and nothing below is built. Kept for when it returns.
+
 - **Storage:** `la28.followComps` (store, try/catch). On each write, prune competitions that ended more than 14 days ago.
 - **Feed (`#following`):** session results and awaiting items of followed competitions join the feed, deduped with
   athlete and sport items.
@@ -154,10 +156,10 @@ No new colours, so contrast is as in phase 1.
   result containing `<b>` renders as text.
 - **Earned:** an earned quota item shows `מכסה הושגה` and no stakes.
 - **Season series:** a competition longer than 31 days shows `סדרה עונתית` and month groups.
-- **Follow:** the competition persists. A followed result appears in the `#following` feed once. Pruning after 14 days works.
+- **Follow (deferred, §2):** the competition persists. A followed result appears in the `#following` feed once. Pruning after 14 days works.
 - **Entry points:** `compRow` names link to `#c-<id>`; the sport link is unchanged.
 
 ## Asks
 - **Maya:** sessions need `competitionId` for every session (plan 1.2 has it). Please keep competition ids stable,
   since they become shareable links.
-- **PM:** confirm that following a competition is wanted in phase 2. Without it, §2 drops and the button is omitted.
+- **PM (resolved, #170):** following a competition is deferred, so §2 and the button are out of phase 2.

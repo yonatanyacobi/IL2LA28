@@ -26,6 +26,11 @@ function commonStakes(list){
   return all.every(s => s.split(";")[0] === lead) ? lead.trim() : "";
 }
 
+// A digest is read for days after it's sent, so no relative time ("היום", "עכשיו"): the head already carries the date.
+// A one-day competition adds nothing, the last day says so, and anything else is "בעיצומה".
+const runningHead = c => (c.end || c.start) === c.start ? `• ${fmtShort(c.start)}` : `• עד ${fmtShort(c.end)}`;
+const runningWhen = (c, t) => (c.end || c.start) === c.start ? "" : c.end === t ? "יום אחרון" : "בעיצומה";
+
 // Depends only on `t` and the loaded data in S, so tests can pin the week.
 function digestText(t = today()){
   const from = addDays(t, -6);
@@ -57,7 +62,9 @@ function digestText(t = today()){
       const fromJob = resChanges.filter(x => !used.has(x) && changeSport(x) === c.sportId && day(x) >= c.start);
       fromJob.forEach(x => used.add(x));
       // An editor's change about an athlete whose result is already logged above would repeat it.
-      const about = fromJob.filter(x => !loggedBy.some(a => a.id === x.athleteId));
+      // The near-live status "…מתקיימת עכשיו" from before the event is stale under its results (Gil's rehearsal). Only
+      // that phrase: any other text, a result included, stays. Dropped notes stay used, so they don't resurface below.
+      const about = fromJob.filter(x => !loggedBy.some(a => a.id === x.athleteId) && !/מתקיימ(ת|ים|ות) עכשיו/.test(str(x.text)));
       const lines = [...logged, ...about.map(x => waCut(`  – ${waText(x.text)}`))];
       return [waCut(`• ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))})`),
         ...(who.length ? waList("  ישראלים: ", names(who)) : []),
@@ -73,7 +80,7 @@ function digestText(t = today()){
   const inRunning = new Set(running.flatMap(r => r.list.map(a => a.id)));
   const competing = [
     ...running.sort((x, y) => heCmp(sportName(x.c.sportId), sportName(y.c.sportId)))
-      .map(({c, list}) => [waCut(`• עד ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))}), מתקיימת עכשיו`), ...waList("  ", names(list))].join("\n")),
+      .map(({c, list}) => [waCut(`${runningHead(c)} · ${waText(c.name)} (${waText(sportName(c.sportId))})${(w => w ? `, ${w}` : "")(runningWhen(c, t))}`), ...waList("  ", names(list))].join("\n")),
     ...S.athletes.filter(a => !inRunning.has(a.id) && isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6))
       .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name))
       .map(a => waCut(`• ${fmtShort(a.nextDate)} · ${waText(a.name)} (${waText(sportName(a.sportId))})${a.next ? ": " + waText(a.next) : ""}`)),
@@ -100,7 +107,7 @@ function digestText(t = today()){
   const sections = [["תוצאות השבוע", results], ["מה התעדכן", changes], ["ישראלים מתחרים השבוע", competing], ["אירועי מכסה בשבועיים הקרובים", quotas]]
     .filter(([, items]) => items.length).map(([title, items]) => ({title, items, cut: 0}));
   // Results always get a heading once anything else is said, so "no results" is explicit rather than missing.
-  if (sections.length && !results.length) sections.unshift({title: "תוצאות השבוע", items: [], none: "לא הסתיימו השבוע תחרויות בענפים שבמעקב.", cut: 0});
+  if (sections.length && !results.length) sections.unshift({title: "תוצאות השבוע", items: [], none: "לא הסתיימו השבוע תחרויות בענפים שברשימה.", cut: 0});
   const head = [`*הדרך ללוס אנג׳לס 28 · תקציר שבועי*`, `${fmtRange(from, t)}${isDate(dataTs) ? ` · נכון ל־${fmt(dataTs)}` : ""}`,
     ...(isDate(dataTs) && dataTs < addDays(t, -2) ? [`שימו לב: הנתונים לא עודכנו מאז ${fmt(dataTs)}.`] : [])];
   const foot = ["", `לכל הפרטים: ${SITE_URL}`, "אתר לא רשמי. הנתונים ממקורות פומביים, כדאי לבדוק מול המקור."];
@@ -120,7 +127,7 @@ function digestText(t = today()){
 
 function viewDigest(){
   const t = today(), text = digestText(t);
-  return `<p class="crumb"><a href="#updates">→ עדכונים</a></p>
+  return `<p class="crumb"><a href="#updates"><span aria-hidden="true">→</span>&nbsp;עדכונים</a></p>
   <h1 tabindex="-1">תקציר שבועי</h1>
   <p class="muted">טקסט מוכן להדבקה בוואטסאפ או בכל מקום אחר. ${fmtRange(addDays(t, -6), t)}.</p>
   <section class="panel digest" aria-labelledby="dgH">

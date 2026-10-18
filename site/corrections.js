@@ -4,6 +4,9 @@
 
 const FIX_BY = {reader: "דיווח של קורא/ת", audit: "בדיקה ידנית", job: "נמצא בעדכון האוטומטי"};
 const FIX_STAT_MIN = 5;   // below this, a share "within 48 hours" would mislead
+// The newest months are shown whole until this many entries; older months show their heading and a button.
+// A month is never split. Keeps the page well under ~150 KB as the log grows.
+const FIX_SHOWN = 100;
 // Pre-launch source audit (PM decision on #89); fixed history, not entries, so it's not derived from data.
 const PRE_LAUNCH_FIXES = 25;
 
@@ -45,16 +48,23 @@ function viewCorrections(id = ""){
   const months = {};
   list.forEach(c => (months[c.at.slice(0, 7)] ??= []).push(c));
   const mail = `<span dir="ltr">${esc(CONTACT_EMAIL)}</span>`;
-  const body = list.length ? Object.keys(months).sort().reverse().map(m => `<section class="month" aria-labelledby="m-${m}">
-      <h2 id="m-${m}">${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})} <span>${months[m].length}<span class="sr"> תיקונים</span></span></h2>
-      ${months[m].map(fixEntry).join("")}</section>`).join("")
+  let shown = 0;
+  const monthName = m => new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"});
+  const body = list.length ? Object.keys(months).sort().reverse().map(m => {
+    const n = months[m].length, open = shown < FIX_SHOWN || S.fixOpen.has(m);
+    if (shown < FIX_SHOWN) shown += n;
+    return `<section class="month" aria-labelledby="m-${m}">
+      <h2 id="m-${m}" tabindex="-1">${monthName(m)} <span>${n}<span class="sr"> תיקונים</span></span></h2>
+      ${open ? months[m].map(fixEntry).join("")
+        : `<p><button class="btn ghost small" data-fix-month="${m}">${n === 1 ? "הצגת התיקון" : `הצגת ${n} התיקונים`} מ${monthName(m)}</button></p>`}</section>`;
+  }).join("")
     : `<div class="empty"><p>עוד אין תיקונים מאז ההשקה.</p>
       <p>מצאתם טעות? שלחו קישור ומקור ל־${mail}, והתיקון יופיע כאן.</p></div>`;
   return `${S.launchAt ? "" : `<div class="banner">תצוגה מקדימה לעורכים: היומן יתפרסם לציבור אחרי שייקבע מועד ההשקה.</div>`}
-  <p class="crumb"><a href="#about">→ אודות</a></p>
+  <p class="crumb"><a href="#about"><span aria-hidden="true">→</span>&nbsp;אודות</a></p>
   <h1 tabindex="-1">יומן התיקונים</h1>
   <p class="muted">כל טעות שתוקנה באתר מאז ההשקה${S.launchAt ? ` ב־${fmt(S.launchAt.slice(0, 10))}` : ""}: מה היה כתוב, מה נכון, ומאיזה מקור.
-    בבדיקה מול המקורות לפני ההשקה תיקנו ${PRE_LAUNCH_FIXES} רשומות.${V ? ` ${V === 1 ? "רשומה אחת כבר נבדקה" : `${V} רשומות כבר נבדקו`} ידנית מול המקור.` : ""}</p>
+    בבדיקה מול המקורות לפני ההשקה תיקנו פרטים אצל ${PRE_LAUNCH_FIXES} ספורטאים ונבחרות.${V ? ` נבדקו ידנית מול המקור עד כה: ${V === 1 ? "ספורטאי/ת או נבחרת אחת" : `${V} ספורטאים ונבחרות`}.` : ""}</p>
   <section class="panel" aria-labelledby="howH">
     <h2 id="howH">מטעות לתיקון</h2>
     <ol class="steps" role="list">
@@ -68,3 +78,12 @@ function viewCorrections(id = ""){
   ${id ? `<p>מוצגים התיקונים של <b>${esc(name || id)}</b> · <a href="#corrections">לכל התיקונים</a></p>` : ""}
   ${body}`;
 }
+
+// "הצגת … התיקונים": render that month and keep focus on its heading.
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-fix-month]");
+  if (!t) return;
+  S.fixOpen.add(t.dataset.fixMonth);
+  route();
+  $("m-" + t.dataset.fixMonth)?.focus();
+});

@@ -17,7 +17,8 @@ ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2}
 ATHLETE_FIELDS = ["name", "name_en", "sportId", "event", "rank", "next", "nextDate", "notes", "source", "updatedAt"]
 COMP_FIELDS = ["sportId", "name", "location", "start", "end", "notes", "source"]
 HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction"}
-HISTORY_PUBLIC = 10
+HISTORY_PUBLIC = 10   # non-result entries per athlete in data.json
+RESULTS_PUBLIC = 60   # kind "result" entries, capped separately (= athlete_patch.RESULTS_MAX)
 RANK_LIST_MAX = 80
 # Public corrections log (docs/design/corrections-log.md). The single source: data.json carries it as launchAt and
 # the page reads it from there. None until the owner picks a launch date; the launch PR sets an ISO instant with Z.
@@ -90,13 +91,16 @@ def stage(v):
         return 0
 
 
-def rank_fields(a):
-    """rankNum only together with its list and date; anything unusable exports as no rank, never a guess."""
-    n, lst, at = a.get("rankNum"), text(a.get("rankList"), RANK_LIST_MAX), date(a.get("rankAsOf"))
+RANK_PREFIXES = ("rank", "olympicRank")  # world rank, and the Olympic qualification list (spec-rank-tiebreak, #218)
+
+
+def rank_fields(a, prefix="rank"):
+    """<prefix>Num only together with its list and date; anything unusable exports as no rank, never a guess."""
+    n, lst, at = a.get(prefix + "Num"), text(a.get(prefix + "List"), RANK_LIST_MAX), date(a.get(prefix + "AsOf"))
     if isinstance(n, str) and n.strip().isdigit():  # edit-form inputs may arrive as strings
         n = int(n)
     ok = type(n) is int and n >= 1 and lst and at
-    return {"rankNum": n if ok else None, "rankList": lst, "rankAsOf": at}
+    return {prefix + "Num": n if ok else None, prefix + "List": lst, prefix + "AsOf": at}
 
 
 def instant(v):
@@ -132,7 +136,11 @@ def history(items):
         out.append({"at": h["at"], "kind": h.get("kind") if h.get("kind") in HISTORY_KINDS else "note",
                     "text": text(h["text"], 300), "source": https(h.get("source"))})
     out.sort(key=lambda h: h["at"])
-    return out[-HISTORY_PUBLIC:]
+    # Results are the public game log (#186): capped on their own, so other kinds never push them out.
+    res = [h for h in out if h["kind"] == "result"][-RESULTS_PUBLIC:]
+    other = [h for h in out if h["kind"] != "result"][-HISTORY_PUBLIC:]
+    keep = {id(h) for h in res + other}
+    return [h for h in out if id(h) in keep]
 
 
 SESSION_TEXT_MAX = 120
@@ -207,7 +215,7 @@ def main(dump, out_file, prev_file=None):
         row = {"id": aid, **{k: text(a.get(k)) for k in ATHLETE_FIELDS}}
         row.update(stage=stage(a.get("stage")), source=https(a.get("source")), nextDate=date(a.get("nextDate")),
                    updatedAt=iso(a.get("updatedAt")), verifiedAt=iso(a.get("verifiedAt")), history=history(a.get("history")),
-                   **rank_fields(a))
+                   **rank_fields(a), **rank_fields(a, "olympicRank"))
         a_out.append(row)
 
     c_out = []

@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T14:19:49Z",
+ "updatedAt": "2026-10-18T17:35:50Z",
  "sessions": [
   {
    "id": "issf-wch-doha-2026-20261103-arm-q",
@@ -15,7 +15,7 @@
    "result": "",
    "resultSource": "",
    "resultAt": "",
-   "notes": "Relay start (approximate, read from the ISSF schedule PDF layout, not a printed time): 09:15 or 11:15 Doha time. Put the real time in timeLocal (tz Asia/Qatar) once the ISSF start list is out (~2.11). Relay not yet published. Once the ISSF start list (expected 2.11) shows it, replace with -arm-q1 (timeLocal 09:15) or -arm-q2 (11:15), tz Asia/Qatar. Entry: ISSF entry list by NOC, 3.10.2026.",
+   "notes": "Relay starts printed on the ISSF web schedule (https://www.issf-sports.org/competitions/3421/schedule), Doha time: relay 1 09:15, relay 2 11:15. When the ISSF start list (~2.11) shows the relay, apply the matching patch: timeLocal \"09:15\" or \"11:15\", tz \"Asia/Qatar\", phase \"מוקדמות רובה אוויר גברים, מקצה 1\" or \"מוקדמות רובה אוויר גברים, מקצה 2\", source = the start list URL (scratchpad yael-doha-relay-patches.json has both variants with startUtc). Entry: ISSF entry list by NOC, 3.10.2026 (final entries closed 2.10).",
    "review": {
     "status": "ok",
     "by": "dana",
@@ -36,7 +36,7 @@
    "result": "",
    "resultSource": "",
    "resultAt": "",
-   "notes": "Relay start (approximate, read from the ISSF schedule PDF layout, not a printed time): 13:15 or 15:15 Doha time. Put the real time in timeLocal (tz Asia/Qatar) once the ISSF start list is out (~2.11). Relay not yet published. Once the ISSF start list shows it, replace with -arw-q1 (13:15) or -arw-q2 (15:15), tz Asia/Qatar.",
+   "notes": "Relay starts printed on the ISSF web schedule (https://www.issf-sports.org/competitions/3421/schedule), Doha time: relay 1 13:15, relay 2 15:15. When the ISSF start list (~2.11) shows the relay, apply the matching patch: timeLocal \"13:15\" or \"15:15\", tz \"Asia/Qatar\", phase \"מוקדמות רובה אוויר נשים, מקצה 1\" or \"מוקדמות רובה אוויר נשים, מקצה 2\", source = the start list URL (scratchpad yael-doha-relay-patches.json has both variants with startUtc). Entry: ISSF entry list by NOC, 3.10.2026 (final entries closed 2.10).",
    "review": {
     "status": "ok",
     "by": "dana",
@@ -58,7 +58,7 @@
    "result": "",
    "resultSource": "",
    "resultAt": "",
-   "notes": "Relay start (approximate, read from the ISSF schedule PDF layout, not a printed time): 09:15 or 10:45 Doha time. Put the real time in timeLocal (tz Asia/Qatar) once the ISSF start list is out (~2.11). No quota in the mixed team. Relay not yet published; split into -armt-q1 (09:15) or -armt-q2 (10:45), tz Asia/Qatar, once the start list shows it.",
+   "notes": "Relay starts printed on the ISSF web schedule (https://www.issf-sports.org/competitions/3421/schedule), Doha time: relay 1 09:15, relay 2 10:45. When the ISSF start list (~2.11) shows the relay, apply the matching patch: timeLocal \"09:15\" or \"10:45\", tz \"Asia/Qatar\", phase \"מוקדמות רובה אוויר זוגות מעורבים, מקצה 1\" or \"מוקדמות רובה אוויר זוגות מעורבים, מקצה 2\", source = the start list URL (scratchpad yael-doha-relay-patches.json has both variants with startUtc). Entry: ISSF entry list by NOC, 3.10.2026 (final entries closed 2.10).",
    "review": {
     "status": "ok",
     "by": "dana",
@@ -83,6 +83,48 @@
    "review": {
     "status": "unchecked",
     "by": "yael",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "golf-lpga-annika-2026-20261112-r1",
+   "competitionId": "golf-lpga-annika-2026",
+   "date": "2026-11-12",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "laetitia-beck"
+   ],
+   "phase": "סיבוב ראשון",
+   "source": "https://www.lpga.com/tournaments/the-annika-driven-by-gainbridge-at-pelican/entries",
+   "result": "",
+   "resultSource": "",
+   "resultAt": "",
+   "notes": "LPGA entries page lists Beck as \"Entered\" (read 2026-10-18 20:23 IDT; quote in #254). Untimed until LPGA posts tee times: then set timeLocal and tz America/New_York, source = the tee-times page. R3 (14.11) and R4 (15.11) only if she makes the cut.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "golf-lpga-annika-2026-20261113-r2",
+   "competitionId": "golf-lpga-annika-2026",
+   "date": "2026-11-13",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "laetitia-beck"
+   ],
+   "phase": "סיבוב שני",
+   "source": "https://www.lpga.com/tournaments/the-annika-driven-by-gainbridge-at-pelican/entries",
+   "result": "",
+   "resultSource": "",
+   "resultAt": "",
+   "notes": "LPGA entries page lists Beck as \"Entered\" (read 2026-10-18 20:23 IDT; quote in #254). Untimed until LPGA posts tee times: then set timeLocal and tz America/New_York, source = the tee-times page. R3 (14.11) and R4 (15.11) only if she makes the cut.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
     "at": "2026-10-18"
    }
   }

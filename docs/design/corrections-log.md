@@ -118,8 +118,10 @@ Nav highlight: "אודות". Route tokens: `corrections` and `corrections-<athle
   `right === ""` → `<span class="was">הוסר: <del>{wrong}</del></span>`.
 - A stage value is shown as `STAGES[n]`; `sportId` as `sportName()`.
 
-**Order and size**: newest first, grouped by month of `at`, with the same `.month` pattern as `#calendar`. No pagination
-until there are 300 entries.
+**Order and size**: newest first, grouped by month of `at`, with the same `.month` pattern as `#calendar`. The newest
+months are shown whole until 100 entries (`FIX_SHOWN`; a month is never split). Each older month shows its heading and
+count, and a button, "הצגת {n} התיקונים מ{month}" ("הצגת התיקון מ…" for one), that renders it in place. Expanded months
+reset on navigation. URLs don't change.
 
 ### Empty state (launch day)
 ```html

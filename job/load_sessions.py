@@ -1,7 +1,9 @@
 """Dry-run DB write plan for signed-off session batches (docs/design/sessions-contract.md §1 and §6).
 
-Usage: python3 job/load_sessions.py <db_dump_dir> data/sessions/<name>.json [...]
+Usage: python3 job/load_sessions.py [--max-age MIN] <db_dump_dir> data/sessions/<name>.json [...]
 <db_dump_dir>: an ArtifactData read with out_dir of athletes, competitions and sessions (the current DB).
+Its age is its newest file's mtime (ArtifactData writes on read). Over --max-age minutes (default 30) prints a WARN
+to stderr, and every "not in the DB" error names the age: re-read the DB before trusting either.
 Writes nothing. Prints a JSON plan for the coordinator:
   errors     every rule a batch breaks (exit 1 if any; fix the batch, don't hand-edit the plan)
   skipped    sessions not signed off (each session's review: status ok/fixed, by, at; as in the quotas master)
@@ -23,6 +25,8 @@ ITEM_KEYS = {"id", "competitionId", "date", "timeLocal", "tz", "athleteIds", "ph
 ITEM_OPTIONAL = {"notes", "result", "resultSource", "resultAt"}  # results only empty: the job owns them
 DB_FIELDS = ["competitionId", "date", "timeLocal", "tz", "athleteIds", "phase", "source", "notes"]
 SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*", re.ASCII)
+MAX_AGE_MIN = 30
+NOT_IN_DB = re.compile(r"not in the DB|is not an athlete in the DB")
 
 
 def check_item(s, comps, athletes, path):
@@ -122,11 +126,39 @@ def plan(batches, comps, athletes, existing):
     return out
 
 
+def dump_age_min(dump, now=None):
+    """Minutes since the newest file under the dump was written; None for an empty dump."""
+    times = [os.path.getmtime(os.path.join(d, f)) for d, _, fs in os.walk(dump) for f in fs]
+    return ((now if now is not None else datetime.now(timezone.utc).timestamp()) - max(times)) / 60 if times else None
+
+
+def fmt_age(m):
+    return f"{m:.0f} min" if m < 120 else f"{m / 60:.1f} h"
+
+
+def stale_hints(out, age):
+    """Name the dump's age on every "not in the DB" error: a write after the dump is the usual cause."""
+    if age is not None:
+        out["errors"] = [f"{e} (dump may be stale: age {fmt_age(age)})" if NOT_IN_DB.search(e) else e for e in out["errors"]]
+    return out
+
+
 def main(argv):
-    if len(argv) < 3 or not os.path.isdir(argv[1]):
-        print("usage: python3 job/load_sessions.py <db_dump_dir> data/sessions/<name>.json [...]", file=sys.stderr)
+    args, max_age = argv[1:], MAX_AGE_MIN
+    if args[:1] == ["--max-age"]:
+        try:
+            max_age, args = float(args[1]), args[2:]
+        except (IndexError, ValueError):
+            args = []
+    if len(args) < 2 or not os.path.isdir(args[0]):
+        print("usage: python3 job/load_sessions.py [--max-age MIN] <db_dump_dir> data/sessions/<name>.json [...]",
+              file=sys.stderr)
         return 2
-    dump, files = argv[1], argv[2:]
+    dump, files = args[0], args[1:]
+    age = dump_age_min(dump)
+    if age is not None and age > max_age:
+        print(f"WARN: the DB dump {dump} is {fmt_age(age)} old (newest file), over --max-age {max_age:g} min;"
+              f" re-read the DB before writing this plan", file=sys.stderr)
     comps, athletes, existing = (load(dump, c, []) for c in ("competitions", "athletes", "sessions"))
     batches = []
     for p in files:
@@ -136,7 +168,7 @@ def main(argv):
         except (OSError, ValueError) as e:
             batches.append((p, None))
             print(f"cannot read {p}: {e}", file=sys.stderr)
-    out = plan(batches, comps, athletes, existing)
+    out = stale_hints(plan(batches, comps, athletes, existing), age)
     print(json.dumps(out, ensure_ascii=False, indent=1))
     print(f"errors={len(out['errors'])} creates={len(out['creates'])} changes={len(out['changes'])} "
           f"unchanged={len(out['unchanged'])} skipped={len(out['skipped'])}", file=sys.stderr)

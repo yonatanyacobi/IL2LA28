@@ -2,7 +2,7 @@
 // Loaded after app.js and relies on its globals (S, esc, route helpers); the router only calls it when S.isAdmin && S.live.
 "use strict";
 
-const RUN_MAX_AGE_H = 36;
+const RUN_MAX_AGE_H = 36, RUN_SOURCES_SHOWN = 8;
 const ADM = {runs: [], runsState: "idle"};   // idle | loading | ready | error
 
 const CHECKS = {
@@ -48,6 +48,8 @@ function runPanel(){
   const errs = errList(r.errors);
   // Job reminders (e.g. "לעדכן quotas.json: …"): action items for editors, not failures.
   const todo = errList(r.warnings);
+  const changes = errList(r.changes);
+  const sources = (Array.isArray(r.sources) ? r.sources : []).filter(s => s && safeUrl(s.source));
   return `<section class="panel ${warns.length ? "adm-alert" : ""}">
     <div class="sec-head"><h2>הריצה היומית האחרונה</h2><span class="pill ${warns.length ? "bad" : todo.length ? "soon" : "open"}">${warns.length ? "דורש בדיקה" : todo.length ? "יש משימות" : "תקין"}</span></div>
     ${warns.length ? `<ul class="adm-warn">${warns.map(w => `<li>${w}</li>`).join("")}</ul>` : ""}
@@ -59,11 +61,15 @@ function runPanel(){
       <dt>פורסם</dt><dd>${r.published === true ? "כן" : "לא"}</dd>
       <dt>עדכונים / הצעות</dt><dd>${countOf(r.writes)} / ${countOf(r.proposals)}</dd>
       <dt>שגיאות</dt><dd>${errs.length ? `<ul class="adm-errs">${errs.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : "אין"}</dd>
+      <dt>שינויים</dt><dd id="runChanges">${changes.length ? `<ul>${changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : "אין"}</dd>
+      <dt>מקורות שנבדקו</dt><dd id="runSources">${sources.length ? `<ul>${sources.slice(0, RUN_SOURCES_SHOWN).map(s =>
+        `<li>${linkOut(s.source, host(s.source))} · ${fmtTs(s.checkedAt)}${s.sportId ? ` · ${esc(sportName(s.sportId))}` : ""}</li>`).join("")}${
+        sources.length > RUN_SOURCES_SHOWN ? `<li>ועוד ${sources.length - RUN_SOURCES_SHOWN}</li>` : ""}</ul>` : "לא תועדו"}</dd>
     </dl>
     ${ADM.runs.length > 1 ? `<div class="tbl"><table>
-      <thead><tr><th scope="col">ריצה</th><th scope="col">סטטוס</th><th scope="col">הסתיימה</th><th scope="col">פורסם</th><th scope="col">עדכונים</th><th scope="col">שגיאות</th><th scope="col">משימות</th></tr></thead>
+      <thead><tr><th scope="col">ריצה</th><th scope="col">סטטוס</th><th scope="col">הסתיימה</th><th scope="col">פורסם</th><th scope="col">עדכונים</th><th scope="col">שגיאות</th><th scope="col">משימות</th><th scope="col">שינויים</th></tr></thead>
       <tbody>${ADM.runs.map(x => `<tr><td>${esc(x.id)}</td><td>${esc(RUN_STATUS[x.status] || x.status || "—")}</td><td>${fmtTs(x.ended)}</td>
-        <td>${x.published === true ? "כן" : "לא"}</td><td>${countOf(x.writes)}</td><td>${errList(x.errors).length}</td><td>${errList(x.warnings).length}</td></tr>`).join("")}</tbody>
+        <td>${x.published === true ? "כן" : "לא"}</td><td>${countOf(x.writes)}</td><td>${errList(x.errors).length}</td><td>${errList(x.warnings).length}</td><td>${errList(x.changes).length}</td></tr>`).join("")}</tbody>
     </table></div>` : ""}
   </section>`;
 }
@@ -107,7 +113,7 @@ function quotaHealthPanel(){
   const sorted = (f, list) => list.slice().sort((a, b) => key(f, a).localeCompare(key(f, b)) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
   return `<section class="panel ${alert ? "adm-alert" : ""}" id="quotaHealth">
     <div class="sec-head">${h}<span class="pill ${alert ? "bad" : flags.length ? "soon" : "open"}">${alert ? "דורש בדיקה" : flags.length ? "תזכורת" : "תקין"}</span></div>
-    <p class="${stale ? "adm-bad" : "muted"}">${S.quotas.length} פריטים · quotas.json עודכן ${isDate(str(S.quotasUpdatedAt).slice(0, 10)) ? `ב־${fmt(str(S.quotasUpdatedAt).slice(0, 10))}` : "בתאריך לא ידוע"}${stale ? ` · ישן מ־${QUOTA_MAX_AGE_D} יום` : ""}</p>
+    <p class="${stale ? "adm-bad" : "muted"}">${plural(S.quotas.length, "פריט אחד", "פריטים")} · quotas.json עודכן ${isDate(str(S.quotasUpdatedAt).slice(0, 10)) ? `ב־${fmt(str(S.quotasUpdatedAt).slice(0, 10))}` : "בתאריך לא ידוע"}${stale ? ` · ישן מ־${QUOTA_MAX_AGE_D} יום` : ""}</p>
     ${flags.map(f => `<div class="stack" data-flag="${f.key}"><h3 class="${f.alert ? "adm-bad" : ""}">${esc(f.label)} (${f.items.length})</h3>
       <ul class="rows">${sorted(f, f.items).map(q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
         <span class="t"><bdi>${esc(q.event)}</bdi><small>${f.why(q)}</small></span><span>${f.pill ? quotaStatusPill(q.israelStatus) : ""}</span></li>`).join("")}</ul>
@@ -116,28 +122,91 @@ function quotaHealthPanel(){
 }
 
 // Launch checks get their own #admin-<key> lists but no tile or per-sport column.
+const NEXT_D = 14;
+// Athlete|day pairs with an exported session; rebuilt only when the sessions index is.
+let sessionPairs = {src: null, set: null};
+const hasSessionOn = (a, d) => {
+  const all = exportedSessions();
+  if (sessionPairs.src !== all) sessionPairs = {src: all, set: new Set(all.flatMap(s => s.athletes.map(x => `${x.id}|${s.day}`)))};
+  return sessionPairs.set.has(`${a.id}|${d}`);
+};
 const LAUNCH_CHECKS = {
   nosource: {label: "בלי קישור למקור", test: a => !safeUrl(a.source), why: () => "אין מקור https"},
   noverified: {label: "בלי בדיקה ידנית (verifiedAt)", test: a => !a.verifiedAt, why: () => "לא נבדק/ה ידנית אף פעם"},
   pastnext: {label: "תאריך התחרות הבאה עבר", test: a => isDate(a.nextDate) && a.nextDate < today(), why: a => "התחרות הבאה: " + fmt(a.nextDate)},
+  // readiness-2210.md §1: every known start in the next 14 days has a session.
+  nosession: {label: `עם תחרות ב־${NEXT_D} הימים הקרובים בלי הופעה בלוח הזמנים`,
+    test: a => isDate(a.nextDate) && a.nextDate >= today() && a.nextDate <= addDays(today(), NEXT_D) && !hasSessionOn(a, a.nextDate),
+    why: a => `התחרות הבאה: ${fmt(a.nextDate)}${a.next ? ` · ${a.next}` : ""}`},
 };
+
+// readiness-2210.md §2 (M3): per result night in the last 14 days, hours from the end of each session's window to
+// its result on the site (resultAt, "when the result was recorded on the site"). A session still without a result
+// counts from its end until now, so a missed night turns late without a result.
+const M3_H = 24, M3_NIGHTS_D = 14;
+function resultNights(t = today(), now = Date.now()){
+  const nights = new Map();
+  for (const s of exportedSessions()) {
+    if (s.day > t || s.day < addDays(t, -M3_NIGHTS_D) || windowEnd(s, s.day) > now) continue;
+    nights.set(s.day, [...(nights.get(s.day) || []), s]);
+  }
+  return [...nights].sort(([x], [y]) => y.localeCompare(x)).map(([d, list]) => {
+    const hours = s => ((s.result && s.resultAt ? Date.parse(s.resultAt) : now) - windowEnd(s, d)) / 36e5;
+    const done = list.filter(s => s.result && s.resultAt), open = list.filter(s => !(s.result && s.resultAt));
+    return {d, n: list.length, done: done.length, worst: done.length ? Math.max(...done.map(hours)) : null,
+      lateDone: done.filter(s => hours(s) > M3_H).length, open: open.length, lateOpen: open.filter(s => hours(s) > M3_H).length};
+  });
+}
 
 function launchPanel(){
   const pend = S.proposals.filter(p => p.status === "pending").length;
   const unpub = S.quotasUnpublished;
   const n = k => S.athletes.filter(LAUNCH_CHECKS[k].test).length;
-  const rows = [
+  const N = S.athletes.length, V = S.athletes.filter(a => trustOf(a) === "ok").length, pct = N ? Math.floor(100 * V / N) : 0;
+  const listLink = k => `<a href="#admin-${k}">לרשימה</a>`;
+  const h = x => `${Math.round(x)} ש׳`;
+  // A row: the number, its label, a line with the link to its list, an optional pill; `open` counts it as an issue.
+  const coverage = [
+    {num: `${V}/${N}`, open: pct < 90, label: "רשומות שנבדקו ידנית (יעד: 90%)", fix: `${pct}% · <a href="#admin-unverified">לרשימת השאר</a>`},
+    {num: n("nosession"), label: `ספורטאים ונבחרות ${LAUNCH_CHECKS.nosession.label}`, fix: listLink("nosession")},
     {num: pend, label: "הצעות ממתינות לאישור", fix: `<a href="#home">לתור האישורים</a>`},
     {num: unpub, label: "פריטי מכסות שלא פורסמו (ממתינים לבדיקת עובדות)",
       fix: unpub == null ? "לא ידוע: quotas.json באתר לא כולל את הספירה" : `<span dir="ltr">data/quotas/quotas.json</span> → <span dir="ltr">job/build_quotas.py</span>`},
-    ...Object.keys(LAUNCH_CHECKS).map(k => ({num: n(k), label: `ספורטאים ונבחרות ${LAUNCH_CHECKS[k].label}`, fix: `<a href="#admin-${k}">לרשימה</a>`})),
+    ...["nosource", "noverified", "pastnext"].map(k => ({num: n(k), label: `ספורטאים ונבחרות ${LAUNCH_CHECKS[k].label}`, fix: listLink(k)})),
   ];
-  const open = rows.filter(r => r.num !== 0).length;
+  const nights = resultNights().map(x => {
+    const late = x.lateDone + x.lateOpen > 0;
+    return {num: x.worst == null ? "—" : h(x.worst), open: late, label: `<a href="#day-${x.d}">${fmt(x.d)}</a>`,
+      fix: [`${x.done} מתוך ${x.n} תוצאות באתר`, x.worst != null && `הארוכה: ${h(x.worst)}`,
+        x.open && `${x.open} עדיין בלי תוצאה${x.lateOpen ? `, ${x.lateOpen} מהן יותר מ־${M3_H} שעות` : ""}`].filter(Boolean).join(" · "),
+      pill: late ? `<span class="pill bad">מעל ${M3_H} שעות</span>` : x.open ? `<span class="pill soon">בהמתנה</span>` : `<span class="pill open">עד ${M3_H} שעות</span>`};
+  });
+  // readiness-2210.md §3: the last 2 daily runs published with no errors.
+  const runLink = `<a href="#admin-runs">ליומן הריצות</a>`;
+  const runs = ADM.runsState === "error" ? [{num: "?", open: true, label: "לא הצלחנו לקרוא את יומן הריצות", fix: runLink}]
+    : ADM.runsState !== "ready" ? [{num: "…", label: "טוען את יומן הריצות", fix: runLink}]
+    : [...ADM.runs.slice(0, 2).map(r => { const e = errList(r.errors).length; return {num: e, open: r.published !== true || e > 0,
+        label: `ריצה ${isDate(r.id) ? fmt(r.id) : esc(r.id)}: ${r.published === true ? "פורסמה" : "לא פורסמה"}`,
+        fix: `${e ? (e === 1 ? "שגיאה אחת" : `${e} שגיאות`) : "אין שגיאות"} · ${runLink}`}; }),
+      ...(ADM.runs.length < 2 ? [{num: ADM.runs.length, open: true, label: ADM.runs.length ? "תועדה ריצה יומית אחת בלבד" : "אין ריצות יומיות מתועדות", fix: runLink}] : [])];
+  const isOpen = r => r.open ?? (r.num !== 0);
+  const open = [...coverage, ...nights, ...runs].filter(isOpen).length;
+  const list = rows => `<ul class="rows">${rows.map(r => `<li><span class="d"><b class="digits${isOpen(r) && r.open ? " adm-bad" : ""}">${r.num == null ? "?" : r.num}</b></span>
+      <span class="t">${r.label}<small>${r.fix}</small></span><span>${r.pill || ""}</span></li>`).join("")}</ul>`;
   return `<section class="panel" id="launch">
     <div class="sec-head"><h2>מוכנות להשקה</h2><span class="pill ${open ? "soon" : "open"}">${open ? (open === 1 ? "נושא פתוח אחד" : `${open} נושאים פתוחים`) : "מוכן"}</span></div>
-    <ul class="rows">${rows.map(r => `<li><span class="d"><b class="digits">${r.num == null ? "?" : r.num}</b></span>
-      <span class="t">${r.label}<small>${r.fix}</small></span><span></span></li>`).join("")}</ul>
+    <h3 id="readyData">1. כיסוי נתונים</h3>${list(coverage)}
+    <h3 id="readyNights">2. לילות תוצאות: מסוף ההופעה עד התוצאה באתר (יעד: עד ${M3_H} שעות)</h3>
+    ${nights.length ? list(nights) : `<p class="muted">אין לילות תוצאות ב־${M3_NIGHTS_D} הימים האחרונים.</p>`}
+    <h3 id="readyRuns">3. הריצות היומיות האחרונות</h3>${list(runs)}
+    <p class="foot">לפי <span dir="ltr">docs/runbooks/readiness-2210.md</span> §1–§3. הופעה בלי שעה מסתיימת בסוף היום.</p>
   </section>`;
+}
+
+function runsList(){
+  return `<p class="crumb"><a href="#admin"><span aria-hidden="true">→</span>&nbsp;בקרה</a></p>
+  <h1 tabindex="-1">יומן הריצות היומיות</h1>
+  ${runPanel()}`;
 }
 
 function admList(key, sportId){
@@ -145,7 +214,7 @@ function admList(key, sportId){
   if (!c || (sportId && !sportById(sportId))) return notFound();
   const list = S.athletes.filter(a => c.test(a) && (!sportId || a.sportId === sportId))
     .sort((a, b) => heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.name, b.name));
-  return `<p class="crumb"><a href="#admin">→ בקרה</a></p>
+  return `<p class="crumb"><a href="#admin"><span aria-hidden="true">→</span>&nbsp;בקרה</a></p>
   <h1 tabindex="-1">${esc(c.label)}${sportId ? ` · ${esc(sportName(sportId))}` : ""} (${list.length})</h1>
   <section class="panel">${list.length ? `<ul class="rows">${list.map(a => `<li><span class="d">${esc(sportName(a.sportId))}</span>
     <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(c.why(a))}</small></span><span></span></li>`).join("")}</ul>`
@@ -170,7 +239,7 @@ const rnAthletes = sid => {
   const list = athletesOf(sid).filter(a => stageOf(a) < 2).sort((a, b) => heCmp(a.name, b.name));
   const props = S.proposals.filter(p => p.status === "pending" && "stage" in (p.patch || {}) && S.athletes.some(a => a.id === p.target && a.sportId === sid)).length;
   return (list.length ? list.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ") : "אין ספורטאים בשלב נמוך מ־2")
-    + (props ? ` · <b>${props} הצעות שלב ממתינות</b>` : "");
+    + (props ? ` · <b>${props === 1 ? "הצעת שלב אחת ממתינה" : `${props} הצעות שלב ממתינות`}</b>` : "");
 };
 const rnKey = q => `la28.rn.${q.sportId}|${q.event}|${q.nextQuotaEvent.start}`;
 
@@ -204,6 +273,7 @@ document.addEventListener("change", e => {
 
 function viewAdmin(sub){
   subscribeRuns();
+  if (sub === "runs") return runsList();
   if (sub) { const [key, ...rest] = sub.split("-"); return admList(key, rest.join("-")); }
   const pend = S.proposals.filter(p => p.status === "pending").length;
   const n = k => S.athletes.filter(CHECKS[k].test).length;
@@ -211,7 +281,7 @@ function viewAdmin(sub){
   const cell = (k, sid, list) => { const v = list.filter(CHECKS[k].test).length; return `<td>${v ? `<a href="#admin-${k}-${esc(sid)}">${v}</a>` : "0"}</td>`; };
   const sports = S.sports.filter(s => athletesOf(s.id).length).sort((a, b) => heCmp(a.he, b.he));
   return `<h1 tabindex="-1">בקרת נתונים</h1>
-  <p class="muted">לעורכים בלבד. ${S.athletes.length} רשומות פעילות במאגר החי.</p>
+  <p class="muted">לעורכים בלבד. ${plural(S.athletes.length, "רשומה פעילה אחת", "רשומות פעילות")}.</p>
   ${resultNightPanel()}
   ${runPanel()}
   ${launchPanel()}

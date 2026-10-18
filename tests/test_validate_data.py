@@ -110,6 +110,77 @@ class ValidateTest(unittest.TestCase):
             self.assertTrue(errors, needle)
             self.assertIn(needle, "\n".join(errors), needle)
 
+    def test_olympic_rank_fields(self):
+        setr = lambda **kw: lambda d: d["athletes"][0].update(kw)
+        O, D = "IJF Olympic Ranking List", "2026-10-13"
+        for ok in [{}, dict(olympicRankNum=3, olympicRankList=O, olympicRankAsOf=D),
+                   dict(olympicRankNum=None, olympicRankList="", olympicRankAsOf=""),
+                   dict(rankNum=1, rankList="IJF World Ranking List", rankAsOf=D, olympicRankNum=3, olympicRankList=O,
+                        olympicRankAsOf=D)]:
+            self.assertEqual(self.broken(setr(**ok)), [], ok)
+        for bad, needle in [(dict(olympicRankNum=0, olympicRankList=O, olympicRankAsOf=D), "olympicRankNum"),
+                            (dict(olympicRankNum="3", olympicRankList=O, olympicRankAsOf=D), "olympicRankNum"),
+                            (dict(olympicRankNum=4, olympicRankAsOf=D), "olympicRankList: required"),
+                            (dict(olympicRankNum=4, olympicRankList=O), "olympicRankAsOf: YYYY-MM-DD required"),
+                            (dict(olympicRankList="x" * 81), "olympicRankList"),
+                            (dict(olympicRankAsOf="13.10.2026"), "olympicRankAsOf"),
+                            (dict(olympicRank=3), "unexpected key")]:
+            errors = self.broken(setr(**bad))
+            self.assertTrue(errors, bad)
+            self.assertIn(needle, "\n".join(errors), bad)
+
+    def test_rank_list_without_as_of_warns(self):
+        # A warning, not an error: export_data leaves exactly this for a malformed DB date (test_export.test_rank_fields).
+        for p in ("olympicRank", "rank"):
+            d = copy.deepcopy(self.good)
+            d["athletes"][0].update({p + "Num": None, p + "List": "IJF Olympic Ranking List", p + "AsOf": ""})
+            self.assertEqual(validate_data.validate(d), [], p)
+            self.assertTrue(any(f"{p}AsOf: missing although {p}List is set" in w for w in validate_data.warnings(d)), p)
+            d["athletes"][0][p + "List"] = ""
+            self.assertFalse(any(d["athletes"][0]["id"] + f").{p}AsOf: missing" in w for w in validate_data.warnings(d)), p)
+
+    def test_rank_as_of_vs_export_day(self):
+        # 21:30Z on 18.10 is already 19.10 in Israel, so both days count as "the export day".
+        def at(stamp, **kw):
+            d = copy.deepcopy(self.good)
+            d["generatedAt"] = stamp
+            for a in d["athletes"]:   # the fixture itself carries the 18.10 IJF bug; pin a clean baseline
+                for p in ("rank", "olympicRank"):
+                    if a.get(p + "AsOf"):
+                        a[p + "AsOf"] = "2026-10-12"
+            d["athletes"][0].update(kw)
+            return validate_data.validate(d), validate_data.warnings(d)
+        ijf = dict(rankNum=5, rankList="IJF World Ranking List", rank="5 בעולם")
+        self.assertEqual(at("2026-10-18T21:30:00Z", **ijf, rankAsOf="2026-10-12"), ([], []))
+        for day in ("2026-10-18", "2026-10-19"):
+            errors, warns = at("2026-10-18T21:30:00Z", **ijf, rankAsOf=day)
+            self.assertEqual(errors, [], day)
+            self.assertEqual(len(warns), 1, day)
+            self.assertIn(f"rankAsOf: {day} is the export day; check the date printed on 'IJF World Ranking List'", warns[0])
+        errors, _ = at("2026-10-18T21:30:00Z", **ijf, rankAsOf="2026-10-20")
+        self.assertIn("rankAsOf: 2026-10-20 is after the export (2026-10-19)", "\n".join(errors))
+        _, warns = at("2026-10-18T09:00:00Z", olympicRankNum=7, olympicRankList="IJF Olympic Ranking List",
+                      olympicRankAsOf="2026-10-18")
+        self.assertTrue(warns and "olympicRankAsOf" in warns[0])
+        # No rankNum: nothing is sorted by that date, so no warning.
+        self.assertEqual(at("2026-10-18T09:00:00Z", rankNum=None, rankList="", rankAsOf="2026-10-18")[1], [])
+
+    def test_cli_warns_without_failing(self):
+        # The fixture carries the real 18.10 IJF rankAsOf bug.
+        out = subprocess.run([sys.executable, os.path.join(HERE, "..", "job", "validate_data.py"), FIXTURE],
+                             capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0)
+        self.assertTrue(any(l.startswith("WARN: ") and "raz-hershko" in l for l in out.stdout.splitlines()))
+        self.assertTrue(out.stdout.rstrip().endswith("OK: " + FIXTURE))
+
+    def test_history_caps_per_kind(self):
+        res = lambda n: [{"at": "2026-01-01", "kind": "result", "text": f"r{i}", "source": "https://x.org"} for i in range(n)]
+        oth = lambda n: [{"at": "2026-02-01", "kind": "rank", "text": f"o{i}", "source": ""} for i in range(n)]
+        set_h = lambda h: lambda d: d["athletes"][0].__setitem__("history", h)
+        self.assertEqual(self.broken(set_h(res(60) + oth(10))), [])
+        self.assertIn("11 non-result entries, max 10", "\n".join(self.broken(set_h(res(5) + oth(11)))))
+        self.assertIn("61 result entries, max 60", "\n".join(self.broken(set_h(res(61)))))
+
     def test_rank_fields(self):
         def setr(**kw):
             return lambda d: d["athletes"][0].update(kw)

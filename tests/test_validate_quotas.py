@@ -42,6 +42,42 @@ class QuotasTest(unittest.TestCase):
         self.assertEqual(len(errors), 1, errors)
         self.assertIn('"earned"', errors[0])
 
+    def test_cutoff(self):
+        good = {"rank": 17, "list": "IJF Olympic Ranking List", "url": "https://www.ijf.org/wrl",
+                "final": "2028-06-15", "opens": "2026-06-15"}
+        cut = lambda c: self.errors(lambda q: q["items"][1].__setitem__("cutoff", c))
+        self.assertEqual(cut(good), [])
+        self.assertEqual(cut({k: v for k, v in good.items() if k != "opens"}), [], "opens is optional")
+        for needle, c in [
+            ("rank", {**good, "rank": 0}), ("rank", {**good, "rank": "17"}), ("rank", {**good, "rank": True}),
+            ("rank", {**good, "rank": 17.0}),
+            ("list", {**good, "list": " "}), ("list", {**good, "list": "x" * 81}),
+            ("url", {**good, "url": "http://www.ijf.org/wrl"}), ("url", {**good, "url": ""}),
+            ("final", {**good, "final": "15.6.2028"}), ("opens", {**good, "opens": "2026-13-01"}),
+            ("is after final", {**good, "opens": "2029-01-01"}),
+            ("missing ['url']", {k: v for k, v in good.items() if k != "url"}),
+            ("unknown ['note']", {**good, "note": "x"}),
+            ("expected an object", 17),
+        ]:
+            errors = cut(c)
+            self.assertTrue(errors, needle)
+            self.assertIn(needle, "\n".join(errors), (needle, errors))
+
+    def test_team_rank(self):
+        cut = {"rank": 4, "list": "FIE Senior Team Ranking", "url": "https://fie.org/athletes", "final": "2028-04-01"}
+        good = {"num": 6, "asOf": "2027-05-01", "source": "https://fie.org/athletes"}
+        def team(t, with_cut=True):
+            def m(q):
+                if with_cut:
+                    q["items"][1]["cutoff"] = cut
+                q["items"][1]["teamRank"] = t
+            return self.errors(m)
+        self.assertEqual(team(good), [])
+        for needle, t in [("teamRank", {**good, "num": 0}), ("teamRank", {**good, "asOf": "5.2027"}),
+                          ("teamRank", {**good, "source": "http://fie.org"}), ("teamRank", {**good, "x": 1})]:
+            self.assertIn(needle, "\n".join(team(t)), t)
+        self.assertIn("only with a cutoff", "\n".join(team(good, with_cut=False)))
+
     def test_stakes_style(self):
         stakes = lambda v: self.errors(lambda q: q["items"][1].__setitem__("stakes", v))
         for ok in ["גרנד סלאם (מ־29 באוק׳ 2026): נקודות לדירוג IJF עד 12 ביוני 2028",
