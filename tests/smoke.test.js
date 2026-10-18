@@ -122,6 +122,36 @@ test("search finds an athlete by Hebrew name", async () => {
   assert.match(els.qCount.textContent, /נמצאו [1-9]/);
 });
 
+test("search by sport English name or id finds that sport's athletes", async () => {
+  const {run, els, view} = await boot();
+  view("home");
+  const judo = FIXTURE.athletes.filter(a => a.sportId === "judo").length;
+  for (const q of ["judo", "JUDO", "artistic-gymnastics"]) {
+    run(`S.q = ${JSON.stringify(q)}; renderResults()`);
+    assert.match(els.qCount.textContent, /נמצאו [1-9]/, q);
+  }
+  run(`S.q = "judo"; renderResults()`);
+  assert.ok(els.qCount.textContent.startsWith(`נמצאו ${judo} `), els.qCount.textContent);
+  assert.ok(els.results.innerHTML.includes("רז הרשקו"));
+  assert.ok(els.results.innerHTML.includes(`href="#sport-judo"`));
+});
+
+test("search says how many of the hits it shows when truncated", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.slice(0, 30).forEach(a => { a.event = "zqx"; });
+  const {run, els, view} = await boot({data});
+  view("home");
+  run(`S.q = "zqx"; renderResults()`);
+  assert.ok(els.results.innerHTML.includes("מציג 24 מתוך 30"));
+  assert.strictEqual((els.results.innerHTML.match(/<a class="card"/g) || []).length, 24);
+  assert.match(els.qCount.textContent, /^נמצאו 30 /);
+  data.athletes.slice(24, 30).forEach(a => { a.event = ""; });
+  const b = await boot({data});
+  b.view("home");
+  b.run(`S.q = "zqx"; renderResults()`);
+  assert.ok(!b.els.results.innerHTML.includes("מציג"), "no note at exactly 24");
+});
+
 test("search ignores apostrophe/geresh, quote/gershayim, niqqud, spacing and Latin case", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
   const a = data.athletes.find(x => x.id === "raz-hershko");
