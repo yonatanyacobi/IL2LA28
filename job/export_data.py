@@ -10,7 +10,7 @@ than 20%, so a failed or truncated dump can't publish a half-empty site.
 import glob, json, os, re, sys
 from datetime import datetime, timezone
 
-DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 ATHLETE_FIELDS = ["name", "name_en", "sportId", "event", "rank", "next", "nextDate", "notes", "source", "updatedAt"]
 COMP_FIELDS = ["sportId", "name", "location", "start", "end", "notes", "source"]
 HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
@@ -34,13 +34,17 @@ def https(u):
 
 
 def date(v):
-    return v if isinstance(v, str) and DATE.match(v) else ""
+    # fullmatch: "$" would accept a trailing newline; strptime rejects impossible dates like 2026-02-30
+    try:
+        return v if isinstance(v, str) and DATE.fullmatch(v) and datetime.strptime(v, "%Y-%m-%d") else ""
+    except ValueError:
+        return ""
 
 
 def stage(v):
     try:
         return max(0, min(3, int(float(v))))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):  # OverflowError: "inf"
         return 0
 
 
