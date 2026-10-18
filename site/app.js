@@ -39,7 +39,7 @@ const store = {
 const S = {
   loaded: false, live: false, failed: false, liveLost: false, generatedAt: "", lastRun: "",
   sports: [], athletes: [], comps: [], changes: [], proposals: [],
-  quotas: [], quotasUpdatedAt: "",   // empty when quotas.json is missing or bad: quota UI must not render
+  quotas: [], quotasUpdatedAt: "", quotasLoaded: false, quotasError: false,   // empty when quotas.json is missing or bad: quota UI must not render
   db: null, uid: null, isAdmin: false,
   cal: {sport: "", qual: false, past: false},
   q: "",
@@ -58,6 +58,33 @@ const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
 // Compared as instants: the job and the page write ISO strings with different precision.
 const trustOf = a => { const v = Date.parse(str(a.verifiedAt)), u = Date.parse(str(a.updatedAt)); return isNaN(v) ? "auto" : isNaN(u) || v >= u ? "ok" : "stale"; };
+
+// ---------- quotas (shared by #quotas, the sport page, #sports cards and home) ----------
+// Statuses render in QUOTA_STATUSES order; S.quotas holds only validated items (see applyQuotas).
+const Q_LABEL = {earned: ["✓", "מכסה הושגה"], "in-contention": ["◐", "במרוץ למכסה"],
+                 outside: ["○", "מחוץ למכסות כרגע"], unknown: ["?", "אין מידע עדיין"]};
+const qStatus = s => Q_LABEL[s] ? s : "unknown";
+const quotaCounts = list => Object.fromEntries(QUOTA_STATUSES.map(k => [k, list.filter(q => qStatus(q.israelStatus) === k).length]));
+// Symbol + text so status never depends on colour; `text` overrides the label (e.g. "1 הושגה").
+const quotaStatusPill = (status, text) => { const k = qStatus(status); return `<span class="pill q-${k}">${Q_LABEL[k][0]} ${esc(text ?? Q_LABEL[k][1])}</span>`; };
+
+function quotaCardSummary(sid){
+  const list = quotasOf(sid);
+  if (!list.length) return "";
+  const n = quotaCounts(list), short = {earned: "הושגה", "in-contention": "במרוץ", outside: "מחוץ"};
+  const shown = QUOTA_STATUSES.filter(k => k !== "unknown" && n[k]);
+  return shown.length ? `<span class="qsum"><span class="sr">מכסות: </span>${shown.map(k => quotaStatusPill(k, `${n[k]} ${short[k]}`)).join("")}</span>`
+    : `<span class="qsum">מכסות: אין מידע עדיין</span>`;
+}
+
+function quotaKpi(){
+  const list = S.quotas;
+  if (!list.length) return "";
+  const n = quotaCounts(list), k = new Set(list.filter(q => ["earned", "in-contention"].includes(qStatus(q.israelStatus))).map(q => q.sportId)).size;
+  const link = `<a href="#quotas">תמונת המכסות</a>`;
+  return `<p class="kpi">${n.earned ? `<b>${n.earned}</b> מקצים עם מכסה לישראל · <b>${n["in-contention"]}</b> במרוץ למכסה · ב־${k} ענפים`
+    : `טרם הושגו מכסות לישראל · <b>${n["in-contention"]}</b> מקצים במרוץ למכסה ב־${k} ענפים`} · ${link}</p>`;
+}
 
 function winStatus(w){
   if (!w || !isDate(w.from)) return null;
@@ -192,6 +219,7 @@ function viewHome(){
     : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת כדי לעקוב, והם יופיעו כאן. המעקב נשמר רק בדפדפן הזה.</p>`}
   <section class="panel" aria-label="התקדמות">
     <p class="kpi"><b>${S.athletes.length}</b> ספורטאים ונבחרות במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה · <b>${verified}</b> מתוך ${S.athletes.length} נבדקו ידנית</p>
+    ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
     <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: לפריז 2024 ישראל שלחה ${PARIS_ATHLETES} ספורטאים. נבחרת נספרת כאן כרשומה אחת.</p>
@@ -235,12 +263,13 @@ function viewSports(){
   withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
-  <p class="muted">${withA.length} ענפים עם ספורטאים ישראלים במעקב, לפי התחרות הקרובה.</p>
+  <p class="muted">${withA.length} ענפים עם ספורטאים ישראלים במעקב, לפי התחרות הקרובה.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
   <ul class="sports">${withA.map(s => {
     const list = athletesOf(s.id), ws = winStatus(s.window), nc = upcomingIn(s.id)[0], fresh = list.filter(isNew).length;
     return `<li><a class="sport" href="#sport-${esc(s.id)}">
       <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון ${ws[1]}</span>` : ""}</span>
       ${stageBar(list, true).html}
+      ${quotaCardSummary(s.id)}
       <span class="meta">${list.length} במעקב${fresh ? ` · <span class="new">${fresh} חדש</span>` : ""}${nc ? ` · התחרות הבאה: ${esc(nc.name)} (${fmtShort(nc.start)})` : ""}</span>
     </a></li>`;
   }).join("")}</ul>
@@ -584,6 +613,7 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about") html = viewAbout(), nav = "about";
+  else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound(), nav = "";
   $("view").innerHTML = banner() + html;
@@ -688,6 +718,7 @@ async function loadPublic(){
   }
   await quotas;
   applyQuotas();
+  S.quotasLoaded = true; S.quotasError = !Array.isArray(quotaFile?.items);
   if (S.loaded) refresh();
 }
 
