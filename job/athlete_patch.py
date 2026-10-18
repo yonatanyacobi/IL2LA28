@@ -34,14 +34,19 @@ def build(current, proposed, now):
         raise ValueError(f"not a direct-write field: {sorted(bad)}")
     changed = {k: proposed[k] for k in VISIBLE if k in proposed and norm(k, proposed[k]) != norm(k, current.get(k))}
     silent = {k: proposed[k] for k in SILENT if k in proposed and norm(k, proposed[k]) != norm(k, current.get(k))}
-    if not changed:
+    hist = current.get("history") if isinstance(current.get("history"), list) else []
+    entry = proposed.get("historyEntry")
+    # A new competition result is itself visible news on the athlete page; a repeat of one already logged is not.
+    new_result = bool(entry) and entry.get("kind") == "result" and not any(
+        isinstance(h, dict) and h.get("at") == entry.get("at") and norm("notes", h.get("text")) == norm("notes", entry.get("text"))
+        for h in hist)
+    if not changed and not new_result:
         return silent  # possibly {}: no updatedAt, no updatedBy, no history
     patch = {**changed, **silent, "updatedAt": now, "updatedBy": "auto"}
     if proposed.get(SOURCE):
         patch[SOURCE] = proposed[SOURCE]
-    if proposed.get("historyEntry"):
-        hist = current.get("history") if isinstance(current.get("history"), list) else []
-        patch["history"] = (hist + [proposed["historyEntry"]])[-HISTORY_MAX:]
+    if entry:
+        patch["history"] = (hist + [entry])[-HISTORY_MAX:]
     return patch
 
 
