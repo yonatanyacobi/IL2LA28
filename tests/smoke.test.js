@@ -1987,6 +1987,31 @@ test("standings: period not open, no cutoff, an invalid cutoff; athlete page fac
   assert.ok(!b.view("a-j-second").includes("מול קו המכסה"), "no fact when the lists differ");
 });
 
+test("standings: Olympic rank first, world rank as fallback; athlete page shows both (PM on #218)", async () => {
+  const oly = (n, asOf = "2026-10-18") => ({olympicRankNum: n, olympicRankList: OLY, olympicRankAsOf: asOf});
+  const {block, b} = await standingsAt({ranks: {
+    "izhak-ashpiz": {...rank(13, "2026-10-12", "IJF World Ranking List"), ...oly(2)},   // world 13, Olympic 2
+    "j-second": rank(20)}});                                                          // only a "world" field, on the cutoff's list
+  const ol = block.split('<ol class="rows standings">')[1].split("</ol>")[0];
+  assert.ok(ol.indexOf('<span class="d">2</span>') < ol.indexOf("cutline") && ol.indexOf("cutline") < ol.indexOf('<span class="d">20</span>'), ol);
+  assert.ok(!ol.includes('<span class="d">13</span>') && !block.includes("בדירוג אחר"), "the world rank isn't placed when an Olympic one is");
+  const page = b.view("a-izhak-ashpiz");
+  assert.ok(page.includes("<dt>דירוג ההעפלה ל־LA28</dt><dd>2 (<bdi>IJF Olympic Ranking List</bdi>, נכון ל־18 באוק׳ 2026)</dd>"), "Olympic line");
+  assert.ok(page.includes('<a href="#sport-judo">מקום 2 · הקו: מקום 17</a>'), "standing uses the Olympic rank");
+});
+
+test("standings UX QA: caveat once per panel, no cut line without placed athletes, no row date beside a stale pill, phone grid", async () => {
+  const {page, block} = await standingsAt({ranks: {"izhak-ashpiz": rank(5, "2026-08-04")}});
+  assert.strictEqual(page.split("הקו הוא מקום ברשימה, לא תחזית.").length - 1, 1, "caveat once");
+  assert.ok(block.includes('<p class="foot">הדירוג הסופי נקבע ב־15 ביוני 2028.</p>'), "per block: the final date only");
+  assert.ok(block.includes('<span class="pill ended">דירוג מ־4 באוג׳ 2026</span>') && !block.includes("</a> · 4 באוג׳"), "stale: date in the pill only");
+  assert.ok(page.indexOf('id="standH"') > page.indexOf("שיטת ההעפלה") && page.indexOf('id="standH"') < page.indexOf('id="qH"'), "right after שיטת ההעפלה");
+  const empty = (await standingsAt({ranks: {"izhak-ashpiz": rank(3, "2026-10-03", "IJF World Ranking List")}})).block;
+  assert.ok(!empty.includes("cutline") && !empty.includes("<ol") && empty.includes("בדירוג אחר: "), "nobody on the list: no line");
+  const css = fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8");
+  assert.ok(/@media \(max-width:640px\)\{\.rows\.standings li\{grid-template-columns:3\.5ch 1fr auto\}/.test(css), "rank stays beside the name on phones");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {

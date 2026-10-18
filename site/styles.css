@@ -360,6 +360,9 @@ div.track{background:none}
 .res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px;color:var(--muted)}
 .res b{color:var(--ink)}
 .home-now{display:grid;gap:22px}
+.rows.standings li{grid-template-columns:3.5ch 1fr auto}
+/* the generic phone rule would put the rank alone on its own line */
+@media (max-width:640px){.rows.standings li{grid-template-columns:3.5ch 1fr auto}.rows.standings .d{grid-column:auto}}
 .rows li.cutline{display:block;border-top:2px dashed var(--sun);padding-top:4px;color:var(--sun-ink);font-size:14px;font-weight:700}
 @media (min-width:900px){.home-now{grid-template-columns:3fr 2fr;align-items:start}}
 .day-sport h3{font-family:var(--f-body);font-size:16px;font-weight:700;overflow-wrap:anywhere}
