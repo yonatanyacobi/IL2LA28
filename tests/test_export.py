@@ -87,6 +87,17 @@ class ExportTest(unittest.TestCase):
         self.assertEqual([a["source"] for a in data["athletes"]], ["", "https://x.org"])
         self.assertEqual(data["competitions"][0]["source"], "")
 
+    def test_history_results_capped_apart_from_others(self):
+        res = [{"at": f"2025-{1 + i // 28:02d}-{1 + i % 28:02d}", "kind": "result", "text": f"r{i}",
+                "source": "https://x.org/r"} for i in range(70)]
+        other = [{"at": f"2026-0{1 + i // 9}-{1 + i % 9:02d}", "kind": "rank", "text": f"o{i}"} for i in range(15)]
+        h = self.export(athletes={"a": athlete(history=res + other)})["athletes"][0]["history"]
+        self.assertEqual([x["text"] for x in h if x["kind"] == "result"], [f"r{i}" for i in range(10, 70)])
+        self.assertEqual([x["text"] for x in h if x["kind"] != "result"], [f"o{i}" for i in range(5, 15)])
+        self.assertEqual([x["at"] for x in h], sorted(x["at"] for x in h), "one list, by date")
+        few = self.export(athletes={"a": athlete(history=other[:3] + res[:2])})["athletes"][0]["history"]
+        self.assertEqual(len(few), 5)
+
     def test_history(self):
         hist = [{"at": f"2026-01-{d:02d}", "kind": "rank", "text": f"t{d}"} for d in range(15, 0, -1)]
         hist += [{"at": "2026-02-01", "kind": "weird", "text": "unknown kind", "source": "http://x"},

@@ -64,10 +64,19 @@ When stale, the line becomes:
 - Days without sessions never show stale.
 
 **Auto-refresh (#152).** When new `data.json` arrives, the page re-renders in place. The re-render updates
-`נכון ל־` and the rows, and it never moves focus or scroll. A new result is not highlighted beyond the row's normal
-result line:
+`נכון ל־` and the rows, and it never moves focus or scroll. A new result gets no highlight of its own beyond the
+row's normal result line:
 - no flashing;
 - `prefers-reduced-motion` doesn't matter, because nothing animates.
+
+**Changed rows (#177, built in #193, `docs/design/changed-rows.md`).** The one allowed mark: a row whose content really
+changed in an auto-refresh gets `<span class="pill chg">השתנה ב־<time datetime="{ISO}">{HH:MM}</time></span>` until the
+next navigation.
+- **A timestamp, never "עכשיו":** it stays true however long the page stays open.
+- **Only a real change:** the row's content differs from the previous render. Clock-driven chips (`מתחרה היום` →
+  `◷ בהמתנה לתוצאה`), first renders, ordinary navigation and editors' live snapshots never mark.
+- **Quiet:** out of the text flow, so marking moves nothing. One polite note announces the count; the pills are not
+  live regions.
 
 #152's "יש עדכון" notice, if kept, is a polite `aria-live` text, not a toast with a timer.
 
