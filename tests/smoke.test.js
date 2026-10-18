@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
 // (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
@@ -723,6 +723,60 @@ test("two-day quota event inside a longer competition (Doha 3–4.11 in the 1–
   assert.ok(after.row.includes('<small class="stakes awaiting">') && after.row.includes("<bdi>רובה אוויר</bdi> · 3 בנוב׳ – 4 בנוב׳ 2026") && !after.row.includes("stake doha"), "5.11: strip awaiting");
   assert.ok(after.sport.includes("q-awaiting") && after.sport.includes("גמר דוחא (3 בנוב׳ – 4 בנוב׳ 2026). עדכון המכסות יפורסם") && !after.sport.includes("stake doha"), "5.11: sport page awaiting");
   assert.ok(after.all.includes('id="qWaitH"') && !(after.all.split('id="qNextH"')[1] || "").includes("גמר דוחא"), "5.11: #quotas awaiting panel");
+});
+
+// Following (#following; docs/design/daily-and-following.md §2, copy from Shira on #130).
+const withHistory = (id, entries) => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const a = data.athletes.find(x => x.id === id);
+  a.history = entries;   // replaced, so counts don't depend on the snapshot's own history
+  return data;
+};
+
+test("following a sport persists across reloads and shows on #following-sports", async () => {
+  const b = await boot();
+  const off = b.view("sport-judo");
+  assert.ok(off.includes('data-follow-sport="judo" aria-pressed="false"><span aria-hidden="true">☆</span> מעקב אחרי הענף</button>'));
+  b.fire("click", {closest: () => ({dataset: {followSport: "judo"}})});
+  assert.strictEqual(b.ctx.localStorage.getItem("la28.followSports"), '["judo"]');
+  assert.ok(b.view("sport-judo").includes('aria-pressed="true"><span aria-hidden="true">★</span> הענף במעקב שלך</button>'));
+  const again = await boot({storage: {"la28.followSports": '["judo"]'}});
+  const tab = again.view("following-sports");
+  assert.ok(tab.includes("ענפים (1)") && tab.includes('<a class="sport" href="#sport-judo">') && tab.includes('aria-current="page">ענפים (1)'));
+  assert.ok(again.view("following").includes("ספורטאים ונבחרות (0)"));
+});
+
+test("#following feed and nav badge: counts changes since the last visit, clears on visit, caps at 9+", async () => {
+  const data = withHistory("raz-hershko", [{at: "2026-10-15", kind: "rank", text: "דירוג <img src=x onerror=alert(1)>"}, {at: "2026-10-01", kind: "rank", text: "ישן"}]);
+  const b = await boot({data, follows: ["raz-hershko"], now: "2026-10-18T08:00:00Z", storage: {"la28.followingSeen": '"2026-10-10T00:00:00Z"'}});
+  b.view("home");
+  assert.ok(!b.els.followBadge.hidden && b.els.followBadge.textContent === "1" && b.els.followBadgeSr.textContent === ", עדכון חדש אחד", "badge before the visit");
+  const page = b.view("following");
+  assert.ok(page.includes('<h2 id="feedH">מאז הביקור הקודם (1)</h2>') && page.includes("דירוג &lt;img") && !/<img/i.test(page) && !page.includes("ישן"));
+  assert.ok(page.includes('<h2 id="nextH">הבא בתור במעקב שלי</h2>') && page.includes("29 באוק׳"), "next up: her 29.10 competition");
+  assert.ok(page.includes("המעקב נשמר רק בדפדפן הזה, בלי חשבון."));
+  assert.ok(b.els.followBadge.hidden && b.els.followBadgeSr.textContent === "", "badge clears on visit");
+  assert.ok(b.view("following").includes("מאז הביקור הקודם (1)"), "the feed keeps what was new on arrival");
+  assert.ok(JSON.parse(b.ctx.localStorage.getItem("la28.followingSeen")) > "2026-10-10", "visit stored");
+
+  const many = withHistory("raz-hershko", Array.from({length: 12}, (_, i) => ({at: `2026-10-${11 + (i % 6)}`, kind: "note", text: `עדכון ${i}`})));
+  const c = await boot({data: many, follows: ["raz-hershko"], now: "2026-10-18T08:00:00Z", storage: {"la28.followingSeen": '"2026-10-10T00:00:00Z"'}});
+  c.view("home");
+  assert.ok(c.els.followBadge.textContent === "9+" && c.els.followBadgeSr.textContent === ", 12 עדכונים חדשים");
+});
+
+test("#following: first visit, empty state with suggestions, sport followers see that sport's athletes, unknown tab", async () => {
+  const first = await boot({follows: ["raz-hershko"], now: "2026-10-18T08:00:00Z"});
+  first.view("home");
+  assert.ok(first.els.followBadge.hidden, "no baseline yet: no badge");
+  assert.ok(first.view("following").includes("עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."));
+  const none = (await boot({now: "2026-10-28T08:00:00Z"})).view("following");
+  assert.ok(none.includes("עוד אין כאן אף אחד. לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב."));
+  assert.ok(!none.includes("<h3>הצעות למעקב</h3>") || none.includes('class="card"'), "suggestions are athlete cards");
+  const data = withHistory("raz-hershko", [{at: "2026-10-15", kind: "result", text: "ארד"}]);
+  const sport = await boot({data, now: "2026-10-18T08:00:00Z", storage: {"la28.followSports": '["judo"]', "la28.followingSeen": '"2026-10-10T00:00:00Z"'}});
+  assert.ok(sport.view("following").includes("ארד"), "a followed sport's athletes feed in");
+  assert.ok(sport.view("following-nope").includes(NOT_FOUND));
 });
 
 test("fetch failure shows the retry view", async () => {

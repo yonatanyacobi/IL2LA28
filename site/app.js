@@ -940,11 +940,13 @@ function route(){
   else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
+  else if (/^following(-|$)/.test(h) && typeof viewFollowing === "function") html = viewFollowing(h.slice(10)), nav = "following";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (h === "digest" && typeof viewDigest === "function") html = viewDigest(), nav = "updates";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound();
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
+  if (typeof followingDecorate === "function") html = followingDecorate(h, html);
   $("view").innerHTML = banner() + html;
   $("fixLink").innerHTML = fixLogLive() ? ` · <a href="#corrections">יומן התיקונים</a>` : "";
   if (focusTrust && S.loaded) {   // once per arrival, so data refreshes don't steal focus
