@@ -115,3 +115,109 @@ In `dl.facts`, after `דירוג או הישג`:
 
 Last: `<a href="#sport-{id}">לכל המכסות בענף</a>` (once). At 400px `.facts` keeps `auto 1fr`; pills wrap.
 The matcher is heuristic, so the line never says "שלו/שלה" — the quota is the event's, not the athlete's.
+
+## 5. Home: next quota chances and "הבא בתור" (Itai, after §4)
+
+Implements fixes #1 and #2 from `heuristics-2026-10-18.md`. §4 (`#admin` past events) is in PR #56. The
+title changes from "הכי קרובים למכסה" to **"ההזדמנויות הקרובות למכסה"**: the data has no measure of how
+close anyone is, only when the next chance is. The panel sorts by date, so the title must not promise a ranking.
+
+### 5a. Panel "ההזדמנויות הקרובות למכסה"
+
+**Input**: `S.quotas`, with `t = today()`. Take items where `israelStatus === "in-contention"` and `nxt(q, t)` is
+non-null. Drop the following:
+- Items the today strip already covers: the strip has a row whose `comp` has the same `sportId` and
+  `comp.start <= q.nextQuotaEvent.start <= (comp.end || comp.start)`. That is the strip's own stakes rule; pass
+  `todayRows()` in and don't recompute it.
+- Items that are awaiting results (`awaitingOf(q)`, once #65 merges). `nxt()` already drops them, so this is a guard only.
+
+**Grouping**: one row per `(sportId, nextQuotaEvent.start, nextQuotaEvent.name)`. On 18.10 that gives Grand
+Slam Abu Dhabi as one row with 7 judo weights, instead of 7 rows.
+
+**Sort**:
+1. `nextQuotaEvent.start` ascending.
+2. Groups with a followed athlete (`quotaAthletes(q)` ∩ `S.follows`) first.
+3. Groups with at least one matched athlete first.
+4. `heCmp(sportName)`.
+
+Inside a group, sort items with a matched athlete first, then by `heCmp(event)`.
+
+**Limits**: `CLOSE_MAX = 5` groups and `CLOSE_EVENTS = 3` items per group, then ` · ועוד {n} מקצים`. There is
+no date horizon: when the nearest chance is months away the date says so.
+
+**Row**:
+```html
+<li><span class="d">{fmtShort(start)}</span>
+  <span class="t"><a href="#sport-{sportId}">{sportName}</a> · {nextQuotaEvent.name}
+    <small>{items}</small>
+    {stakes}</span>
+  <span class="muted">{when}</span></li>
+```
+- `{items}`: per item, `<bdi>{event}</bdi>`, plus ` ({athlete links, joined ", "})` when `quotaAthletes(q)` is
+  non-empty. Join items with ` · `.
+- `{stakes}`: `stakesLine(q, "stakes", "small")` only when the group has exactly 1 item. Several weights'
+  stakes would bury the row; the sport page has them.
+- `{when}`: `היום` if `start === t`, `מחר` if `start === addDays(t, 1)`, else `בעוד {n} ימים`, where
+  `n = dayNo(t, start) - 1`. If `start < t` (multi-day event already running, not in the strip): `מתקיים עכשיו`.
+
+**Panel**:
+```html
+<section class="panel today" aria-labelledby="closeH">
+  <h2 id="closeH">ההזדמנויות הקרובות למכסה</h2>
+  <ul class="rows">…</ul>
+  <p class="foot">מקצים שבהם ישראל במרוץ למכסה, לפי אירוע המכסה הבא. <a href="#quotas">לכל תמונת המכסות</a></p>
+</section>
+```
+- Position: right after `todayStrip(rows)`, before `reviewPanel()`.
+- Omitted when there are no groups, or when quotas aren't loaded or failed (`!S.quotasLoaded || S.quotasError`).
+- `.today` reuses the accent border; there is no new CSS. At 400px `.rows` already drops the date onto its own line.
+
+**18.10 example (fixture + `site/quotas.json`)**: the 20.10 team final is inside the running Worlds, so it is in
+the strip and not here. The rows are:
+1. 24.10 triathlon.
+2. 29.10 judo: 3 weights, then "ועוד 4 מקצים".
+3. 2.11 lacrosse.
+4. 6.11 surfing.
+5. 15.1.2027 sailing.
+
+### 5b. "הבא בתור" in the hero
+
+Shown **only when `todayRows()` is empty**; the strip answers "what's next" on event days. It goes under
+`freshness()`, inside the hero's text column.
+
+**Candidates**: `S.comps` with `c.start > t`, `dayNo(c.start, c.end || c.start) <= SERIES_DAYS` and
+`athletesOf(c.sportId).length > 0`. For each, `entrants` = athletes of that sport with
+`isDate(nextDate) && c.start <= nextDate <= (c.end || c.start)`.
+
+**Pick**: the earliest `start` among candidates with `entrants.length > 0`. Break ties by more entrants, then
+`qualifying` first, then `heCmp(name)`. If there is none, take the earliest candidate overall (fallback copy below).
+If there are no candidates, omit the line.
+
+**Copy**:
+```html
+<p class="next-up"><b>הבא בתור:</b> <a href="#sport-{id}">{sportName}</a> · {c.name} · {fmtRange(c.start, c.end)} · {who}{qual}</p>
+```
+- `{who}`:
+  - 1–3 entrants: their names as links, joined with ", ".
+  - 4 or more: `{n} ישראלים`.
+  - Fallback (no entrants): `{n} ישראלים במעקב בענף` (`ישראלי/ת אחד/ת במעקב בענף` for 1). It never says
+    "מתחרים", same rule as the strip.
+- `{qual}`: ` · <span class="pill open">העפלה</span>` when `c.qualifying`.
+
+**Example (26.10)**: weightlifting Worlds on 27.10 has no entrants, so judo is picked:
+`הבא בתור: ג׳ודו · גרנד סלאם אבו דאבי · 29–31 באוק׳ 2026 · 5 ישראלים`. On 18.10 the line is hidden, because the strip shows.
+
+**CSS** (tokens only):
+```css
+.next-up{margin-top:8px;font-size:15px;overflow-wrap:anywhere}
+.next-up b{color:var(--sun-ink)}
+```
+
+### 5c. Tests (date matrix, pinned clock)
+
+- **18.10**: strip shown, `next-up` absent; panel row 1 = triathlon; no gymnastics team-final row.
+- **26.10**: `next-up` names judo with "5 ישראלים", skipping weightlifting.
+- **A day with only a no-entrant candidate**: the fallback text appears and "מתחרים" does not.
+- **`S.quotasError`**: no panel, and the page still renders.
+- **Judo group**: exactly 3 `<bdi>` items + "ועוד 4 מקצים", and no stakes line.
+- **Escaping**: the event and competition names from the fixture are escaped.
