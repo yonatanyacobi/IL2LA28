@@ -17,8 +17,7 @@ function digestText(t = today()){
   const competing = S.athletes.filter(a => isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6))
     .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name))
     .map(a => waCut(`• ${fmtShort(a.nextDate)} · ${waText(a.name)} (${waText(sportName(a.sportId))})${a.next ? ": " + waText(a.next) : ""}`));
-  const quotas = S.quotas.filter(q => q.israelStatus !== "earned" && isDate(q.nextQuotaEvent?.start)
-      && q.nextQuotaEvent.start >= t && q.nextQuotaEvent.start <= addDays(t, 13))
+  const quotas = S.quotas.filter(q => q.israelStatus !== "earned" && nxt(q, t) && q.nextQuotaEvent.start <= addDays(t, 13))
     .sort((a, b) => a.nextQuotaEvent.start.localeCompare(b.nextQuotaEvent.start) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event))
     .map(q => waCut(`• ${fmtShort(q.nextQuotaEvent.start)} · ${waText(sportName(q.sportId))}, ${waText(q.event)}: ${waText(q.nextQuotaEvent.name)}`)
       + (waText(q.stakes) ? "\n" + waCut(`  מה זה אומר: ${waText(q.stakes)}`) : ""));

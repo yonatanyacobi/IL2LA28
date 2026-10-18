@@ -79,7 +79,7 @@ function quotaHealthPanel(){
   const age = daysSince(S.quotasUpdatedAt);
   const evt = q => `${esc(q.nextQuotaEvent.name)} · ${fmt(start(q))}`;
   const flags = [
-    {key: "past", alert: true, label: "אירוע המכסה הבא כבר עבר", items: S.quotas.filter(q => start(q) && start(q) < t), why: evt},
+    {key: "past", alert: true, label: "אירוע המכסה הבא כבר עבר", items: S.quotas.filter(q => start(q) && quotaEventEnd(q) < t), why: evt},
     {key: "earned", alert: true, label: "„מכסה הושגה” בלי ספורטאי/ת בשלב מכסה ומעלה בענף",
       items: S.quotas.filter(q => q.israelStatus === "earned" && !athletesOf(q.sportId).some(a => stageOf(a) >= 2)), why: () => "לבדוק את הפריט או את שלב הספורטאי/ת"},
     {key: "soon", alert: false, label: `אירוע מכסה ב־${QUOTA_SOON_D} הימים הקרובים: לעדכן אחרי התחרות`,

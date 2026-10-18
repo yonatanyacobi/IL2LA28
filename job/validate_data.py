@@ -199,13 +199,15 @@ def validate_quotas(q, data):
             err(f"{path}.source: expected an https:// URL, got {src!r}")
         nxt = it.get("nextQuotaEvent")
         if nxt is not None:
-            if not (isinstance(nxt, dict) and set(nxt) == {"name", "start"}):
-                err(f"{path}.nextQuotaEvent: expected null or {{name, start}}")
+            if not (isinstance(nxt, dict) and set(nxt) in ({"name", "start"}, {"name", "start", "end"})):
+                err(f"{path}.nextQuotaEvent: expected null or {{name, start, end?}}")
             else:
                 if not (isinstance(nxt["name"], str) and nxt["name"].strip()):
                     err(f"{path}.nextQuotaEvent.name: must not be empty")
                 if not is_date(nxt["start"]):
                     err(f"{path}.nextQuotaEvent.start: expected YYYY-MM-DD, got {nxt['start']!r}")
+                elif "end" in nxt and not (is_date(nxt["end"]) and nxt["end"] >= nxt["start"]):
+                    err(f"{path}.nextQuotaEvent.end: expected YYYY-MM-DD on or after start, got {nxt['end']!r}")
     return errors
 
 
