@@ -14,15 +14,16 @@ const hasIsraelis = d => daySessions(d).length > 0;
 
 function compBlock(comp, sessions, sid, d){
   const t = today();
-  const list = `<ul class="rows sess">${sessions.sort(sessionOrder).map(s => sessionRow(s, d)).join("")}</ul>`;
-  if (!comp) return `<h3>${esc(sessions[0].athletes[0].next || sportName(sid))}</h3>${list}`;
+  const only = dateOnly(sessions), tail = only ? DATE_ONLY : "";
+  const list = `<ul class="rows sess">${sessions.sort(sessionOrder).map(s => sessionRow(s, d, only)).join("")}</ul>`;
+  if (!comp) return `<h3>${esc(sessions[0].athletes[0].next || sportName(sid))}${tail}</h3>${list}`;
   const total = dayNo(comp.start, comp.end || comp.start);
   const now = comp.start <= t && t <= (comp.end || comp.start) && d === t;
   // Stakes: in-contention items whose quota event covers this day (an earned item mustn't show pre-event stakes).
   const stakes = quotasOf(sid).filter(q => q.israelStatus === "in-contention" && q.stakes && q.nextQuotaEvent
     && q.nextQuotaEvent.start <= d && d <= quotaEventEnd(q)).slice(0, STAKES_MAX);
-  return `<h3>${compLink(comp, esc(comp.name), "hlink")}</h3>
-    ${now ? `<p class="now">מתקיימת עכשיו${total > 1 ? ` · יום ${dayNo(comp.start, d)} מתוך ${total}` : ""}</p>` : ""}
+  return `<h3>${compLink(comp, esc(comp.name), "hlink")}${tail}</h3>
+    ${now ? `<p><span class="pill s-live">מתקיימת עכשיו${total > 1 ? ` · יום ${dayNo(comp.start, d)} מתוך ${total}` : ""}</span></p>` : ""}
     ${list}
     ${stakes.map(q => `<p class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</p>`).join("")}
     <p class="foot">${[fmtRange(comp.start, comp.end), esc(comp.location), linkOut(comp.source)].filter(Boolean).join(" · ")}</p>`;
@@ -50,15 +51,15 @@ function viewDay(d){
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
   return `<div class="day-nav">
       <h1 tabindex="-1">${isToday ? `היום, ${dayTitle(d)}` : dayTitle(d)}</h1>
-      <a class="day-prev" href="#day-${prev}"><span aria-hidden="true">→</span> ${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
-      <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"}<span class="sr">, ${chipName(next)}</span> <span aria-hidden="true">←</span></a>
+      <a class="day-prev" href="#day-${prev}"><span aria-hidden="true">→</span>&nbsp;${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
+      <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"}<span class="sr">, ${chipName(next)}</span>&nbsp;<span aria-hidden="true">←</span></a>
     </div>
   ${freshLine(isToday && sessions.length > 0)}
   <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = hasIsraelis(x);
     return `<a href="#day-${x}" class="${has ? "has" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}<span class="sr"> · ${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}</span></a>`; }).join("")}
     ${isToday ? "" : `<a href="#today">היום</a>`}</nav>
   ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
-      <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
+      <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a class="hlink" href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
     : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.</p>${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
