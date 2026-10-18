@@ -1,6 +1,8 @@
 # Test fixtures
 
-- `data.json`: the site/data.json export of 2026-10-18T11:01:34Z, plus one hand-added competition,
-  `tri-world-cup-tongyeong-2026`. That record was added to the DB after this export and first appears in the
-  2026-10-19 export. It is identical to the DB record. Drop this note at the next refresh from a real export.
+- `data.json`: the published `data.json` exported at 2026-10-18T15:32:50Z (artifact version 1792337589-34f2), as is.
+  To refresh it, see `../README.md`.
+- `site-quotas-2026-10-18.json`: `site/quotas.json` frozen on 18.10, for date and scenario tests. Don't refresh it
+  along with `data.json`: those tests pin dates against it.
 - `quotas.json`, `quotas-sport.json`: hand-made quota fixtures. They aren't real data.
+- `dryrun/`: saved API answers for the publishing dry runs (Omer's runbooks).

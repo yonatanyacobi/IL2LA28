@@ -9,6 +9,14 @@ const assert = require("assert");
 const ROOT = path.join(__dirname, "..");
 const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js", "site/event.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
+// The fixture is a real export and gets refreshed (tests/README.md). A test that needs a precondition the real data
+// may lose (no ranks, a given nextDate…) sets it on its own copy instead of relying on the snapshot.
+const clone = (data = FIXTURE) => JSON.parse(JSON.stringify(data));
+const withoutRanks = (data = clone()) => {
+  for (const a of data.athletes) for (const k of ["rankNum", "rankList", "rankAsOf", "olympicRankNum", "olympicRankList", "olympicRankAsOf"]) delete a[k];
+  return data;
+};
+const setAthlete = (data, id, fields) => { Object.assign(data.athletes.find(a => a.id === id), fields); return data; };
 // site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
 // (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
 const QUOTAS_SNAPSHOT = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/site-quotas-2026-10-18.json"), "utf8"));
@@ -420,7 +428,8 @@ test("today strip stakes order: followed athletes, then athletes in the row, the
     item("78+ ק״ג נשים", "רז הרשקו מדורגת 1"),      // in the row, linked by name
   ]};
   const shown = async follows => {
-    const row = rowsOf(stripOf((await boot({quotas, follows, now: "2026-10-29T08:00:00Z"})).view("home"))).find(r => r.includes("גרנד סלאם אבו דאבי"));
+    // No ranks: this test is about the follow/row/file order, not the rank tie-break.
+    const row = rowsOf(stripOf((await boot({data: withoutRanks(), quotas, follows, now: "2026-10-29T08:00:00Z"})).view("home"))).find(r => r.includes("גרנד סלאם אבו דאבי"));
     return [...row.matchAll(/<small class="stakes"><b>מה זה אומר:<\/b> <bdi>([^<]+)<\/bdi>:/g)].map(m => m[1]);
   };
   assert.deepStrictEqual(await shown([]), ["60- ק״ג גברים", "78+ ק״ג נשים"], "athletes listed in the row first, file order among them");
@@ -601,7 +610,8 @@ test("#corrections: months newest first, diffs, labels, speed, escaping, invalid
   assert.ok(out.includes("בבדיקה מול המקורות לפני ההשקה תיקנו 25 רשומות."));
   const dated = (await bootFixes([fix({at: "2026-10-24T09:10:00Z"}, [{field: "nextDate", wrong: "2026-10-29", right: "2026-10-30"}])])).view("corrections");
   assert.ok(dated.includes("<del>29 באוק׳ 2026</del>") && !dated.includes("2026-10-29"), "nextDate through fmt()");
-  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const data = clone();
+  for (const a of data.athletes) delete a.verifiedAt;   // exactly the two verified below
   for (const id of ["raz-hershko", "inbar-lanir"]) Object.assign(data.athletes.find(a => a.id === id), {verifiedAt: "2026-10-20T10:00:00Z", updatedAt: "2026-10-19T10:00:00Z"});
   const counted = (await boot({data: {...data, corrections: CORRECTIONS, launchAt: LAUNCH}})).view("corrections");
   assert.ok(counted.includes(" 2 רשומות כבר נבדקו ידנית מול המקור."), "computed manual-check count");
@@ -662,7 +672,7 @@ test("corrections log before launch (launchAt null): not found for visitors, no 
 const JUDO_RANKS = {"raz-hershko": 1, "izhak-ashpiz": 5, "timna-nelson-levy": 6, "gefen-primo": 11, "kerem-primo": 13,
   "yuli-alma-mishiner": 13, "inbar-lanir": 22, "yonatan-elbaz": 26, "inbal-shemesh": 35};
 const rankedData = asOf => {
-  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const data = withoutRanks();   // only the ranks set here
   for (const a of data.athletes) if (a.id in JUDO_RANKS) Object.assign(a, {rankNum: JUDO_RANKS[a.id], rankList: "IJF World Ranking List", rankAsOf: asOf});
   return data;
 };
@@ -673,7 +683,7 @@ const abuDhabiStakes = async data => {
 
 test("rank tie-break: Abu Dhabi strip shows the best-ranked judo items; stale or missing ranks keep file order", async () => {
   assert.deepStrictEqual(await abuDhabiStakes(rankedData("2026-10-15")), ["78+ ק״ג נשים", "60- ק״ג גברים"], "world #1 and #5 first");
-  const fileOrder = await abuDhabiStakes(FIXTURE);
+  const fileOrder = await abuDhabiStakes(withoutRanks());
   assert.deepStrictEqual(fileOrder, ["60- ק״ג גברים", "73- ק״ג גברים"], "no rankNum: unchanged");
   assert.deepStrictEqual(await abuDhabiStakes(rankedData("2026-08-01")), fileOrder, "rank older than 60 days is ignored");
 });
@@ -694,7 +704,7 @@ test("rank tie-break: digest lists ranked athletes first within a quota event", 
 });
 
 test("edit dialog: rank number needs its list and date", async () => {
-  const {run, els} = await boot();
+  const {run, els} = await boot({data: withoutRanks()});   // Raz starts with no list or date
   run(`var __w = []; S.db = {collection: () => ({doc: () => ({update: async p => { __w.push(p); }})})}; openForm(S.athletes.find(a => a.id === "raz-hershko"))`);
   els.fRankNum.value = "1";
   await run("saveForm({preventDefault(){}})");
@@ -749,7 +759,8 @@ test("following a sport persists across reloads and shows on #following-sports",
 });
 
 test("#following feed and nav badge: counts changes since the last visit, clears on visit, caps at 9+", async () => {
-  const data = withHistory("raz-hershko", [{at: "2026-10-15", kind: "rank", text: "דירוג <img src=x onerror=alert(1)>"}, {at: "2026-10-01", kind: "rank", text: "ישן"}]);
+  const data = setAthlete(withHistory("raz-hershko", [{at: "2026-10-15", kind: "rank", text: "דירוג <img src=x onerror=alert(1)>"}, {at: "2026-10-01", kind: "rank", text: "ישן"}]),
+    "raz-hershko", {nextDate: "2026-10-29"});
   const b = await boot({data, follows: ["raz-hershko"], now: "2026-10-18T20:00:00Z", storage: {"la28.followingSeen": '"2026-10-10T00:00:00Z"'}});
   b.view("home");
   assert.ok(!b.els.followBadge.hidden && b.els.followBadge.textContent === "1" && b.els.followBadgeSr.textContent === ", עדכון חדש אחד", "badge before the visit");
@@ -866,8 +877,18 @@ const eventAt = async (id, now, opts = {}) => {
   return {b, out: b.run(`viewEvent(${JSON.stringify(id)})`)};
 };
 
+// Abu Dhabi as the fallback cases need it: five entrants, all on 29.10, no sessions (so two empty days collapse).
+const AD_FIVE = ["gefen-primo", "izhak-ashpiz", "raz-hershko", "timna-nelson-levy", "yonatan-elbaz"];
+const adFallback = () => {
+  const data = clone();
+  data.sessions = [];
+  for (const a of data.athletes) if (a.sportId === "judo" && a.nextDate >= "2026-10-29" && a.nextDate <= "2026-10-31") a.nextDate = "";
+  for (const id of AD_FIVE) setAthlete(data, id, {nextDate: "2026-10-29"});
+  return data;
+};
+
 test("#c- Abu Dhabi (fallback data): header, 3 days, athletes once each, quota items, unknown id", async () => {
-  const {b, out} = await eventAt(AD, "2026-10-29T08:00:00Z");
+  const {b, out} = await eventAt(AD, "2026-10-29T08:00:00Z", {data: adFallback()});
   assert.ok(out.includes('<h1 tabindex="-1">גרנד סלאם אבו דאבי</h1>') && out.includes('<a href="#sport-judo">→ ג׳ודו</a>'));
   assert.ok(out.includes("מתקיימת עכשיו · יום 1 מתוך 3") && out.includes('<span class="pill open">העפלה</span>'));
   assert.strictEqual(out.split('class="sess-day"').length - 1, 1, "only the day with sessions");
@@ -915,7 +936,11 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   const inbal = sh.split('id="evAthH"')[1].split('<div class="stack"><a class="card" href="#a-').find(x => x.startsWith("inbal-shemesh")) || "";
   assert.ok(inbal.includes("pill s-wait") && !inbal.includes("ארד"), "Inbal: her own chip, not Timna's result");
 
-  const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z")).out;
+  // Doha with no known Israelis: one tracked shooter, no session, no nextDate inside it.
+  const noIsraelis = setAthlete(clone(), "sergey-richter", {nextDate: ""});
+  noIsraelis.sessions = [];
+  noIsraelis.athletes = noIsraelis.athletes.filter(a => a.sportId !== "shooting" || a.id === "sergey-richter");
+  const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z", {data: noIsraelis})).out;
   assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת במעקב בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
   assert.ok(doha.includes('id="evStakesH"') && doha.includes("הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
   const dohaItems = doha.split('id="evStakesH"')[1].split("</section>")[0].split("<li>").slice(1);
@@ -1197,7 +1222,9 @@ const digestOf = async opts => { const b = await boot({now: DIGEST_NOW, quotas: 
 const boldLines = text => text.split("\n").filter(l => l.includes("*"));
 
 test("#digest: page, entry points and the week's text", async () => {
-  const {view, text} = await digestOf();
+  // Someone competing in the digest week (the real Amsterdam marathon entry has since passed).
+  const data = setAthlete(clone(), "maru-teferi", {nextDate: "2026-10-18", next: "מרתון אמסטרדם"});
+  const {view, text} = await digestOf({data});
   const page = view("digest");
   assert.ok(page.includes('<h1 tabindex="-1">תקציר שבועי</h1>') && page.includes("<textarea id=\"digestText\" readonly"));
   assert.ok(page.includes('data-copy="digestText" data-copy-msg="digestMsg"'));
@@ -1438,7 +1465,8 @@ test("closest panel + next-up on 18.10: strip day, triathlon first, judo grouped
 test("next-up on 26.10 skips weightlifting (no entrants) and names judo", async () => {
   const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
   const line = nextUpOf(view("home"));
-  assert.ok(line.includes("#sport-judo") && line.includes("5 ישראלים") && line.includes("pill open"), line);
+  const entrants = FIXTURE.athletes.filter(a => a.sportId === "judo" && a.nextDate >= "2026-10-29" && a.nextDate <= "2026-10-31").length;
+  assert.ok(line.includes("#sport-judo") && line.includes(`${entrants} ישראלים`) && line.includes("pill open"), line);
   assert.ok(!line.includes("weightlifting"));
 });
 
@@ -1749,7 +1777,9 @@ test("#day renders the fixture on 24.10, 29.10 and 3.11 with Israelis' sessions 
   const strip = d29.split('aria-label="בחירת יום"')[1].split("</nav>")[0];
   assert.ok(!/<a [^>]*aria-label=/.test(strip), "no aria-label overriding the visible chip text");
   assert.ok(d29.includes('<span aria-hidden="true">→</span> היום הקודם<span class="sr">, יום רביעי, 28 באוקטובר</span>'), "prev: arrow hidden, sr date");
-  assert.ok(!d03.includes("#sport-shooting"), "3.11: running competitions without Israelis are left out");
+  // The weightlifting Worlds run on 3.11 with no Israeli entrant; the Doha shooting Worlds have the Israelis' sessions.
+  assert.ok(!d03.includes("#sport-weightlifting"), "3.11: running competitions without Israelis are left out");
+  assert.ok(d03.includes("#sport-shooting") && d03.includes('href="#a-sergey-richter"'), "3.11: Doha sessions from the fixture");
 });
 
 test("#day: today's states, a result on another day, #day alone, impossible dates, empty day, escaping", async () => {
@@ -1783,7 +1813,9 @@ const withSessions = list => ({...JSON.parse(JSON.stringify(FIXTURE)), sessions:
 
 test("#day from sessions: time, status by clock, result stamp, untimed, Israel day key, defense in depth", async () => {
   const rowOf = html => html.split('<ul class="rows sess">')[1]?.split("</ul>")[0] || "";
-  const at = async (now, sessions) => (await boot({data: withSessions(sessions), quotas: SITE_QUOTAS, now})).view("day-2026-11-03");
+  // Only the sessions under test on 3.11: the shooters' own nextDate there would add fallback rows to the list.
+  const noFallback = sessions => setAthlete(setAthlete(withSessions(sessions), "olga-tashtchiev", {nextDate: ""}), "sergey-richter", {nextDate: ""});
+  const at = async (now, sessions) => (await boot({data: noFallback(sessions), quotas: SITE_QUOTAS, now})).view("day-2026-11-03");
   // 06:15Z is 08:15 in Israel (UTC+2 after 25.10).
   const before = rowOf(await at("2026-11-03T05:00:00Z", [SESS()]));
   assert.ok(before.includes('<span class="d">08:15</span>') && before.includes("pill s-before") && before.includes("<bdi>רובה אוויר 10 מ׳ גברים"), "before");
@@ -1806,7 +1838,7 @@ test("#day merges sessions with the fallback per athlete (lead review on #151, M
   // Richter has a session on 3.11; Abu Dhabi judo athletes (29.10) have none and keep their nextDate rows.
   const b = await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
   const j = b.view("day-2026-10-29");
-  assert.ok(j.includes('id="ds-judo"') && j.includes('href="#a-raz-hershko"') && j.includes('<span class="d">תאריך בלבד</span>'), "athletes without a session stay");
+  assert.ok(j.includes('id="ds-judo"') && j.includes('href="#a-gefen-primo"') && j.includes('<span class="d">תאריך בלבד</span>'), "athletes without a session stay");
   const sh = b.view("day-2026-11-03");
   assert.strictEqual((sh.match(/href="#a-sergey-richter"/g) || []).length, 1, "an athlete with a session isn't repeated from the fallback");
   assert.ok(sh.includes('<span class="d">08:15</span>'));
