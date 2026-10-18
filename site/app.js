@@ -35,7 +35,7 @@ const daysSince = iso => (Date.now() - new Date(str(iso))) / 864e5;
 const stageOf = a => Math.min(3, Math.max(0, Number(a.stage) | 0));
 const heCmp = (a, b) => str(a).localeCompare(str(b), "he");
 const plural = (n, one, many) => n === 1 ? one : `${n} ${many}`;
-// "עודכן ב־HH:MM" (docs/design/changed-rows.md): a row whose signature differs from the previous render of the same
+// "השתנה ב־HH:MM" (docs/design/changed-rows.md): a row whose signature differs from the previous render of the same
 // page, compared only on an auto-refresh render, stays marked until the next navigation. Rows that are new count too.
 // The time is the export's (as in #updateNote), kept from the refresh that first marked the row.
 const rowSigs = new Map(), changedRows = new Map();
@@ -46,7 +46,7 @@ function rowMark(key, sig){
   if (diffRender && rowSigs.get(key) !== sig && !changedRows.has(key) && ts && !isNaN(Date.parse(ts))) { changedRows.set(key, ts); newlyChanged++; }
   rowSigs.set(key, sig);
   const at = changedRows.get(key);
-  return at ? `<span class="pill chg">עודכן ב־<time datetime="${esc(at)}">${ilTime(at)}</time></span>` : "";   // out of the flow: see styles.css
+  return at ? `<span class="pill chg">השתנה ב־<time datetime="${esc(at)}">${ilTime(at)}</time></span>` : "";   // out of the flow: see styles.css
 }
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };
@@ -1233,7 +1233,7 @@ async function checkForUpdate(){
 }
 // A small visible note (also the screen-reader announcement), shown only when the export changed; it hides itself.
 let noteTimer = 0;
-// `marked`: rows newly marked "עודכן ב־"; the note is their only announcement, so the rows themselves stay quiet.
+// `marked`: rows newly marked "השתנה ב־"; the note is their only announcement, so the rows themselves stay quiet.
 function showUpdateNote(marked = 0){
   const n = $("updateNote");
   if (!n) return;

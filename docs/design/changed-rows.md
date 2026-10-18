@@ -1,7 +1,7 @@
-# "עודכן ב־HH:MM": what changed on an open page (#177, roadmap P3)
+# "השתנה ב־HH:MM": what changed on an open page (#177, roadmap P3)
 
-When auto-refresh picks up a newer `data.json`, the rows it changed get a `עודכן ב־<time>HH:MM</time>` pill, with the
-export's Israel time from the refresh that first marked the row (Shira: "עכשיו" goes stale). Marks stay until the
+When auto-refresh picks up a newer `data.json`, the rows it changed get a `השתנה ב־<time>HH:MM</time>` pill, with the
+export's Israel time from the refresh that first marked the row (Shira: "עכשיו" goes stale; "השתנה", not "עודכן", so a result row doesn't show two different "עודכן ב־"). Marks stay until the
 viewer navigates to another page.
 
 ## Rows
