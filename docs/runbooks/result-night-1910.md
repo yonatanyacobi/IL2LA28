@@ -35,9 +35,10 @@ No Official PDFs by the morning of 20.10: wait. Don't record anything from anoth
    One write per result. An athlete who also makes the bars final gets a second write with the bars row.
 2. **Session** `sessions/<session id>`: `result` = the session text below, `resultSource` = the Official PDF,
    `resultAt` = `date -u +%Y-%m-%dT%H:%M:%SZ`. All three, or the export blanks the result. Sub 10 holds both Raz
-   and Shamai, so its `result` joins their two texts (see ambiguities).
-3. **"מה התעדכן"**: prepend the athlete's line from the drafts below to `meta/status` `changes`
-   (`{"at": "2026-10-19", "text": …, "athleteId": …}`), `if_version` from your read, keep 30.
+   and Shamai, so its `result` is `ליהיא רז: <text>; רוני שמאי: <text>`.
+3. **"מה התעדכן"**, for a Q or a reserve only (not-qualified goes to history only): prepend the athlete's line
+   from the drafts below to `meta/status` `changes` (`{"at": "2026-10-19", "text": …, "athleteId": …}`, `at` is
+   the competition day even after midnight), `if_version` from your read, keep 30.
 4. **After a Q only**: move the matching final from `pendingFinalBlocks` in `data/sessions/roni.json` to
    `sessions` with that athlete's `athleteIds` (AA final 23.10 19:30, bars final 24.10 14:00 Rotterdam time), Dana
    signs it, and it loads through `job/load_sessions.py`.
@@ -70,23 +71,20 @@ A later change (a reserve moving up, the per-country limit) is a new entry, not 
 
 ## Drafts for "מה התעדכן" (`meta/status`)
 
-The same `result.text`, with the sport and name in front, as in the judo lines in publishing.md.
+Only for a qualification or a reserve. The same `result.text`, with the sport and name in front, as in the judo
+lines in publishing.md.
 
 **ליהיא רז** (`lihie-raz`)
 - Q: `התעמלות מכשירים: ליהיא רז – מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב`
-- Not qualified: `התעמלות מכשירים: ליהיא רז – מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר הקרב־רב`
 
 **רוני שמאי** (`roni-shamay`)
 - Q: `התעמלות מכשירים: רוני שמאי – מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב`
-- Not qualified: `התעמלות מכשירים: רוני שמאי – מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר הקרב־רב`
 
 **יהלי שושני** (`yali-shoshani`)
 - Q: `התעמלות מכשירים: יהלי שושני – מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר המקבילים`
 - Reserve: `התעמלות מכשירים: יהלי שושני – מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר המקבילים`
-- Not qualified: `התעמלות מכשירים: יהלי שושני – מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר המקבילים`
 
-## Not covered by Roni's plan (ask Roni/Tamar before writing)
+## Not covered yet
 
-- **AA reserve** for Raz or Shamai: no row. Don't reuse the bars reserve text.
-- **Beam or floor final** for Raz or Shamai: no rows, though `pendingFinalBlocks` has the 25.10 block.
-- **Sub 10 session `result`** with two athletes: Roni's row is per athlete. Proposed: `ליהיא רז: <text>; רוני שמאי: <text>`.
+An all-around reserve, or a beam/floor final for Raz or Shamai, has no wording. Roni is adding it to her plan;
+until it is on `main`, don't write those outcomes.
