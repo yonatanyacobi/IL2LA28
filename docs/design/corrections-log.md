@@ -28,7 +28,7 @@ mailbox into a visible promise. Existing tokens only. Works at 400px, in light a
 ### How entries are created (never by automation directly)
 1. **Editor form** (`openForm()`): a new fieldset `<fieldset><legend>תיקון טעות</legend>` holds:
    - a checkbox `זה תיקון של טעות שפורסמה`;
-   - when checked: a select `מי מצא` (`קורא/ת` / `בדיקה ידנית` / `העדכון האוטומטי`), the date `התקבל ב־` (default today), and `מקור לתיקון` (required).
+   - when checked: a select `מי מצא` (`קורא/ת` / `בדיקת עובדות` / `העדכון האוטומטי`), the date `התקבל ב־` (default today), and `מקור לתיקון` (required).
 
    On save, the patch is written as today. The same save also writes one `corrections` doc: the `wrong` values
    come from the record before the edit and the `right` values from the patch. It appends a history entry
