@@ -1628,6 +1628,23 @@ test("#day: today's states, a result on another day, #day alone, impossible date
   assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
 });
 
+test("#day (Gil D4, D6, D8): 'תאריך בלבד', no stakes for earned items, followed sports first", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  // 29.10: judo (Abu Dhabi) and a weightlifter moved onto the same day, so two sports are listed.
+  const lifter = data.athletes.find(a => a.sportId === "weightlifting");
+  lifter.nextDate = "2026-10-29";
+  const q = JSON.parse(JSON.stringify(SITE_QUOTAS));
+  const judo = q.items.filter(i => i.sportId === "judo" && i.stakes && i.nextQuotaEvent?.start === "2026-10-29");
+  judo.forEach(i => { i.israelStatus = "earned"; i.earnedAt = "2026-10-29"; });
+  const b = await boot({data, quotas: q, now: "2026-10-26T08:00:00Z", storage: {"la28.followSports": JSON.stringify(["weightlifting"])}});
+  const out = b.view("day-2026-10-29");
+  assert.ok(out.includes('<span class="d">תאריך בלבד</span>'), "D4: fallback rows say תאריך בלבד");
+  const judoBlock = out.split('id="ds-judo"')[1].split("</section>")[0];
+  assert.ok(judo.length && !judo.some(i => judoBlock.includes(i.stakes.slice(0, 20))), "D6: earned items don't show pre-event stakes");
+  assert.ok(out.indexOf('id="ds-weightlifting"') < out.indexOf('id="ds-judo"'), "D8: followed sport first");
+  assert.ok(out.split('id="ds-weightlifting"')[1].split("</h2>")[0].includes("במעקב שלך"), "D8: followed sport marked");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {

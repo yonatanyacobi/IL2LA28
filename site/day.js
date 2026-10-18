@@ -32,7 +32,6 @@ const chipText = d => `${asDate(d).toLocaleDateString("he-IL", {weekday: "narrow
 const chipName = d => asDate(d).toLocaleDateString("he-IL", {weekday: "long", day: "numeric", month: "long"});
 const hhmm = iso => new Date(iso).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
 const ilDate = iso => new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Jerusalem"}).format(new Date(iso));
-const followedSport = sid => !!S.followSports?.has?.(sid);
 const STAR = `<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span>`;
 
 function sessionRow(s, d){
@@ -79,7 +78,7 @@ function viewDay(d){
     if (!comps.has(key)) comps.set(key, {comp: s.comp, list: []});
     comps.get(key).list.push(s);
   }
-  const rank = sid => followedSport(sid) ? 0 : [...bySport.get(sid).values()].some(c => c.list.some(s => S.follows.has(s.a.id))) ? 1 : 2;
+  const rank = sid => followsSport(sid) ? 0 : [...bySport.get(sid).values()].some(c => c.list.some(s => S.follows.has(s.a.id))) ? 1 : 2;
   const sports = [...bySport.keys()].sort((x, y) => rank(x) - rank(y) || heCmp(sportName(x), sportName(y)));
   let after = "";
   if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && !after; i++) if (hasIsraelis(addDays(d, i))) after = addDays(d, i);
@@ -95,7 +94,7 @@ function viewDay(d){
     ${isToday ? "" : `<a href="#today">היום</a>`}</nav>
   <p class="foot">${tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)} · ` : ""}${CADENCE}</p>
   ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
-      <h2 id="ds-${esc(sid)}">${followedSport(sid) ? STAR + " " : ""}<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
+      <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
     : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.</p>${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
