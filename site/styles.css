@@ -355,15 +355,26 @@ div.track{background:none}
 .daystrip a[aria-current="date"].has::after{background:var(--on-blue)}   /* sun on blue is 1.2:1 in dark */
 .day-nav{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .day-nav > a{min-height:44px;display:inline-flex;align-items:center;font-weight:600;text-decoration:none}
+.day-nav .day-prev{order:-1}   /* h1 comes first in the DOM (reading/tab order); visually prev stays at the start */
 .rows.sess li{grid-template-columns:70px 1fr auto}
-.res{font-size:14.5px;overflow-wrap:anywhere;margin-top:2px}
+.res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px}
 .day-sport h3{font-family:var(--f-body);font-size:16px;font-weight:700;overflow-wrap:anywhere}
 .pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
 .pill.s-wait{background:var(--blue-soft);color:var(--blue)}
-@media (max-width:640px){.day-nav h1{flex-basis:100%;order:-1}}
+@media (max-width:640px){.day-nav h1{flex-basis:100%;order:-2}}
 
 /* following (#following): nav badge */
 .nav-badge{display:inline-block;min-width:18px;margin-inline-start:4px;padding:0 5px;border-radius:99px;background:var(--sun);color:var(--on-sun);font-size:11px;font-weight:700;line-height:18px;text-align:center}
 @media (max-width:640px){.links a{padding-inline:8px}}
 .site-foot .foot-link{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px}   /* "אודות" left the nav: keep a full tap target */
+/* auto-refresh: "יש עדכון" note, fixed so it shows wherever the reader is */
+.update-note{position:fixed;inset-inline:16px;bottom:16px;z-index:6;margin:0 auto;max-width:360px;padding:8px 14px;border-radius:10px;background:var(--blue);color:var(--on-blue);font-size:14px;font-weight:600;text-align:center;box-shadow:0 2px 8px rgb(0 0 0/.2)}
+
+/* competition page (#c-<id>; event-page.md §4) */
+.event-cols{display:grid;gap:22px}
+@media (min-width:900px){.event-cols{grid-template-columns:2fr 1fr;align-items:start}}
+.event-head{display:grid;gap:6px}
+.event-head .pills{display:flex;flex-wrap:wrap;gap:6px}
+.sess-day h3{font-size:16px;font-family:var(--f-body);font-weight:700}
+.sess-day h3 a[aria-current="date"]{color:var(--ink);text-decoration-thickness:3px;text-decoration-color:var(--sun)}

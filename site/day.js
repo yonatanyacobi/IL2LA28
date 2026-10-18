@@ -77,7 +77,7 @@ function sessionRow(s, d){
   const names = s.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   // "עודכן ב־" only with the result's own time (resultAt); fallback results have only a date.
   const stamp = s.resultAt ? ` · עודכן ב־${ilDate(s.resultAt) === t ? hhmm(s.resultAt) : `${fmtShort(ilDate(s.resultAt))}, ${hhmm(s.resultAt)}`}` : "";
-  const res = s.result ? `<p class="res"><b>תוצאה:</b> ${esc(s.result)}${stamp}${safeUrl(s.resultSource) ? ` · ${linkOut(s.resultSource)}` : ""}</p>` : "";
+  const res = s.result ? `<span class="res"><b>תוצאה:</b> ${esc(s.result)}${stamp}${safeUrl(s.resultSource) ? ` · ${linkOut(s.resultSource)}` : ""}</span>` : "";
   const start = s.startUtc ? Date.parse(s.startUtc) : NaN;
   const status = s.result ? ""
     : !isNaN(start) ? (now < start ? "before" : now < start + SESSION_WINDOW_H * 36e5 ? "live" : "wait")
@@ -135,8 +135,8 @@ function viewDay(d){
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun), tsOk = ts && !isNaN(Date.parse(ts));
   return `<div class="day-nav">
-      <a href="#day-${prev}"><span aria-hidden="true">→</span> ${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
       <h1 tabindex="-1">${dayTitle(d)}</h1>
+      <a class="day-prev" href="#day-${prev}"><span aria-hidden="true">→</span> ${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
       <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"}<span class="sr">, ${chipName(next)}</span> <span aria-hidden="true">←</span></a>
     </div>
   <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = hasIsraelis(x);

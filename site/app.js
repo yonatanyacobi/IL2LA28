@@ -710,7 +710,7 @@ function freshness(){
   if (!ts) return "";
   const stale = daysSince(ts) > 1.5;
   const when = new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
-  return `<span class="fresh ${stale ? "stale" : ""}"><i></i><span>${S.live ? "נתונים חיים · עדכון אוטומטי אחרון: " : "הנתונים עודכנו: "}${when}</span></span>`;
+  return `<span class="fresh ${stale ? "stale" : ""}"><i></i><span>${S.live ? "נתונים חיים · עדכון אוטומטי אחרון: " : "נכון ל־"}${when}</span></span>`;
 }
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
 
@@ -955,6 +955,7 @@ function route(){
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
   else if (/^following(-|$)/.test(h) && typeof viewFollowing === "function") html = viewFollowing(h.slice(10)), nav = "following";
+  else if (h.startsWith("c-") && typeof viewEvent === "function") html = viewEvent(h.slice(2)), nav = "calendar";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (h === "digest" && typeof viewDigest === "function") html = viewDigest(), nav = "updates";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
@@ -995,11 +996,33 @@ function navigate(){
   $("routeStatus").textContent = document.querySelector("#view h1")?.textContent || "";
 }
 // Data refreshes re-render in place without jumping the scroll position or losing search focus.
+// Focus is restored by id (search box, filters, buttons with ids); the scroll position is kept explicitly.
+// Re-rendering replaces #view, so focus is found again by a stable key: the id, else a data-* action attribute,
+// else the link's href (with its index among equal matches). Open <details> are reopened by index.
+const FOCUS_ATTRS = ["data-follow", "data-follow-sport", "data-edit", "data-add", "data-verify", "data-copy", "href"];
+const attrSel = (k, v) => `[${k}="${str(v).replace(/["\\]/g, "\\$&")}"]`;
+function focusKey(el){
+  if (!el || el === document.body) return null;
+  if (el.id) return {id: el.id};
+  const k = FOCUS_ATTRS.find(a => el.getAttribute?.(a) != null);
+  if (!k) return null;
+  const sel = attrSel(k, el.getAttribute(k));
+  return {sel, idx: Math.max(0, [...($("view").querySelectorAll?.(sel) || [])].indexOf(el))};
+}
 function refresh(){
-  const focused = document.activeElement?.id;
-  const pos = focused === "q" ? $("q").selectionStart : null;
+  const el = document.activeElement, key = focusKey(el), y = window.scrollY;
+  const open = [...($("view").querySelectorAll?.("details") || [])].map((d, i) => d.open ? i : -1).filter(i => i >= 0);
+  let pos = null;
+  try { pos = typeof el?.selectionStart === "number" ? el.selectionStart : null; } catch {}
   route();
-  if (focused === "q" && $("q")) { $("q").focus(); $("q").setSelectionRange(pos, pos); }
+  const details = [...($("view").querySelectorAll?.("details") || [])];
+  open.forEach(i => { if (details[i]) details[i].open = true; });
+  const again = !key ? null : key.id ? $(key.id) : (m => m[key.idx] || m[0])([...($("view").querySelectorAll?.(key.sel) || [])]);
+  if (again && again !== el) {
+    again.focus({preventScroll: true});
+    if (pos !== null) try { again.setSelectionRange(pos, pos); } catch {}
+  }
+  if (typeof y === "number") scrollTo({top: y, behavior: "auto"});
 }
 
 // ---------- events ----------
@@ -1170,6 +1193,49 @@ async function goLive(){
   } catch { /* stay on the public snapshot */ }
 }
 
+// ---------- auto-refresh (public data) ----------
+// An open tab re-reads data.json every REFRESH_MS and re-renders only when the export changed. Hidden tabs
+// don't poll; on return the check runs at once if it's due. Editors get live DB snapshots instead.
+const REFRESH_MS = 5 * 60e3;   // acceptance item 11: at most 5 minutes
+let lastCheck = Date.now(), refreshTimer = 0;
+async function checkForUpdate(){
+  lastCheck = Date.now();
+  if (S.live || !S.loaded) return;
+  try {
+    const prevQ = quotaFile, prevJson = JSON.stringify(quotaFile);
+    const [r] = await Promise.all([fetch("data.json", {cache: "no-cache"}), loadQuotas()]);
+    // A failed re-read keeps the quotas already shown; a 404 is an empty list (file removed on purpose), so they go.
+    if (quotaFile === null) quotaFile = prevQ;
+    const quotasChanged = JSON.stringify(quotaFile) !== prevJson;
+    if (quotasChanged) applyQuotas();
+    const d = r.ok ? await r.json() : null;
+    if (S.live || !d || (str(d.generatedAt) === S.generatedAt && str(d.lastRun) === S.lastRun)) { if (quotasChanged) refresh(); return; }
+    publicSnapshot = d;
+    applySnapshot(d);
+    refresh();
+    showUpdateNote();
+  } catch { /* keep what is on screen; freshness() turns stale after 1.5 days */ }
+}
+// A small visible note (also the screen-reader announcement), shown only when the export changed; it hides itself.
+let noteTimer = 0;
+function showUpdateNote(){
+  const n = $("updateNote");
+  if (!n) return;
+  // The export's own time (Israel), not the moment the tab noticed it.
+  const ts = S.generatedAt || S.lastRun, ok = ts && !isNaN(Date.parse(ts));
+  n.textContent = ok ? `הנתונים עודכנו ב־${new Date(ts).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"})}` : "הנתונים עודכנו";
+  n.hidden = false;
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => { n.hidden = true; }, 8000);
+}
+function scheduleRefresh(){
+  clearTimeout(refreshTimer);
+  if (document.hidden) return;
+  refreshTimer = setTimeout(async () => { await checkForUpdate(); scheduleRefresh(); }, Math.max(0, REFRESH_MS - (Date.now() - lastCheck)));
+}
+document.addEventListener("visibilitychange", scheduleRefresh);
+
 navigate();
 loadPublic();
 goLive();
+scheduleRefresh();

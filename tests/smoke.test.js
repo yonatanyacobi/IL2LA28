@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js", "site/event.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
 // (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
@@ -38,13 +38,15 @@ const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.
 // `quotas`: quotas.json payload; undefined → 404, "fail" → that fetch rejects.
 // `now` pins the clock (ISO instant); `follows` seeds localStorage.
 // Start hidden like their markup in index.html, so tests see what the app un-hides.
-const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar", "visitorChip", "visitorMsg"];
+const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar", "visitorChip", "visitorMsg", "updateNote"];
 // `claude` stands in for window.claude (editor tests); `storage` seeds localStorage.
 async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = [], claude, storage = {}} = {}){
   const els = {}, listeners = {};
   const mem = new Map([["la28.follows", JSON.stringify(follows)], ...Object.entries(storage)]);
   const ctx = {
-    console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, setTimeout, clearTimeout,
+    console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, clearTimeout,
+    // Long timers (the 10-minute auto-refresh) mustn't keep Node alive after the tests.
+    setTimeout: (f, ms, ...a) => { const t = setTimeout(f, ms, ...a); if (ms > 1000) t.unref(); return t; },
     setInterval: () => 0, clearInterval(){},
     location: {hash: "", reload(){ ctx.reloads = (ctx.reloads || 0) + 1; }},
     history: {replaceState(){}},
@@ -857,6 +859,75 @@ test("QA F1/F2: blocked storage says the follow wasn't saved; footer has its own
   assert.ok(/\.site-foot \.foot-link\{[^}]*min-height:44px/.test(fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8")), "44px target");
 });
 
+// Competition page (docs/design/event-page.md §6). Rendered through viewEvent() until the router line lands (#152).
+const AD = "judo-gs-abu-dhabi-2026", DOHA = "issf-wch-doha-2026";
+const eventAt = async (id, now, opts = {}) => {
+  const b = await boot({now, quotas: REAL_QUOTAS, ...opts});
+  return {b, out: b.run(`viewEvent(${JSON.stringify(id)})`)};
+};
+
+test("#c- Abu Dhabi (fallback data): header, 3 days, athletes once each, quota items, unknown id", async () => {
+  const {b, out} = await eventAt(AD, "2026-10-29T08:00:00Z");
+  assert.ok(out.includes('<h1 tabindex="-1">גרנד סלאם אבו דאבי</h1>') && out.includes('<a href="#sport-judo">→ ג׳ודו</a>'));
+  assert.ok(out.includes("מתקיימת עכשיו · יום 1 מתוך 3") && out.includes('<span class="pill open">העפלה</span>'));
+  assert.strictEqual(out.split('class="sess-day"').length - 1, 1, "only the day with sessions");
+  assert.ok(out.includes("ב־2 ימים נוספים בתחרות לא ידועים סשנים של ישראלים."), "empty days collapsed into one line");
+  assert.ok(out.includes('<a href="#day-2026-10-29" aria-current="date">'), "today's group marked");
+  const sched = out.split('id="evSchedH"')[1].split("</section>")[0];
+  for (const id of ["gefen-primo", "izhak-ashpiz", "raz-hershko", "timna-nelson-levy", "yonatan-elbaz"])
+    assert.strictEqual(sched.split(`href="#a-${id}"`).length - 1, 1, `${id} once in the schedule`);
+  assert.ok(out.includes('<h2 id="evAthH">הישראלים בתחרות (5)</h2>') && out.includes("5 ספורטאים ונבחרות"), "athletes panel and kpi");
+  assert.ok(out.includes('<bdi><a href="https://allsportdb.com/Sports/Judo"'), "source host isolated");
+  const stakes = out.split('id="evStakesH"')[1]?.split("</section>")[0] || "";
+  assert.ok(stakes.includes("<bdi>78+ ק״ג נשים</bdi>") && stakes.includes('<a href="#sport-judo">לכל המכסות בענף</a>'), "judo quota items");
+  assert.ok(out.includes(`value="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT#c-${AD}"`) && out.includes('data-copy-msg="evShareMsg"'), "share box");
+  assert.ok(b.run(`viewEvent("nope")`).includes(NOT_FOUND));
+  assert.ok(b.view(`c-${AD}`).includes("גרנד סלאם אבו דאבי") && b.view("c-nope").includes(NOT_FOUND), "#c- route and unknown id");
+});
+
+test("#c- status by date, escaped results, earned items, series, Doha with no known Israelis and with a session", async () => {
+  assert.ok((await eventAt(AD, "2026-10-20T08:00:00Z")).out.includes('<span class="pill s-before">מתחילה ב־29 באוק׳ 2026</span>'), "before");
+  assert.ok((await eventAt(AD, "2026-11-05T08:00:00Z")).out.includes("הסתיימה · בהמתנה לתוצאות"), "after, awaiting");
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-10-29", kind: "result", text: "<b>ארד</b>"}];
+  const res = (await eventAt(AD, "2026-10-30T08:00:00Z", {data})).out;
+  assert.ok(res.includes("&lt;b&gt;ארד&lt;/b&gt;") && !res.includes("<b>ארד</b>"), "result escaped");
+  assert.ok(res.includes("תוצאה אחת") && !res.includes("1 תוצאות"), "kpi counts the result, singular");
+  const athPanel = res.split('id="evAthH"')[1].split("</section>")[0];
+  assert.ok(!athPanel.includes("ארד"), "no unsourced result line in the athletes panel");
+
+  const q = JSON.parse(JSON.stringify(REAL_QUOTAS));
+  const won = q.items.find(i => i.sportId === "judo" && i.nextQuotaEvent?.start === "2026-10-29");
+  Object.assign(won, {israelStatus: "earned", stakes: "stake earned"});
+  const earned = (await eventAt(AD, "2026-10-29T08:00:00Z", {quotas: q})).out.split('id="evStakesH"')[1].split("</section>")[0];
+  assert.ok(earned.includes("pill q-earned") && !earned.includes("<b>מכסה הושגה</b>") && !earned.includes("stake earned"), "earned: the pill only, no stakes");
+
+  const series = JSON.parse(JSON.stringify(FIXTURE));
+  series.competitions.push({id: "long-series", sportId: "judo", name: "סדרה ארוכה", location: "", start: "2026-09-01", end: "2027-03-01", notes: "", source: "", qualifying: false});
+  const longOut = (await eventAt("long-series", "2026-10-29T08:00:00Z", {data: series})).out;
+  assert.ok(longOut.includes('<span class="pill ended">סדרה עונתית</span>') && longOut.includes('<span class="pill s-live">מתקיימת עכשיו</span>') && !longOut.includes("מתוך"), "series: no day X of Y");
+  // Gil P2-1: a shared session; only Timna has a result.
+  const shared = JSON.parse(JSON.stringify(FIXTURE));
+  shared.sessions = [{competitionId: AD, date: "2026-10-29", athleteIds: ["timna-nelson-levy", "inbal-shemesh"], phase: "57- ק״ג"}];
+  shared.athletes.find(a => a.id === "timna-nelson-levy").history = [{at: "2026-10-29", kind: "result", text: "ארד"}];
+  const sh = (await eventAt(AD, "2026-10-30T08:00:00Z", {data: shared})).out;
+  assert.ok(sh.includes("תוצאה אחת") && !sh.includes("2 תוצאות"), "results counted per athlete");
+  const inbal = sh.split('id="evAthH"')[1].split('<div class="stack"><a class="card" href="#a-').find(x => x.startsWith("inbal-shemesh")) || "";
+  assert.ok(inbal.includes("pill s-wait") && !inbal.includes("ארד"), "Inbal: her own chip, not Timna's result");
+
+  const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z")).out;
+  assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת במעקב בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
+  assert.ok(doha.includes('id="evStakesH"') && doha.includes("הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
+  const dohaItems = doha.split('id="evStakesH"')[1].split("</section>")[0].split("<li>").slice(1);
+  for (const li of dohaItems) assert.ok(li.includes("q-in-contention") || !li.includes("מה זה אומר"), "stakes only for in-contention items");
+  const withSess = {...JSON.parse(JSON.stringify(FIXTURE)), sessions: [{competitionId: DOHA, date: "2026-11-03", startUtc: "2026-11-03T06:30:00Z",
+    athleteIds: ["sergey-richter"], phase: "מוקדמות רובה אוויר"}]};
+  const s = (await eventAt(DOHA, "2026-11-02T08:00:00Z", {data: withSess})).out;
+  assert.strictEqual(s.split('class="sess-day"').length - 1, 1, "Doha: only the day with a session");
+  assert.ok(s.includes("ב־13 ימים נוספים בתחרות לא ידועים סשנים של ישראלים."), "13 empty days in one line");
+  assert.ok(s.includes("08:30") && s.includes('href="#a-sergey-richter"') && s.includes("לפני התחרות"), "timed session (Israel time)");
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));
@@ -1602,7 +1673,59 @@ test("approving an empty patch only closes the proposal; a real patch still stam
   assert.ok(upd && upd.v.rank === "3 בעולם" && upd.v.updatedAt, "non-empty patch still writes updatedAt");
 });
 
+// Auto-refresh: re-read data.json, re-render only on change, keep focus and scroll, pause while hidden.
+test("auto-refresh: re-renders on a new export, keeps focus/scroll, skips unchanged, live and hidden", async () => {
+  const b = await boot({quotas: QUOTAS});
+  const {ctx, run, els} = b;
+  let calls = [], next = FIXTURE;
+  ctx.fetch = async url => { calls.push(url); const body = url === "quotas.json" ? QUOTAS : next;
+    return {ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(body))}; };
+  b.view("home");
+
+  await run("checkForUpdate()");
+  assert.deepStrictEqual(calls.sort(), ["data.json", "quotas.json"]);
+  assert.ok(run(`$("updateNote").hidden`), "unchanged export: no update note");
+
+  next = {...FIXTURE, generatedAt: "2099-01-01T00:00:00Z", athletes: FIXTURE.athletes.slice(1)};
+  run(`$("q")`); const q = els.q; let focused = 0, sel = null, scrolled = null;
+  q.focus = () => { focused++; }; q.setSelectionRange = (a) => { sel = a; };
+  ctx.document.activeElement = {id: "q", selectionStart: 3};
+  ctx.scrollY = 640; ctx.scrollTo = o => { scrolled = o.top; };
+  await run("checkForUpdate()");
+  assert.strictEqual(run("S.generatedAt"), "2099-01-01T00:00:00Z");
+  assert.strictEqual(run("S.athletes.length"), FIXTURE.athletes.length - 1);
+  // generatedAt 2099-01-01T00:00Z is 02:00 in Israel (winter time).
+  assert.ok(!run(`$("updateNote").hidden`) && run(`$("updateNote").textContent`) === "הנתונים עודכנו ב־02:00", "visible note with the export's Israel time");
+  assert.ok(focused === 1 && sel === 3 && scrolled === 640, "focus, caret and scroll kept");
+  assert.ok(els.view.innerHTML.includes("נכון ל־"), "freshness says נכון ל־");
+
+  calls = [];
+  run("S.live = true");
+  await run("checkForUpdate()");
+  assert.deepStrictEqual(calls, [], "editors on live data don't poll");
+  run("S.live = false");
+
+  ctx.document.hidden = true;
+  run("lastCheck = 0; scheduleRefresh()");
+  await new Promise(r => setTimeout(r, 20));
+  assert.deepStrictEqual(calls, [], "hidden tab: no check");
+  ctx.document.hidden = false;
+  run("scheduleRefresh()");   // overdue (lastCheck = 0): runs at once when the tab is visible again
+  await new Promise(r => setTimeout(r, 20));
+  assert.ok(calls.includes("data.json"), "visible again: checks immediately");
+});
+
 // #today / #day-<date> (site/day.js; daily-and-following.md §1, UX review on #140).
+test("#day a11y: h1 before the prev/next links in the DOM; the result is inline, not a <p> inside a <span>", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const sagiv = data.athletes.find(a => a.id === "shachar-sagiv");
+  sagiv.history = [...(sagiv.history || []), {at: "2026-10-24", kind: "result", text: "מקום 12", source: "https://triathlon.org/x"}];
+  const out = (await boot({data, now: "2026-10-26T08:00:00Z"})).view("day-2026-10-24");
+  const nav = out.split('<div class="day-nav">')[1].split("</div>")[0];
+  assert.ok(nav.indexOf("<h1") < nav.indexOf('class="day-prev"') && nav.indexOf('class="day-prev"') < nav.indexOf('href="#day-2026-10-25"'), nav);
+  assert.ok(out.includes('<span class="res"><b>תוצאה:</b> מקום 12') && !out.includes('<p class="res"'));
+});
+
 test("#day renders the fixture on 24.10, 29.10 and 3.11 with Israelis' sessions only", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
   // A past day keeps its athletes through history results even after nextDate has moved on.
@@ -1737,6 +1860,34 @@ test("#day: an athlete with a session later in the competition isn't listed on t
   assert.ok(!b.view("day-2026-10-29").includes('href="#a-raz-hershko"'), "not on her nextDate");
   assert.ok(b.view("day-2026-10-29").includes('href="#a-izhak-ashpiz"'), "others without a session keep their nextDate row");
   assert.strictEqual((b.view("day-2026-10-31").match(/href="#a-raz-hershko"/g) || []).length, 1, "once, on the session day");
+});
+
+test("refresh keeps focus without an id (href, data-follow), reopens <details>, polls every 5 minutes (Gil on #152)", async () => {
+  const {ctx, run, els} = await boot();
+  assert.strictEqual(run("REFRESH_MS"), 5 * 60e3);
+  run(`$("view")`);
+  // A tiny stand-in for the rendered #view: elements found by attribute selector, plus <details>.
+  const mk = attrs => ({attrs, focused: 0, open: false, getAttribute: k => k in attrs ? attrs[k] : null, focus(){ this.focused++; }});
+  let nodes = [];
+  const render = () => { nodes = [mk({href: "#a-x"}), mk({href: "#day-2026-10-29"}), mk({href: "#day-2026-10-29"}), mk({"data-follow": "raz-hershko"})];
+    details = [mk({}), mk({})]; };
+  let details = [];
+  render();
+  els.view.querySelectorAll = sel => sel === "details" ? details
+    : nodes.filter(n => Object.entries(n.attrs).some(([k, v]) => sel === `[${k}="${v}"]`));
+  const realRoute = run("route");
+  ctx.route = () => { render(); return realRoute(); };
+  const check = (old, pick, label) => {
+    ctx.document.activeElement = old;
+    run("refresh()");
+    assert.strictEqual(pick().focused, 1, label);
+  };
+  check(nodes[2], () => nodes[2], "second of two equal hrefs (a #day chip)");
+  check(nodes[3], () => nodes[3], "☆ button by data-follow");
+  details[1].open = true;
+  ctx.document.activeElement = null;
+  run("refresh()");
+  assert.ok(details[1].open && !details[0].open, "open <details> reopened by index");
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
