@@ -31,6 +31,14 @@ Doha shooting and the Salou lacrosse championships are covered in #159.
 - **Climbing, beach volleyball, 3x3, baseball, flag football:** no event with Israelis found. Beach volleyball's new "Beach World Series" (November) has no dates published.
 - **Cycling (road/track/MTB):** off-season; no Israeli entry found.
 
+## Laetitia Beck – LPGA entries (checked 18.10)
+- **HOLD:** no official entry list is published yet for TOTO Japan (5–8.11), The ANNIKA (12–15.11) or CME (19–22.11).
+  lpga.com renders by script; its field and athlete pages return 404 to fetch, and no lpga.com field page for 2026 is indexed.
+- **Eligibility, not entries:** TOTO Japan is a limited field (LPGA and JLPGA lists), and CME takes the top 60 of the season points race.
+  Neither list was readable, so I'm not claiming she is in or out.
+- **Recheck:** LPGA usually publishes fields in the week before each event, so check around 2.11 (TOTO), 9.11 (ANNIKA) and 16.11 (CME).
+  Add a session only from the official LPGA field or tee times. For golf, a "session" is a round day with her tee time.
+
 ## Next steps
 1. Tamar signs off the two records in `docs/research/fiba-competitions-2026-11.json`; the coordinator creates them.
 2. Then Tamar signs off the 5 sessions in `data/sessions/yael-2.json` and the coordinator loads them (`job/load_sessions.py`).
