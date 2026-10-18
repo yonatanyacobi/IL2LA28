@@ -132,11 +132,16 @@ function freshLine(hasToday){
     : `<p class="fresh"><i></i><span>נכון ל־${whenIL(ts)} · ${CADENCE}</span></p>`;
 }
 
-function sessionRow(s, d){
+// A group in which no session has a time says "תאריך בלבד" once, in its heading, instead of on every row
+// (components.md §1). In a mixed group an untimed row keeps its own label (coordinator, #208).
+const dateOnly = list => list.length > 0 && list.every(s => !s.startUtc);
+const DATE_ONLY = `<span class="muted"> · תאריך בלבד</span>`;
+
+function sessionRow(s, d, groupDateOnly = false){
   const names = s.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   const state = sessionState(s, d);
-  // Untimed is always "תאריך בלבד": we never promise a time that hasn't been announced (components.md §1).
-  const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : "תאריך בלבד";
+  // Untimed is always "תאריך בלבד", never a promised time (components.md §1); an all-untimed group says it in its heading.
+  const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : groupDateOnly ? "" : "תאריך בלבד";
   // Keyed by day, competition and athletes, so the same session on #day and #c- is one row. The signature leaves out
   // what changes with the clock or a run without news (the status chip, checkedAt).
   const mark = rowMark(`sess|${d}|${s.comp?.id || ""}|${s.athletes.map(a => a.id).join(",")}|${s.phase}`,

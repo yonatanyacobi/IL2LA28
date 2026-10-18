@@ -889,11 +889,11 @@ const adFallback = () => {
 
 test("#c- Abu Dhabi (fallback data): header, 3 days, athletes once each, quota items, unknown id", async () => {
   const {b, out} = await eventAt(AD, "2026-10-29T08:00:00Z", {data: adFallback()});
-  assert.ok(out.includes('<h1 tabindex="-1">גרנד סלאם אבו דאבי</h1>') && out.includes('<a href="#sport-judo">→ ג׳ודו</a>'));
+  assert.ok(out.includes('<h1 tabindex="-1">גרנד סלאם אבו דאבי</h1>') && out.includes('<a href="#sport-judo"><span aria-hidden="true">→</span>&nbsp;ג׳ודו</a>'));
   assert.ok(out.includes("מתקיימת עכשיו · יום 1 מתוך 3") && out.includes('<span class="pill open">העפלה</span>'));
   assert.strictEqual(out.split('class="sess-day"').length - 1, 1, "only the day with sessions");
   assert.ok(out.includes("ב־2 ימים נוספים בתחרות לא ידועים סשנים של ישראלים."), "empty days collapsed into one line");
-  assert.ok(out.includes('<a href="#day-2026-10-29" aria-current="date">'), "today's group marked");
+  assert.ok(out.includes('<a class="hlink" href="#day-2026-10-29" aria-current="date">'), "today's group marked");
   const sched = out.split('id="evSchedH"')[1].split("</section>")[0];
   for (const id of ["gefen-primo", "izhak-ashpiz", "raz-hershko", "timna-nelson-levy", "yonatan-elbaz"])
     assert.strictEqual(sched.split(`href="#a-${id}"`).length - 1, 1, `${id} once in the schedule`);
@@ -959,7 +959,7 @@ test("entry points link to #c-<id>: calendar rows, today strip, #day heading, at
   const cal = view("calendar");
   assert.ok(cal.includes(`<a href="#sport-judo">ג׳ודו</a> · ${AD_LINK}`), "calendar: sport link kept, name links to the page");
   assert.ok(stripOf(view("home")).includes(AD_LINK), "today strip");
-  assert.ok(view("day-2026-10-29").includes('<h3><a href="#c-judo-gs-abu-dhabi-2026" class="hlink">גרנד סלאם אבו דאבי</a></h3>'), "#day heading, hlink");
+  assert.ok(view("day-2026-10-29").includes('<h3><a href="#c-judo-gs-abu-dhabi-2026" class="hlink">גרנד סלאם אבו דאבי</a>'), "#day heading, hlink");
   const q = (await boot({now: "2026-10-20T08:00:00Z", quotas: REAL_QUOTAS})).view("quotas").split('id="qNextH"')[1].split("</section>")[0];
   assert.ok(q.includes('<a href="#c-judo-gs-abu-dhabi-2026">'), "#quotas upcoming quota event links to its competition");
   const raz = view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
@@ -1958,19 +1958,19 @@ test("#day renders the fixture on 24.10, 29.10 and 3.11 with Israelis' sessions 
   const d24 = view("day-2026-10-24"), d29 = view("day-2026-10-29"), d03 = view("day-2026-11-03");
   for (const [h, out] of [["24", d24], ["29", d29], ["03", d03]]) {
     assert.ok(!out.includes(NOT_FOUND) && out.includes('<h1 tabindex="-1">'), h);
-    assert.ok(out.includes('<span aria-hidden="true">→</span> היום הקודם') && out.includes('<span aria-hidden="true">←</span>') && out.includes("היום הבא<span class=\"sr\">") && out.includes('<a href="#today">היום</a>'), `${h}: prev/next + today link`);
+    assert.ok(out.includes('<span aria-hidden="true">→</span>&nbsp;היום הקודם') && out.includes('<span aria-hidden="true">←</span>') && out.includes("היום הבא<span class=\"sr\">") && out.includes('<a href="#today">היום</a>'), `${h}: prev/next + today link`);
     assert.strictEqual((out.split('aria-label="בחירת יום"')[1].split("</nav>")[0].match(/href="#day-/g) || []).length, 7, `${h}: 7 chips`);
     assert.strictEqual((out.match(/aria-current="date"/g) || []).length, 1, `${h}: one selected chip`);
     assert.ok(/<p class="fresh"><i><\/i><span>נכון ל־<time datetime="[^"]+">[^<]*\d\d:\d\d<\/time> · מתעדכן פעם ביום/.test(out), `${h}: data note with cadence`);
     noLiveClaims(out, h);
   }
   assert.ok(d24.includes('href="#a-shachar-sagiv"') && d24.includes("<b>תוצאה:</b> מקום 12") && !d24.includes("עודכן ב־"), "24.10: result from history, no stamp");
-  assert.ok(d29.includes('<h3><a href="#c-judo-gs-abu-dhabi-2026" class="hlink">גרנד סלאם אבו דאבי</a></h3>') && d29.includes("pill s-before") && d29.includes('id="ds-judo"'), "29.10: sport h2, comp h3, before chips");
+  assert.ok(d29.includes('<h3><a href="#c-judo-gs-abu-dhabi-2026" class="hlink">גרנד סלאם אבו דאבי</a>') && d29.includes("pill s-before") && d29.includes('id="ds-judo"'), "29.10: sport h2, comp h3, before chips");
   assert.ok(!d29.includes("#sport-weightlifting"), "no competitions without Israelis' sessions");
   assert.ok(d29.includes('aria-current="date">ה׳ 29<span class="sr"> · יום חמישי, 29 באוקטובר · יש תחרויות של ישראלים</span>'), "chip: visible text in the name + current");
   const strip = d29.split('aria-label="בחירת יום"')[1].split("</nav>")[0];
   assert.ok(!/<a [^>]*aria-label=/.test(strip), "no aria-label overriding the visible chip text");
-  assert.ok(d29.includes('<span aria-hidden="true">→</span> היום הקודם<span class="sr">, יום רביעי, 28 באוקטובר</span>'), "prev: arrow hidden, sr date");
+  assert.ok(d29.includes('<span aria-hidden="true">→</span>&nbsp;היום הקודם<span class="sr">, יום רביעי, 28 באוקטובר</span>'), "prev: arrow hidden, sr date");
   // The weightlifting Worlds run on 3.11 with no Israeli entrant; the Doha shooting Worlds have the Israelis' sessions.
   assert.ok(!d03.includes("#sport-weightlifting"), "3.11: running competitions without Israelis are left out");
   assert.ok(d03.includes("#sport-shooting") && d03.includes('href="#a-sergey-richter"'), "3.11: Doha sessions from the fixture");
@@ -1987,7 +1987,7 @@ test("#day: today's states, a result on another day, #day alone, impossible date
   const t = view("today");
   assert.ok(t.includes('<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span> <a href="#a-gefen-primo"'), "★ pattern");
   assert.strictEqual(t, view("day-2026-10-30")); assert.strictEqual(t, view("day"), "#day alone = today");
-  assert.ok(t.includes('<span aria-hidden="true">→</span> אתמול') && t.includes("מחר<span class=\"sr\">") && !t.includes('<a href="#today">היום</a>'));
+  assert.ok(t.includes('<span aria-hidden="true">→</span>&nbsp;אתמול') && t.includes("מחר<span class=\"sr\">") && !t.includes('<a href="#today">היום</a>'));
   assert.ok(t.includes("מתקיימת עכשיו · יום 2 מתוך 3") && t.includes("pill s-live"), "today: live header and chip");
   assert.ok(!t.includes('href="#a-raz-hershko"'), "a result on 29.10 isn't shown as awaiting on 30.10");
   const y = view("day-2026-10-29");
@@ -2019,8 +2019,12 @@ test("#day from sessions: time, status by clock, result stamp, untimed, Israel d
   assert.ok(done.includes('<b>תוצאה:</b> &lt;b&gt;מקום 12&lt;/b&gt; · עודכן ב־<time datetime="2026-11-03T08:40:00.000Z">10:40</time>') && !done.includes("pill s-"), "result with its own time, escaped");
   const unproven = rowOf(await at("2026-11-03T12:00:00Z", [SESS({result: "מקום 12", resultSource: "http://x", resultAt: "2026-11-03T08:40:00Z"})]));
   assert.ok(!unproven.includes("תוצאה:") && unproven.includes("pill s-wait"), "a result without proof isn't shown");
-  const untimed = rowOf(await at("2026-11-02T08:00:00Z", [SESS({startUtc: null})]));   // the day before
-  assert.ok(untimed.includes('<span class="d">תאריך בלבד</span>') && untimed.includes("pill s-before"), "untimed: no time, never a time");
+  // components.md §1: an all-untimed group says "תאריך בלבד" once, in its heading; in a mixed group the untimed row says it.
+  const allUntimed = await at("2026-11-02T08:00:00Z", [SESS({startUtc: null})]);   // the day before
+  assert.ok(allUntimed.includes('<span class="muted"> · תאריך בלבד</span>') && rowOf(allUntimed).includes('<span class="d"></span>')
+    && rowOf(allUntimed).includes("pill s-before"), "all untimed: heading form, no time");
+  const mixed = rowOf(await at("2026-11-02T08:00:00Z", [SESS(), SESS({id: "x-olga", athleteIds: ["olga-tashtchiev"], startUtc: null, phase: "אקדח"})]));
+  assert.ok(mixed.includes("08:15") && mixed.includes('<span class="d">תאריך בלבד</span>'), "mixed: the untimed row says תאריך בלבד");
   // components.md §1: no promise of an unannounced time, in any output or source.
   for (const f of fs.readdirSync(path.join(__dirname, "../site")).filter(f => f.endsWith(".js")))
     assert.ok(!fs.readFileSync(path.join(__dirname, "../site", f), "utf8").includes("השעה תפורסם"), f);
@@ -2117,7 +2121,7 @@ test("#day merges sessions with the fallback per athlete (lead review on #151, M
   // Richter has a session on 3.11; Abu Dhabi judo athletes (29.10) have none and keep their nextDate rows.
   const b = await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
   const j = b.view("day-2026-10-29");
-  assert.ok(j.includes('id="ds-judo"') && j.includes('href="#a-gefen-primo"') && j.includes('<span class="d">תאריך בלבד</span>'), "athletes without a session stay");
+  assert.ok(j.includes('id="ds-judo"') && j.includes('href="#a-gefen-primo"') && (j.includes('<span class="d">תאריך בלבד</span>') || j.includes('<span class="muted"> · תאריך בלבד</span>')), "athletes without a session stay");
   const sh = b.view("day-2026-11-03");
   assert.strictEqual((sh.match(/href="#a-sergey-richter"/g) || []).length, 1, "an athlete with a session isn't repeated from the fallback");
   assert.ok(sh.includes('<span class="d"><time datetime="2026-11-03T06:15:00.000Z">08:15</time></span>'));
@@ -2145,7 +2149,8 @@ test("#day (Gil D4, D6, D8): 'תאריך בלבד', no stakes for earned items, 
   judo.forEach(i => { i.israelStatus = "earned"; i.earnedAt = "2026-10-29"; });
   const b = await boot({data, quotas: q, now: "2026-10-26T08:00:00Z", storage: {"la28.followSports": JSON.stringify(["weightlifting"])}});
   const out = b.view("day-2026-10-29");
-  assert.ok(out.includes('<span class="d">תאריך בלבד</span>'), "D4: fallback rows say תאריך בלבד");
+  assert.ok(out.includes('<span class="muted"> · תאריך בלבד</span></h3>'), "D4: an all-untimed group says תאריך בלבד once, in its heading");
+  assert.ok(!/<span class="d">תאריך בלבד<\/span>[\s\S]*<span class="d">תאריך בלבד<\/span>/.test(out.split('id="ds-judo"')[1].split("</section>")[0]), "D4: not repeated on every judo row");
   const judoBlock = out.split('id="ds-judo"')[1].split("</section>")[0];
   assert.ok(judo.length && !judo.some(i => judoBlock.includes(i.stakes.slice(0, 20))), "D6: earned items don't show pre-event stakes");
   assert.ok(out.indexOf('id="ds-weightlifting"') < out.indexOf('id="ds-judo"'), "D8: followed sport first");

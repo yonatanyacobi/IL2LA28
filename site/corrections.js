@@ -51,7 +51,7 @@ function viewCorrections(id = ""){
     : `<div class="empty"><p>עוד אין תיקונים מאז ההשקה.</p>
       <p>מצאתם טעות? שלחו קישור ומקור ל־${mail}, והתיקון יופיע כאן.</p></div>`;
   return `${S.launchAt ? "" : `<div class="banner">תצוגה מקדימה לעורכים: היומן יתפרסם לציבור אחרי שייקבע מועד ההשקה.</div>`}
-  <p class="crumb"><a href="#about">→ אודות</a></p>
+  <p class="crumb"><a href="#about"><span aria-hidden="true">→</span>&nbsp;אודות</a></p>
   <h1 tabindex="-1">יומן התיקונים</h1>
   <p class="muted">כל טעות שתוקנה באתר מאז ההשקה${S.launchAt ? ` ב־${fmt(S.launchAt.slice(0, 10))}` : ""}: מה היה כתוב, מה נכון, ומאיזה מקור.
     בבדיקה מול המקורות לפני ההשקה תיקנו ${PRE_LAUNCH_FIXES} רשומות.${V ? ` ${V === 1 ? "רשומה אחת כבר נבדקה" : `${V} רשומות כבר נבדקו`} ידנית מול המקור.` : ""}</p>
