@@ -1853,6 +1853,56 @@ test("auto-refresh: re-renders on a new export, keeps focus/scroll, skips unchan
   assert.ok(calls.includes("data.json"), "visible again: checks immediately");
 });
 
+// "השתנה ב־HH:MM" (docs/design/changed-rows.md): only rows changed by an auto-refresh, until the next navigation.
+test("changed rows: marked after auto-refresh on #a- and #day, one announcement, cleared on navigation", async () => {
+  const b = await boot({quotas: QUOTAS, now: "2026-10-19T08:00:00Z"});
+  const {ctx, run, els} = b;
+  let next = FIXTURE;
+  ctx.fetch = async url => ({ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(url === "quotas.json" ? QUOTAS : next))});
+  const go = h => { ctx.location.hash = "#" + h; run("navigate()"); return els.view.innerHTML; };
+  const marks = () => (els.view.innerHTML.match(/השתנה ב־<time datetime="[^"]+">\d\d:\d\d<\/time>/g) || []).length;
+  const exportWith = (gen, edit) => { const d = JSON.parse(JSON.stringify(FIXTURE)); d.generatedAt = gen; edit(d); return d; };
+  const ath = (d, id) => d.athletes.find(a => a.id === id);
+
+  go("a-yali-shoshani");
+  assert.strictEqual(marks(), 0);
+  // rank changes and a history entry is added; nothing else about her changes.
+  next = exportWith("2099-01-01T00:00:00Z", d => { const a = ath(d, "yali-shoshani");
+    a.rank = "מקום 5 במקבילים"; a.history = [...(a.history || []), {at: "2026-10-19", kind: "result", text: "מקום 5 במקבילים", source: "https://example.org/r.pdf"}]; });
+  await run("checkForUpdate()");
+  assert.strictEqual(marks(), 2, "rank and the new history row");
+  assert.strictEqual(run(`$("updateNote").textContent`), "הנתונים עודכנו ב־02:00 · 2 פריטים השתנו בדף הזה", "one announcement with the count");
+  assert.ok(els.view.innerHTML.includes(`השתנה ב־<time datetime="2099-01-01T00:00:00Z">02:00</time>`), "the export's Israel time");
+
+  // A later export that doesn't touch her keeps the marks and announces no new rows.
+  next = exportWith("2099-01-02T00:00:00Z", d => { const a = ath(d, "yali-shoshani");
+    a.rank = "מקום 5 במקבילים"; a.history = [...(a.history || []), {at: "2026-10-19", kind: "result", text: "מקום 5 במקבילים", source: "https://example.org/r.pdf"}]; });
+  await run("checkForUpdate()");
+  assert.strictEqual(marks(), 2, "marks stay until navigation");
+  assert.strictEqual(run(`$("updateNote").textContent`), "הנתונים עודכנו ב־02:00");
+
+  // Re-renders that aren't an auto-refresh (e.g. the minute tick) mark nothing new.
+  run("refresh()");
+  assert.strictEqual(marks(), 2);
+  go("home"); go("a-yali-shoshani");
+  assert.strictEqual(marks(), 0, "navigation clears the marks");
+
+  // #day: only the session row whose result changed is marked.
+  next = FIXTURE;
+  await run("checkForUpdate()");   // back to the fixture (a new generatedAt): a fresh baseline after navigating
+  go("day-2026-10-19");
+  const rows = (els.view.innerHTML.match(/<li><span class="d">/g) || []).length;
+  assert.ok(rows >= 2, "the day has several rows");
+  next = exportWith("2099-01-03T00:00:00Z", d => { const a = ath(d, "yali-shoshani");
+    a.history = [...(a.history || []), {at: "2026-10-19", kind: "result", text: "מקום 5 במקבילים", source: "https://example.org/r.pdf"}]; });
+  await run("checkForUpdate()");
+  assert.strictEqual(marks(), 1, "only Shoshani's row");
+  assert.ok(/יהלי שושני[\s\S]*?<\/time><\/span><\/span>/.test(els.view.innerHTML), "the mark is inside her row");
+  // The pill must not take space in the row, or marking it would move text under the cursor.
+  const css = fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8");
+  assert.ok(/\.pill\.chg\{[^}]*position:absolute/.test(css) && /\.rows li,\.facts dd\{position:relative\}/.test(css), "pill is out of the flow");
+});
+
 // #today / #day-<date> (site/day.js; daily-and-following.md §1, UX review on #140).
 test("#day a11y: h1 before the prev/next links in the DOM; the result is inline, not a <p> inside a <span>", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
