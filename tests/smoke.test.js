@@ -244,7 +244,7 @@ test("empty states: one form, a next step, no \"במאגר\"", async () => {
   far.athletes[0].nextDate = "2026-10-19";
   const c = await boot({data: far, now: "2026-10-19T09:00:00Z"});
   const h = c.view("home");
-  assert.ok(h.includes("מופיעים למעלה, ב„ישראלים מתחרים היום”.") && !h.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים"),
+  assert.ok(h.includes("כל מי שמתחרה ב־14 הימים הקרובים כבר מופיע למעלה, ב„ישראלים מתחרים היום”.") && !h.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים"),
     "strip-only day: no false 'no competitions'");
 });
 

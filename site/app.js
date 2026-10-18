@@ -494,7 +494,7 @@ function viewHome(){
       <h2>ישראלים בפעולה ב־14 הימים הקרובים</h2>
       ${busy.length ? `<ul class="rows">${busy.map(a => `<li><span class="d">${fmtShort(a.nextDate)}</span>
         <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))} · ${esc(a.next)}</small></span><span></span></li>`).join("")}</ul>`
-        : nextDayEmpty(inStrip.size ? "הספורטאים והנבחרות מישראל שמתחרים בשבועיים הקרובים מופיעים למעלה, ב„ישראלים מתחרים היום”."
+        : nextDayEmpty(inStrip.size ? "כל מי שמתחרה ב־14 הימים הקרובים כבר מופיע למעלה, ב„ישראלים מתחרים היום”."
           : "אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.", t)}
     </section>
     <section class="panel">
