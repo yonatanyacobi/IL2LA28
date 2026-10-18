@@ -46,9 +46,13 @@ function runPanel(){
     r.published !== true && "הנתונים הציבוריים לא פורסמו בריצה האחרונה.",
   ].filter(Boolean);
   const errs = errList(r.errors);
+  // Job reminders (e.g. "לעדכן quotas.json: …"): action items for editors, not failures.
+  const todo = errList(r.warnings);
   return `<section class="panel ${warns.length ? "adm-alert" : ""}">
-    <div class="sec-head"><h2>הריצה היומית האחרונה</h2><span class="pill ${warns.length ? "bad" : "open"}">${warns.length ? "דורש בדיקה" : "תקין"}</span></div>
+    <div class="sec-head"><h2>הריצה היומית האחרונה</h2><span class="pill ${warns.length ? "bad" : todo.length ? "soon" : "open"}">${warns.length ? "דורש בדיקה" : todo.length ? "יש משימות" : "תקין"}</span></div>
     ${warns.length ? `<ul class="adm-warn">${warns.map(w => `<li>${w}</li>`).join("")}</ul>` : ""}
+    ${todo.length ? `<div class="adm-todo" id="runWarnings"><h3>לטיפול מהריצה האחרונה (${todo.length})</h3>
+      <ul>${todo.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>` : ""}
     <dl class="facts">
       <dt>ריצה</dt><dd>${esc(r.id)} · ${esc(RUN_STATUS[r.status] || r.status || "—")}</dd>
       <dt>הסתיימה</dt><dd>${fmtTs(r.ended)}</dd>
@@ -57,9 +61,9 @@ function runPanel(){
       <dt>שגיאות</dt><dd>${errs.length ? `<ul class="adm-errs">${errs.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : "אין"}</dd>
     </dl>
     ${ADM.runs.length > 1 ? `<div class="tbl"><table>
-      <thead><tr><th scope="col">ריצה</th><th scope="col">סטטוס</th><th scope="col">הסתיימה</th><th scope="col">פורסם</th><th scope="col">עדכונים</th><th scope="col">שגיאות</th></tr></thead>
+      <thead><tr><th scope="col">ריצה</th><th scope="col">סטטוס</th><th scope="col">הסתיימה</th><th scope="col">פורסם</th><th scope="col">עדכונים</th><th scope="col">שגיאות</th><th scope="col">משימות</th></tr></thead>
       <tbody>${ADM.runs.map(x => `<tr><td>${esc(x.id)}</td><td>${esc(RUN_STATUS[x.status] || x.status || "—")}</td><td>${fmtTs(x.ended)}</td>
-        <td>${x.published === true ? "כן" : "לא"}</td><td>${countOf(x.writes)}</td><td>${errList(x.errors).length}</td></tr>`).join("")}</tbody>
+        <td>${x.published === true ? "כן" : "לא"}</td><td>${countOf(x.writes)}</td><td>${errList(x.errors).length}</td><td>${errList(x.warnings).length}</td></tr>`).join("")}</tbody>
     </table></div>` : ""}
   </section>`;
 }

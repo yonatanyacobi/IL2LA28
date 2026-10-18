@@ -276,3 +276,6 @@ div.track{background:none}
 /* weekly digest (#digest); the stakes-line rules of the same spec come with §1 */
 .digest textarea{width:100%;min-height:22em;resize:vertical;border:1px solid var(--line-ui,var(--stage0));border-radius:8px;
   padding:10px 12px;background:var(--bg);font-size:15px;line-height:1.5}
+.adm-todo{background:var(--sun-soft);border:1px solid var(--sun);border-radius:10px;padding:10px 14px;display:grid;gap:6px}
+.adm-todo h3{font-family:var(--f-body);font-size:16px;font-weight:700;color:var(--sun-ink)}
+.adm-todo ul{margin:0;padding-inline-start:18px;overflow-wrap:anywhere}

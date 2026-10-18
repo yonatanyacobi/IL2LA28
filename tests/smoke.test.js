@@ -356,6 +356,29 @@ test("fetch failure shows the retry view", async () => {
   assert.ok(view("home").includes("data-retry"));
 });
 
+test("#admin last-run panel shows the newest run's warnings, escaped", async () => {
+  const runs = [
+    {id: "2026-10-18", status: "done", started: "2026-10-18T05:00:00Z", ended: "2026-10-18T05:30:00Z", published: true,
+      warnings: ["לעדכן quotas.json: גרנד סלאם <img src=x onerror=alert(1)>", "לעדכן quotas.json: אליפות העולם בקליעה"]},
+    {id: "2026-10-17", status: "done", started: "2026-10-17T05:00:00Z", published: true, warnings: ["ישנה: לא להציג"]},
+  ];
+  const {run, view} = await boot({now: "2026-10-18T08:00:00Z"});
+  run(`S.isAdmin = true; S.live = true; S.db = {collection: () => ({orderBy: () => ({limit: () => ({
+    onSnapshot: ok => ok({docs: ${JSON.stringify(runs)}.map(r => ({id: r.id, data: () => r}))})})})})}`);
+  const out = view("admin");
+  const box = out.split('id="runWarnings"')[1]?.split("</div>")[0] || "";
+  assert.ok(box.includes("(2)") && box.includes("אליפות העולם בקליעה"), "newest run's warnings listed");
+  assert.ok(box.includes("&lt;img") && !/<img/i.test(out), "escaped");
+  assert.ok(!box.includes("ישנה"), "older run's warnings stay out of the box");
+  const runOpen = out.slice(0, out.indexOf("הריצה היומית האחרונה")).split("<section").pop();
+  assert.ok(out.includes("יש משימות") && !runOpen.includes("adm-alert"), "reminder, not an alert");
+
+  const quiet = await boot({now: "2026-10-18T08:00:00Z"});
+  quiet.run(`S.isAdmin = true; S.live = true; S.db = {collection: () => ({orderBy: () => ({limit: () => ({
+    onSnapshot: ok => ok({docs: [{id: "2026-10-18", data: () => ({status: "done", started: "2026-10-18T05:00:00Z", published: true})}]})})})})}`);
+  assert.ok(!quiet.view("admin").includes('id="runWarnings"'), "no box without warnings");
+});
+
 test("#admin quota health: stale file, past/soon events, earned without a stage-2 athlete", async () => {
   const base = QUOTAS.items[0];   // judo, valid
   const item = (sportId, event, israelStatus, start) => ({...base, sportId, event, israelStatus,
