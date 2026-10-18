@@ -87,9 +87,7 @@ Workload over the next 2 months, which hold about 14 qualifying events:
 5. **Legal and brand.** Risks: unofficial status, athlete names, a personal email shown publicly. Mitigations: an
    "unofficial" tag, no logos, a dedicated contact address, and a corrections and removal policy on `#about`.
 
-## 6. Owner decisions (recommendation in brackets)
-1. Go public on 21.10, after the Rotterdam result is live and the ✏️ fixes are applied. [Yes]
-2. Replace the public personal Gmail with a dedicated address before launch. [Yes]
-3. Approve two hires (a second fact-checker and a researcher), and convert Omer to publisher. [Yes]
-4. Delegate publishing of fact-checked quota changes; the owner approves only `earned`. [Yes]
-5. No English version and no Paralympics until mid-2027. [Confirm]
+## 6. Owner decisions
+The single list is `docs/product/owner-decisions.md` (PM). Its D1–D8 are aligned with this doc. In addition:
+- D9: no English version and no Paralympics coverage until mid-2027. [Confirm]
+- The hires and the publisher role were approved on 18.10.
