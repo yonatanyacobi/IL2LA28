@@ -1050,6 +1050,80 @@ test("view as visitor: editors get a toggle; visitor mode runs on data.json with
   assert.ok(hid(pub, "visitorBar") && hid(pub, "visitorBtn"), "no bar or toggle for non-editors");
 });
 
+// Editor form "תיקון טעות" fieldset (corrections-log.md §1.1): one athlete update + one corrections doc.
+async function bootEditor({failCorrection = 0} = {}){
+  const b = await boot({now: "2026-10-24T09:10:00Z"});
+  const writes = [];
+  b.ctx.__writes = writes;
+  b.ctx.__fail = failCorrection;
+  b.run(`S.isAdmin = true; S.uid = "u-editor"; S.db = {collection: name => ({doc: id => ({
+    update: async p => { __writes.push({name, id, op: "update", p}); },
+    set: async p => { if (name === "corrections" && __fail-- > 0) throw new Error("x"); __writes.push({name, id, op: "set", p}); },
+    get: async () => ({exists: false}),
+  })})};`);
+  b.run(`openForm(S.athletes.find(a => a.id === "raz-hershko"))`);
+  const set = (id, v) => { b.els[id].value = v; };
+  const save = async () => { await b.run(`saveForm({preventDefault(){}})`); };
+  return {...b, writes, set, save};
+}
+
+test("editor correction: record + log entry in the export's shape, no reporter identity", async () => {
+  const e = await bootEditor();
+  assert.ok(!e.els.fixSet.hidden, "fieldset shown when editing a published record");
+  e.set("fRank", "1 בעולם (IJF, 21.10.2026)"); e.set("fStageIn", "2");
+  e.els.fIsFix.checked = true; e.set("fFixBy", "reader"); e.set("fFixAt", "2026-10-23");
+  e.set("fFixSrc", "https://www.ijf.org/wrl");
+  await e.save();
+  assert.deepStrictEqual(e.writes.map(w => `${w.name}:${w.op}`), ["athletes:update", "corrections:set"]);
+  const [upd, log] = e.writes.map(w => JSON.parse(JSON.stringify(w.p)));   // plain objects, not the vm realm's
+  const last = upd.history[upd.history.length - 1];
+  assert.deepStrictEqual([last.kind, last.text, last.source], ["correction", "תוקן: דירוג או הישג, שלב", "https://www.ijf.org/wrl"]);
+  assert.strictEqual(upd.history.filter(h => h.kind === "stage").length, 1, "stage history still written");
+  assert.deepStrictEqual(Object.keys(log).sort(), ["at", "by", "changes", "createdBy", "id", "reportedAt", "source", "target"]);
+  assert.strictEqual(log.at, "2026-10-24T09:10:00.000Z");
+  assert.strictEqual(log.reportedAt, "2026-10-23T00:00:00Z");
+  assert.deepStrictEqual(log.target, {kind: "athlete", id: "raz-hershko", name: "רז הרשקו"});
+  assert.deepStrictEqual(log.changes.map(c => c.field), ["rank", "stage"]);
+  assert.strictEqual(log.changes[1].right, "2");
+  assert.ok(log.id.startsWith("raz-hershko-202610240910-") && e.writes[1].id === log.id);
+  assert.ok(!JSON.stringify(log).includes("@"));
+});
+
+test("editor correction: refused without source, with only a source change, or a future report date", async () => {
+  for (const [setup, msg] of [
+    [e => { e.set("fRank", "x"); e.set("fFixSrc", "http://ijf.org"); }, "מקור שמתחיל ב־https://"],
+    [e => { e.set("fSource", "https://new.example/x"); e.set("fFixSrc", "https://ijf.org/x"); }, "לפחות שדה אחד"],
+    [e => { e.set("fRank", "x"); e.set("fFixSrc", "https://ijf.org/x"); e.set("fFixAt", "2026-10-25"); }, "עתידי"],
+  ]) {
+    const e = await bootEditor();
+    e.els.fIsFix.checked = true;
+    setup(e);
+    await e.save();
+    assert.strictEqual(e.writes.length, 0, msg);
+    assert.ok(e.els.frmErr.textContent.includes(msg), e.els.frmErr.textContent);
+  }
+});
+
+test("editor correction: a failed log write is retried by the next save, without re-saving the record", async () => {
+  const e = await bootEditor({failCorrection: 1});
+  e.set("fRank", "1 בעולם"); e.els.fIsFix.checked = true; e.set("fFixSrc", "https://ijf.org/x");
+  await e.save();
+  assert.deepStrictEqual(e.writes.map(w => w.name), ["athletes"]);
+  assert.ok(e.els.frmErr.textContent.includes("לא נרשם ביומן"));
+  await e.save();
+  assert.deepStrictEqual(e.writes.map(w => w.name), ["athletes", "corrections"]);
+});
+
+test("editor: unticked fieldset writes no correction; new athletes don't get the fieldset", async () => {
+  const e = await bootEditor();
+  e.set("fRank", "1 בעולם");
+  await e.save();
+  assert.deepStrictEqual(e.writes.map(w => w.name), ["athletes"]);
+  assert.ok(!e.writes[0].p.history.some(h => h.kind === "correction"));
+  e.run(`openForm(null, "judo")`);
+  assert.ok(e.els.fixSet.hidden);
+});
+
 (async () => {
   let failed = 0;
   for (const {name, fn} of tests) {

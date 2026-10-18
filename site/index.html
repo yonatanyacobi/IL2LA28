@@ -51,6 +51,17 @@
       </div>
       <label>הערות<textarea id="fNotes" rows="3" maxlength="500"></textarea></label>
       <label>קישור למקור<input id="fSource" type="url" maxlength="400" dir="ltr" placeholder="https://"></label>
+      <fieldset id="fixSet" class="fix-set" hidden>
+        <legend>תיקון טעות</legend>
+        <label class="chk"><input type="checkbox" id="fIsFix"> זה תיקון של טעות שפורסמה</label>
+        <div id="fixRows" hidden>
+          <div class="row">
+            <label>מי מצא<select id="fFixBy"><option value="reader">קורא/ת</option><option value="audit">בדיקת עובדות</option><option value="job">העדכון האוטומטי</option></select></label>
+            <label>התקבל ב־<input id="fFixAt" type="date"></label>
+          </div>
+          <label>מקור לתיקון<input id="fFixSrc" type="url" maxlength="400" dir="ltr" placeholder="https://"></label>
+        </div>
+      </fieldset>
       <p class="warn" id="frmWarn" hidden></p>
       <p class="err" id="frmErr" hidden></p>
       <div class="actions">
