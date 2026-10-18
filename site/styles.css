@@ -314,3 +314,7 @@ div.track{background:none}
 .visitor-bar b{color:var(--blue)}
 @media (min-width:641px){.visitor-bar .btn{min-height:36px}}
 @media (max-width:640px){.vb-more{display:none}}
+
+/* quota earned (round3.md §2) */
+.won{border-inline-start:4px solid var(--ok)}
+.stakes.won-line{border-inline-start-color:var(--ok)} .stakes.won-line b{color:var(--ok-ink)}
