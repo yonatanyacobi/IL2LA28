@@ -3,6 +3,19 @@
 One row per record check, newest run first. Process: [fact-check-cadence.md](../runbooks/fact-check-cadence.md).
 Verdicts: ✅ unchanged · ✏️ edit sent · ❓ source unreadable.
 
+## 2026-10-18: baseline cross-check (Dana on Tamar's judo, swimming and fencing)
+Read from the published data.json of 2026-10-18T15:25:51Z. Sample: Tamar's records (60) → 10% = 6, drawn from her
+judo, swimming and fencing records (24, sorted by id); Python `random.Random(20261018).sample`.
+
+| Record | List date read | Verdict | Claims checked | Source | Checker |
+|---|---|---|---|---|---|
+| raz-hershko | IJF WRL 18.10.2026 | ✅ | rank 1; Euro 2026 gold; Worlds Baku 2026 bronze; GS Hungary, GS Tbilisi, GP Upper Austria (Linz) 2026 gold; Paris 2024 silver; next Abu Dhabi GS | https://www.ijf.org/judoka/13713 + IJF results feed (data.ijf.org, competitor.results) | Dana |
+| timna-nelson-levy | IJF WRL 18.10.2026 | ✅ | rank 6; Euro 2026 silver; GS Tbilisi 2026 gold; GS Paris 2025 silver; Worlds 2026 out without a place; Paris 2024; next Abu Dhabi GS 29.10 | https://www.ijf.org/judoka/14858 + IJF results feed | Dana |
+| inbar-lanir | IJF WRL 18.10.2026 | ✏️ | rank 22 ✅; Paris 2024 silver ✅; world champion 2023 ✅; no Worlds 2026 entry ✅. **The shoulder-surgery reason has one outlet only (mako): cut "אחרי ניתוח בכתף (mako, 6.7.2026)".** | https://www.ijf.org/judoka/20209 + IJF results feed | Dana |
+| maya-goshen | IJF WRL + Olympic list 18.10.2026 | ✅ | Olympic list 35 (148 pts); WRL 57; GS Ulaanbaatar 2026 7th; Paris 2024; next Abu Dhabi GS (on her IJF profile) | https://www.ijf.org/judoka/26366 + ijf.org/internal_api/wrl_olympic (category 12) | Dana |
+| anastasia-gorbenko | World Aquatics, read 18.10 | ✏️ | Every fact checks out: Paris 2024; Worlds 2025 7th in the 200 IM (2:10.26) and the 50 breast final; Euro 2026 Paris 7th in the 200 IM (2:10.70) and 400 IM (4:45.07). **The source is media (walla): source ← https://www.worldaquatics.com/athletes/1135373/anastasia-gorbenko.** | api.worldaquatics.com/fina/athletes/1135373/results | Dana |
+| dov-vilensky | OCI 29.7.2026 | ✅ | Hebrew name and epee team 4th at the 2026 Worlds (OCI names all four fencers) | OCI post (record source) | Dana |
+
 ## 2026-10-18: baseline cross-check (Tamar on Dana's athletics and sailing)
 Read from the published data.json of 2026-10-18T15:25:51Z. Sample: verified records in athletics, sailing, triathlon
 and surfing, excluding records Tamar signed herself; Python `random.seed(20261018)`, 3 of 25, plus 2 of the 10
