@@ -92,7 +92,8 @@ function quotaKpi(){
   const events = c => c === 1 ? "מקצה אחד" : `<b>${c}</b> מקצים`;
   const sports = k === 1 ? "בענף אחד" : k ? `ב־${k} ענפים` : "";
   return `<p class="kpi">${n.earned ? [`${events(n.earned)} עם מכסה לישראל`, `<b>${n["in-contention"]}</b> במרוץ למכסה`, sports].filter(Boolean).join(" · ")
-    : `טרם הושגו מכסות לישראל · ${events(n["in-contention"])} במרוץ למכסה${sports ? " " + sports : ""}`} · ${link}</p>`;
+    : `טרם הושגו מכסות לישראל · ${events(n["in-contention"])} במרוץ למכסה${sports ? " " + sports : ""}`}${
+    (w => w ? ` · <b>${w}</b> ממתינים לתוצאות` : "")(list.filter(q => awaitingOf(q)).length)} · ${link}</p>`;
 }
 
 function winStatus(w){
@@ -130,14 +131,26 @@ function quotaEventEnd(q){
 }
 // Past quota events are hidden in the UI; the loader keeps them for #admin checks.
 const nxt = (q, t = today()) => q.nextQuotaEvent?.name && quotaEventEnd(q) >= t ? q.nextQuotaEvent : null;
+// The quota event is over but quotas.json predates its end: the item still shows the pre-event state.
+// "earned" never waits; after AWAIT_DAYS the row falls back to showing no event at all.
+const AWAIT_DAYS = 14;
+const awaitingOf = (q, t = today()) => {
+  const e = q.nextQuotaEvent, end = quotaEventEnd(q);
+  if (!e?.name || !end || end >= t || q.israelStatus === "earned") return null;
+  if (str(S.quotasUpdatedAt).slice(0, 10) > end) return null;
+  return dayNo(end, t) - 1 <= AWAIT_DAYS ? {...e, end} : null;
+};
+const AWAIT_PILL = `<span class="pill q-awaiting">◷ ממתינים לתוצאות</span>`;
+const awaitingLine = w => `${esc(w.name)} ${w.start === w.end ? "התקיים" : "הסתיים"} ב־${fmt(w.end)}. ממתינים לעדכון המכסות לפי ההודעה הרשמית.`;
 // "What it means" for Israel at the next quota event; meaningless once that event is past.
 const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
 
 function quotaSection(id){
   const items = quotasOf(id);
   if (!items.length) return "";
-  items.sort((a, b) => QUOTA_STATUSES.indexOf(qStatus(a.israelStatus)) - QUOTA_STATUSES.indexOf(qStatus(b.israelStatus))
-    || (nxt(a)?.start || "9999").localeCompare(nxt(b)?.start || "9999") || heCmp(a.event, b.event));
+  // Awaiting rows come right after "earned": they are the newsiest.
+  const order = q => q.israelStatus === "earned" ? 0 : awaitingOf(q) ? 1 : 2 + QUOTA_STATUSES.indexOf(qStatus(q.israelStatus));
+  items.sort((a, b) => order(a) - order(b) || (nxt(a)?.start || "9999").localeCompare(nxt(b)?.start || "9999") || heCmp(a.event, b.event));
   const n = quotaCounts(items);
   return `<section class="panel" aria-labelledby="qH">
     <div class="sec-head"><h2 id="qH">מכסות לישראל</h2><span class="foot">${plural(items.length, "מקצה אחד", "מקצים")}</span></div>
@@ -146,13 +159,13 @@ function quotaSection(id){
     <ul class="legend">${QUOTA_STATUSES.map(k => n[k] ? `<li><i class="q-${k}"></i>${Q_LABEL[k][1]} <b>${n[k]}</b></li>` : "").join("")}</ul>
     ${n.unknown === items.length ? `<p class="muted">עוד אין מידע על מצב ישראל במקצים האלה.</p>` : ""}
     <ul class="qlist">${items.map(q => {
-      const tot = q.totalQuotas, max = q.maxPerNOC, e = nxt(q), src = linkOut(q.source, host(q.source));
+      const tot = q.totalQuotas, max = q.maxPerNOC, e = nxt(q), w = awaitingOf(q), src = linkOut(q.source, host(q.source));
       const meta = [tot != null && `${plural(tot, "מכסה אחת", "מכסות")} בעולם`, max != null && `עד ${plural(max, "מכסה אחת", "מכסות")} למדינה`].filter(Boolean).join(" · ");
       return `<li>
-        <div class="q-top"><b>${esc(q.event)}</b>${quotaStatusPill(q.israelStatus)}</div>
+        <div class="q-top"><b>${esc(q.event)}</b>${w ? `<span class="actions">${quotaStatusPill(q.israelStatus)}${AWAIT_PILL}</span>` : quotaStatusPill(q.israelStatus)}</div>
         ${meta ? `<p class="q-meta">${meta}</p>` : ""}
         ${q.israelNote ? `<p>${esc(q.israelNote)}</p>` : ""}
-        ${e ? `<p class="q-meta">אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}</p>` : ""}
+        ${e ? `<p class="q-meta">אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}</p>` : w ? `<p class="q-meta">${awaitingLine(w)}</p>` : ""}
         ${stakesLine(q)}
         ${q.allocation || src ? `<details><summary>איך מחולקות המכסות</summary><p>${q.allocation ? esc(q.allocation) : `<span class="muted">פרטי השיטה טרם נאספו.</span>`}</p>${src ? `<p class="foot">${src}</p>` : ""}</details>` : ""}
       </li>`;
@@ -234,9 +247,13 @@ function todayStrip(rows){
     // Matched by sport + date (names are free text). Not via stakesLine: the event may have started before today.
     // Followed athletes' items first, then items of athletes listed in this row, then file order (stable sort).
     const rank = q => { const as = quotaAthletes(q); return as.some(a => S.follows.has(a.id)) ? 0 : as.some(a => athletes.includes(a)) ? 1 : 2; };
-    const stakes = quotasOf(sportId).filter(q => q.stakes && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
+    // An item whose own event already ended inside this still-running competition (a team final in a 9-day
+    // Worlds) shows "awaiting" instead of its stale stakes.
+    const stakes = quotasOf(sportId).filter(q => (q.stakes && nxt(q) || awaitingOf(q)) && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
       .sort((x, y) => rank(x) - rank(y));
-    const onLine = stakes.slice(0, STAKES_MAX).map(q => `<small class="stakes"><b>מה זה אומר:</b> ${esc(q.event)}: ${esc(q.stakes)}</small>`).join("")
+    const onLine = stakes.slice(0, STAKES_MAX).map(q => awaitingOf(q)
+      ? `<small class="stakes awaiting"><b>◷ ממתינים לתוצאות:</b> ${esc(q.event)}</small>`
+      : `<small class="stakes"><b>מה זה אומר:</b> ${esc(q.event)}: ${esc(q.stakes)}</small>`).join("")
       + (stakes.length > STAKES_MAX ? `<small>ועוד ${stakes.length - STAKES_MAX} מקצים — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
       <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small>${onLine}</span>

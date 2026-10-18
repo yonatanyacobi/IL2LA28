@@ -370,6 +370,45 @@ test("today strip stakes order: followed athletes, then athletes in the row, the
   assert.deepStrictEqual(await shown(["kerem-primo"]), ["63- ק״ג נשים", "60- ק״ג גברים"], "followed even when not listed in the row");
 });
 
+test("awaiting results after a quota event (round3 §1): sport page, #quotas, home KPI, today strip", async () => {
+  const base = QUOTAS.items[0];   // valid item
+  const item = (event, israelStatus, nextQuotaEvent) => ({...base, sportId: "artistic-gymnastics", event, israelStatus, stakes: `stake ${event}`, nextQuotaEvent});
+  const quotas = updatedAt => ({updatedAt, items: [
+    item("קבוצתי<b>", "in-contention", {name: "גמר קבוצתי<i>", start: "2026-10-20", end: "2026-10-20"}),   // inside the 17–25 Oct Worlds
+    item("אישי", "in-contention", {name: "אליפות העולם 2027", start: "2027-09-28"}),
+    item("הושגה", "earned", {name: "גמר קבוצתי<i>", start: "2026-10-20", end: "2026-10-20"}),             // earned never waits
+  ]});
+  const PILL = '<span class="pill q-awaiting">◷ ממתינים לתוצאות</span>';
+  const LINE = "גמר קבוצתי&lt;i&gt; התקיים ב־";
+  const at = async (now, updatedAt = "2026-10-18") => {
+    const {view} = await boot({quotas: quotas(updatedAt), now});
+    const home = view("home");
+    return {home, strip: rowsOf(stripOf(home)).find(r => r.includes("אליפות העולם בהתעמלות מכשירים")) || "",
+      sport: view("sport-artistic-gymnastics"), all: view("quotas")};
+  };
+
+  const day = await at("2026-10-20T08:00:00Z");
+  assert.ok(day.strip.includes("stake קבוצתי&lt;b&gt;") && !day.sport.includes(PILL) && !day.all.includes("qWaitH"), "event day: stakes, no awaiting");
+
+  const next = await at("2026-10-21T08:00:00Z");
+  const row = next.sport.split("<li>").find(x => x.includes("קבוצתי&lt;b&gt;"));
+  assert.ok(row.includes(`<span class="actions"><span class="pill q-in-contention">◐ במרוץ למכסה</span>${PILL}</span>`), "status pill + awaiting pill");
+  assert.ok(row.includes(`<p class="q-meta">${LINE}`) && row.includes("ממתינים לעדכון המכסות לפי ההודעה הרשמית.") && !row.includes("stake קבוצתי"), "line replaces stale stakes");
+  const order = ["הושגה", "קבוצתי&lt;b&gt;", "אישי"].map(e => next.sport.indexOf(`<b>${e}</b>`));
+  assert.deepStrictEqual([...order].sort((x, y) => x - y), order, "earned, then awaiting, then the rest");
+  assert.ok(!next.sport.split("<li>").find(x => x.includes("<b>הושגה</b>")).includes(PILL), "earned never awaits");
+  const panel = next.all.split('id="qWaitH"')[1]?.split("</section>")[0] || "";
+  assert.ok(panel.includes("גמר קבוצתי&lt;i&gt;") && panel.includes("קבוצתי&lt;b&gt;") && !panel.includes("הושגה") && !/<[bi]>/.test(panel.replace(/<\/?b>/g, "")), "#quotas panel, escaped");
+  assert.ok(next.all.indexOf('id="qWaitH"') < next.all.indexOf('id="qNextH"'), "panel above upcoming");
+  assert.ok(next.home.includes(" · <b>1</b> ממתינים לתוצאות"), "home KPI");
+  assert.ok(next.strip.includes('<small class="stakes awaiting"><b>◷ ממתינים לתוצאות:</b> קבוצתי&lt;b&gt;</small>') && !next.strip.includes("stake קבוצתי"), "strip: no stale stakes");
+
+  const updated = await at("2026-10-21T08:00:00Z", "2026-10-21T06:00:00Z");
+  for (const page of Object.values(updated)) assert.ok(!page.includes("ממתינים לתוצאות") && !page.includes("stake קבוצתי"), "curated after the event: no awaiting");
+  const late = await at("2026-11-05T08:00:00Z");
+  assert.ok(!late.sport.includes(PILL) && !late.all.includes("qWaitH"), "after 14 days the awaiting state ends");
+});
+
 test("quota section: all-unknown note; hidden without items", async () => {
   const {view} = await boot({quotas: SPORT_QUOTAS});
   const shooting = view("sport-shooting");

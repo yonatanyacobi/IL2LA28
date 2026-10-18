@@ -10,6 +10,7 @@ function viewQuotas(){
   const n = quotaCounts(list);
   const next = list.filter(q => nxt(q))
     .sort((a, b) => a.nextQuotaEvent.start.localeCompare(b.nextQuotaEvent.start)).slice(0, 5);
+  const waiting = list.map(q => [q, awaitingOf(q)]).filter(([, w]) => w).sort(([, x], [, y]) => y.end.localeCompare(x.end));
   const row = q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
     <span class="t">${esc(q.event)}${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
     <span>${nxt(q) ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
@@ -19,6 +20,12 @@ function viewQuotas(){
     <p class="kpi">${QUOTA_STATUSES.map(k => `<b>${n[k]}</b> ${Q_LABEL[k][1]}`).join(" · ")}</p>
     <p class="foot">הספירה היא לפי מקצים, לא לפי ספורטאים. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת.${isDate(at) ? ` נכון ל־${fmt(at)}.` : ""}</p>
   </section>
+  ${waiting.length ? `<section class="panel" aria-labelledby="qWaitH">
+    <h2 id="qWaitH">ממתינים לתוצאות</h2>
+    <ul class="rows">${waiting.map(([q, w]) => `<li><span class="d">${fmtShort(w.end)}</span>
+      <span class="t">${esc(w.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · ${esc(q.event)}</small></span>
+      <span>${quotaStatusPill(q.israelStatus)}</span></li>`).join("")}</ul>
+  </section>` : ""}
   ${next.length ? `<section class="panel" aria-labelledby="qNextH">
     <h2 id="qNextH">אירועי המכסה הקרובים</h2>
     <ul class="rows">${next.map(q => `<li><span class="d">${fmt(q.nextQuotaEvent.start)}</span>
