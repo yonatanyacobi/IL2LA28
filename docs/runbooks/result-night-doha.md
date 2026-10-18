@@ -32,7 +32,7 @@ worked out from the results. The mixed team on 4.11 has no quotas.
 | 17:30–18:15 | Women's final | – |
 | after each final | Results: https://www.issf-sports.org/competitions/3421/results. Quota status: https://www.issf-sports.org/competitions/olympic-qualification-tracker/quota-place-by-nation-and-number | Yael |
 | results + 30 min | Athlete and session values → Dana; quota item per doha-outcomes.md (א)–(ד) → Dana (+ Tamar for `earned`) | Yael |
-| after sign-off, **before the 23:45 run** | Steps 1–3 below | coordinator |
+| after sign-off, **before the next morning's 07:13 daily run** | Steps 1–3 below | coordinator |
 | tracker not updated yet | "Provisional": facts only, no word "מכסה", no stage proposal; repeat when the tracker updates | Yael |
 
 ## Sequence, 4.11 (mixed team, no quotas)
