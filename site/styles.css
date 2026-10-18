@@ -307,3 +307,5 @@ div.track{background:none}
 /* home: "הבא בתור" (round3 §5b) */
 .next-up{margin-top:8px;font-size:15px;overflow-wrap:anywhere}
 .next-up b{color:var(--sun-ink)}
+/* editors' "view as visitor" preview */
+.visitor-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:center;background:var(--blue-soft);color:var(--ink);border-bottom:1px solid var(--line);padding:6px 16px;font-size:14px}

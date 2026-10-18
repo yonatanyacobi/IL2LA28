@@ -34,20 +34,23 @@ const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.
 // `data` is the data.json payload; `fetchFails` makes every fetch reject.
 // `quotas`: quotas.json payload; undefined → 404, "fail" → that fetch rejects.
 // `now` pins the clock (ISO instant); `follows` seeds localStorage.
-async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = []} = {}){
+// Start hidden like their markup in index.html, so tests see what the app un-hides.
+const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar"];
+// `claude` stands in for window.claude (editor tests); `storage` seeds localStorage.
+async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = [], claude, storage = {}} = {}){
   const els = {}, listeners = {};
-  const mem = new Map([["la28.follows", JSON.stringify(follows)]]);
+  const mem = new Map([["la28.follows", JSON.stringify(follows)], ...Object.entries(storage)]);
   const ctx = {
     console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, setTimeout, clearTimeout,
     setInterval: () => 0, clearInterval(){},
-    location: {hash: ""},
+    location: {hash: "", reload(){ ctx.reloads = (ctx.reloads || 0) + 1; }},
     history: {replaceState(){}},
     localStorage: {getItem: k => mem.has(k) ? mem.get(k) : null, setItem: (k, v) => mem.set(k, String(v)), removeItem: k => mem.delete(k)},
     navigator: {clipboard: {writeText: async () => {}}},
     matchMedia: () => ({matches: false, addEventListener(){}}),
     scrollTo(){}, addEventListener(){}, removeEventListener(){},
     document: {
-      getElementById: id => els[id] ??= fakeEl(id),
+      getElementById: id => els[id] ??= Object.assign(fakeEl(id), HIDDEN_IN_HTML.includes(id) ? {hidden: true} : {}),
       // Only "#view h1" is needed (focus, route announcement, document.title).
       querySelector: sel => {
         const m = sel === "#view h1" && /<h1\b[^>]*>([\s\S]*?)<\/h1>/.exec(els.view?.innerHTML || "");
@@ -68,6 +71,7 @@ async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = 
     },
   };
   ctx.window = ctx;
+  if (claude) ctx.claude = claude;
   vm.createContext(ctx);
   for (const f of SCRIPTS) vm.runInContext(fs.readFileSync(f, "utf8"), ctx, {filename: f});
   await new Promise(r => setTimeout(r, 20));   // let loadPublic()'s fetch settle
@@ -932,6 +936,51 @@ test("closest panel and next-up escape names", async () => {
   const {view} = await boot({data, quotas: {updatedAt: "2026-10-25", items}, now: "2026-10-26T08:00:00Z"});
   const home = view("home");
   assert.ok(!/<img|<b>ev|<i>q/i.test(home) && closeOf(home).includes("&lt;b&gt;ev") && nextUpOf(home).includes("&lt;img"));
+});
+
+// An editor session: canEdit() is true and the DB serves the fixture, plus one pending proposal.
+function fakeEditor(data = FIXTURE){
+  const calls = [];
+  const snap = docs => ({docs: docs.map(d => ({id: d.id, data: () => d}))});
+  const rows = {athletes: data.athletes, competitions: data.competitions, sports: data.sports};
+  const coll = name => ({
+    onSnapshot: ok => ok(snap(rows[name] || [])),
+    where: () => ({onSnapshot: ok => ok(snap(name === "proposals"
+      ? [{id: "p1", kind: "update", target: data.athletes[0].id, patch: {rank: "1"}, status: "pending", summary: "בדיקה"}] : []))}),
+    orderBy: () => ({limit: () => ({onSnapshot: ok => ok(snap([]))})}),
+  });
+  const db = {collection: coll, doc: () => ({onSnapshot: ok => ok({exists: false})})};
+  return {calls, use: async name => { calls.push(name); return name === "user" ? {canEdit: async () => true, id: async () => "u1"} : db; }};
+}
+
+test("view as visitor: editors get a toggle; visitor mode runs on data.json with no editor features", async () => {
+  const hid = (b, id) => b.run(`$("${id}").hidden`);
+  const ed = fakeEditor();
+  const e = await boot({claude: ed});
+  assert.ok(e.run("S.live && S.isAdmin"), "editor mode is live");
+  e.view("home");
+  assert.ok(!hid(e, "visitorBtn") && !hid(e, "adminChip") && !hid(e, "adminLink") && hid(e, "visitorBar"));
+  assert.ok(e.view("home").includes("את/ה רואה נתונים חיים"), "review queue for editors");
+  e.run("setVisitorView(true)");
+  assert.strictEqual(e.run(`localStorage.getItem("la28.viewAsVisitor")`), "true");
+  assert.strictEqual(e.ctx.reloads, 1);
+
+  const vc = fakeEditor();
+  const v = await boot({claude: vc, storage: {"la28.viewAsVisitor": "true"}});
+  assert.ok(!vc.calls.includes("db"), "the DB is never opened");
+  assert.ok(v.run("!S.live && !S.isAdmin && S.db === null && S.loaded"), "public snapshot only");
+  const home = v.view("home");
+  assert.ok(!hid(v, "visitorBar") && hid(v, "adminLink") && hid(v, "adminChip") && hid(v, "visitorBtn"),
+    "bar shown; chip, toggle and בקרה hidden");
+  assert.ok(!home.includes("את/ה רואה נתונים חיים") && !home.includes("data-edit") && !home.includes("data-add"));
+  assert.ok(!v.view("sport-judo").includes("data-add") && !v.view("a-raz-hershko").includes("data-edit"));
+  assert.ok(v.view("admin").includes(NOT_FOUND), "#admin is not-found, as for visitors");
+  v.run("setVisitorView(false)");
+  assert.strictEqual(v.run(`localStorage.getItem("la28.viewAsVisitor")`), "false");
+  assert.strictEqual(v.ctx.reloads, 1);
+
+  const pub = await boot({storage: {"la28.viewAsVisitor": "true"}});   // a real visitor with a leftover flag
+  assert.ok(hid(pub, "visitorBar") && hid(pub, "visitorBtn"), "no bar or toggle for non-editors");
 });
 
 (async () => {
