@@ -228,7 +228,7 @@ function athleteQuotaFacts(a){
     return s === "outside" ? "לפי המצב הנוכחי, מחוץ למקומות המכסה." : "עוד אין מידע על מצב ישראל במקצה הזה.";
   };
   return `<dt>מכסה</dt><dd class="stack">${items.map(q => { const l = line(q); return `
-    <span>${quotaStatusPill(q.israelStatus)} ${esc(q.event)}${awaitingOf(q) ? AWAIT_PILL : ""}</span>${l ? `
+    <span>${quotaStatusPill(q.israelStatus)} <bdi>${esc(q.event)}</bdi>${awaitingOf(q) ? AWAIT_PILL : ""}</span>${l ? `
     <span class="muted">${l}</span>` : ""}${q.israelStatus === "in-contention" && !awaitingOf(q) ? stakesLine(q, "stakes", "span") : ""}`; }).join("")}
     <a href="#sport-${esc(a.sportId)}">לכל המכסות בענף</a></dd>`;
 }
