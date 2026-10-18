@@ -1161,6 +1161,9 @@ function cutoffOf(c){
   if (!c || typeof c !== "object" || !Number.isInteger(c.rank) || c.rank < 1 || !str(c.list).trim() || !safeUrl(c.url) || !isDate(c.final)) return null;
   return {rank: c.rank, list: str(c.list), url: c.url, final: c.final, opens: isDate(c.opens) ? c.opens : ""};
 }
+// A team event's own rank on the cutoff's list (standings.md §1: the ranked unit is the national team, not its members).
+const teamRankOf = t => t && typeof t === "object" && Number.isInteger(t.num) && t.num >= 1 && isDate(t.asOf) && safeUrl(t.source)
+  ? {num: t.num, asOf: t.asOf, source: t.source} : null;
 function applyQuotas(){
   const items = Array.isArray(quotaFile?.items) ? quotaFile.items : [];
   S.quotas = items.filter(q => q && typeof q === "object" && sportById(q.sportId) && QUOTA_STATUSES.includes(q.israelStatus)
@@ -1168,7 +1171,7 @@ function applyQuotas(){
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
       allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
-      cutoff: cutoffOf(q.cutoff),
+      cutoff: cutoffOf(q.cutoff), teamRank: teamRankOf(q.teamRank),
       checkedAt: isDate(q.checkedAt) ? q.checkedAt : "",
       earnedAt: isDate(q.earnedAt) ? q.earnedAt : "",
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
