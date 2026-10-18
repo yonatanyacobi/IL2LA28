@@ -35,7 +35,7 @@ const awaitingOf = (q, t = today()) => {
 | Sport page sort | awaiting rows right after `earned` (they are the newsiest) |
 | `#quotas` | new panel above "אירועי המכסה הקרובים", only if any: h2 `בהמתנה לתוצאות`, `.rows` with `.d` = `fmtShort(end)`, `.t` = `{name}<small>{sport link} · {event}</small>`, third cell = status pill |
 | Home KPI (`quotaKpi()`) | append ` · <b>{n}</b> מקצים בהמתנה לתוצאות` when n > 0, via `plural(n, "מקצה אחד", "מקצים")` (`· מקצה אחד בהמתנה לתוצאות`) |
-| Today strip | nothing (it lists running competitions only) |
+| Today strip | for an item whose event ended inside a competition that is still running, the waiting line replaces its stakes line: `<small class="stakes awaiting"><b><span aria-hidden="true">◷</span> בהמתנה לתוצאות:</b> <bdi>{event}</bdi> · {fmtRange(e.start, end)}</small>` (CSS: `.stakes.awaiting{border-inline-start-color:var(--blue)} .stakes.awaiting b{color:var(--blue)}`). Decided on #65. |
 | Athlete page | see §3 |
 
 ```html
