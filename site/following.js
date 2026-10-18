@@ -66,14 +66,19 @@ function viewFollowing(tab = ""){
     <a href="#following" ${tab ? "" : `aria-current="page"`}>ספורטאים ונבחרות (${athletes.length})</a>
     <a href="#following-sports" ${tab ? `aria-current="page"` : ""}>ענפים (${sports.length})</a></nav>`;
   const foot = `<p class="foot">המעקב נשמר רק בדפדפן הזה, בלי חשבון.</p>`;
-  const empty = `<div class="empty"><p>עוד אין כאן אף אחד. לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב.</p></div>`;
+  const todayLink = typeof viewDay === "function" ? `<a href="#today">היום</a>` : "היום";
+  // Replaces `foot`, whose limit line it already says.
+  const empty = `<div class="empty">
+    <p><b>מה מקבלים:</b> תג עם מספר השינויים מאז הביקור הקודם, רשימת עדכונים, ומי שבמעקב שלך מופיעים ראשונים בדף ${todayLink}.</p>
+    <p><b>איך:</b> לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף.</p>
+    <p><b>שימו לב:</b> המעקב נשמר רק בדפדפן הזה, בלי חשבון.</p></div>`;
   const emptyTab = tab ? `<div class="empty"><p>עוד אין ענפים במעקב. לחצו על ☆ בדף של ענף כדי לעקוב.</p></div>`
     : `<div class="empty"><p>עוד אין ספורטאים או נבחרות במעקב. לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב.</p></div>`;
   if (!athletes.length && !sports.length) {
     const t = today(), seen = new Set(), picks = [];
     for (const g of closestGroups(todayRows(), t)) for (const {as} of g.items) for (const a of as) if (!seen.has(a.id) && picks.length < 3) { seen.add(a.id); picks.push(a); }
     return `${head}${empty}
-    ${picks.length ? `<section class="panel"><h2>הצעות למעקב</h2><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}${foot}`;
+    ${picks.length ? `<section class="panel"><h2>הצעות למעקב</h2><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}`;
   }
   const feed = followFeed(followSeenAtLoad), next = followUpcoming();
   return `${head}

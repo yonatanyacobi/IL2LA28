@@ -446,8 +446,7 @@ function viewHome(){
   ${mine.length || mineSports.length ? `<section class="panel">
       <div class="sec-head"><h2>במעקב שלי</h2>${mineNew ? `<span class="new">${mineNew} עודכנו מאז הביקור הקודם</span>` : ""}</div>
       ${mineSports.length ? `<div class="chips" role="group" aria-labelledby="mineSportsL"><span class="chips-lbl" id="mineSportsL">ענפים במעקב:</span>${mineSports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
-      ${mine.length ? `<div class="cards">${mine.map(athleteCard).join("")}</div>` : ""}</section>`
-    : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>`}
+      ${mine.length ? `<div class="cards">${mine.map(athleteCard).join("")}</div>` : ""}</section>` : ""}
   <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
   <p class="sr" id="qCount" aria-live="polite"></p>
   <div id="results"></div>
@@ -473,6 +472,7 @@ function viewHome(){
       ${S.changes.length ? `<ul class="rows">${S.changes.slice(0, 5).map(changeRow).join("")}</ul>` : `<p class="muted">עוד אין עדכונים.</p>`}
     </section>
   </div>
+  ${S.seenBefore && !mine.length && !mineSports.length ? `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>` : ""}
   <section class="panel">
     <div class="sec-head"><h2>תחרויות קרובות</h2><a href="#calendar">ללוח התחרויות</a></div>
     <div class="stack">${upcoming().slice(0, 6).map(c => compRow(c, true)).join("") || `<p class="muted">אין תחרויות קרובות במאגר.</p>`}</div>
