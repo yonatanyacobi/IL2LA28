@@ -34,6 +34,38 @@ class ValidateTest(unittest.TestCase):
         self.assertEqual(bad.returncode, 1)
         self.assertIn("schemaVersion", bad.stdout)
 
+    def test_corrections(self):
+        fix = {"id": "c1", "at": "2026-10-24T09:10:00Z", "reportedAt": "2026-10-23T18:40:00Z",
+               "target": {"kind": "athlete", "id": "raz-hershko", "name": "רז הרשקו"},
+               "changes": [{"field": "rank", "wrong": "2 בעולם", "right": "1 בעולם"}],
+               "source": "https://www.ijf.org/x", "by": "reader"}
+        later = {**fix, "id": "c2", "at": "2026-10-25T09:00:00Z", "reportedAt": "", "by": "job"}
+        with_c = lambda rows: lambda d: d.__setitem__("corrections", rows)
+        self.assertEqual(self.broken(with_c([])), [])
+        self.assertEqual(self.broken(with_c([later, fix])), [])
+        self.assertEqual(self.broken(lambda d: d.pop("corrections", None)), [])  # optional
+        cases = [
+            ("not newest first", [fix, later]),
+            ("on or after", [{**fix, "at": "2026-10-21T09:00:00Z"}]),
+            ("duplicate", [later, {**later}]),
+            ("unexpected keys ['reporter']", [{**fix, "reporter": "קורא"}]),
+            ("email address", [{**fix, "changes": [{"field": "notes", "wrong": "a@b.com", "right": "x"}]}]),
+            ("target", [{**fix, "target": {"kind": "athlete", "id": "x"}}]),
+            ("target", [{**fix, "target": {"kind": "team", "id": "x", "name": "y"}}]),
+            ("changes: expected 1-5", [{**fix, "changes": []}]),
+            ("changes[0]", [{**fix, "changes": [{"field": "rank", "wrong": "", "right": ""}]}]),
+            ("changes[0]", [{**fix, "changes": [{"field": "verifiedBy", "wrong": "a", "right": "b"}]}]),
+            ("changes[0]", [{**fix, "changes": [{"field": "rank", "wrong": "x" * 201, "right": ""}]}]),
+            ("source", [{**fix, "source": "http://x.org"}]),
+            ("by", [{**fix, "by": "editor"}]),
+            ("reportedAt", [{**fix, "reportedAt": "אתמול"}]),
+            ("corrections: expected a list", {"c1": fix}),
+        ]
+        for needle, rows in cases:
+            errors = self.broken(with_c(rows))
+            self.assertTrue(errors, needle)
+            self.assertIn(needle, "\n".join(errors), needle)
+
     def test_rank_fields(self):
         def setr(**kw):
             return lambda d: d["athletes"][0].update(kw)

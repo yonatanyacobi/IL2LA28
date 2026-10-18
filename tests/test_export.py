@@ -23,14 +23,14 @@ def comp(sport="judo", **kw):
 class Dump:
     """Temp dump dir in ArtifactData out_dir layout; every other file uses the {id, data} wrapper."""
 
-    def __init__(self, athletes=None, comps=None, sports=None, meta=None):
+    def __init__(self, athletes=None, comps=None, sports=None, meta=None, corrections=None):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = os.path.join(self.tmp.name, "dump")
         self.out = os.path.join(self.tmp.name, "data.json")
         sports = sports if sports is not None else {"judo": {"he": "ג׳ודו", "en": "Judo", "window": None}}
         meta = meta if meta is not None else {"lastRun": "2026-10-18T14:00:00Z", "changes": [], "updatedBy": "auto"}
         for coll, docs in (("athletes", athletes or {}), ("competitions", comps or {}), ("sports", sports),
-                           ("meta", {"status": meta})):
+                           ("meta", {"status": meta}), ("corrections", corrections or {})):
             os.makedirs(os.path.join(self.dir, coll))
             for i, (doc_id, doc) in enumerate(docs.items()):
                 body = {"id": doc_id, "data": doc} if i % 2 else doc
@@ -204,6 +204,65 @@ class ExportTest(unittest.TestCase):
         data = self.export(athletes={k: athlete(**fields) for k, (fields, _) in cases.items()})
         got = {a["id"]: (a["rankNum"], a["rankList"], a["rankAsOf"]) for a in data["athletes"]}
         self.assertEqual(got, {k: want for k, (_, want) in cases.items()})
+
+    def fix(self, **kw):
+        base = {"at": "2026-10-24T09:10:00Z", "reportedAt": "2026-10-23T18:40:00Z",
+                "target": {"kind": "athlete", "id": "a", "name": "רז הרשקו"},
+                "changes": [{"field": "rank", "wrong": "2 בעולם", "right": "1 בעולם"}],
+                "source": "https://www.ijf.org/x", "by": "reader"}
+        return {**base, **kw}
+
+    def test_corrections_exported_after_launch_newest_first_without_identity(self):
+        corrections = {
+            "old": self.fix(at="2026-10-20T08:00:00Z"),                       # before LAUNCH_AT: not public
+            "at-launch": self.fix(at=ex.LAUNCH_AT),
+            "later": self.fix(at="2026-10-25T07:00:00+03:00", by="job", reportedAt=""),
+            "with-ids": self.fix(at="2026-10-24T10:00:00Z", reporter="dana@example.org", reportedBy="u-1",
+                                 createdBy="u-2", updatedBy="u-3", note="פנימי"),
+        }
+        with Dump(athletes={"a": athlete()}, corrections=corrections) as d:
+            data = d.run()
+            log = d.log
+        self.assertEqual(validate_data.validate(data), [])
+        self.assertEqual([c["id"] for c in data["corrections"]], ["later", "with-ids", "at-launch"])
+        self.assertEqual(set(data["corrections"][1]), {"id", "at", "reportedAt", "target", "changes", "source", "by"})
+        raw = json.dumps(data["corrections"], ensure_ascii=False)
+        for secret in ("@", "u-1", "u-2", "u-3", "פנימי"):
+            self.assertNotIn(secret, raw)
+        self.assertNotIn("'old'", log)  # pre-launch is skipped, not reported as dropped
+
+    def test_corrections_invalid_dropped_and_reported(self):
+        bad = {
+            "no-source": self.fix(source=""), "http": self.fix(source="http://x.org"), "by": self.fix(by="editor"),
+            "kind": self.fix(target={"kind": "comp", "id": "a", "name": "x"}),
+            "no-name": self.fix(target={"kind": "athlete", "id": "a", "name": " "}),
+            "no-changes": self.fix(changes=[]), "empty-change": self.fix(changes=[{"field": "rank", "wrong": "", "right": ""}]),
+            "field": self.fix(changes=[{"field": "updatedBy", "wrong": "a", "right": "b"}]),
+            "six": self.fix(changes=[{"field": "rank", "wrong": str(i), "right": "x"} for i in range(6)]),
+            "email": self.fix(changes=[{"field": "notes", "wrong": "פנו ל-someone@mail.com", "right": "x"}]),
+            "bad-at": self.fix(at="yesterday"), "not-dict": ["x"],
+        }
+        with Dump(athletes={"a": athlete()}, corrections={**bad, "ok": self.fix()}) as d:
+            data = d.run()
+            log = d.log
+        self.assertEqual([c["id"] for c in data["corrections"]], ["ok"])
+        for cid in bad:
+            self.assertIn(repr(cid), log)
+
+    def test_corrections_values_normalised(self):
+        long = "א" * 250
+        c = self.export(athletes={"a": athlete()}, corrections={"x": self.fix(
+            changes=[{"field": "event", "wrong": "200 מ' גב", "right": long}, {"field": "next", "wrong": "", "right": "גביע"}])})
+        ch = c["corrections"][0]["changes"]
+        self.assertEqual((ch[0]["wrong"], len(ch[0]["right"]), ch[1]["wrong"]), ("200 מ׳ גב", 200, ""))
+
+    def test_corrections_launch_matches_site(self):
+        with open(os.path.join(HERE, "..", "site", "app.js"), encoding="utf-8") as f:
+            app = f.read()
+        m = re.search(r"\bLAUNCH_AT\s*=\s*[\"']([^\"']+)[\"']", app)
+        if not m:
+            self.skipTest("site/app.js has no LAUNCH_AT yet (Noa's #corrections UI)")
+        self.assertEqual(m.group(1), ex.LAUNCH_AT)
 
     def test_shrink_guard(self):
         with tempfile.TemporaryDirectory() as tmp:
