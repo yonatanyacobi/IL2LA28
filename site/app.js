@@ -941,7 +941,7 @@ async function goLive(){
   try {
     const user = await window.claude?.use?.("user");
     if (!user || !(await user.canEdit())) return;
-    if (store.get(VISITOR_KEY, false) === true) { $("visitorBar").hidden = false; return; }
+    if (store.get(VISITOR_KEY, false) === true) { $("visitorBar").hidden = false; $("visitorChip").hidden = false; return; }
     const db = await window.claude.use("db");
     if (!db) return;
     S.db = db; S.isAdmin = true; S.uid = await user.id();
