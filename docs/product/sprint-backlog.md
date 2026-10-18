@@ -2,7 +2,7 @@
 
 Owner: PM. It's re-planned after each event below and rolled forward 2 weeks every Sunday.
 Sprint 18.10 (quota story MVP, today strip, digest, quota health, QA P2s) is done: see main @ 2701d63, the QA rounds in
-`docs/qa/2026-10-18.md` and the launch gates in `docs/product/launch-checklist.md`.
+`docs/qa/2026-10-18.md` and the launch gates in PR #43 (launch checklist).
 
 Sizes: S ≤ 30 min, M ≤ 1 h, L > 1 h (split before starting). One PR per story; the lead reviews every PR.
 **Rule for every event:** the record (athlete + competition) is ✅ and "נבדק ידנית" **before** day 1, and the
@@ -20,21 +20,22 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 
 ## P0: event-driven
 
-### E1. Rotterdam result night, 20.10 (Roni + Dana + owner, S)
-- Before 20.10: Roni confirms the official FIG men's qualification result. If Israel isn't in the final, use outcome (ג) from
-  the runbook on 19.10 and drop the "final 20.10" wording everywhere.
-- On 20.10: the owner applies outcome (א)/(ב)/(ג) from `rotterdam-outcomes.md`. Stage proposals for the 5 gymnasts
+### E1. Rotterdam result night, 20.10 (Roni + Omer as publisher + Dana and Tamar, S)
+- Before 20.10: Roni confirms the official FIG men's qualification result. If Israel isn't in the final, apply outcome (ב) from
+  the runbook on 19.10, which covers "not in the final", and drop the "final 20.10" wording everywhere.
+- On 20.10: the publisher applies outcome (א) or (ב) from `docs/runbooks/rotterdam-outcomes.md`. `earned` needs both fact-checkers' sign-off. Stage proposals for the 5 gymnasts
   are approved **before** the quota item flips to `earned`. Published the same night, or the next morning at the latest.
 - Done when `#sport-artistic-gymnastics`, `#quotas` and the home strip agree, with an official FIG source.
 
 ### E2. Add missing competitions for the next 2 weeks (Maya, S)
-- Add the Tongyeong World Cup (24.10) as a competition with `qualifying: true` and an official source. Check that every
-  `nextQuotaEvent` in the next 14 days has a matching competition (a test in `tests/`, so the gap can't come back).
+- Add the Tongyeong World Cup (24.10) as a competition with `qualifying: true` and an official source. Add a test in `tests/`:
+  every `nextQuotaEvent` starting in the next 14 days has a containing competition (same sport, start inside it)
+  **or** an explicit `end`, matching `quotaEventEnd()`.
 - Done when the calendar and today strip show Tongyeong on 24.10.
 
-### E3. Pre-event verification sweep (Dana, M, by 23.10)
-- ✅ or ✏️ for every athlete appearing 20.10–1.11: gymnasts, Sagiv, Gold, the judo entrants, Richter. The owner marks
-  ✅ records "נבדק ידנית". This is launch gate G3.
+### E3. Pre-event verification drive (Dana + Tamar, batches due 19–21.10)
+- ✅ or ✏️ for every athlete appearing 20.10–1.11: gymnasts, Sagiv, Gold, the judo entrants, Richter. The coordinator marks
+  ✅ records "נבדק ידנית". This is launch gate G3; batches and deadlines are in the verification drive (PR #71).
 
 ### E4. Weightlifting and shooting quota items (Yael, S, by 26.10)
 - Celia Gold's Olympic category and the Doha entry list (Richter). Move each item out of `unknown` only with an
@@ -43,7 +44,7 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 ### E5. Event-day check, each event's day 1 (Gil, S per event)
 - Fake today = 20.10, 24.10, 27.10, 29.10, 1.11. The strip, stakes, digest and `#admin` stay consistent. 400px, both themes.
 
-## P1: launch (target Thu 22.10, see `launch-checklist.md`)
+## P1: launch (Thu 22.10, go/no-go 12:00; gates in PR #43)
 
 ### L1. Launch PR (lead + owner, S)
 - G1–G8 green. The contact-address decision (the lead's memo) is recorded. The digest text is used as the launch message.
@@ -56,8 +57,6 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 - Copy `#digest`, check it against the calendar above, then share it. Log the shares and error reports for the metrics.
 
 ## P2: quality and next sprint
-- QA P2-8: geresh normalisation for data strings in the job/export (Maya, S).
-- QA: singular forms in the home quota KPI; hide the empty "איך מחולקות המכסות" details (Itai, S).
 - The 5 ❓ quota items (athletics ×2, sailing ×3): re-check when World Athletics publishes its LA28 system or the 2026
   sailing placings are verified (Roni, standing).
 - Next calendar roll (1–15.11): surfing ISA (6.11), lacrosse sixes Europeans (2–18.11), BMX freestyle Worlds (3.11),
