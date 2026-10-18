@@ -2637,11 +2637,15 @@ test("#digest: a 'מתקיימת עכשיו' note from before an event isn't pri
 
 // #sports took ~500 ms and an empty day ~140 ms here before the perf fixes; every route is now under 20 ms.
 // The budget is loose so a slow machine doesn't flake, but a superlinear loop still blows through it.
-test("render budget: each main route under 50 ms at 3x today's data", async () => {
+test("render budget: every route under 50 ms at 3x today's data", async () => {
   const bench = require("./bench.js");
   const data = bench.dataAt(3), b = await bench.boot(data, data.athletes.slice(0, 10).map(a => a.id));
-  const slow = ["home", "today", "c-judo-gs-abu-dhabi-2026", "a-raz-hershko", "following", "sports", "calendar", "quotas", "day-2026-12-24"]
-    .map(r => [r, bench.timeRoute(b, r, 5)]).filter(([, ms]) => ms > 50);
+  // bench.dataAt adds standings ranks and corrections, so #sport-judo, the game log and #corrections have content.
+  const html = r => (b.ctx.location.hash = "#" + r, b.run("route()"), b.els.view.innerHTML);
+  assert.ok(html("sport-judo").includes('id="standH"') && html("a-raz-hershko").includes('id="logH"') && html("corrections").includes('class="fix"'),
+    "the heavy sections render");
+  const slow = [...bench.ALL_ROUTES, "admin"]
+    .map(r => { if (r === "admin") b.run("S.isAdmin = true; S.live = true"); return [r, bench.timeRoute(b, r, 5)]; }).filter(([, ms]) => ms > 50);
   assert.deepStrictEqual(slow.map(([r, ms]) => `#${r} ${ms.toFixed(0)} ms`), []);
 });
 
