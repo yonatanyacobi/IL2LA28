@@ -12,7 +12,7 @@ function viewQuotas(){
     .sort((a, b) => a.nextQuotaEvent.start.localeCompare(b.nextQuotaEvent.start)).slice(0, 5);
   const waiting = list.map(q => [q, awaitingOf(q)]).filter(([, w]) => w).sort(([, x], [, y]) => y.end.localeCompare(x.end));
   const row = q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
-    <span class="t">${esc(q.event)}${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
+    <span class="t"><bdi>${esc(q.event)}</bdi>${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
     <span>${nxt(q) ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
   const at = str(S.quotasUpdatedAt).slice(0, 10);
   return head + `
@@ -23,13 +23,13 @@ function viewQuotas(){
   ${waiting.length ? `<section class="panel" aria-labelledby="qWaitH">
     <h2 id="qWaitH">בהמתנה לתוצאות</h2>
     <ul class="rows">${waiting.map(([q, w]) => `<li><span class="d">${fmtShort(w.end)}</span>
-      <span class="t">${esc(w.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · ${esc(q.event)}</small></span>
+      <span class="t">${esc(w.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · <bdi>${esc(q.event)}</bdi></small></span>
       <span>${quotaStatusPill(q.israelStatus)}</span></li>`).join("")}</ul>
   </section>` : ""}
   ${next.length ? `<section class="panel" aria-labelledby="qNextH">
     <h2 id="qNextH">אירועי המכסה הקרובים</h2>
     <ul class="rows">${next.map(q => `<li><span class="d">${fmt(q.nextQuotaEvent.start)}</span>
-      <span class="t">${esc(q.nextQuotaEvent.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · ${esc(q.event)}</small>${stakesLine(q, "stakes", "small")}</span>
+      <span class="t">${esc(q.nextQuotaEvent.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · <bdi>${esc(q.event)}</bdi></small>${stakesLine(q, "stakes", "small")}</span>
       <span>${quotaStatusPill(q.israelStatus)}</span></li>`).join("")}</ul>
   </section>` : ""}
   ${QUOTA_STATUSES.filter(k => n[k]).map(k => `<section class="panel" aria-labelledby="qH-${k}">

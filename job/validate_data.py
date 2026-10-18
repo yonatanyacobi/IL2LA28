@@ -17,7 +17,7 @@ HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}
-QUOTA_OPTIONAL = {"stakes"}
+QUOTA_OPTIONAL = {"stakes", "earnedAt"}
 STAKES_MAX = 140
 
 # key -> (kind, required); kinds: str, date ("" or YYYY-MM-DD), url ("" or https://), iso ("" or ISO datetime with timezone, as export_data.iso())
@@ -197,6 +197,8 @@ def validate_quotas(q, data):
             v = it["stakes"]
             if not (isinstance(v, str) and v.strip() and "\n" not in v and len(v) <= STAKES_MAX):
                 err(f"{path}.stakes: expected one non-empty line of at most {STAKES_MAX} chars, got {v!r}")
+        if "earnedAt" in it and not (is_date(it["earnedAt"]) and status == "earned"):
+            err(f"{path}.earnedAt: expected YYYY-MM-DD on an \"earned\" item, got {it['earnedAt']!r}")
         src = it.get("source")
         if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
             err(f"{path}.source: expected an https:// URL, got {src!r}")

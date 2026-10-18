@@ -51,6 +51,12 @@ class QuotasTest(unittest.TestCase):
             e["end"] = e["start"]
         self.assertEqual(self.errors(add_end), [])
 
+    def test_earned_at_optional_on_earned_items(self):
+        q = copy.deepcopy(self.valid)
+        earned = next(i for i in q["items"] if i["israelStatus"] == "earned")
+        earned["earnedAt"] = "2026-10-18"
+        self.assertEqual(validate_data.validate_quotas(q, self.staged), [])
+
     def test_iso_updated_at_accepted(self):
         self.assertEqual(self.errors(lambda q: q.__setitem__("updatedAt", "2026-10-18T12:00:00Z")), [])
 
@@ -74,6 +80,8 @@ class QuotasTest(unittest.TestCase):
             ("unexpected", lambda q: i0(q).__setitem__("israelstatus", "earned")),
             ("israelNote", lambda q: i0(q).__setitem__("israelNote", None)),
             ("expected an object", lambda q: q["items"].append("junk")),
+            ("earnedAt", lambda q: i0(q).__setitem__("earnedAt", "yesterday")),
+            ("earnedAt", lambda q: i0(q).__setitem__("earnedAt", "2026-10-18")),   # i0 is not "earned"
             ("stakes", lambda q: i0(q).__setitem__("stakes", 7)),
             ("stakes", lambda q: i0(q).__setitem__("stakes", "  ")),
             ("stakes", lambda q: i0(q).__setitem__("stakes", "שורה\nשנייה")),
