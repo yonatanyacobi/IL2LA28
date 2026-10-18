@@ -1,7 +1,7 @@
 """Build the public data.json for the LA28 tracker from an ArtifactData dump.
 
 Usage: python3 export_data.py <dump_dir> <out_file> [<previous_data.json>]
-<dump_dir> holds athletes/, competitions/, sports/, corrections/ and meta/status.json, as written by
+<dump_dir> holds athletes/, competitions/, sports/, corrections/, sessions/ and meta/status.json, as written by
 ArtifactData list/get with out_dir. Only public fields are exported; proposals, run logs,
 archived athletes, updatedBy and verifiedBy (viewer ids) and anything identifying who reported
 a correction never leave the database.
@@ -135,9 +135,49 @@ def history(items):
     return out[-HISTORY_PUBLIC:]
 
 
+SESSION_TEXT_MAX = 120
+HHMM = re.compile(r"([01]\d|2[0-3]):[0-5]\d", re.ASCII)
+
+
+def start_utc(day, time_local, tz):
+    """The session start as ISO with Z, from the venue's local time and IANA zone (docs/design/sessions-contract.md)."""
+    from zoneinfo import ZoneInfo
+    try:
+        local = datetime.strptime(f"{day} {time_local}", "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo(tz))
+    except (ValueError, TypeError, LookupError, OSError):  # LookupError covers ZoneInfoNotFoundError
+        return None
+    return local.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def session(sid, s, comps, athlete_ids, held):
+    """Public form of sessions/<id> (whitelist), or None to drop it. held collects ids exported with a field blanked."""
+    comp = comps.get(s.get("competitionId"))
+    day = date(s.get("date"))
+    if (not comp or not day or not comp["start"] <= day <= (comp["end"] or comp["start"]) or not https(s.get("source"))
+            or not text(s.get("phase"))):
+        return None
+    ids = [a for a in dict.fromkeys(s.get("athleteIds") or []) if isinstance(a, str) and a in athlete_ids]
+    if not ids:
+        return None
+    when = None
+    if s.get("timeLocal") or s.get("tz"):
+        when = start_utc(day, s.get("timeLocal"), s.get("tz")) if HHMM.fullmatch(str(s.get("timeLocal"))) else None
+        if not when:
+            held.append(f"{sid} (time)")
+    result = text(s.get("result"), SESSION_TEXT_MAX)
+    proof = https(s.get("resultSource")), iso(s.get("resultAt"))
+    if result and not (proof[0] and proof[1].endswith("Z")):
+        held.append(f"{sid} (result)")
+        result = ""
+    return {"id": sid, "competitionId": comp["id"], "date": day, "startUtc": when, "athleteIds": ids,
+            "phase": text(s.get("phase"), SESSION_TEXT_MAX), "source": https(s.get("source")),
+            "result": result, "resultSource": proof[0] if result else "", "resultAt": proof[1] if result else ""}
+
+
 def main(dump, out_file, prev_file=None):
     dropped = []
-    sports, athletes, comps, corrs = (load(dump, c, dropped) for c in ("sports", "athletes", "competitions", "corrections"))
+    sports, athletes, comps, corrs, sess = (load(dump, c, dropped)
+                                            for c in ("sports", "athletes", "competitions", "corrections", "sessions"))
     with open(os.path.join(dump, "meta", "status.json"), encoding="utf-8") as fh:
         meta = json.load(fh)
     meta = meta.get("data", meta) if isinstance(meta, dict) else {}
@@ -194,7 +234,16 @@ def main(dump, out_file, prev_file=None):
             dropped.append(cid)
     fixes = sorted(fixes, key=lambda r: (instant(r["at"]), r["id"]), reverse=True)[:CORRECTIONS_MAX]
 
-    counts = {"sports": len(s_out), "athletes": len(a_out), "competitions": len(c_out)}
+    sessions, held, by_comp = [], [], {c["id"]: c for c in c_out}
+    for sid, s in sorted(sess.items()):
+        row = session(sid, s, by_comp, ids, held)
+        if row:
+            sessions.append(row)
+        else:
+            dropped.append(sid)
+    sessions.sort(key=lambda r: (r["date"], r["startUtc"] is None, r["startUtc"] or "", r["id"]))
+
+    counts = {"sports": len(s_out), "athletes": len(a_out), "competitions": len(c_out), "sessions": len(sessions)}
     if LAUNCH_AT:  # without a launch date corrections are [] by design, so the guard ignores them
         counts["corrections"] = len(fixes)
     if prev_file and os.path.exists(prev_file):
@@ -210,11 +259,11 @@ def main(dump, out_file, prev_file=None):
         "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "lastRun": iso(meta.get("lastRun")),
         "sports": s_out, "athletes": a_out, "competitions": c_out, "changes": changes,
-        "launchAt": LAUNCH_AT, "corrections": fixes,
+        "launchAt": LAUNCH_AT, "corrections": fixes, "sessions": sessions,
     }
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"{counts} changes={len(changes)} dropped={dropped} -> {out_file}")
+    print(f"{counts} changes={len(changes)} dropped={dropped} held={held} -> {out_file}")
 
 
 if __name__ == "__main__":
