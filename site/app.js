@@ -9,7 +9,8 @@ const PARIS_ATHLETES = 88;
 const SITE_NAME = "הדרך ללוס אנג׳לס 28";
 const SITE_URL ="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
 const CONTACT_EMAIL = "yacobiyonatan@gmail.com";
-const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "next", "nextDate", "notes", "source"];
+const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "rankNum", "rankList", "rankAsOf", "next", "nextDate", "notes", "source"];
+const RANK_MAX_AGE_D = 60;
 const HISTORY_MAX = 20;
 const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
 
@@ -198,6 +199,11 @@ function weightKey(s){
 }
 const quotaAthletes = q => athletesOf(q.sportId).filter(a => (a.name && (q.israelNote.includes(a.name) || q.stakes.includes(a.name)))
   || (weightKey(a.event) && weightKey(a.event) === weightKey(q.event)));
+// Tie-break only (docs/product/spec-rank-tiebreak.md): rankNum counts while its list is at most 60 days old.
+// Compared only within one sport, so different lists never meet.
+const rankOf = (a, t = today()) => Number.isInteger(a.rankNum) && a.rankNum >= 1 && isDate(a.rankAsOf) && a.rankAsOf <= t
+  && dayNo(a.rankAsOf, t) - 1 <= RANK_MAX_AGE_D ? a.rankNum : Infinity;
+const byRank = (x, y) => rankOf(x) - rankOf(y) || 0;
 const dayNo = (from, to) => Math.round((new Date(to + "T12:00:00") - new Date(from + "T12:00:00")) / 864e5) + 1;
 
 // From the schedule, not live results. One row per running competition in a tracked sport, listing the
@@ -234,9 +240,10 @@ function todayStrip(rows){
     // Matched by sport + date (names are free text). Not via stakesLine: the event may have started before today.
     // Followed athletes' items first, then items of athletes listed in this row, then file order (stable sort).
     const rank = q => { const as = quotaAthletes(q); return as.some(a => S.follows.has(a.id)) ? 0 : as.some(a => athletes.includes(a)) ? 1 : 2; };
+    const best = q => Math.min(Infinity, ...quotaAthletes(q).map(a => rankOf(a, t)));
     const stakes = quotasOf(sportId).filter(q => q.stakes && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start)
       && quotaEventEnd(q) >= t)   // a one-day final inside a longer championship is over once its day passes
-      .sort((x, y) => rank(x) - rank(y));
+      .sort((x, y) => rank(x) - rank(y) || (best(x) - best(y) || 0));   // || 0: Infinity - Infinity is NaN
     const onLine = stakes.slice(0, STAKES_MAX).map(q => `<small class="stakes"><b>מה זה אומר:</b> ${esc(q.event)}: ${esc(q.stakes)}</small>`).join("")
       + (stakes.length > STAKES_MAX ? `<small>ועוד ${stakes.length - STAKES_MAX} מקצים — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
@@ -597,6 +604,8 @@ function openForm(a, sportId){
   $("dlgTitle").textContent = a ? "עריכת " + a.name : "ספורטאי/ת חדש/ה";
   $("fName").value = str(a?.name); $("fNameEn").value = str(a?.name_en); $("fSportIn").value = str(editing.sportId);
   $("fEvent").value = str(a?.event); $("fStageIn").value = String(a ? stageOf(a) : 0); $("fRank").value = str(a?.rank);
+  $("fRankNum").value = Number.isInteger(a?.rankNum) ? String(a.rankNum) : ""; $("fRankList").value = str(a?.rankList);
+  $("fRankAsOf").value = isDate(a?.rankAsOf) ? a.rankAsOf : "";
   $("fNext").value = str(a?.next); $("fNextDate").value = isDate(a?.nextDate) ? a.nextDate : "";
   $("fNotes").value = str(a?.notes); $("fSource").value = str(a?.source);
   $("archBtn").hidden = !a; $("archBtn").textContent = "הסרה מהרשימה";
@@ -608,6 +617,8 @@ function formValues(){
   return {
     name: $("fName").value.trim(), name_en: $("fNameEn").value.trim(), sportId: $("fSportIn").value,
     event: $("fEvent").value.trim(), stage: +$("fStageIn").value, rank: $("fRank").value.trim(),
+    rankNum: $("fRankNum").value.trim() === "" ? null : Number($("fRankNum").value), rankList: $("fRankList").value.trim(),
+    rankAsOf: $("fRankAsOf").value,
     next: $("fNext").value.trim(), nextDate: $("fNextDate").value, notes: $("fNotes").value.trim(),
     source: $("fSource").value.trim(),
   };
@@ -621,6 +632,8 @@ async function saveForm(ev){
   const v = formValues();
   if (!v.name || !v.sportId) return;
   if (v.source && !safeUrl(v.source)) return showFormErr("קישור המקור חייב להתחיל ב־https://");
+  if (v.rankNum !== null && !(Number.isInteger(v.rankNum) && v.rankNum >= 1 && v.rankList && isDate(v.rankAsOf)))
+    return showFormErr("מיקום בדירוג הוא מספר שלם מ־1 ומעלה, ונשמר רק יחד עם שם הרשימה ותאריך הפרסום שלה.");
   const stamp = {updatedAt: new Date().toISOString(), updatedBy: S.uid || "manual"};
   const col = S.db.collection("athletes");
   $("saveBtn").disabled = true;

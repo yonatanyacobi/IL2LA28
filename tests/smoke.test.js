@@ -400,6 +400,54 @@ test("site/quotas.json: all items load and render", async () => {
   }
 });
 
+// docs/product/spec-rank-tiebreak.md: IJF ranks from the real items' notes, as of mid-October.
+const JUDO_RANKS = {"raz-hershko": 1, "izhak-ashpiz": 5, "timna-nelson-levy": 6, "gefen-primo": 11, "kerem-primo": 13,
+  "yuli-alma-mishiner": 13, "inbar-lanir": 22, "yonatan-elbaz": 26, "inbal-shemesh": 35};
+const rankedData = asOf => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  for (const a of data.athletes) if (a.id in JUDO_RANKS) Object.assign(a, {rankNum: JUDO_RANKS[a.id], rankList: "IJF World Ranking List", rankAsOf: asOf});
+  return data;
+};
+const abuDhabiStakes = async data => {
+  const row = rowsOf(stripOf((await boot({data, quotas: REAL_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home"))).find(r => r.includes("גרנד סלאם אבו דאבי")) || "";
+  return [...row.matchAll(/<small class="stakes"><b>מה זה אומר:<\/b> (?:<bdi>)?([^<:]+?)(?:<\/bdi>)?:/g)].map(m => m[1]);
+};
+
+test("rank tie-break: Abu Dhabi strip shows the best-ranked judo items; stale or missing ranks keep file order", async () => {
+  assert.deepStrictEqual(await abuDhabiStakes(rankedData("2026-10-15")), ["78+ ק״ג נשים", "60- ק״ג גברים"], "world #1 and #5 first");
+  const fileOrder = await abuDhabiStakes(FIXTURE);
+  assert.deepStrictEqual(fileOrder, ["60- ק״ג גברים", "73- ק״ג גברים"], "no rankNum: unchanged");
+  assert.deepStrictEqual(await abuDhabiStakes(rankedData("2026-08-01")), fileOrder, "rank older than 60 days is ignored");
+});
+
+test("rank tie-break: every real judo quota item resolves to its athlete", async () => {
+  const {run} = await boot({quotas: REAL_QUOTAS});
+  const resolved = JSON.parse(run(`JSON.stringify(quotasOf("judo").map(q => [q.event, quotaAthletes(q).map(a => a.id).sort()]))`));
+  const want = {"60- ק״ג גברים": ["izhak-ashpiz"], "73- ק״ג גברים": ["yonatan-elbaz"], "52- ק״ג נשים": ["gefen-primo"],
+    "57- ק״ג נשים": ["inbal-shemesh", "timna-nelson-levy"], "63- ק״ג נשים": ["kerem-primo"], "78- ק״ג נשים": ["inbar-lanir"],
+    "78+ ק״ג נשים": ["raz-hershko", "yuli-alma-mishiner"]};
+  assert.deepStrictEqual(Object.fromEntries(resolved), want);
+});
+
+test("rank tie-break: digest lists ranked athletes first within a quota event", async () => {
+  const b = await boot({data: rankedData("2026-10-15"), now: DIGEST_NOW, quotas: REAL_QUOTAS});
+  const line = b.run("digestText()").split("\n").find(l => l.startsWith("  ישראלים: ") && l.includes("רז הרשקו")) || "";
+  assert.ok(line.indexOf("רז הרשקו") < line.indexOf("יצחק אשפיז") && line.indexOf("יצחק אשפיז") < line.indexOf("גפן פרימו"), line);
+});
+
+test("edit dialog: rank number needs its list and date", async () => {
+  const {run, els} = await boot();
+  run(`var __w = []; S.db = {collection: () => ({doc: () => ({update: async p => { __w.push(p); }})})}; openForm(S.athletes.find(a => a.id === "raz-hershko"))`);
+  els.fRankNum.value = "1";
+  await run("saveForm({preventDefault(){}})");
+  assert.ok(!els.frmErr.hidden && els.frmErr.textContent.includes("שם הרשימה ותאריך"), "rejected without list/date");
+  els.fRankList.value = "IJF World Ranking List"; els.fRankAsOf.value = "2026-10-15";
+  await run("saveForm({preventDefault(){}})");
+  const saved = JSON.parse(run("JSON.stringify(__w)"));
+  assert.strictEqual(saved.length, 1);
+  assert.deepStrictEqual([saved[0].rankNum, saved[0].rankList, saved[0].rankAsOf], [1, "IJF World Ranking List", "2026-10-15"]);
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));

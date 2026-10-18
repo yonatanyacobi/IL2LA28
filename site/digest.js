@@ -61,7 +61,8 @@ function digestText(t = today()){
     return [
       waCut(`• ${fmtShort(e.start)} · ${waText(sportName(q.sportId))}${list.length === 1 ? `, ${waText(q.event)}` : ""}: ${waText(e.name)}`),
       ...(list.length > 1 ? waList("  מקצים: ", list.map(x => waText(x.event))) : []),
-      ...(who.length ? waList("  ישראלים: ", names(who)) : []),
+      // Ranked first (best rankNum), then by name.
+      ...(who.length ? waList("  ישראלים: ", who.sort((a, b) => byRank(a, b) || heCmp(a.name, b.name)).map(a => waText(a.name))) : []),
       ...(stakes ? [waCut(`  מה זה אומר: ${stakes}`)] : []),
     ].join("\n");
   });
