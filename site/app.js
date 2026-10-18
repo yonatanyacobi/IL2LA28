@@ -10,6 +10,7 @@ const SITE_URL = "https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
 const CONTACT_EMAIL = "yacobiyonatan@gmail.com";
 const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "next", "nextDate", "notes", "source"];
 const HISTORY_MAX = 20;
+const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
 
 const $ = id => document.getElementById(id);
 const str = v => typeof v === "string" ? v : (v == null ? "" : String(v));
@@ -38,6 +39,7 @@ const store = {
 const S = {
   loaded: false, live: false, failed: false, liveLost: false, generatedAt: "", lastRun: "",
   sports: [], athletes: [], comps: [], changes: [], proposals: [],
+  quotas: [], quotasUpdatedAt: "",   // empty when quotas.json is missing or bad: quota UI must not render
   db: null, uid: null, isAdmin: false,
   cal: {sport: "", qual: false, past: false},
   q: "",
@@ -50,6 +52,7 @@ store.set("la28.seen", new Date().toISOString());
 const sportById = id => S.sports.find(s => s.id === id);
 const sportName = id => sportById(id)?.he || id;
 const athletesOf = sid => S.athletes.filter(a => a.sportId === sid);
+const quotasOf = sid => S.quotas.filter(q => q.sportId === sid);
 const upcoming = () => S.comps.filter(c => (c.end || c.start) >= today()).sort((a, b) => a.start.localeCompare(b.start));
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
@@ -136,6 +139,31 @@ function changeRow(c){
   return `<li><span class="d">${fmt(str(c.at).slice(0, 10))}</span><span class="t">${body}</span><span></span></li>`;
 }
 
+// From the schedule, not live results: an athlete counts as competing on every day of a running
+// competition in their sport whose dates contain their nextDate.
+function competingToday(){
+  const t = today();
+  return S.athletes.flatMap(a => {
+    if (!isDate(a.nextDate)) return [];
+    const c = S.comps.find(c => c.sportId === a.sportId && c.start <= t && t <= (c.end || c.start)
+      && c.start <= a.nextDate && a.nextDate <= (c.end || c.start));
+    return c || a.nextDate === t ? [{a, comp: c ? c.name : a.next}] : [];
+  }).sort((x, y) => heCmp(sportName(x.a.sportId), sportName(y.a.sportId)) || heCmp(x.a.name, y.a.name));
+}
+
+function todayStrip(){
+  const list = competingToday();
+  if (!list.length) return "";
+  const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
+  const when = ts ? new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
+  return `<section class="panel today-strip">
+    <h2>ישראלים מתחרים היום</h2>
+    <p class="foot">${when ? `לפי הנתונים מ־${when}` : "לפי לוח התחרויות"}, תוצאות יתעדכנו בעדכון היומי</p>
+    <ul class="rows">${list.map(({a, comp}) => `<li><span class="d">${esc(sportName(a.sportId))}</span>
+      <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${[a.event, comp].filter(Boolean).map(esc).join(" · ")}</small></span><span></span></li>`).join("")}</ul>
+  </section>`;
+}
+
 // ---------- views ----------
 function viewHome(){
   const {counts, html: bar} = stageBar(S.athletes);
@@ -156,6 +184,7 @@ function viewHome(){
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
+  ${todayStrip()}
   ${reviewPanel()}
   <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
   <p class="sr" id="qCount" aria-live="polite"></p>
@@ -624,10 +653,34 @@ function applySnapshot(d){
   S.comps = (Array.isArray(d.competitions) ? d.competitions : []).filter(c => isDate(c.start));
   S.changes = Array.isArray(d.changes) ? d.changes : [];
   S.loaded = true;
+  applyQuotas();
+}
+
+// quotas.json is hand-curated and optional: a bad item is dropped, a bad file only hides the quota UI.
+// Re-applied whenever sports change, since an item needs a known sportId.
+let quotaFile = null;
+const quotaCount = v => v == null || (Number.isInteger(v) && v >= 0);
+function applyQuotas(){
+  const items = Array.isArray(quotaFile?.items) ? quotaFile.items : [];
+  S.quotas = items.filter(q => q && typeof q === "object" && sportById(q.sportId) && QUOTA_STATUSES.includes(q.israelStatus)
+      && safeUrl(q.source) && quotaCount(q.totalQuotas) && quotaCount(q.maxPerNOC)
+      && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
+    .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
+      allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source,
+      nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start} : null}));
+  S.quotasUpdatedAt = S.quotas.length ? str(quotaFile.updatedAt) : "";
+}
+
+async function loadQuotas(){
+  try {
+    const r = await fetch("quotas.json", {cache: "no-cache"});
+    quotaFile = r.ok ? await r.json() : null;
+  } catch { quotaFile = null; }
 }
 
 let publicSnapshot = null;
 async function loadPublic(){
+  const quotas = loadQuotas();   // in parallel; never delays or fails the data.json render
   try {
     const r = await fetch("data.json", {cache: "no-cache"});
     if (!r.ok) throw new Error(r.status);
@@ -636,6 +689,9 @@ async function loadPublic(){
   } catch {
     if (!S.loaded) { S.failed = true; route(); }
   }
+  await quotas;
+  applyQuotas();
+  if (S.loaded) refresh();
 }
 
 // A dead live subscription must not keep showing stale data labelled "live".
@@ -666,6 +722,7 @@ async function goLive(){
     }, dropLive);
     db.collection("sports").onSnapshot(snap => {
       S.sports = snap.docs.map(d => ({id: d.id, ...d.data()}));
+      applyQuotas();
       ready.sports = true; go();
     }, dropLive);
     db.doc("meta/status").onSnapshot(s => {

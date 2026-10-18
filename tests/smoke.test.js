@@ -20,12 +20,25 @@ function fakeEl(id){
   };
 }
 
-// `data` is the fetch payload; `fetchFails` makes fetch reject.
-async function boot({data = FIXTURE, fetchFails = false} = {}){
+// A Date whose "now" is pinned, so today() (Israel time) is deterministic.
+function fixedDate(iso){
+  const NOW = Date.parse(iso);
+  return class extends Date {
+    constructor(...a){ a.length ? super(...a) : super(NOW); }
+    static now(){ return NOW; }
+  };
+}
+
+const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.json"), "utf8"));
+
+// `data` is the data.json payload; `fetchFails` makes every fetch reject.
+// `quotas`: quotas.json payload; undefined → 404, "fail" → that fetch rejects.
+// `now` pins the clock (ISO instant).
+async function boot({data = FIXTURE, fetchFails = false, quotas, now} = {}){
   const els = {};
   const mem = new Map();
   const ctx = {
-    console, URL, Intl, Date, Math, JSON, Promise, setTimeout, clearTimeout,
+    console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, setTimeout, clearTimeout,
     setInterval: () => 0, clearInterval(){},
     location: {hash: ""},
     history: {replaceState(){}},
@@ -38,9 +51,15 @@ async function boot({data = FIXTURE, fetchFails = false} = {}){
       querySelector: () => null, querySelectorAll: () => [],
       addEventListener(){}, activeElement: null,
     },
-    fetch: async () => {
+    fetch: async url => {
       if (fetchFails) throw new Error("network down");
-      return {ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(data))};
+      let body = data;
+      if (url === "quotas.json") {
+        if (quotas === "fail") throw new Error("network down");
+        if (quotas === undefined) return {ok: false, status: 404, json: async () => { throw new Error("404"); }};
+        body = quotas;
+      }
+      return {ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(body))};
     },
   };
   ctx.window = ctx;
@@ -125,6 +144,62 @@ test("empty data renders empty states", async () => {
   assert.ok(view("calendar").includes("אין תחרויות שמתאימות לסינון"));
   assert.ok(view("updates").includes("עוד אין עדכונים"));
   assert.ok(view("sports").length > 0);
+});
+
+const STRIP = "ישראלים מתחרים היום";
+const stripOf = html => html.split('class="panel today-strip"')[1]?.split("</section>")[0] || "";
+
+test("today strip: mid-way through a multi-day competition", async () => {
+  // 21:30 UTC on 19 Oct is already 20 Oct in Israel; gymnastics Worlds run 17–25 Oct.
+  const {view, run} = await boot({now: "2026-10-19T21:30:00Z"});
+  assert.strictEqual(run("today()"), "2026-10-20");
+  const strip = stripOf(view("home"));
+  assert.ok(strip.includes(STRIP) && strip.includes("תוצאות יתעדכנו בעדכון היומי"), "strip/label missing");
+  assert.ok(strip.includes('href="#a-artem-dolgopyat"'), "athlete whose nextDate is inside the competition");
+  assert.ok(strip.includes("אליפות העולם בהתעמלות מכשירים 2026"), "competition name");
+  assert.ok(!strip.includes("raz-hershko"), "judo athlete competing on 29 Oct");
+});
+
+test("today strip: nextDate == today, ordered by sport", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  Object.assign(data.athletes.find(a => a.id === "adva-cohen"), {nextDate: "2026-10-29", next: "מרוץ בדיקה", event: "<img src=x onerror=alert(1)>"});
+  const {view} = await boot({data, now: "2026-10-29T08:00:00Z"});
+  const strip = stripOf(view("home"));
+  assert.ok(strip.includes("גרנד סלאם אבו דאבי") && strip.includes("מרוץ בדיקה"));
+  assert.ok(strip.indexOf("adva-cohen") < strip.indexOf("raz-hershko"), "אתלטיקה sorts before ג׳ודו");
+  assert.ok(!/<img/i.test(strip) && strip.includes("&lt;img"), "event must be escaped");
+});
+
+test("today strip: hidden on a day with no competitions", async () => {
+  const {view} = await boot({now: "2026-10-27T08:00:00Z"});
+  const home = view("home");
+  assert.ok(home.length > 200 && !home.includes(STRIP));
+});
+
+test("quotas.json loads into S.quotas and invalid items are dropped", async () => {
+  const {run} = await boot({quotas: QUOTAS});
+  const statuses = JSON.parse(run(`JSON.stringify(S.quotas.map(q => q.israelStatus))`));
+  assert.deepStrictEqual(statuses.sort(), ["earned", "in-contention", "outside", "unknown"]);
+  assert.strictEqual(run(`quotasOf("judo").length`), 1);
+  assert.strictEqual(run(`quotasOf("swimming")[0].totalQuotas`), null);
+  assert.strictEqual(run(`S.quotasUpdatedAt`), "2026-10-18");
+
+  const items = JSON.parse(JSON.stringify(QUOTAS.items.slice(0, 1)));
+  const bad = [{sportId: "quidditch"}, {israelStatus: "won"}, {source: "javascript:alert(1)"},
+    {nextQuotaEvent: {name: "x", start: "soon"}}, {totalQuotas: "18"}, {maxPerNOC: 1.5}];
+  const {run: run2} = await boot({quotas: {updatedAt: "2026-10-18", items: [...items, ...bad.map(b => ({...items[0], ...b})), null, "x"]}});
+  assert.strictEqual(run2(`S.quotas.length`), 1);
+});
+
+test("missing, failing or malformed quotas.json leaves the site unchanged", async () => {
+  const base = (await boot()).view("sport-judo");
+  for (const quotas of [undefined, "fail", "not an object", {items: "nope"}, null]) {
+    const {run, view} = await boot({quotas});
+    assert.strictEqual(run(`S.quotas.length`), 0, JSON.stringify(quotas));
+    assert.strictEqual(run(`S.quotasUpdatedAt`), "");
+    assert.ok(!run(`S.failed`));
+    assert.strictEqual(view("sport-judo"), base);
+  }
 });
 
 test("fetch failure shows the retry view", async () => {
