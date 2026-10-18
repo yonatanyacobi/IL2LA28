@@ -318,7 +318,7 @@ function renderResults(){
   const sportKey = s => [s.id, s.he, s.en].map(str).join(" ");
   const sports = S.sports.filter(s => searchKey(sportKey(s)).includes(q));
   const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportKey(sportById(a.sportId) || {id: a.sportId})].map(str).join(" ")).includes(q));
-  $("qCount").textContent = `נמצאו ${hits.length} ספורטאים ונבחרות ו־${sports.length} ענפים`;
+  $("qCount").textContent = `נמצאו ${hits.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${hits.length} ספורטאים ונבחרות`} ו־${plural(sports.length, "ענף אחד", "ענפים")}`;
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
     ${hits.length ? `<div class="cards">${hits.slice(0, SEARCH_MAX).map(athleteCard).join("")}</div>
@@ -333,7 +333,7 @@ function viewSports(){
   withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
-  <p class="muted">${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
+  <p class="muted">${withA.length === 1 ? "ענף אחד עם ספורטאים ונבחרות מישראל במעקב." : `${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.`}${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
   <ul class="sports">${withA.map(s => {
     const list = athletesOf(s.id), ws = winStatus(s.window), nc = upcomingIn(s.id)[0], fresh = list.filter(isNew).length;
     return `<li><a class="sport" href="#sport-${esc(s.id)}">
