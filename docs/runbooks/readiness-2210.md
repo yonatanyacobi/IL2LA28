@@ -48,15 +48,15 @@ This is a team check of the text, not legal advice. If the owner wants a profess
 - [ ] Corrections log: off until launch (`LAUNCH_AT = None`). The launch PR sets it (launch-day.md Part 2).
 
 ## 5. The owner's open decisions
-From [owner-decisions.md](../product/owner-decisions.md), plus two items the coordinator raised that aren't on that page yet.
+From [owner-decisions.md](../product/owner-decisions.md).
 | # | Decision | By | If no decision |
 |---|---|---|---|
 | D1 | Launch date | the owner's call, after this report | The site stays unshared |
 | D8 | Digest-copy counter | 25.10 | B: no counter |
 | D9 | No English, no Paralympics until mid-2027 | 25.10 | Treated as confirmed |
 | D-R2 | Daily job proposes quota updates | 25.10 | B: fully manual |
-| new | Trampoline athletes' Hebrew names | before launch | **PM:** copy the question and options from the coordinator's thread into owner-decisions.md before 22.10 |
-| new | Sporthive and lpga.com browser checks (sites the team's tools can't read) | before launch | **PM:** same; until then, the affected records keep the "טרם נבדק ידנית" chip |
+| D10 | Trampoline athletes' Hebrew names | before launch | A: the DB spelling; both records stay unverified |
+| D11 | Browser check: Teferi's Sporthive result (lpga.com optional) | before launch | Teferi's result stays on hold |
 
 ## Report to the owner (12:30)
 One screen: one line per section above (🟢/🟡/🔴 + source), the decisions table, and the recommendation: "ready", or
