@@ -16,7 +16,7 @@ and an option letter. The PM keeps this page current.
 ## Decided
 | # | Decision | Decided | Consequence |
 |---|---|---|---|
-| D2 | Contact address | Owner, 18.10: the owner opens a dedicated address | Until it exists, new code uses the `{REPORT_EMAIL}` placeholder; nothing new hard-codes the personal Gmail. Launch gate G5 stays red until the address is live |
+| D2 | Contact address | Owner, 18.10: dedicated address `il2la28.site@gmail.com` opened | Shira swaps it into the site in place of the personal Gmail and the `{REPORT_EMAIL}` placeholder. Launch gate G5 turns green once that is merged and published |
 | D3 | Marking records verified | Delegated, 18.10 | The coordinator writes `verifiedAt`/`verifiedBy` after a fact-checker's sign-off (verification drive, PR #71) |
 | D4 | Result-night approvals | Owner, 18.10: "the team decides alone" | `earned` (and stage 2–3) is approved by **both fact-checkers (Dana + Tamar)**, with no owner approval. Omer publishes per `docs/runbooks/result-night.md` |
 | D5 | New athletes (incl. Olga Tashtchiev) | Owner, 18.10: added without the owner | A fact-checker signs off and the coordinator writes the record. A Hebrew name without a source is marked as a transliteration in `notes` |
