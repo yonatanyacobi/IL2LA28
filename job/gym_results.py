@@ -77,9 +77,12 @@ def parse_ranking(page):
     """{"title", "apparatus", "rows": [{rank:int|None, bib, name, noc, total:str, qualified:bool}]} from a ranking page."""
     p = _Ranking()
     p.feed(page if isinstance(page, str) else page.decode("utf-8", "replace"))
+    mark = lambda r: r.get("QualifiedMarker", "").strip().upper()
     rows = [{"rank": int(r["rank"]) if str(r.get("rank", "")).isdigit() else None, "bib": r.get("bib", ""),
              "name": r.get("name", ""), "noc": r.get("noc", ""), "total": r.get("total", ""),
-             "qualified": r.get("QualifiedMarker", "").upper().startswith("Q")} for r in p.rows]
+             "qualified": mark(r).startswith("Q"),
+             # Longines marks the final's reserves R1, R2, R3: not qualified, but not out either.
+             "reserve": int(mark(r)[1:]) if re.fullmatch(r"R\d", mark(r)) else None} for r in p.rows]
     return {"title": html.unescape(p.title).strip(), "apparatus": p.apparatus, "rows": rows}
 
 
@@ -125,14 +128,22 @@ def pdf_text(data):
     return "\n".join(lines)
 
 
-def result_text(phase, place, apparatus, comp, day_he, qualified=None):
+def result_text(phase, place, apparatus, comp, day_he, qualified=None, reserve=None):
     """The one Hebrew wording for a gymnastics result (#168), also for manual entries on result night.
-    phase: "qual" or "final"; apparatus: a Longines key (APPARATUS) or Hebrew; day_he: site date style."""
+    phase: "qual" or "final"; apparatus: a Longines key (APPARATUS) or Hebrew; day_he: site date style.
+    reserve: n for a qualification reserve (Longines R<n>), written as such, never as "לא עלה/תה"."""
     app = APPARATUS.get(apparatus, apparatus)
     if phase == "final":
+        if reserve is not None:
+            raise ValueError("reserve applies to a qualification result")
         return f"{MEDAL.get(place, f'מקום {place}')} בגמר {app} ב{comp} ({day_he})"
     if phase == "qual":
-        tail = "" if qualified is None else (", עלה/תה לגמר" if qualified else ", לא עלה/תה לגמר")
+        if reserve is not None:
+            if qualified or type(reserve) is not int or reserve < 1:
+                raise ValueError(f"reserve must be an int >= 1 on a non-qualified result, got {reserve!r}")
+            tail = f", מחליף/ה {reserve} לגמר"
+        else:
+            tail = "" if qualified is None else (", עלה/תה לגמר" if qualified else ", לא עלה/תה לגמר")
         return f"מקום {place} ב{app} במוקדמות {comp} ({day_he}){tail}"
     raise ValueError(f"phase must be qual or final, got {phase!r}")
 

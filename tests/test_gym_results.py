@@ -31,6 +31,25 @@ class GymResultsTest(unittest.TestCase):
         self.assertEqual(ranks, sorted(ranks), "table order; ties share a rank (two at 7th here)")
         self.assertEqual(ranks[:8], [1, 2, 3, 4, 5, 6, 7, 7])
 
+    def test_reserves_parsed_from_r_markers(self):
+        with open(RANKING, encoding="utf-8") as f:
+            rows = gr.parse_ranking(f.read())["rows"]
+        self.assertEqual([(r["rank"], r["name"], r["reserve"], r["qualified"]) for r in rows if r["reserve"]],
+                         [(9, "KOVTUN Illia", 1, False), (9, "LEYKIN Danila", 1, False), (11, "HEPWORTH Harry", 3, False)])
+        self.assertEqual(sum(r["qualified"] for r in rows), 8)
+        self.assertTrue(all(r["reserve"] is None for r in rows if r["qualified"]))
+
+    def test_reserve_wording(self):
+        comp, day = "אליפות העולם ברוטרדם", "19 באוק׳ 2026"
+        self.assertEqual(gr.result_text("qual", 10, "balancebeam", comp, day, qualified=False, reserve=2),
+                         "מקום 10 בקורה במוקדמות אליפות העולם ברוטרדם (19 באוק׳ 2026), מחליף/ה 2 לגמר")
+        self.assertNotIn("לא עלה/תה", gr.result_text("qual", 9, "floor", comp, day, reserve=1))
+        for bad in (dict(qualified=True, reserve=1), dict(reserve=0), dict(reserve="R1")):
+            with self.assertRaises(ValueError, msg=bad):
+                gr.result_text("qual", 9, "floor", comp, day, **bad)
+        with self.assertRaises(ValueError):
+            gr.result_text("final", 4, "floor", comp, day, reserve=1)
+
     def test_pdf_text_from_saved_fig_pdf(self):
         with open(PDF, "rb") as f:
             text = gr.pdf_text(f.read())
