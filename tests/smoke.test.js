@@ -2370,6 +2370,25 @@ test("render budget: each main route under 50 ms at 3x today's data", async () =
   assert.deepStrictEqual(slow.map(([r, ms]) => `#${r} ${ms.toFixed(0)} ms`), []);
 });
 
+// tests/probe.js: every route on 7 dates, visitor and with follows; ~1 s on the fixture.
+test("route probe: no throw, not-found, junk, banned copy, duplicate id, dangling aria or non-https link", async () => {
+  const {probe} = require("./probe.js");
+  const {renders, findings} = await probe({data: FIXTURE, quotas: QUOTAS_SNAPSHOT});
+  assert.ok(renders > 1000, `only ${renders} renders`);
+  assert.deepStrictEqual(findings, []);
+});
+
+test("route probe: each check fires", () => {
+  const {check} = require("./probe.js");
+  const found = html => { const out = []; check(html, "x", w => out.push(w)); return out; };
+  const bad = {
+    junk: "<p>undefined</p>", attr: '<a href="#a-null">x</a>', banned: "<span>השעה תפורסם</span>",
+    dup: '<h2 id="a"></h2><p id="a"></p>', aria: '<section aria-labelledby="nope"></section>', http: '<a href="http://x.org">x</a>',
+  };
+  for (const [k, html] of Object.entries(bad)) assert.strictEqual(found(html).length, 1, `${k}: ${found(html)}`);
+  assert.deepStrictEqual(found('<h2 id="h">ok</h2><section aria-labelledby="h"><a href="https://x.org">x</a> <a href="#home">y</a></section>'), []);
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {

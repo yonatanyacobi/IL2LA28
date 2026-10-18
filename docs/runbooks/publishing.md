@@ -101,6 +101,7 @@ python3 -m unittest discover -s tests
 node tests/smoke.test.js
 node tests/preview_at.js /tmp/la28-data.json site/quotas.json $(TZ=Asia/Jerusalem date +%F)
 node tests/preview_at.js /tmp/la28-data.json site/quotas.json <next event day, YYYY-MM-DD>
+node tests/probe.js /tmp/la28-data.json site/quotas.json
 ```
 
 - The two `validate_data.py` runs print `OK: …` and must exit 0. `INVALID: … "earned" but no athlete … has
@@ -114,6 +115,10 @@ node tests/preview_at.js /tmp/la28-data.json site/quotas.json <next event day, Y
   strip, the new-quota panel and the full digest text, and exits 1 on a crash, a not-found sport or athlete, or a
   digest over 3,500 characters. Read the strip and the digest for stale wording (for example, "מה זה אומר" about an
   event that has already happened).
+- `probe.js` renders every route (including `#today`, `#day-`, `#c-`, `#following`, `#corrections`) on the export day
+  and the 13 days after it, as a visitor and with follows. It prints `N renders in T s, 0 findings` and exits 1 on any
+  `FINDING`: a crash, a not-found, `undefined`/`NaN`/`null` in the page, banned copy, a duplicate id, a dangling aria
+  reference or a non-https link. Pass dates after the files to check specific days.
 
 ### 5. Republish (coordinator presses publish)
 
@@ -187,7 +192,7 @@ before the stage change, both validators after it, `quota_due.py` (nothing due),
 | 1 | (א) had no `earnedAt`, so there was no home banner and no strip line. | Fixed here: added to rotterdam-outcomes.md (א) and result-night.md step 2. |
 | 2 | With `nextQuotaEvent: null` (as (א) says), the strip never matched the earned item, so there was no "✓ מכסה הושגה" line. | Fixed in #68 (cc8cd71): earned items are matched by `earnedAt` and sorted first. **#68 must merge before 20.10.** |
 | 3 | The individual men's item → `outside` kept "אירוע המכסה הבא: 2027" next to "לא רלוונטי". | Fixed here: (א) now also sets its `nextQuotaEvent: null`. |
-| 4 | **Blocker:** `node tests/smoke.test.js` fails after the real result is built. Two tests (date matrix, `#admin` result night) read `site/quotas.json` and expect the pre-final item. Step 4 can't pass on the night. | Open. **Maya, before 20.10:** point those tests at a frozen fixture copy. Until then, if only these two fail and only on the changed item, note it in the PR and go on. |
+| 4 | `node tests/smoke.test.js` failed after the real result was built: two tests (date matrix, `#admin` result night) read `site/quotas.json` and expected the pre-final item. | Fixed: date and scenario tests read the frozen `tests/fixtures/site-quotas-2026-10-18.json`; only "all items load and render" reads the live file. Checked 18.10 (Gil): with Rotterdam men's team set to `earned`, smoke passes and `preview_at.js` for 20.10 shows the won panel. |
 | 5 | `check_signoff.py` couldn't tell whether an `earned` item had both fact-checkers. | Fixed here: `earned` requires `review.by` `"dana+tamar"` (#102's D4 format). |
 | 6 | After approval, the athletes' "התחרות הבאה" still showed the 18.10 qualifiers. | Open. The editor updates `next`/`nextDate` while approving (result-night.md step 4). Itai: an `#admin` hint. |
 | 7 | The athlete page has no "מכסה" line for the team members, because the (א) note names no gymnasts and the matcher looks for names. | Open, UX (round3 §3). A team quota belongs to the NOC, so maybe that's correct. |
