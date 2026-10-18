@@ -576,7 +576,7 @@ function calendarResults(){
   const months = {};
   rows.forEach(c => (months[c.start.slice(0, 7)] ??= []).push(c));
   return rows.length ? Object.keys(months).sort().map(m => `<section class="month">
-      <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}</span></h2>
+      <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}<span class="sr"> ${months[m].length === 1 ? "תחרות" : "תחרויות"}</span></span></h2>
       ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
     : `<div class="empty">אין תחרויות שמתאימות לסינון.</div>`;
 }

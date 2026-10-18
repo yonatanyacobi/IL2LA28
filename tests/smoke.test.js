@@ -846,6 +846,7 @@ test("calendar: unknown sport is not-found; arriving at #calendar resets all fil
   const cal = go("calendar");
   assert.deepStrictEqual(JSON.parse(run("JSON.stringify(S.cal)")), {sport: "", qual: false, past: false});
   assert.ok(!cal.includes(" selected") && !/id="cQual" checked|id="cPast" checked/.test(cal), "controls render unchecked");
+  assert.match(cal, /<h2>[^<]+ <span>\d+<span class="sr"> תחרו(?:ת|יות)<\/span><\/span><\/h2>/, "month count is labelled for screen readers");
 });
 
 test("calendar filters update only the results list, so focus and scroll survive", async () => {
