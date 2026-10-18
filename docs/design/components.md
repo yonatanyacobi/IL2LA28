@@ -30,6 +30,7 @@ Glyphs are `<span aria-hidden="true">`.
 | quota | `q-earned` / `q-in-contention` / `q-outside` / `q-unknown` / `q-awaiting` | via `quotaStatusPill()` |
 | stage | `st0`–`st3` | `STAGES[n]` |
 | neutral fact (old rank etc.) | `ended` | e.g. `דירוג מ־{d}` |
+| changed by auto-refresh | `chg` | `השתנה ב־<time>{HH:MM}</time>` (near-live §3, #235) |
 
 `s-wait` and ◷ mean only "a result is awaited". Nothing else borrows them.
 ```html
