@@ -38,7 +38,7 @@ function buildExportedSessions(){
     const proven = str(s.result).trim() && safeUrl(s.resultSource) && isUtc(s.resultAt);
     return comp && athletes.length ? {comp, athletes, sportId: comp.sportId, phase: str(s.phase).slice(0, 120),
       source: safeUrl(s.source), checkedAt: isUtc(s.checkedAt) ? s.checkedAt : "",
-      startUtc: isUtc(s.startUtc) ? s.startUtc : null, day: isUtc(s.startUtc) ? ilDate(s.startUtc) : s.date, timed: true,
+      startUtc: isUtc(s.startUtc) ? s.startUtc : null, day: isUtc(s.startUtc) ? ilDate(s.startUtc) : s.date,
       result: proven ? str(s.result).slice(0, 120) : "", resultSource: proven ? s.resultSource : "", resultAt: proven ? s.resultAt : ""} : null;
   }).filter(Boolean);
 }
@@ -60,7 +60,7 @@ function fallbackSessions(d){
   for (const a of athletesByDay().get(d) || []) {
     const res = historyResult(a, d);
     if (!res && a.nextDate !== d) continue;   // most athletes have nothing that day: skip compOn() (docs/perf/2026-10.md)
-    const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null, timed: false};
+    const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null};
     if (res) out.set(a.id, {...base, result: str(res.text).slice(0, 120), resultSource: res.source, resultAt: ""});
     else if (a.nextDate === d) out.set(a.id, {...base, result: ""});
   }
@@ -149,19 +149,21 @@ function freshLine(hasToday){
 
 // A group in which no session has a time says "תאריך בלבד" once, in its heading, instead of on every row
 // (components.md §1). In a mixed group an untimed row keeps its own label (coordinator, #208).
-const dateOnly = list => list.length > 0 && list.every(s => !s.startUtc && !s.timed);
+const dateOnly = list => list.length > 0 && list.every(s => !s.startUtc);
 const DATE_ONLY = `<span class="muted"> · תאריך בלבד</span>`;
 
-function sessionRow(s, d, groupDateOnly = false){
+// `extra`: markup after the names (the home adds the competition link).
+function sessionRow(s, d, groupDateOnly = false, extra = ""){
   const names = s.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   const state = sessionState(s, d);
-  const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : s.timed ? "השעה תפורסם" : groupDateOnly ? "" : "תאריך בלבד";
+  // Untimed is always "תאריך בלבד", never a promised time (components.md §1); an all-untimed group says it in its heading.
+  const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : groupDateOnly ? "" : "תאריך בלבד";
   // Keyed by day, competition and athletes, so the same session on #day and #c- is one row. The signature leaves out
   // what changes with the clock or a run without news (the status chip, checkedAt).
   const mark = rowMark(`sess|${d}|${s.comp?.id || ""}|${s.athletes.map(a => a.id).join(",")}|${s.phase}`,
     [s.result, s.resultSource, s.resultAt, s.startUtc, s.athletes.map(a => a.name).join(",")].join("\u241f"));
   return `<li><span class="d">${when}</span>
-    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${sessionDetail(s, state)}${mark}</span>
+    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${extra}${sessionDetail(s, state)}${mark}</span>
     <span>${statusChip(state)}</span></li>`;
 }
 

@@ -7,8 +7,9 @@ const path = require("path");
 const vm = require("vm");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["app.js", "admin.js", "quotas.js", "digest.js", "corrections.js", "sessions.js", "day.js", "event.js", "gamelog.js", "following.js"]
-  .map(f => path.join(ROOT, "site", f)).filter(fs.existsSync);
+// The page's own script order, so a new site/*.js is always benched.
+const SCRIPTS = [...fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8").matchAll(/<script src="([\w.-]+\.js)">/g)]
+  .map(m => path.join(ROOT, "site", m[1]));
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 const QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
 const NOW = "2026-10-29T08:00:00Z";   // Abu Dhabi day 1: strip, #day and #c- all have content
