@@ -103,16 +103,20 @@ Checked directly on 2026-10-18. For World Athletics, the facts come from the emb
     Portugal event.
   - notes ← "השתתפה בטוקיו ובפריז; הישראלית הראשונה בסבב ה-CT של ה-WSL (2026); מקום 2 בטהיטי פרו 2026". This
     cuts "דירוג CT נוכחי לא אומת". All three facts are on her WSL bio.
-  - **next is wrong:** the record says Pipe Masters (2026-12-08). Since Abu Dhabi was dropped (WSL, 2026-09-04),
-    two CT stops come first: MEO Rip Curl Pro Portugal (2026-10-16 to 2026-10-25, women's heats on standby on
-    2026-10-18) and the Philippines Pro (2026-10-31 to 2026-11-10). next ← "MEO Rip Curl Pro Portugal (פנישה)" /
-    2026-10-16, but only once the women's draw shows her. Otherwise use the Philippines Pro / 2026-10-31. Either way
-    it is in #158's 14-day window, so a session row follows when the draw is published.
-  Source: https://www.worldsurfleague.com/athletes/tour/wct · https://www.worldsurfleague.com/posts/559746/surf-abu-dhabi-pro-removed-from-2026-championship-tour-calendar · https://www.worldsurfleague.com/events/2026/ct/445/meo-rip-curl-pro-portugal/results
+  - **next: keep Pipe Masters (2026-12-08), pending one check.** This corrects the previous commit. After Stop 9
+    the CT narrows to 16 women for the postseason. That is now Portugal (2026-10-16 to 2026-10-25) and the
+    Philippines Pro (2026-10-31 to 2026-11-10), since Abu Dhabi was dropped. The full 24-woman field returns at
+    Pipe Masters.
+    - Portugal: her official WSL page for the women's event shows **no heats** ("Standby", place "-"). The women's
+      Round 1 (2026-10-16) and quarterfinals (2026-10-17) have already been surfed, so she is not in the Portugal
+      field. No session or result is added.
+    - Philippines Pro: check its draw when WSL publishes it. If she is in it, next ← Philippines Pro / 2026-10-31,
+      and a session row follows.
+  Source: https://www.worldsurfleague.com/athletes/7491/anat-lelior/eventresults?eventId=5115 · https://www.worldsurfleague.com/events/2026/ct/445/meo-rip-curl-pro-portugal/main · https://www.worldsurfleague.com/posts/546310/world-surf-league-releases-2026-championship-tour-schedule-and-formats · https://www.worldsurfleague.com/posts/559746/surf-abu-dhabi-pro-removed-from-2026-championship-tour-calendar · https://www.worldsurfleague.com/athletes/tour/wct
 
 **Amsterdam, Maru Teferi:** no official result yet. His WA profile (results to 2026-10-14) and the WA race report
 don't list him; only one media report has "20th, 2:07:22". So no session row or result. Recheck WA on 2026-10-19
 in the morning.
 
-**Correction to my radar (#111):** it lists Pipe Masters as Lelior's next event and misses the Portugal and
-Philippines CT stops. Both are worth a radar fix in a follow-up.
+**Correction to my radar (#111):** it misses the Portugal and
+Philippines CT stops (postseason, 16 women). Fixed in #111.
