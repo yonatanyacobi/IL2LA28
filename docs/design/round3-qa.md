@@ -60,7 +60,7 @@ they're in visitor mode, and can read "nothing to review" as an empty queue. Fix
 
 Size: S.
 
-**QA-9 · P2 · Visitor toggle buttons are below the 44px target.** `#visitorBtn` and `#editModeBtn` use
+**QA-9 · P3 · Visitor toggle buttons: 44px only on phones; the nav button crowds 400px.** (Corrected: styles.css:220–223 already sets 44px at ≤640px. Full fix spec in the #105 comment.) `#visitorBtn` and `#editModeBtn` use
 `.btn.small` (4px padding, about 30px tall; styles.css:168). The nav button also adds width to a nav that
 already wraps at 400px (heuristics #5). Fix: `min-height:44px` on both, and at ≤640px put `#visitorBtn` in the
 second nav row or shorten it to `כגולש/ת`. Size: XS.
