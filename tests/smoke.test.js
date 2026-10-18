@@ -409,6 +409,30 @@ test("#admin quota health: stale file, past/soon events, earned without a stage-
   assert.ok(ok.includes("תקין") && !ok.includes("data-flag"), "healthy file has no flags");
 });
 
+test("multi-day quota events stay current until their last day (sport page, #quotas, #admin)", async () => {
+  const base = QUOTAS.items[0];   // judo, valid
+  const item = (sportId, event, nextQuotaEvent) => ({...base, sportId, event, israelStatus: "in-contention", stakes: `stakes ${event}`, nextQuotaEvent});
+  const quotas = {updatedAt: "2026-10-29", items: [
+    item("judo", "גרנד-סלאם", {name: "גרנד סלאם אבו דאבי", start: "2026-10-29"}),            // end from the fixture competition (29–31 Oct)
+    item("shooting", "עם-סוף", {name: "אליפות", start: "2026-10-27", end: "2026-11-08"}),   // explicit end
+    item("sailing", "עבר", {name: "אירוע שעבר", start: "2026-10-28"}),                      // one day, no competition
+  ]};
+  const at = async now => { const b = await boot({quotas, now}); b.run("S.isAdmin = true; S.live = true"); return b; };
+
+  const day2 = await at("2026-10-30T08:00:00Z");   // day 2 of Abu Dhabi
+  assert.ok(day2.view("sport-judo").includes("מה זה אומר:</b> stakes גרנד-סלאם"), "judo stakes on day 2");
+  assert.ok(day2.view("sport-shooting").includes("stakes עם-סוף"), "explicit end");
+  assert.ok(!day2.view("sport-sailing").includes("מה זה אומר"), "one-day event already over");
+  const upcoming = day2.view("quotas").split('id="qNextH"')[1].split("</section>")[0];
+  assert.ok(upcoming.includes("גרנד-סלאם") && upcoming.includes("עם-סוף") && !upcoming.includes("עבר"));
+  const past = day2.view("admin").split('data-flag="past"')[1]?.split("</div>")[0] || "";
+  assert.ok(past.includes("עבר") && !past.includes("גרנד-סלאם") && !past.includes("עם-סוף"), "running events not flagged as past");
+
+  const after = await at("2026-11-01T08:00:00Z");
+  assert.ok(!after.view("sport-judo").includes("מה זה אומר"), "gone after the competition ends");
+  assert.ok((after.view("admin").split('data-flag="past"')[1] || "").split("</div>")[0].includes("גרנד-סלאם"));
+});
+
 test("#quotas renders the fixture grouped by status, with links and the as-of date", async () => {
   const {view} = await boot({quotas: QUOTAS, now: "2026-10-18T08:00:00Z"});
   const out = view("quotas");

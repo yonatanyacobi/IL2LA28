@@ -7,12 +7,12 @@ function viewQuotas(){
   if (!S.quotasLoaded) return head + `<p class="muted">טוען נתוני מכסות…</p>`;
   const list = S.quotas.slice().sort((a, b) => heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
   if (!list.length) return head + `<p class="muted">עוד לא נאספו נתוני מכסות.</p>`;
-  const n = quotaCounts(list), t = today();
-  const next = list.filter(q => isDate(q.nextQuotaEvent?.start) && q.nextQuotaEvent.start >= t)
+  const n = quotaCounts(list);
+  const next = list.filter(q => nxt(q))
     .sort((a, b) => a.nextQuotaEvent.start.localeCompare(b.nextQuotaEvent.start)).slice(0, 5);
   const row = q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
     <span class="t">${esc(q.event)}${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
-    <span>${isDate(q.nextQuotaEvent?.start) && q.nextQuotaEvent.start >= t ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
+    <span>${nxt(q) ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
   const at = str(S.quotasUpdatedAt).slice(0, 10);
   return head + `
   <section class="panel" aria-label="סיכום">

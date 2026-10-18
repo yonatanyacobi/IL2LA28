@@ -117,8 +117,17 @@ function trustChip(a){
   return `<span class="trust ${t}">${t === "auto" ? "◌ איסוף אוטומטי" : t === "ok" ? `✓ נבדק ידנית ${d}` : `✓ נבדק ${d} · עודכן מאז`}</span>`;
 }
 
+// A quota event is current until its last day: nextQuotaEvent.end, else the end of the competition in the same
+// sport that it starts inside (names are free text; season-long series don't count), else its start day.
+function quotaEventEnd(q){
+  const e = q.nextQuotaEvent;
+  if (!e) return "";
+  if (e.end) return e.end;
+  const c = S.comps.find(c => c.sportId === q.sportId && c.start <= e.start && e.start <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS);
+  return c ? c.end || c.start : e.start;
+}
 // Past quota events are hidden in the UI; the loader keeps them for #admin checks.
-const nxt = q => q.nextQuotaEvent?.name && q.nextQuotaEvent.start >= today() ? q.nextQuotaEvent : null;
+const nxt = (q, t = today()) => q.nextQuotaEvent?.name && quotaEventEnd(q) >= t ? q.nextQuotaEvent : null;
 // "What it means" for Israel at the next quota event; meaningless once that event is past.
 const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
 
@@ -758,7 +767,8 @@ function applyQuotas(){
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
       allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
-      nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start} : null}));
+      nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
+        ...(isDate(q.nextQuotaEvent.end) && q.nextQuotaEvent.end >= q.nextQuotaEvent.start ? {end: q.nextQuotaEvent.end} : {})} : null}));
   S.quotasUpdatedAt = S.quotas.length ? str(quotaFile.updatedAt) : "";
 }
 

@@ -45,6 +45,12 @@ class QuotasTest(unittest.TestCase):
     def test_stakes_optional_and_accepted_up_to_140(self):
         self.assertEqual(self.errors(lambda q: q["items"][1].__setitem__("stakes", "א" * 140)), [])
 
+    def test_next_quota_event_end_optional(self):
+        def add_end(q):
+            e = q["items"][1]["nextQuotaEvent"]
+            e["end"] = e["start"]
+        self.assertEqual(self.errors(add_end), [])
+
     def test_iso_updated_at_accepted(self):
         self.assertEqual(self.errors(lambda q: q.__setitem__("updatedAt", "2026-10-18T12:00:00Z")), [])
 
@@ -59,6 +65,8 @@ class QuotasTest(unittest.TestCase):
             ("source", lambda q: i0(q).__setitem__("source", "")),
             ("nextQuotaEvent.start", lambda q: i0(q)["nextQuotaEvent"].__setitem__("start", "10/01/2027")),
             ("nextQuotaEvent", lambda q: i0(q).__setitem__("nextQuotaEvent", "soon")),
+            ("nextQuotaEvent.end", lambda q: i0(q)["nextQuotaEvent"].__setitem__("end", "2020-01-01")),
+            ("nextQuotaEvent.end", lambda q: i0(q)["nextQuotaEvent"].__setitem__("end", "soon")),
             ("totalQuotas", lambda q: i0(q).__setitem__("totalQuotas", "24")),
             ("maxPerNOC", lambda q: i0(q).__setitem__("maxPerNOC", 1.5)),
             ("maxPerNOC", lambda q: i0(q).__setitem__("maxPerNOC", True)),
