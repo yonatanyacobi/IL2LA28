@@ -32,8 +32,10 @@ OLYMPIC_FIELDS = ["olympicRankNum", "olympicRankList", "olympicRankAsOf"]
 
 
 def fields_for(rank_list):
-    """By name: today's Olympic qualification lists all say so ("IJF Olympic Ranking List")."""
-    return OLYMPIC_FIELDS if "olympic" in rank_list.lower() else RANK_FIELDS
+    """By name: the Olympic qualification lists say "Olympic" (IJF, WT), or are FIE's Adjusted Official Ranking (AOR),
+    which only exists for Olympic qualification. Anything else is the world rank."""
+    name = rank_list.lower()
+    return OLYMPIC_FIELDS if "olympic" in name or "adjusted official ranking" in name else RANK_FIELDS
 RANK_LIST_MAX = 80  # as validate_data / export_data
 
 

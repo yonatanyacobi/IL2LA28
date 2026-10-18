@@ -699,7 +699,8 @@ function viewAbout(){
   return `<h1 tabindex="-1">אודות</h1>
   <section class="panel prose">
     <h2>על האתר</h2>
-    <p>אתר עצמאי ולא רשמי שעוקב אחרי ספורטאיות, ספורטאים ונבחרות מישראל בדרך לאולימפיאדת לוס אנג׳לס 2028. אין לאתר קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של המשחקים או לוועד האולימפי בישראל.</p>
+    <p>אתר עצמאי ולא רשמי שעוקב אחרי ספורטאיות, ספורטאים ונבחרות מישראל בדרך לאולימפיאדת לוס אנג׳לס 2028. לכל ספורטאי/ת ונבחרת יש דף עם השלב בדרך להעפלה, הדירוג או ההישג האחרון, התחרות הבאה וקישור למקור.</p>
+    <p>אין לאתר קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של משחקי לוס אנג׳לס 2028 או לוועד האולימפי בישראל.</p>
     <h2>ארבעת השלבים</h2>
     <ol>${STAGES.map((x, i) => `<li><b>${x}</b>: ${STAGE_HELP[i]}</li>`).join("")}</ol>
   </section>
@@ -722,7 +723,7 @@ function trustBlock(){
   ];
   const tile = (n, label) => `<div class="adm-tile"><b class="digits">${n}</b><span>${label}</span></div>`;
   return `<section class="panel prose" aria-labelledby="trustH">
-    <h2 id="trustH">אפשר לסמוך? ככה זה עובד</h2>
+    <h2 id="trustH">איך אנחנו בודקים את הנתונים</h2>
     <div class="adm-tiles">
       ${tile(N, "ספורטאים ונבחרות ברשימה")}
       ${tile(V, "נבדקו ידנית מול המקור")}
@@ -732,16 +733,16 @@ function trustBlock(){
     <h3>מאיפה הנתונים</h3>
     <ul>
       <li>דירוגים, תוצאות ושיטות העפלה: האתרים הרשמיים של ההתאחדויות הבין־לאומיות.</li>
-      <li>בחירות לנבחרת והודעות: הוועד האולימפי בישראל וכלי תקשורת.</li>
+      <li>בחירה לנבחרת והודעות: הוועד האולימפי בישראל וכלי תקשורת.</li>
     </ul>
     ${top.length ? `<p class="foot">המקורות הנפוצים באתר: <span dir="ltr">${top.map(esc).join(" · ")}</span>. בכל דף ספורטאי/ת יש קישור למקור.</p>` : ""}
     <p class="foot">„דירוג או הישג” הוא דירוג עולמי רשמי כשיש כזה, ואחרת התוצאה הבולטת האחרונה (מסומנת „מיקום, לא דירוג”).</p>
-    <h3>שלוש רמות ביטחון</h3>
+    <h3>שלוש רמות בדיקה</h3>
     <dl class="facts trust-legend">${legend.map(([a, text]) => `<dt>${trustChip(a)}</dt><dd>${text}</dd>`).join("")}</dl>
     <h3>מה אוטומטי ומה לא</h3>
     <ul>
       <li><b>אוטומטי, פעם ביום:</b> דירוגים, תוצאות אחרונות, תחרויות קרובות.</li>
-      <li><b>רק אחרי אישור של אדם:</b> שינוי שלב, ספורטאי/ת חדש/ה, הסרה מהרשימה, וכל נתוני המכסות.</li>
+      <li><b>רק אחרי בדיקה ידנית:</b> שינוי שלב, ספורטאי/ת חדש/ה, הסרה מהרשימה, וכל נתוני המכסות.</li>
     </ul>
     <h3>תיקונים</h3>
     <p>כל דיווח נבדק מול מקור לפני שהוא מתפרסם.${typeof fixLogLive === "function" && fixLogLive() ? ` כל תיקון נרשם ב<a href="#corrections">יומן התיקונים</a>.` : ""} אין לנו גישה למידע שאינו פומבי.</p>
@@ -1161,6 +1162,9 @@ function cutoffOf(c){
   if (!c || typeof c !== "object" || !Number.isInteger(c.rank) || c.rank < 1 || !str(c.list).trim() || !safeUrl(c.url) || !isDate(c.final)) return null;
   return {rank: c.rank, list: str(c.list), url: c.url, final: c.final, opens: isDate(c.opens) ? c.opens : ""};
 }
+// A team event's own rank on the cutoff's list (standings.md §1: the ranked unit is the national team, not its members).
+const teamRankOf = t => t && typeof t === "object" && Number.isInteger(t.num) && t.num >= 1 && isDate(t.asOf) && safeUrl(t.source)
+  ? {num: t.num, asOf: t.asOf, source: t.source} : null;
 function applyQuotas(){
   const items = Array.isArray(quotaFile?.items) ? quotaFile.items : [];
   S.quotas = items.filter(q => q && typeof q === "object" && sportById(q.sportId) && QUOTA_STATUSES.includes(q.israelStatus)
@@ -1168,7 +1172,7 @@ function applyQuotas(){
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
       allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
-      cutoff: cutoffOf(q.cutoff),
+      cutoff: cutoffOf(q.cutoff), teamRank: teamRankOf(q.teamRank),
       checkedAt: isDate(q.checkedAt) ? q.checkedAt : "",
       earnedAt: isDate(q.earnedAt) ? q.earnedAt : "",
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
