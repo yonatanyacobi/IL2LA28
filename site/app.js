@@ -352,8 +352,8 @@ function closestPanel(rows){
   };
   return `<section class="panel today" aria-labelledby="closeH">
     <h2 id="closeH">ההזדמנויות הקרובות למכסה</h2>
-    <ul class="rows">${groups.map(row).join("")}</ul>
-    <p class="foot">מקצים שבהם ישראל במרוץ למכסה, לפי אירוע המכסה הבא. <a href="#quotas">לכל תמונת המכסות</a></p>
+    <ul class="rows closest">${groups.map(row).join("")}</ul>
+    <p class="foot">מקצים שבהם ישראל במרוץ למכסה, לפי אירוע המכסה הבא. <a href="#quotas">לכל תמונת המכסות${groups.length > 3 ? `<span class="sm-only"> (עוד ${groups.length - 3})</span>` : ""}</a></p>
   </section>`;
 }
 
@@ -397,13 +397,13 @@ function viewHome(){
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
+  <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
+  <p class="sr" id="qCount" aria-live="polite"></p>
+  <div id="results"></div>
   ${todayStrip(rows)}
   ${wonPanel()}
   ${closestPanel(rows)}
   ${reviewPanel()}
-  <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
-  <p class="sr" id="qCount" aria-live="polite"></p>
-  <div id="results"></div>
   ${mine.length ? `<section class="panel">
       <div class="sec-head"><h2>במעקב שלי</h2>${mineNew ? `<span class="new">${mineNew} עודכנו מאז הביקור הקודם</span>` : ""}</div>
       <div class="cards">${mine.map(athleteCard).join("")}</div></section>`
@@ -961,6 +961,11 @@ function dropLive(){
 const VISITOR_KEY = "la28.viewAsVisitor";
 function setVisitorView(on){
   store.set(VISITOR_KEY, on);
+  if (store.get(VISITOR_KEY, !on) !== on) {   // storage blocked: a reload would land in the same mode
+    $("visitorMsg").textContent = "אי אפשר להחליף תצוגה: הדפדפן חוסם שמירה מקומית באתר הזה.";
+    $("visitorMsg").hidden = false;
+    return;
+  }
   try { location.reload(); } catch {}
 }
 
