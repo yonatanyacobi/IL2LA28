@@ -27,6 +27,9 @@ const stageOf = a => Math.min(3, Math.max(0, Number(a.stage) | 0));
 const heCmp = (a, b) => str(a).localeCompare(str(b), "he");
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };
+// Match key for search: keyboards type ' and " where the data has ׳ and ״ (and vice versa).
+const searchKey = s => str(s).normalize("NFD").replace(/[֑-ׇֽֿׁׂׅׄ]/g, "")
+  .replace(/[׳'`’‘]/g, "'").replace(/[״"“”]/g, '"').replace(/\s+/g, " ").trim().toLowerCase();
 const linkOut = (u, label = "מקור") => safeUrl(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}<span class="sr"> (נפתח בחלון חדש)</span></a>` : "";
 
 // Per-viewer conveniences only; the page must work when storage is blocked.
@@ -245,10 +248,10 @@ function viewHome(){
 function renderResults(){
   const box = $("results");
   if (!box) return;
-  const q = S.q.trim().toLowerCase();
+  const q = searchKey(S.q);
   if (!q) { box.innerHTML = ""; $("qCount").textContent = ""; return; }
-  const sports = S.sports.filter(s => (s.he + " " + s.en).toLowerCase().includes(q));
-  const hits = S.athletes.filter(a => [a.name, a.name_en, a.event, sportName(a.sportId)].map(str).join(" ").toLowerCase().includes(q));
+  const sports = S.sports.filter(s => searchKey(str(s.he) + " " + str(s.en)).includes(q));
+  const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportName(a.sportId)].map(str).join(" ")).includes(q));
   $("qCount").textContent = `נמצאו ${hits.length} ספורטאים ו־${sports.length} ענפים`;
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
@@ -422,7 +425,7 @@ function viewAbout(){
   ${reportBox("טעות באתר הדרך ללוס אנג׳לס 28", SITE_URL)}`;
 }
 
-const notFound = () => `<div class="empty">הדף לא נמצא. <a href="#home">חזרה לדף הראשי</a></div>`;
+const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
 
 function freshness(){
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
@@ -615,7 +618,8 @@ function route(){
   else if (h === "about") html = viewAbout(), nav = "about";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
-  else html = notFound(), nav = "";
+  else html = notFound();
+  if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
   $("view").innerHTML = banner() + html;
   $("adminLink").hidden = !(S.isAdmin && S.live);
   document.querySelectorAll(".links a").forEach(a => a.dataset.nav === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
