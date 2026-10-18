@@ -9,8 +9,7 @@ The site stays read-only for visitors; every gate below is about what they see.
 
 The decisions these gates rely on:
 - **Approvals:** the owner has delegated approvals to the coordinator.
-- **`earned`:** needs sign-off from both fact-checkers. When the owner can't be reached, the lead plus both
-  fact-checkers decide.
+- **`earned`:** who approves it is pending owner decision D4 (PR #57).
 - **Contact:** the public contact is a dedicated address, not the personal Gmail.
 
 The full decision list is in PR #57 (owner decisions).
@@ -28,7 +27,7 @@ The full decision list is in PR #57 (owner decisions).
 | G5 | **Dedicated contact address live.** `CONTACT_EMAIL` is replaced by a dedicated address (memo: PR #53) | 🔴 owner to create the address | Owner → dev |
 | G6 | **QA final regression is green** on the launch commit: no P0/P1, smoke + Python tests pass, 400px and 1280px, light and dark | 🟡 15:00 round pending; R2-1 fixed | Gil |
 | G7 | **The pipeline publishes cleanly.** The last 2 daily runs published with no `#admin` errors, the validator ran, and the live job copy equals `job/` on main | 🟡 job copy synced after #45/#49; re-check on 21.10, since every `job/` merge needs a re-sync | Lead |
-| G8 | **Result night 20.10 handled.** The Rotterdam outcome is live with an official FIG source. The publisher (Omer) runs `docs/runbooks/result-night.md`; `earned` needs both fact-checkers' sign-off, and the lead decides with them if the owner can't be reached | 🟡 | Omer, Dana + Tamar |
+| G8 | **Result night 20.10 handled.** The Rotterdam outcome is live with an official FIG source. The publisher (Omer) runs `docs/runbooks/result-night.md`; `earned` is approved per owner decision D4 (pending) | 🟡 | Omer, Dana + Tamar |
 
 ## Should-have (doesn't block, fix in the first launch week)
 - `generatedAt` freshness banner seen once in a real stale state (not only in fake-date QA).
