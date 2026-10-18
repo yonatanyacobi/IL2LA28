@@ -129,6 +129,8 @@ function quotaEventEnd(q){
   const c = S.comps.find(c => c.sportId === q.sportId && c.start <= e.start && e.start <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS);
   return c ? c.end || c.start : e.start;
 }
+// Last fact-check of an item (build_quotas.py publishes review.at); older files only have the file date.
+const checkedOf = q => q.checkedAt || str(S.quotasUpdatedAt).slice(0, 10);
 // Past quota events are hidden in the UI; the loader keeps them for #admin checks.
 const nxt = (q, t = today()) => q.nextQuotaEvent?.name && quotaEventEnd(q) >= t ? q.nextQuotaEvent : null;
 // The quota event is over but quotas.json predates its end: the item still shows the pre-event state.
@@ -890,6 +892,7 @@ function applyQuotas(){
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
       allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
+      checkedAt: isDate(q.checkedAt) ? q.checkedAt : "",
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
         ...(isDate(q.nextQuotaEvent.end) && q.nextQuotaEvent.end >= q.nextQuotaEvent.start ? {end: q.nextQuotaEvent.end} : {})} : null}));
   S.quotasUpdatedAt = S.quotas.length ? str(quotaFile.updatedAt) : "";
