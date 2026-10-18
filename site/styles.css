@@ -304,3 +304,6 @@ div.track{background:none}
 .rn-steps .chk{align-items:flex-start;font-weight:400;overflow-wrap:anywhere}
 .rn-steps .chk input{margin-top:4px;flex:none}
 .rn-steps code{font-size:12.5px;overflow-wrap:anywhere}
+/* home: "הבא בתור" (round3 §5b) */
+.next-up{margin-top:8px;font-size:15px;overflow-wrap:anywhere}
+.next-up b{color:var(--sun-ink)}
