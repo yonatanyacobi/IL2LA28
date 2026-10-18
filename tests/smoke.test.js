@@ -774,6 +774,19 @@ test("next-up fallback with no entrants never says מתחרים; quotas error hi
   assert.ok(home.length > 200 && !home.includes('id="closeH"') && nextUpOf(home), "page renders without the panel");
 });
 
+test("closest panel copy: יומיים, ועוד מקצה אחד, sorted foot; record-count fallback", async () => {
+  const ev = {name: "אירוע בדיקה", start: "2026-12-03"};
+  const items = ["א", "ב", "ג", "ד"].map(e => ({...QUOTAS.items[0], sportId: "sailing", event: e, israelStatus: "in-contention", nextQuotaEvent: ev}));
+  const {view} = await boot({quotas: {updatedAt: "2026-11-30", items}, now: "2026-12-01T08:00:00Z"});
+  const panel = closeOf(view("home"));
+  assert.ok(panel.includes("בעוד יומיים") && panel.includes("ועוד מקצה אחד") && !panel.includes("ועוד 1"), panel);
+  assert.ok(panel.includes("ממוינים לפי מועד אירוע המכסה הבא") && panel.includes("לתמונת המכסות המלאה"));
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.forEach(a => { a.nextDate = ""; });
+  const line = nextUpOf((await boot({data, quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"})).view("home"));
+  assert.ok(/ספורטאים ונבחרות במעקב בענף|ספורטאי\/ת או נבחרת אחת במעקב בענף/.test(line) && !line.includes("ישראלים במעקב"), line);
+});
+
 test("closest panel and next-up escape names", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
   const judoComp = data.competitions.find(x => x.sportId === "judo" && x.start === "2026-10-29");
