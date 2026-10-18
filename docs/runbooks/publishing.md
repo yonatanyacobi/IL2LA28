@@ -130,7 +130,8 @@ The Publisher prepares the call and the coordinator runs it. The page itself is 
    > Publish to https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT with file_path = site/index.html and
    > files = {"app.js": "site/app.js", "admin.js": "site/admin.js", "quotas.js": "site/quotas.js",
    > "digest.js": "site/digest.js", "corrections.js": "site/corrections.js", "sessions.js": "site/sessions.js",
-   > "day.js": "site/day.js", "event.js": "site/event.js", "following.js": "site/following.js",
+   > "day.js": "site/day.js", "event.js": "site/event.js", "gamelog.js": "site/gamelog.js",
+   > "following.js": "site/following.js",
    > "styles.css": "site/styles.css", "quotas.json": "site/quotas.json"}.
    > Don't pass force, capabilities, icon or contract.
 
