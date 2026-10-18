@@ -24,7 +24,7 @@ As a visitor, I see quota data when it exists, and the site works the same when 
   load, only the quota sections are hidden: no error banner, and the rest of the site is unchanged.
 - Per item, the page drops any item with an unknown `sportId`, a status outside the 4 values, a non-https `source`, or a
   `nextQuotaEvent.start` that isn't YYYY-MM-DD. Counts are ints or null.
-- `tests/validate_data.py` (PR #1) gets a `quotas` mode with the same rules plus a cross-check:
+- `job/validate_data.py` (PR #1) gets a `quotas` mode with the same rules plus a cross-check:
   "earned" ⇒ some athlete in that sport has stage ≥ 2.
 - Add a `tests/fixtures/quotas.json` with all 4 statuses and one invalid item, and cover it in the smoke tests.
 
