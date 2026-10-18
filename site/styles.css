@@ -363,6 +363,15 @@ div.track{background:none}
 .pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
 .pill.s-wait{background:var(--blue-soft);color:var(--blue)}
+/* The "השתנה ב־" pill sits on the row's top edge, out of the flow, so marking a row never moves text (#177). */
+.rows li,.facts dd{position:relative}
+.pill.chg{position:absolute;top:0;inset-inline-end:0;transform:translateY(-50%);z-index:1;pointer-events:none;
+  font-size:11px;line-height:14px;padding:0 6px;background:var(--sun-soft);color:var(--sun-ink)}
+/* Kept inside the space between rows: .rows has 8px padding each side, the timeline 10px below / 6px above, and
+   .facts gets a 14px row gap (was 6px) so the pill fits entirely in it. */
+.timeline .pill.chg{transform:translateY(-70%)}
+.facts{row-gap:14px}
+.facts .pill.chg{transform:translateY(-100%)}
 @media (max-width:640px){.day-nav h1{flex-basis:100%;order:-2}.rows.sess li{grid-template-columns:1fr auto}}   /* .rows.sess li beats the generic phone rule */
 
 /* following (#following): nav badge */
