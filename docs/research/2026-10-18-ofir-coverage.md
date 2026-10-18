@@ -68,6 +68,25 @@ both genders. All three items still carry per-gender totals.
 as worded. Next step: ask the Olympic Committee of Israel and the Israeli canoe and rowing federations which
 athletes raced 2026 ranking events.
 
+## Canoe follow-up after `dev/ofir/totals-fix` (signed off by Tamar in a935e84, not yet on main)
+
+Already done there: totals 234/16 (58) and 82/6 (59), and both sources moved to the ICF systems. What is still
+open in 58/59, as values ready to paste:
+
+| item id | field | current | proposed | source |
+|---|---|---|---|---|
+| 58 canoe sprint | `allocation` | "לכל מגדר: רוב המקומות לפי דירוג הקליטה האולימפי ב-31.12.2027 (תוצאות מ-20.4.2026), והיתר באירועי קליטה יבשתיים ב-2028; עד 2 סירות למדינה בכל מקצה." | "לכל מגדר: 79 מקומות לפי דירוג הקליטה האולימפי (תוצאות 2026-04-20–2027-12-31; אליפויות העולם ×1.5), 36 באירועי קליטה יבשתיים ב-2028 (באירופה: 2 בכל אחד מ-K1, K2, C1, C2) ומקום מארחת בקיאק ובקאנו; ועוד 2 מקומות אוניברסליות משותפים לספרינט ולסלאלום. עד 5 בקיאק ו-3 בקאנו למדינה, ועד 2 סירות במקצה." | [CSP-QS] §B.1–B.4, §D.3–D.6, §H |
+| 58 | `nextQuotaEvent` | null | `{"name": "אליפות העולם בקאנו ספרינט", "start": "2027-08-25", "end": "2027-08-29"}`. The three 2027 World Cups are earlier but have no dates in the QS, so recheck when ICF publishes the 2027 calendar. Venue: a search result lists Szeged for 2027, but the ICF page did not load. Leave the venue out until confirmed. | [CSP-QS] §G |
+| 59 canoe slalom | `allocation` | "לכל מגדר 19 מקומות לפי הדירוג ב-3.10.2027 (6 K-1, 3 X-1, 10 C-1; תוצאות מ-20.7.2026), והיתר בתחרויות יבשתיות ועולמית ב-2028; אחד למדינה בכל מקצה." | "לכל מגדר: 19 מקומות לפי הדירוג האולימפי ב-2027-10-03 (10 C-1, 6 K-1, 3 X-1; תוצאות מ-2026-07-20), 15 בתחרויות קליטה יבשתיות ו-6 בתחרות קליטה עולמית ב-2028, ומקום מארחת. אחד למדינה בכל מקצה." | [CSL-QS] §B, §D1–D4, §D.3.1 |
+| 59 | `nextQuotaEvent` | Worlds, La Seu, 2027-09-07 | `{"name": "גביע העולם בקאנו סלאלום, פראג", "start": "2027-06-04", "end": "2027-06-06"}`. This is the first ranking event still to come. Then Augsburg (2027-06-11), Lee Valley (2027-08-13), Pau (2027-08-20), the Worlds in La Seu (2027-09-07 to 2027-09-12) and Montgomery (2027-09-30 to 2027-10-03, the last before the lock). If the team prefers the headline event, keep the Worlds; the date is already correct. | [CSL-QS] §E timeline |
+
+Still open for canoe:
+- **Israelis: none identified.** I found no ISR results in official 2026 sprint or slalom results, and the ICF
+  Road-to-LA28 page has no data yet. To do: ask the Israeli canoe federation and the Olympic Committee of Israel
+  which athletes raced the 2026 ranking events. `israelStatus` stays `unknown`.
+- The ICF 2027 calendar: dates for the sprint World Cups and the Worlds venue.
+- The 2028 continental and world qualifiers: no dates in either QS.
+
 ## Follow-up on 28/30 and 41 (stopped when the sprint ended)
 
 **Athletics (28/30): the full LA28 system was not found, and there is no official date for it.**
