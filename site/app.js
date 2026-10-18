@@ -295,17 +295,20 @@ function viewHome(){
   </section>`;
 }
 
+const SEARCH_MAX = 24;
 function renderResults(){
   const box = $("results");
   if (!box) return;
   const q = searchKey(S.q);
   if (!q) { box.innerHTML = ""; $("qCount").textContent = ""; return; }
-  const sports = S.sports.filter(s => searchKey(str(s.he) + " " + str(s.en)).includes(q));
-  const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportName(a.sportId)].map(str).join(" ")).includes(q));
+  const sportKey = s => [s.id, s.he, s.en].map(str).join(" ");
+  const sports = S.sports.filter(s => searchKey(sportKey(s)).includes(q));
+  const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportKey(sportById(a.sportId) || {id: a.sportId})].map(str).join(" ")).includes(q));
   $("qCount").textContent = `נמצאו ${hits.length} ספורטאים ונבחרות ו־${sports.length} ענפים`;
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
-    ${hits.length ? `<div class="cards">${hits.slice(0, 24).map(athleteCard).join("")}</div>` : `<p class="muted">לא נמצאו ספורטאים או נבחרות שמתאימים לחיפוש.</p>`}
+    ${hits.length ? `<div class="cards">${hits.slice(0, SEARCH_MAX).map(athleteCard).join("")}</div>
+    ${hits.length > SEARCH_MAX ? `<p class="muted">מציג ${SEARCH_MAX} מתוך ${hits.length}. אפשר לצמצם את החיפוש.</p>` : ""}` : `<p class="muted">לא נמצאו ספורטאים או נבחרות שמתאימים לחיפוש.</p>`}
   </section>`;
 }
 
