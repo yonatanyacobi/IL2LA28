@@ -29,7 +29,7 @@ has an owner and an ETA. Pre-filled values are as of 18.10 ~16:30; **re-check ev
 | G2 no ❓ record shown as checked | 🟢 | Drive log `docs/audit/2026-10-verification-drive.md`: every marked record has a ✅ row | Dana, Tamar → coordinator | Unmark it |
 | G3 drive ≥ 27/30, all of B1 | 🔴 **28/30, B1 incomplete**: missing `ilia-liubimov`, `celia-gold` | DB `athletes.verifiedAt` vs the drive list (Tashtchiev not in DB; `israel-basketball-women` counts as the alternate) | Dana → coordinator | Sign off and mark both; ETA in the report |
 | G4 5 ❓ quota items unpublished | 🟢 (`site/quotas.json`: 55 published, `unpublished`: 5) | `#admin` launch panel / `site/quotas.json` | Roni, Ofir; Dana, Tamar | – |
-| G5 dedicated contact address | 🔴 the owner is opening the address (D2); until then new code uses `{REPORT_EMAIL}` | `site/app.js` on main and the error box on the live page | Owner (address) → dev (swap in the launch PR) | Stays red until the address exists |
+| G5 dedicated contact address | 🟡 `il2la28.site@gmail.com` opened (D2); green once Shira's swap is published | `site/app.js` on main and the error box on the live page | Shira → lead | Publish the swap |
 | G6 QA regression green | ⬜ | Gil's live check at 10:00 (`docs/qa/`) | Gil | List each P0/P1 with an owner |
 | G7 pipeline publishes cleanly | ⬜ (`check_live_sync.py` merged, #91) | `#admin` last 2 runs + `python3 job/check_live_sync.py` | Lead | Run it now; red only if data.json is invalid |
 | G8 Rotterdam result live | ⬜ | `#sport-artistic-gymnastics`, `#quotas`, home agree; official FIG URL. `earned` approved by Dana + Tamar (D4) | Omer; Dana, Tamar | Red until live |
@@ -44,7 +44,7 @@ has an owner and an ETA. Pre-filled values are as of 18.10 ~16:30; **re-check ev
 |---|---|
 | Coordinator | Final ready call and any rollback call; marks verified records |
 | PM | Morning gate re-check, day-1 metrics, owns this runbook |
-| Lead | Release freeze, launch PR (`LAUNCH_AT`, dedicated address in place of `{REPORT_EMAIL}`), tag, publish, rollback |
+| Lead | Release freeze, launch PR (`LAUNCH_AT`; check the dedicated address is live), tag, publish, rollback |
 | Omer (publisher) | Data fixes after reports: run the daily task, check the published data.json |
 | Gil | Final QA on the live site, signed out |
 | Dana, Tamar | Error-report triage, on call in shifts (Dana 12:00–18:00, Tamar 18:00–23:00) |

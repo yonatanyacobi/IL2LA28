@@ -1,9 +1,10 @@
 """Build the public data.json for the LA28 tracker from an ArtifactData dump.
 
 Usage: python3 export_data.py <dump_dir> <out_file> [<previous_data.json>]
-<dump_dir> holds athletes/, competitions/, sports/ and meta/status.json, as written by
+<dump_dir> holds athletes/, competitions/, sports/, corrections/ and meta/status.json, as written by
 ArtifactData list/get with out_dir. Only public fields are exported; proposals, run logs,
-archived athletes, updatedBy and verifiedBy (viewer ids) never leave the database.
+archived athletes, updatedBy and verifiedBy (viewer ids) and anything identifying who reported
+a correction never leave the database.
 With a previous data.json, the export refuses (exit 2) to shrink any collection by more
 than 20%, so a failed or truncated dump can't publish a half-empty site.
 """
@@ -15,9 +16,19 @@ DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})", re.ASCII)
 ATHLETE_FIELDS = ["name", "name_en", "sportId", "event", "rank", "next", "nextDate", "notes", "source", "updatedAt"]
 COMP_FIELDS = ["sportId", "name", "location", "start", "end", "notes", "source"]
-HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
+HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction"}
 HISTORY_PUBLIC = 10
 RANK_LIST_MAX = 80
+# Public corrections log (docs/design/corrections-log.md). The single source: data.json carries it as launchAt and
+# the page reads it from there. None until the owner picks a launch date; the launch PR sets an ISO instant with Z.
+# While None, no correction is published.
+LAUNCH_AT = None
+CORRECTION_TARGETS = {"athlete", "sport", "quota"}
+CORRECTION_FIELDS = {"name", "event", "rank", "next", "nextDate", "notes", "stage", "sportId", "quota"}
+CORRECTION_BY = {"reader", "audit", "job"}
+CORRECTIONS_MAX = 300
+# data.json is public: a correction mentioning an email address is held back, whoever typed it.
+EMAIL = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
 
 
 def load(dump, coll, dropped):
@@ -88,6 +99,31 @@ def rank_fields(a):
     return {"rankNum": n if ok else None, "rankList": lst, "rankAsOf": at}
 
 
+def instant(v):
+    v = iso(v)
+    return datetime.fromisoformat(v.replace("Z", "+00:00")) if v else None
+
+
+def correction(cid, c):
+    """Public form of corrections/<id>, or None. Fields are whitelisted, so reporter or editor ids never leave."""
+    at, t, src = instant(c.get("at")), c.get("target"), https(c.get("source"))
+    if not (at and at >= instant(LAUNCH_AT) and src and c.get("by") in CORRECTION_BY and isinstance(t, dict)
+            and t.get("kind") in CORRECTION_TARGETS and text(t.get("id"), 120) and text(t.get("name"), 120)):
+        return None
+    changes = [{"field": ch["field"], "wrong": text(ch.get("wrong"), 200), "right": text(ch.get("right"), 200)}
+               for ch in (c.get("changes") if isinstance(c.get("changes"), list) else [])
+               if isinstance(ch, dict) and ch.get("field") in CORRECTION_FIELDS]
+    changes = [ch for ch in changes if ch["wrong"] or ch["right"]]
+    if not 1 <= len(changes) <= 5:
+        return None
+    out = {"id": cid, "at": iso(c["at"]), "reportedAt": iso(c.get("reportedAt")),
+           "target": {"kind": t["kind"], "id": text(t["id"], 120), "name": text(t["name"], 120)},
+           "changes": changes, "source": src, "by": c["by"]}
+    if any(EMAIL.search(s) for s in [out["target"]["name"]] + [v for ch in changes for v in (ch["wrong"], ch["right"])]):
+        return None
+    return out
+
+
 def history(items):
     out = []
     for h in items if isinstance(items, list) else []:
@@ -101,7 +137,7 @@ def history(items):
 
 def main(dump, out_file, prev_file=None):
     dropped = []
-    sports, athletes, comps = (load(dump, c, dropped) for c in ("sports", "athletes", "competitions"))
+    sports, athletes, comps, corrs = (load(dump, c, dropped) for c in ("sports", "athletes", "competitions", "corrections"))
     with open(os.path.join(dump, "meta", "status.json"), encoding="utf-8") as fh:
         meta = json.load(fh)
     meta = meta.get("data", meta) if isinstance(meta, dict) else {}
@@ -149,7 +185,18 @@ def main(dump, out_file, prev_file=None):
             item["athleteId"] = ch["athleteId"]
         changes.append(item)
 
+    fixes = []
+    for cid, c in corrs.items() if LAUNCH_AT else ():  # no launch date yet: nothing is public, nothing is an error
+        row, at = correction(cid, c), instant(c.get("at"))
+        if row:
+            fixes.append(row)
+        elif not (at and at < instant(LAUNCH_AT)):  # pre-launch entries are skipped by design, not reported
+            dropped.append(cid)
+    fixes = sorted(fixes, key=lambda r: (instant(r["at"]), r["id"]), reverse=True)[:CORRECTIONS_MAX]
+
     counts = {"sports": len(s_out), "athletes": len(a_out), "competitions": len(c_out)}
+    if LAUNCH_AT:  # without a launch date corrections are [] by design, so the guard ignores them
+        counts["corrections"] = len(fixes)
     if prev_file and os.path.exists(prev_file):
         prev = json.load(open(prev_file, encoding="utf-8"))
         for k, n in counts.items():
@@ -163,6 +210,7 @@ def main(dump, out_file, prev_file=None):
         "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "lastRun": iso(meta.get("lastRun")),
         "sports": s_out, "athletes": a_out, "competitions": c_out, "changes": changes,
+        "launchAt": LAUNCH_AT, "corrections": fixes,
     }
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))

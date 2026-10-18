@@ -13,7 +13,7 @@ PRIVATE_KEYS = {"updatedBy", "verifiedBy"}
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})", re.ASCII)
 STAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", re.ASCII)
-HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
+HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction"}  # = export_data.HISTORY_KINDS
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}
@@ -91,9 +91,11 @@ def validate(data):
             data[k] = []
     if len(data["changes"]) > 30:
         err(f"changes: {len(data['changes'])} entries, max 30")
-    extra = set(data) - {"schemaVersion", "generatedAt", "lastRun", "sports", "athletes", "competitions", "changes"}
+    extra = set(data) - {"schemaVersion", "generatedAt", "lastRun", "sports", "athletes", "competitions", "changes",
+                         "launchAt", "corrections"}
     if extra:
         err(f"top level: unexpected keys {sorted(extra)}")
+    errors.extend(validate_corrections(data.get("corrections", []), data.get("launchAt")))
 
     sport_ids = {s.get("id") for s in data["sports"] if isinstance(s, dict)}
     athlete_ids = {a.get("id") for a in data["athletes"] if isinstance(a, dict)}
@@ -158,6 +160,66 @@ def validate(data):
                 if isinstance(rid, str) and rid in seen:
                     err(f"{path}: duplicate id")
                 seen.add(rid)
+    return errors
+
+
+def validate_corrections(rows, launch_at):
+    """data.json "corrections" (optional) against its "launchAt": the export's public shape, on or after launchAt,
+    newest first, no emails. launchAt null (no launch date yet) allows only an empty list."""
+    from export_data import CORRECTION_TARGETS, CORRECTION_FIELDS, CORRECTION_BY, CORRECTIONS_MAX, EMAIL, instant
+    if not isinstance(rows, list):
+        return ["corrections: expected a list"]
+    errors = []
+    err = errors.append
+    if launch_at is not None and not (isinstance(launch_at, str) and launch_at.endswith("Z") and is_iso(launch_at)):
+        err(f"launchAt: expected null or an ISO time with Z, got {launch_at!r}")
+        launch_at = None
+    if rows and launch_at is None:
+        return errors + [f"corrections: {len(rows)} entries but no valid launchAt; nothing is public before launch"]
+    if len(rows) > CORRECTIONS_MAX:
+        err(f"corrections: {len(rows)} entries, max {CORRECTIONS_MAX}")
+    seen, prev = set(), None
+    for i, c in enumerate(rows):
+        path = f"corrections[{i}]"
+        if not isinstance(c, dict):
+            err(f"{path}: expected an object")
+            continue
+        path += f"({c.get('id')})"
+        extra = set(c) - {"id", "at", "reportedAt", "target", "changes", "source", "by"}
+        if extra:  # reporter identity or editor ids would land here
+            err(f"{path}: unexpected keys {sorted(extra)}")
+        if not (isinstance(c.get("id"), str) and c["id"]) or c.get("id") in seen:
+            err(f"{path}.id: missing or duplicate")
+        seen.add(c.get("id"))
+        at = instant(c.get("at")) if is_iso(c.get("at")) else None
+        if not at or at < instant(launch_at):
+            err(f"{path}.at: expected an ISO time on or after launchAt {launch_at}, got {c.get('at')!r}")
+        elif prev and at > prev:
+            err(f"{path}.at: not newest first")
+        prev = at or prev
+        if not (c.get("reportedAt") == "" or is_iso(c.get("reportedAt"))):
+            err(f"{path}.reportedAt: expected ISO time or \"\", got {c.get('reportedAt')!r}")
+        t = c.get("target")
+        if not (isinstance(t, dict) and set(t) == {"kind", "id", "name"} and t["kind"] in CORRECTION_TARGETS
+                and all(isinstance(t[k], str) and t[k].strip() for k in ("id", "name"))):
+            err(f"{path}.target: expected {{kind: {sorted(CORRECTION_TARGETS)}, id, name}}, got {t!r}")
+        ch = c.get("changes")
+        if not (isinstance(ch, list) and 1 <= len(ch) <= 5):
+            err(f"{path}.changes: expected 1-5 entries")
+            ch = []
+        for j, x in enumerate(ch):
+            if not (isinstance(x, dict) and set(x) == {"field", "wrong", "right"} and x["field"] in CORRECTION_FIELDS
+                    and all(isinstance(x[k], str) and len(x[k]) <= 200 for k in ("wrong", "right"))
+                    and (x["wrong"] or x["right"])):
+                err(f"{path}.changes[{j}]: expected {{field, wrong, right}} with a known field and one value set, got {x!r}")
+        src = c.get("source")
+        if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
+            err(f"{path}.source: expected an https:// URL, got {src!r}")
+        if c.get("by") not in CORRECTION_BY:
+            err(f"{path}.by: expected one of {sorted(CORRECTION_BY)}, got {c.get('by')!r}")
+        strings = [json.dumps(v, ensure_ascii=False) for k, v in c.items() if k != "source"]
+        if any(EMAIL.search(s) for s in strings):
+            err(f"{path}: contains an email address; data.json is public")
     return errors
 
 

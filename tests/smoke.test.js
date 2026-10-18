@@ -9,6 +9,9 @@ const assert = require("assert");
 const ROOT = path.join(__dirname, "..");
 const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
+// site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
+// (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
+const QUOTAS_SNAPSHOT = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/site-quotas-2026-10-18.json"), "utf8"));
 
 function fakeEl(id){
   return {
@@ -35,7 +38,7 @@ const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.
 // `quotas`: quotas.json payload; undefined → 404, "fail" → that fetch rejects.
 // `now` pins the clock (ISO instant); `follows` seeds localStorage.
 // Start hidden like their markup in index.html, so tests see what the app un-hides.
-const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar"];
+const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar", "visitorChip", "visitorMsg"];
 // `claude` stands in for window.claude (editor tests); `storage` seeds localStorage.
 async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = [], claude, storage = {}} = {}){
   const els = {}, listeners = {};
@@ -650,7 +653,7 @@ test("#admin launch readiness: counts link to where each issue is fixed", async 
 });
 
 test("#admin result night: picks quota events ending today/yesterday, links the runbook, keeps ticks", async () => {
-  const SITE_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+  const SITE_QUOTAS = QUOTAS_SNAPSHOT;
   const panelOf = html => html.split('id="resultNight"')[1].split("</section>")[0];
   const admin = async (now, quotas = SITE_QUOTAS) => {
     const b = await boot({quotas, now});
@@ -846,6 +849,7 @@ test("calendar: unknown sport is not-found; arriving at #calendar resets all fil
   const cal = go("calendar");
   assert.deepStrictEqual(JSON.parse(run("JSON.stringify(S.cal)")), {sport: "", qual: false, past: false});
   assert.ok(!cal.includes(" selected") && !/id="cQual" checked|id="cPast" checked/.test(cal), "controls render unchecked");
+  assert.match(cal, /<h2>[^<]+ <span>\d+<span class="sr"> תחרו(?:ת|יות)<\/span><\/span><\/h2>/, "month count is labelled for screen readers");
 });
 
 test("calendar filters update only the results list, so focus and scroll survive", async () => {
@@ -861,7 +865,7 @@ test("calendar filters update only the results list, so focus and scroll survive
 });
 
 // ---------- #digest ----------
-const REAL_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+const REAL_QUOTAS = QUOTAS_SNAPSHOT;
 const DIGEST_NOW = "2026-10-18T09:00:00Z";
 const digestOf = async opts => { const b = await boot({now: DIGEST_NOW, quotas: REAL_QUOTAS, ...opts}); return {...b, text: b.run("digestText()")}; };
 const boldLines = text => text.split("\n").filter(l => l.includes("*"));
@@ -979,7 +983,7 @@ test("#digest: copy succeeds, and a refused clipboard selects the textarea", asy
 // Date matrix on the real snapshot + published quotas: the strip, #quotas and the sport page must show the
 // event that is on, keep a multi-day quota event current until its last day, and drop its stakes after.
 // tests/test_quota_due.py checks the job's warnings on the same dates.
-const SITE_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+const SITE_QUOTAS = QUOTAS_SNAPSHOT;
 // Last day of each quota event, as the page derives it (own end, else the containing competition, else start).
 const EVENT_END = {
   "אליפות העולם רוטרדם – גמר קבוצתי גברים": "2026-10-20",
@@ -1139,7 +1143,7 @@ test("view as visitor: editors get a toggle; visitor mode runs on data.json with
   const e = await boot({claude: ed});
   assert.ok(e.run("S.live && S.isAdmin"), "editor mode is live");
   e.view("home");
-  assert.ok(!hid(e, "visitorBtn") && !hid(e, "adminChip") && !hid(e, "adminLink") && hid(e, "visitorBar"));
+  assert.ok(!hid(e, "visitorBtn") && !hid(e, "adminChip") && !hid(e, "adminLink") && hid(e, "visitorBar") && hid(e, "visitorChip"));
   assert.ok(e.view("home").includes("את/ה רואה נתונים חיים"), "review queue for editors");
   e.run("setVisitorView(true)");
   assert.strictEqual(e.run(`localStorage.getItem("la28.viewAsVisitor")`), "true");
@@ -1150,7 +1154,7 @@ test("view as visitor: editors get a toggle; visitor mode runs on data.json with
   assert.ok(!vc.calls.includes("db"), "the DB is never opened");
   assert.ok(v.run("!S.live && !S.isAdmin && S.db === null && S.loaded"), "public snapshot only");
   const home = v.view("home");
-  assert.ok(!hid(v, "visitorBar") && hid(v, "adminLink") && hid(v, "adminChip") && hid(v, "visitorBtn"),
+  assert.ok(!hid(v, "visitorBar") && !hid(v, "visitorChip") && hid(v, "adminLink") && hid(v, "adminChip") && hid(v, "visitorBtn"),
     "bar shown; chip, toggle and בקרה hidden");
   assert.ok(!home.includes("את/ה רואה נתונים חיים") && !home.includes("data-edit") && !home.includes("data-add"));
   assert.ok(!v.view("sport-judo").includes("data-add") && !v.view("a-raz-hershko").includes("data-edit"));
@@ -1194,7 +1198,41 @@ test("#admin re-check ages use Hebrew counts: יומיים, ימים up to 10, �
   }
 });
 
-(async () => {
+test("visitor bar markup: inside the sticky nav, not a live region; short toggle keeps its full name", async () => {
+  const html = fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8");
+  const nav = html.split('<nav class="nav"')[1].split("</nav>")[0];
+  const bar = nav.match(/<div class="visitor-bar"[^>]*>/)?.[0] || "";
+  assert.ok(bar.includes('id="visitorBar"') && !/\brole=/.test(bar), "bar inside <nav>, no role");
+  assert.ok(nav.includes('id="visitorChip"'));
+  assert.ok(/id="visitorBtn"[^>]*aria-label="צפייה באתר כגולש\/ת"/.test(nav) || /aria-label="צפייה באתר כגולש\/ת"[^>]*id="visitorBtn"/.test(nav));
+});
+
+test("view-as-visitor toggle with blocked storage shows a message instead of reloading", async () => {
+  const e = await boot({claude: fakeEditor()});
+  e.run(`localStorage.setItem = () => { throw new Error("blocked"); }; localStorage.getItem = () => { throw new Error("blocked"); }`);
+  e.run("setVisitorView(true)");
+  assert.ok(!e.ctx.reloads, "no reload");
+  assert.ok(!e.run(`$("visitorMsg").hidden`) && e.run(`$("visitorMsg").textContent`).includes("חוסם שמירה מקומית"));
+  const ok = await boot({claude: fakeEditor()});
+  ok.run("setVisitorView(true)");
+  assert.ok(ok.ctx.reloads === 1 && ok.run(`$("visitorMsg").hidden`), "normal storage: reload, no message");
+});
+
+test("home order: search right under the hero; chances panel caps at 3 rows on phones", async () => {
+  const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-18T08:00:00Z"});
+  const home = view("home");
+  const q = home.indexOf('id="q"');
+  assert.ok(q > home.indexOf("</section>") && q < home.indexOf('id="todayH"') && q < home.indexOf('id="closeH"'), "search before strip and panel");
+  const panel = home.split('id="closeH"')[1].split("</section>")[0];
+  assert.ok(panel.includes('class="rows closest"') && panel.includes('<span class="sm-only"> (עוד 2)</span>'), "5 groups → (עוד 2)");
+  const few = {updatedAt: "2026-10-18", items: [{...QUOTAS.items[0], sportId: "sailing", event: "x", israelStatus: "in-contention",
+    nextQuotaEvent: {name: "אירוע", start: "2026-12-01"}}]};
+  const one = (await boot({quotas: few, now: "2026-10-18T08:00:00Z"})).view("home").split('id="closeH"')[1].split("</section>")[0];
+  assert.ok(!one.includes("sm-only"), "≤ 3 groups: no suffix");
+});
+// tests/preview_at.js reuses boot() to render real data on a chosen date.
+module.exports = {boot};
+if (require.main === module) (async () => {
   let failed = 0;
   for (const {name, fn} of tests) {
     try { await fn(); console.log(`ok   ${name}`); }

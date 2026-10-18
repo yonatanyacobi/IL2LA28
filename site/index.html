@@ -17,17 +17,19 @@
         <a href="#admin" data-nav="admin" id="adminLink" hidden>בקרה</a>
       </div>
       <span class="admin-chip" id="adminChip" hidden>מצב עריכה</span>
-      <button class="btn ghost small" type="button" id="visitorBtn" hidden>צפייה כגולש/ת</button>
+      <span class="admin-chip" id="visitorChip" hidden>תצוגת גולש/ת</span>
+      <button class="btn ghost small" type="button" id="visitorBtn" aria-label="צפייה באתר כגולש/ת" hidden><span class="vb-more">צפייה </span>כגולש/ת</button>
     </div>
+    <div class="visitor-bar" id="visitorBar" hidden>
+      <span><b>תצוגת גולש/ת</b><span class="vb-more">: הנתונים מהפרסום הציבורי, בלי כלי עריכה.</span></span>
+      <button class="btn small" type="button" id="editModeBtn">חזרה למצב עריכה</button>
+    </div>
+    <p class="vb-msg" id="visitorMsg" role="status" hidden></p>
   </nav>
-  <div class="visitor-bar" id="visitorBar" role="status" hidden>
-    <span>את/ה צופה באתר כגולש/ת: הנתונים מהפרסום הציבורי, בלי כלי עריכה.</span>
-    <button class="btn small" type="button" id="editModeBtn">חזרה למצב עריכה</button>
-  </div>
   <p class="sr" id="routeStatus" aria-live="polite"></p>
   <main id="view" tabindex="-1" aria-label="תוכן ראשי"><div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div></main>
   <footer class="site-foot">
-    <p>אתר עצמאי ולא רשמי. אין לו קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של משחקי לוס אנג׳לס 2028 או לוועד האולימפי בישראל. הנתונים נאספים ממקורות פומביים, וכדאי לבדוק מול המקור המצורף. <a href="#about">איך הנתונים נאספים</a> · דיווח על טעות: <span dir="ltr">yacobiyonatan@gmail.com</span></p>
+    <p>אתר עצמאי ולא רשמי. אין לו קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של משחקי לוס אנג׳לס 2028 או לוועד האולימפי בישראל. הנתונים נאספים ממקורות פומביים, וכדאי לבדוק מול המקור המצורף. <a href="#about">איך הנתונים נאספים</a> · דיווח על טעות: <span dir="ltr">il2la28.site@gmail.com</span></p>
   </footer>
 
   <dialog id="dlg">
