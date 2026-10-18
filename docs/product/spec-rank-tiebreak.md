@@ -18,9 +18,11 @@ followed → listed in the row → file order (`site/app.js`, the strip's `rank(
 
 - The free-text `rank` stays, unchanged, as the display string. `rankNum` is never shown on its own in v1.
 - The source is the record's `source`, or the `history` entry of kind `rank` written in the same update.
-- **Which list:** the ranking that drives LA28 qualification in that sport, if one exists (e.g. the Olympic
-  qualification ranking); otherwise the IF's official world ranking. One list per sport, recorded in the table below.
-  Teams use the team ranking (FIBA, WBSC, etc.).
+- **Which list (amended 18.10, PR #218 decision):** `rank*` is the IF's official **world** ranking, the one the `rank`
+  text names. Teams use the team ranking (FIBA, WBSC, etc.). Where a sport has an Olympic qualification list, it goes in
+  separate fields: `olympicRankNum` (int ≥ 1 | null), `olympicRankList`, `olympicRankAsOf`, under the same rules.
+  Standings (#179) and the quota line use `olympicRank*`, and fall back to `rank*` when there's none. The athlete page shows
+  the world rank, plus one line for the Olympic rank when it exists. The tie-break below keeps `rankNum`.
 - **Comparisons are only within one sport.** The strip groups by competition, so this always holds.
 
 ## Behaviour
