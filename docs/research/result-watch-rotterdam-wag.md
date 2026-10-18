@@ -14,7 +14,7 @@ Longines "Official" results. Style follows `docs/research/result-watch-tongyeong
 - **The list of finalists can change after qualification.** A withdrawal before a final can lift a reserve
   (R1–R3), and the per-country limit can remove an athlete. So:
   - "עלתה לגמר" is based on the Q mark in the Official list;
-  - a reserve is recorded as "מחליפה" in the session `result` and in `next` (the history text says "לא עלה/תה לגמר");
+  - a reserve is recorded as "מחליפה <R>" in the history text, in the session `result` and in `next`;
   - a later change is a new entry, not an edit of this one.
 
 ## Timeline (Israel time = Rotterdam + 1)
@@ -36,19 +36,19 @@ An athlete write with `"result": {at, text, source}` through `job/athlete_patch.
 - `at` = "2026-10-19";
 - `source` = the URL of the Official PDF for that apparatus or all-around.
 
-All `result.text` values are the output of `gym_results.result_text("qual", …)` from #219, the one wording the job
-uses too, so it sees a manual entry as already logged. They use `tri_results.he_date()` ("19 באוק׳ 2026") and the
-competition name from data.json, and pass `athlete_patch.result_entry()` unchanged.
-**Reserves:** `result_text` has no reserve form, so a reserve gets `qualified=False` ("לא עלה/תה לגמר"). The reserve
-number appears only in the session `result` ("מחליפה <R>") and in `next`. A reserve variant in `result_text` is
-proposed to Maya in #219.
+**Wording (coordinator decision, 18.10):** the `result.text` values are character-for-character the same as the
+gendered texts in #173 (Omer's runbook), for example "…, עלתה לגמר הקרב־רב" and "…, מחליפה <R> לגמר המקבילים".
+`gym_results.py` isn't in the daily job yet (#219 is a skeleton), so the 20.10 run writes no gymnastics result
+and there's no duplicate risk. Maya will add a gender option to `result_text` so that it produces the same
+strings. The texts use `tri_results.he_date()` and the data.json competition name, and pass
+`athlete_patch.result_entry()`.
 
 ### Raz (`lihie-raz`) and Shamai (`roni-shamay`), all-around
 | Outcome | `result.text` | session `result` | `next` / `nextDate` |
 |---|---|---|---|
-| Q to the all-around final | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר` | `מקום <N> בקרב־רב, עלתה לגמר` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים` / `2026-10-23` |
-| Reserve (R1–R3) | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר` | `מקום <N> בקרב־רב, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים (מחליפה)` / `2026-10-23` |
-| Not qualified | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר` | `מקום <N> בקרב־רב, לא עלתה לגמר` | `""` / `""`, unless an editor knows the next competition |
+| Q to the all-around final | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב` | `מקום <N> בקרב־רב, עלתה לגמר` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים` / `2026-10-23` |
+| Reserve (R1–R3) | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקרב־רב` | `מקום <N> בקרב־רב, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים (כמחליפה <R>)` / `2026-10-23` |
+| Not qualified | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר הקרב־רב` | `מקום <N> בקרב־רב, לא עלתה לגמר` | `""` / `""`, unless an editor knows the next competition |
 
 - **Apparatus final as well**: a second, separate write, with its own `source` (the Official PDF for that
   apparatus). Each update gets one history entry, so the two can't share one write.
@@ -59,28 +59,28 @@ all-around entry already covers the day.
 
 | Apparatus (final date) | Q: `result.text` | Reserve: `result.text` | session `result` | `next` / `nextDate` if this is her nearest final |
 |---|---|---|---|---|
-| Vault (24.10) | `מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר` | `מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר` | `מקום <N> בקפיצות, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קפיצות נשים` / `2026-10-24` |
-| Uneven bars (24.10) | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר` | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר` | `מקום <N> במקבילים, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים` / `2026-10-24` |
-| Beam (25.10) | `מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר` | `מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר` | `מקום <N> בקורה, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קורה נשים` / `2026-10-25` |
-| Floor (25.10) | `מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר` | `מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר` | `מקום <N> בקרקע, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרקע נשים` / `2026-10-25` |
+| Vault (24.10) | `מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקפיצות` | `מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקפיצות` | `מקום <N> בקפיצות, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קפיצות נשים` / `2026-10-24` |
+| Uneven bars (24.10) | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר המקבילים` | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר המקבילים` | `מקום <N> במקבילים, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים` / `2026-10-24` |
+| Beam (25.10) | `מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקורה` | `מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקורה` | `מקום <N> בקורה, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קורה נשים` / `2026-10-25` |
+| Floor (25.10) | `מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרקע` | `מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקרקע` | `מקום <N> בקרקע, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרקע נשים` / `2026-10-25` |
 
 - **`next` order:**
   - all-around final 23.10 → vault and bars 24.10 → beam and floor 25.10;
   - `next` names only the nearest one;
   - a reserve spot counts only if she has no final as a qualifier;
-  - add "(מחליפה)" to the `next` text for a reserve, as in the all-around table.
+  - add "(כמחליפה <R>)" to the `next` text for a reserve, as in the all-around table.
 - **Sessions:** a Q moves the matching block from `pendingFinalBlocks` to a session (24.10 or 25.10 at 14:00 Europe/Amsterdam,
   the FIG Work Plan block), with only that athlete's id. A reserve gets no session until she is confirmed in the
   final's start list.
-- All the texts come from `gym_results.result_text()` (#219) and pass `athlete_patch.result_entry()`.
+- All the texts are #173's gendered strings and pass `athlete_patch.result_entry()`.
 - If she reaches both finals, `next` points to the nearest one: the all-around final on 23.10 comes before 24–25.10.
 
 ### Shoshani (`yali-shoshani`), uneven bars
 | Outcome | `result.text` | session `result` | `next` / `nextDate` |
 |---|---|---|---|
-| Q to the bars final | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר` | `מקום <N> במקבילים, עלתה לגמר` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים` / `2026-10-24` |
-| Reserve (R1–R3) | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר` | `מקום <N> במקבילים, מחליפה <R>` | no change |
-| Not qualified | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר` | `מקום <N> במקבילים, לא עלתה לגמר` | `""` / `""` |
+| Q to the bars final | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר המקבילים` | `מקום <N> במקבילים, עלתה לגמר` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים` / `2026-10-24` |
+| Reserve (R1–R3) | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר המקבילים` | `מקום <N> במקבילים, מחליפה <R>` | no change |
+| Not qualified | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר המקבילים` | `מקום <N> במקבילים, לא עלתה לגמר` | `""` / `""` |
 
 **Session result fields** (`data/sessions/roni.json` → DB):
 - `resultSource` = the Official PDF;
@@ -102,9 +102,10 @@ The contract requires both whenever `result` is set. Without them the export bla
 It's based on #134, the item `artistic-gymnastics` / `קבוצתי גברים`, outcome (ב). Publish it **only after** Dana and Tamar
 sign #134 against FIG's Official results. Until then the digest has no team line.
 
-Line, one line, maqaf before numbers, date in the job's format (`he_date`, "18 באוק׳ 2026"):
+Line (Shira's wording on #184): one line, opening with the sport prefix the digest's `changeSport()` needs. There's no
+date in the line, because the date is in the entry's `at`, and no forecast wording:
 ```
-נבחרת הגברים במקום 20 במוקדמות אליפות העולם ברוטרדם (18 באוק׳ 2026) ולא עלתה לגמר הקבוצתי; ללא מכסת נבחרת, והסיכוי הבא: 9 נבחרות במוקדמות אליפות העולם 2027
+התעמלות מכשירים: נבחרת הגברים סיימה במקום 20 במוקדמות אליפות העולם ברוטרדם ולא עלתה לגמר הקבוצתי, ולכן לא השיגה מכסה. ההזדמנות הבאה: אליפות העולם 2027, שבה 9 מכסות לנבחרות.
 ```
 - The rank (20) and the date come from #134's israelNote. If the Official PDF gives a different rank, change only the
   number.

@@ -1,8 +1,9 @@
 # Result night 19.10.2026: Rotterdam women's qualification. Copy sheet (Roni)
 
 Only `<N>`, `<OFFICIAL_PDF>` and, after a Q, the order of finals need filling in. Everything else is final.
-The plan and its rules are in `result-watch-rotterdam-wag.md` (#184). Texts are the output of
-`gym_results.result_text("qual", …)` (#219), and every one passes `athlete_patch.result_entry()`.
+The plan and its rules are in `result-watch-rotterdam-wag.md` (#184). Texts are #173's gendered
+strings, the same character for character (coordinator decision 18.10; gym_results isn't in the job yet), and every one
+passes `athlete_patch.result_entry()`.
 
 ## Sessions (start list checked on Longines, 18.10)
 | Sub | Rotterdam | Israel | Who | Session id |
@@ -40,22 +41,22 @@ PDF.
 ### yali-shoshani (bars)
 | Outcome | new.json | session `result` |
 |---|---|---|
-| Q to the bars final | `{"result": {"at": "2026-10-19", "text": "מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>", "next": "אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים", "nextDate": "2026-10-24"}` | `מקום <N> במקבילים, עלתה לגמר` |
-| Reserve R1–R3 | `{"result": {"at": "2026-10-19", "text": "מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}` plus `"next": "אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים (מחליפה)", "nextDate": "2026-10-24"` | `מקום <N> במקבילים, מחליפה <R>` |
-| Not qualified | `{"result": {"at": "2026-10-19", "text": "מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>", "next": "", "nextDate": ""}` | `מקום <N> במקבילים, לא עלתה לגמר` |
+| Q to the bars final | `{"result": {"at": "2026-10-19", "text": "מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר המקבילים", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>", "next": "אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים", "nextDate": "2026-10-24"}` | `מקום <N> במקבילים, עלתה לגמר` |
+| Reserve R1–R3 | `{"result": {"at": "2026-10-19", "text": "מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר המקבילים", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}` plus `"next": "אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים (כמחליפה <R>)", "nextDate": "2026-10-24"` | `מקום <N> במקבילים, מחליפה <R>` |
+| Not qualified | `{"result": {"at": "2026-10-19", "text": "מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר המקבילים", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>", "next": "", "nextDate": ""}` | `מקום <N> במקבילים, לא עלתה לגמר` |
 
 ### lihie-raz and roni-shamay (all-around): one write each
 | Outcome | new.json | session `result` |
 |---|---|---|
-| Q to the AA final | `{"result": {"at": "2026-10-19", "text": "מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>", "next": "אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים", "nextDate": "2026-10-23"}` | `מקום <N> בקרב־רב, עלתה לגמר` |
-| Reserve R1–R3 | `{"result": {"at": "2026-10-19", "text": "מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}` plus `"next": "אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים (מחליפה)", "nextDate": "2026-10-23"` | `מקום <N> בקרב־רב, מחליפה <R>` |
-| Not qualified | `{"result": {"at": "2026-10-19", "text": "מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>", "next": "", "nextDate": ""}` | `מקום <N> בקרב־רב, לא עלתה לגמר` |
+| Q to the AA final | `{"result": {"at": "2026-10-19", "text": "מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>", "next": "אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים", "nextDate": "2026-10-23"}` | `מקום <N> בקרב־רב, עלתה לגמר` |
+| Reserve R1–R3 | `{"result": {"at": "2026-10-19", "text": "מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקרב־רב", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}` plus `"next": "אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים (כמחליפה <R>)", "nextDate": "2026-10-23"` | `מקום <N> בקרב־רב, מחליפה <R>` |
+| Not qualified | `{"result": {"at": "2026-10-19", "text": "מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר הקרב־רב", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>", "next": "", "nextDate": ""}` | `מקום <N> בקרב־רב, לא עלתה לגמר` |
 
 **Apparatus final as well** (a separate write after the AA write; no `next`, the AA write already set the nearest):
-- vault: `{"result": {"at": "2026-10-19", "text": "מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}`
-- unevenbars: `{"result": {"at": "2026-10-19", "text": "מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}`
-- balancebeam: `{"result": {"at": "2026-10-19", "text": "מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}`
-- floor: `{"result": {"at": "2026-10-19", "text": "מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלה/תה לגמר", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}`
+- vault: `{"result": {"at": "2026-10-19", "text": "מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקפיצות", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}`
+- unevenbars: `{"result": {"at": "2026-10-19", "text": "מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר המקבילים", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}`
+- balancebeam: `{"result": {"at": "2026-10-19", "text": "מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקורה", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}`
+- floor: `{"result": {"at": "2026-10-19", "text": "מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרקע", "source": "<OFFICIAL_PDF>"}, "source": "<OFFICIAL_PDF>"}`
 
 - **`next` when there is more than one final:** the nearest one (23 → 24 → 25.10).
 - **If she has an apparatus final but no AA final:** the apparatus write also carries `next` and `nextDate` for that
