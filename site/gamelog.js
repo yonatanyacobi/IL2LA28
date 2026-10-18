@@ -38,9 +38,11 @@ function gameLogRows(a){
 }
 
 // The year only when it isn't this year: "29–30 באוק׳", "12 בספט׳ 2025".
+// A range within one month names the month once: "29–31 באוק׳".
 function logDays(first, last){
   const year = today().slice(0, 4), one = d => `<time datetime="${d}">${d.slice(0, 4) === year ? fmtShort(d) : fmt(d)}</time>`;
-  return first === last ? one(first) : `${one(first)}–${one(last)}`;
+  if (first === last) return one(first);
+  return first.slice(0, 7) === last.slice(0, 7) ? `<time datetime="${first}">${Number(first.slice(8))}</time>–${one(last)}` : `${one(first)}–${one(last)}`;
 }
 
 function gameLogRow({comp, entries, first, last}){
@@ -56,7 +58,7 @@ function gameLogSection(a){
   const rows = gameLogRows(a), n = rows.reduce((k, r) => k + r.entries.length, 0);
   const shown = rows.slice(0, GAMELOG_ROWS), more = rows.slice(GAMELOG_ROWS), k = more.reduce((x, r) => x + r.entries.length, 0);
   return `<section class="panel" aria-labelledby="logH"><h2 id="logH">תוצאות בתחרויות</h2>
-    ${n ? `<p class="kpi muted">${plural(n, "תוצאה אחת", "תוצאות")} ${rows.length === 1 ? "בתחרות אחת" : `ב־${rows.length} תחרויות`}</p>
+    ${n ? `<p class="kpi muted">${plural(n, "תוצאה אחת", "תוצאות")}${(m => !m ? "" : m === 1 ? " בתחרות אחת" : ` ב־${m} תחרויות`)(rows.filter(r => r.comp).length)}</p>
     <ul class="rows game-log">${shown.map(gameLogRow).join("")}</ul>
     ${more.length ? `<details><summary>${k === 1 ? "הצגת עוד תוצאה אחת" : `הצגת עוד ${k} תוצאות`}</summary><ul class="rows game-log">${more.map(gameLogRow).join("")}</ul></details>` : ""}
     <p class="foot">כל תוצאה מופיעה עם המקור שלה · ${CADENCE}</p>`

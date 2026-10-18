@@ -949,7 +949,17 @@ test("game log: rows per competition, newest row first, entries oldest first, li
   assert.ok(rows[0].indexOf("מוקדמות") < rows[0].indexOf("גמר"), "entries oldest first");
   assert.strictEqual(rows[0].split("מקור: ijf.org").length - 1, 1, "a shared source is shown once");
   assert.ok(rows[0].includes('<time datetime="2026-10-29">29 באוק׳</time>'), "date without the current year");
-  assert.ok(glPanel(out).includes("3 תוצאות ב־2 תחרויות") && glPanel(out).includes("כל תוצאה מופיעה עם המקור שלה · מתעדכן פעם ביום"));
+  assert.ok(glPanel(out).includes("3 תוצאות בתחרות אחת") && glPanel(out).includes("כל תוצאה מופיעה עם המקור שלה · מתעדכן פעם ביום"),
+    "a row with no known competition isn't counted as a competition (Gil P3)");
+  // Gil P3: a range within one month names the month once.
+  const range = glBase();
+  range.sessions = [glSess("2026-10-29", null, "מוקדמות", "עלתה"), glSess("2026-10-31", null, "גמר", "ארד")];
+  const r = glRows((await boot({data: range, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko"))[0];
+  assert.ok(r.includes('<time datetime="2026-10-29">29</time>–<time datetime="2026-10-31">31 באוק׳</time>'), "29–31 באוק׳");
+  const loose = glBase();
+  loose.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-02-06", kind: "result", text: "זהב", source: GL_SRC}];
+  const lp = glPanel((await boot({data: loose, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko"));
+  assert.ok(lp.includes('<p class="kpi muted">תוצאה אחת</p>'), "no known competition: no competition count");
   const hist = out.split("<h2>היסטוריה</h2>")[1].split("</section>")[0];
   assert.ok(!hist.includes("זהב") && hist.includes("נכנסה למעקב"), "results leave the history timeline");
 });
