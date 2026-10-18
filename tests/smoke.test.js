@@ -122,6 +122,32 @@ test("search finds an athlete by Hebrew name", async () => {
   assert.match(els.qCount.textContent, /נמצאו [1-9]/);
 });
 
+test("search ignores apostrophe/geresh, quote/gershayim, niqqud, spacing and Latin case", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const a = data.athletes.find(x => x.id === "raz-hershko");
+  a.event = `ק"מ אחד`; a.name_en = "Raz Hershko";
+  const {run, els, view} = await boot({data});
+  view("home");
+  const count = q => { run(`S.q = ${JSON.stringify(q)}; renderResults()`); return els.qCount.textContent; };
+  const judo = count("ג׳ודו");
+  assert.match(judo, /נמצאו [1-9]/);
+  for (const q of ["ג'ודו", "ג`ודו", "ג’ודו", "  גּ׳וּדוֹ  "]) assert.strictEqual(count(q), judo, q);
+  for (const q of ["ק״מ אחד", "ק\"מ   אחד", "RAZ hershko"]) assert.match(count(q), /נמצאו [1-9]/, q);
+});
+
+test("not-found has an h1, is announced and clears the nav", async () => {
+  const {ctx, view} = await boot();
+  const links = ["home", "sports"].map(nav => ({dataset: {nav}, current: false,
+    setAttribute(){ this.current = true; }, removeAttribute(){ this.current = false; }}));
+  ctx.document.querySelectorAll = sel => sel === ".links a" ? links : [];
+  for (const h of ["nope", "sport-nope", "a-nope"]) {
+    view("sports");
+    assert.ok(links[1].current);
+    assert.ok(view(h).includes(`<h1 tabindex="-1">${NOT_FOUND}</h1>`), h);
+    assert.ok(links.every(l => !l.current), `${h}: nav still marked`);
+  }
+});
+
 test("hostile strings are escaped and unsafe links dropped", async () => {
   const BAD = `<img src=x onerror=alert(1)>`, JS = "javascript:alert(1)";
   const data = JSON.parse(JSON.stringify(FIXTURE));

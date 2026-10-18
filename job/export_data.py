@@ -33,8 +33,26 @@ def load(dump, coll, dropped):
     return out
 
 
+# A Hebrew word (optionally opened by a ' quote) that may contain ' and " typed for geresh/gershayim.
+HEB_WORD = re.compile(r"(?<![\w'])('?)([א-ת][א-ת'\"]*)")
+
+
+def _geresh_word(m):
+    opener, word = m.groups()
+    tail = "'" if opener and word.endswith("'") else ""  # 'מילה' is a quotation, not an abbreviation
+    word = word[:len(word) - len(tail)]
+    word = re.sub(r"(?<=[א-ת])'", "׳", word)  # צ'לנג', מ' -> geresh
+    word = re.sub(r'(?<=[א-ת])"(?=[א-ת])', "״", word)  # ארה"ב -> gershayim
+    return opener + word + tail
+
+
+def geresh(s):
+    """Typed ' and " attached to Hebrew letters -> ׳ and ״. Latin text and URLs are left alone."""
+    return re.sub(r"\S+", lambda m: m.group() if "://" in m.group() else HEB_WORD.sub(_geresh_word, m.group()), s)
+
+
 def text(v, limit=600):
-    return v.strip()[:limit] if isinstance(v, str) else ""
+    return geresh(v.strip())[:limit] if isinstance(v, str) else ""
 
 
 def https(u):

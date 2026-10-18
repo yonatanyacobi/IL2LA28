@@ -1,4 +1,4 @@
-import contextlib, importlib.util, io, json, os, subprocess, sys, tempfile, unittest
+import contextlib, importlib.util, io, json, os, re, subprocess, sys, tempfile, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPT = os.path.join(HERE, "..", "job", "export_data.py")
@@ -137,6 +137,54 @@ class ExportTest(unittest.TestCase):
         self.assertEqual([s["id"] for s in data["sports"]], ["judo"])
         for doc_id in ("list", "str", "null", "bad"):
             self.assertIn(repr(doc_id), d.log)
+
+    def test_geresh(self):
+        cases = {
+            "קווין קוזמיצ'וב": "קווין קוזמיצ׳וב",
+            "200 מ' גב": "200 מ׳ גב",
+            "ארד בצ'לנג' בהובנס": "ארד בצ׳לנג׳ בהובנס",
+            'ארה"ב, 10 ק"מ': "ארה״ב, 10 ק״מ",
+            "Israel men's 3x3 team": "Israel men's 3x3 team",
+            "לפי 'מאי 2027'.": "לפי 'מאי 2027'.",
+            "אמר 'שלום' לכולם": "אמר 'שלום' לכולם",
+            'כתב "שלום" לכולם': 'כתב "שלום" לכולם',
+            "ראו https://he.wikipedia.org/wiki/צ'לנג": "ראו https://he.wikipedia.org/wiki/צ'לנג",
+            "כבר ג׳ודו": "כבר ג׳ודו",
+        }
+        for raw, want in cases.items():
+            self.assertEqual(ex.geresh(raw), want, raw)
+
+    def test_geresh_applied_to_display_text_only(self):
+        hist = [{"at": "2026-01-01", "kind": "rank", "text": "3000 מ' מכשולים", "source": "https://x.org/a'b"}]
+        data = self.export(
+            athletes={"a": athlete(name="קוזמיצ'וב", name_en="O'Brien", event="200 מ' גב",
+                                   source="https://x.org/צ'לנג", history=hist)},
+            sports={"judo": {"he": "ג'ודו", "en": "Judo", "window": None}},
+            meta={"lastRun": "", "changes": [{"at": "2026-10-18", "text": 'ארה"ב'}]})
+        a = data["athletes"][0]
+        self.assertEqual((a["name"], a["name_en"], a["event"]), ("קוזמיצ׳וב", "O'Brien", "200 מ׳ גב"))
+        self.assertEqual(a["source"], "https://x.org/צ'לנג")
+        self.assertEqual((a["history"][0]["text"], a["history"][0]["source"]), ("3000 מ׳ מכשולים", "https://x.org/a'b"))
+        self.assertEqual(data["sports"][0]["he"], "ג׳ודו")
+        self.assertEqual(data["changes"][0]["text"], "ארה״ב")
+
+    def test_geresh_fixes_fixture_strings(self):
+        with open(os.path.join(HERE, "fixtures", "data.json"), encoding="utf-8") as f:
+            fixture = json.load(f)
+        left = []
+
+        def walk(v):
+            if isinstance(v, dict):
+                for k, x in v.items():
+                    if k not in ("source", "id", "sportId", "athleteId"):
+                        walk(x)
+            elif isinstance(v, list):
+                for x in v:
+                    walk(x)
+            elif isinstance(v, str):
+                left.extend(re.findall(r"[א-ת]['\"][א-ת\s]", ex.geresh(v)))
+        walk(fixture)
+        self.assertEqual(left, [])
 
     def test_shrink_guard(self):
         with tempfile.TemporaryDirectory() as tmp:
