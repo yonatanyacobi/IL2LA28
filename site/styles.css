@@ -362,3 +362,6 @@ div.track{background:none}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
 .pill.s-wait{background:var(--blue-soft);color:var(--blue)}
 @media (max-width:640px){.day-nav h1{flex-basis:100%;order:-1}}
+
+/* following (#following): nav badge */
+.nav-badge{display:inline-block;min-width:18px;margin-inline-start:4px;padding:0 5px;border-radius:99px;background:var(--sun);color:var(--on-sun);font-size:11px;font-weight:700;line-height:18px;text-align:center}
