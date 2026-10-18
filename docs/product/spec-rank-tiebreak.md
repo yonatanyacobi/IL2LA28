@@ -1,6 +1,6 @@
 # Spec: break stakes ties by world rank
 
-Status: draft for the researchers (Roni, Yael) and the lead. Owner: PM.
+Status: draft for the researchers (Roni, Yael, Ofir) and the lead. Owner: PM.
 
 ## Problem
 On a busy competition day the today strip shows only `STAKES_MAX` stakes lines per competition. They're ordered
@@ -39,7 +39,8 @@ followed → listed in the row → file order (`site/app.js`, the strip's `rank(
   number, it leaves the fields untouched (never sets 0 or a guess). Human edits win, as today. SKILL.md + export + validator.
 - **Researchers, one-off backfill** for the athletes in the next 2 weeks' events. Each row gives the number, list, date and URL:
   - Roni: judo (Abu Dhabi 29.10), plus taekwondo and fencing (the strategy's ranking-tracker sports).
-  - Yael: triathlon (Sagiv), weightlifting (Gold), shooting (Richter, Tashtchiev if D5 is approved).
+  - Yael: weightlifting (Gold), shooting (Richter, Tashtchiev if D5 is approved).
+  - Ofir: triathlon (Sagiv); athletics as the job rotation reaches it.
   - Everyone else is filled by the job's rotation over the following ~7 days.
 - **Dana:** spot-checks 1 in 5 backfilled values against the list URL.
 - **Editors:** the 3 fields are added to the edit dialog (`EDIT_FIELDS`) as an optional row.
@@ -48,8 +49,8 @@ followed → listed in the row → file order (`site/app.js`, the strip's `rank(
 | Sport | List (`rankList`) | Confirmed by |
 |---|---|---|
 | judo | IJF World Ranking List | Roni |
-| athletics | World Athletics World Rankings (event-specific) | Yael |
-| triathlon | World Triathlon Olympic Qualification Ranking (if published), else World Ranking | Yael |
+| athletics | World Athletics World Rankings (event-specific) | Ofir |
+| triathlon | World Triathlon Olympic Qualification Ranking (if published), else World Ranking | Ofir |
 | weightlifting | IWF ranking used by the LA28 system: **to confirm** | Yael |
 | shooting | ISSF World Ranking (quotas come from results, so the rank is a tie-break only) | Yael |
 | others | the IF's world ranking | the job, gradually |
