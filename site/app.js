@@ -42,7 +42,7 @@ let diffRender = false, newlyChanged = 0;
 function rowMark(key, sig){
   if (diffRender && rowSigs.get(key) !== sig && !changedRows.has(key)) { changedRows.add(key); newlyChanged++; }
   rowSigs.set(key, sig);
-  return changedRows.has(key) ? ` <span class="pill chg">עודכן עכשיו</span>` : "";
+  return changedRows.has(key) ? `<span class="pill chg">עודכן עכשיו</span>` : "";   // out of the flow: see styles.css
 }
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };

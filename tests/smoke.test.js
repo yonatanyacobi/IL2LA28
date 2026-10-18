@@ -1759,6 +1759,9 @@ test("changed rows: marked after auto-refresh on #a- and #day, one announcement,
   await run("checkForUpdate()");
   assert.strictEqual(marks(), 1, "only Shoshani's row");
   assert.ok(/יהלי שושני[\s\S]*?עודכן עכשיו<\/span><\/span>/.test(els.view.innerHTML), "the mark is inside her row");
+  // The pill must not take space in the row, or marking it would move text under the cursor.
+  const css = fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8");
+  assert.ok(/\.pill\.chg\{[^}]*position:absolute/.test(css) && /\.rows li,\.facts dd\{position:relative\}/.test(css), "pill is out of the flow");
 });
 
 // #today / #day-<date> (site/day.js; daily-and-following.md §1, UX review on #140).

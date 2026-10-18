@@ -19,7 +19,9 @@ leaves out clock-driven parts (the "מתחרה היום" / "בהמתנה" chip),
 - **One announcement:** the existing `#updateNote` (`role="status"`, polite) adds the count of newly marked rows:
   `הנתונים עודכנו ב־21:40 · 2 שורות סומנו „עודכן עכשיו”`. The pills themselves are not live regions, so a refresh
   that changes ten rows is read once. Without newly marked rows the note is unchanged.
-- Focus and scroll are kept by the existing `refresh()`. The pill is inline at the end of the row text. At ~400px
-  it can wrap that row onto one more line, which moves the rows below it (Gil's "nothing moves" check).
+- Focus and scroll are kept by the existing `refresh()`. The pill is out of the flow (`position:absolute`), centred
+  on the row's top edge at the inline end, in the padding between rows, so marking a row never moves text at any
+  width. `.facts` rows get a 14px gap (was 6px) so the pill fits between them. `pointer-events:none`, so it never
+  covers a link.
 
-Not in scope: the "יש עדכון" wording in #177 (the note keeps Shira's current text), home and sport pages.
+Not in scope: the "יש עדכון" wording in #177 (the note keeps Shira's current text); home (after #176) and sport pages.
