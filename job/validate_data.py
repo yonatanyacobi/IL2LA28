@@ -19,6 +19,9 @@ QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "isr
               "nextQuotaEvent", "source"}
 QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt"}
 STAKES_MAX = 140
+# Stakes style (site date format, maqaf). A year-less date needs a 2-digit month so decimals like 9.58 pass.
+DOTTED_DATE = re.compile(r"(?<![\d.])\d{1,2}\.(?:\d{1,2}\.\d{2,4}|0[1-9]|1[0-2])(?![\d.])", re.ASCII)
+HEB_HYPHEN = re.compile(r"[א-ת]-\S*")
 
 # key -> (kind, required); kinds: str, date ("" or YYYY-MM-DD), url ("" or https://), iso ("" or ISO datetime with timezone, as export_data.iso())
 SPORT = {"id": ("id", True), "he": ("str", True), "en": ("str", True), "window": ("window", True)}
@@ -209,6 +212,10 @@ def validate_quotas(q, data):
             v = it["stakes"]
             if not (isinstance(v, str) and v.strip() and "\n" not in v and len(v) <= STAKES_MAX):
                 err(f"{path}.stakes: expected one non-empty line of at most {STAKES_MAX} chars, got {v!r}")
+            elif m := DOTTED_DATE.search(v):
+                err(f"{path}.stakes: dotted date {m.group()!r}; write it as the site does, e.g. \"29 באוק׳ 2026\"")
+            elif m := HEB_HYPHEN.search(v):
+                err(f"{path}.stakes: hyphen in {m.group()!r}; use a maqaf (־) after a Hebrew letter")
         if "earnedAt" in it and not (is_date(it["earnedAt"]) and status == "earned"):
             err(f"{path}.earnedAt: expected YYYY-MM-DD on an \"earned\" item, got {it['earnedAt']!r}")
         src = it.get("source")
