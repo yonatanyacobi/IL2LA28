@@ -107,7 +107,7 @@ function quotaHealthPanel(){
   const sorted = (f, list) => list.slice().sort((a, b) => key(f, a).localeCompare(key(f, b)) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
   return `<section class="panel ${alert ? "adm-alert" : ""}" id="quotaHealth">
     <div class="sec-head">${h}<span class="pill ${alert ? "bad" : flags.length ? "soon" : "open"}">${alert ? "דורש בדיקה" : flags.length ? "תזכורת" : "תקין"}</span></div>
-    <p class="${stale ? "adm-bad" : "muted"}">${S.quotas.length} פריטים · quotas.json עודכן ${isDate(str(S.quotasUpdatedAt).slice(0, 10)) ? `ב־${fmt(str(S.quotasUpdatedAt).slice(0, 10))}` : "בתאריך לא ידוע"}${stale ? ` · ישן מ־${QUOTA_MAX_AGE_D} יום` : ""}</p>
+    <p class="${stale ? "adm-bad" : "muted"}">${plural(S.quotas.length, "פריט אחד", "פריטים")} · quotas.json עודכן ${isDate(str(S.quotasUpdatedAt).slice(0, 10)) ? `ב־${fmt(str(S.quotasUpdatedAt).slice(0, 10))}` : "בתאריך לא ידוע"}${stale ? ` · ישן מ־${QUOTA_MAX_AGE_D} יום` : ""}</p>
     ${flags.map(f => `<div class="stack" data-flag="${f.key}"><h3 class="${f.alert ? "adm-bad" : ""}">${esc(f.label)} (${f.items.length})</h3>
       <ul class="rows">${sorted(f, f.items).map(q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
         <span class="t"><bdi>${esc(q.event)}</bdi><small>${f.why(q)}</small></span><span>${f.pill ? quotaStatusPill(q.israelStatus) : ""}</span></li>`).join("")}</ul>
@@ -170,7 +170,7 @@ const rnAthletes = sid => {
   const list = athletesOf(sid).filter(a => stageOf(a) < 2).sort((a, b) => heCmp(a.name, b.name));
   const props = S.proposals.filter(p => p.status === "pending" && "stage" in (p.patch || {}) && S.athletes.some(a => a.id === p.target && a.sportId === sid)).length;
   return (list.length ? list.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ") : "אין ספורטאים בשלב נמוך מ־2")
-    + (props ? ` · <b>${props} הצעות שלב ממתינות</b>` : "");
+    + (props ? ` · <b>${props === 1 ? "הצעת שלב אחת ממתינה" : `${props} הצעות שלב ממתינות`}</b>` : "");
 };
 const rnKey = q => `la28.rn.${q.sportId}|${q.event}|${q.nextQuotaEvent.start}`;
 
@@ -211,7 +211,7 @@ function viewAdmin(sub){
   const cell = (k, sid, list) => { const v = list.filter(CHECKS[k].test).length; return `<td>${v ? `<a href="#admin-${k}-${esc(sid)}">${v}</a>` : "0"}</td>`; };
   const sports = S.sports.filter(s => athletesOf(s.id).length).sort((a, b) => heCmp(a.he, b.he));
   return `<h1 tabindex="-1">בקרת נתונים</h1>
-  <p class="muted">לעורכים בלבד. ${S.athletes.length} רשומות פעילות במאגר החי.</p>
+  <p class="muted">לעורכים בלבד. ${plural(S.athletes.length, "רשומה פעילה אחת", "רשומות פעילות")} במאגר החי.</p>
   ${resultNightPanel()}
   ${runPanel()}
   ${launchPanel()}

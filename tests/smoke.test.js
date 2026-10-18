@@ -1438,7 +1438,7 @@ test("closest panel + next-up on 18.10: strip day, triathlon first, judo grouped
 test("next-up on 26.10 skips weightlifting (no entrants) and names judo", async () => {
   const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
   const line = nextUpOf(view("home"));
-  assert.ok(line.includes("#sport-judo") && line.includes("5 ישראלים") && line.includes("pill open"), line);
+  assert.ok(line.includes("#sport-judo") && line.includes("5 ספורטאים ונבחרות") && line.includes("pill open"), line);
   assert.ok(!line.includes("weightlifting"));
 });
 

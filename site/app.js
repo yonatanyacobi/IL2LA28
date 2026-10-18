@@ -405,7 +405,7 @@ function nextUpLine(rows){
     || (y.c.qualifying ? 1 : 0) - (x.c.qualifying ? 1 : 0) || heCmp(x.c.name, y.c.name))[0];
   const {c, who} = pick, n = athletesOf(c.sportId).length;
   const names = who.length === 0 ? (n === 1 ? "ספורטאי/ת או נבחרת אחת במעקב בענף" : `${n} ספורטאים ונבחרות במעקב בענף`)
-    : who.length > 3 ? `${who.length} ישראלים`
+    : who.length > 3 ? `${who.length} ספורטאים ונבחרות`
     : who.sort((a, b) => heCmp(a.name, b.name)).map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   return `<p class="next-up"><b>הבא בתור:</b> <a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${esc(c.name)} · ${fmtRange(c.start, c.end)} · ${names}${c.qualifying ? ` · <span class="pill open">העפלה</span>` : ""}</p>`;
 }
@@ -727,7 +727,7 @@ function reviewPanel(){
   const pend = S.proposals.filter(p => p.status === "pending");
   const note = `<p class="foot">את/ה רואה נתונים חיים. הציבור רואה את הפרסום האחרון, שמתעדכן בכל ריצה של העדכון היומי.</p>`;
   if (!pend.length) return `<section class="panel">${note}</section>`;
-  return `<section class="panel review"><h2>ממתינים לאישורך (${pend.length})</h2>${note}
+  return `<section class="panel review"><h2>הצעות לאישורך (${pend.length})</h2>${note}
     <div class="stack">${pend.map(p => {
       const t = S.athletes.find(a => a.id === p.target);
       const who = p.kind === "create" ? `ספורטאי/ת חדש/ה: ${esc(p.patch?.name)}` : esc(t?.name || p.target);
