@@ -44,7 +44,9 @@ async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = 
   const els = {}, listeners = {};
   const mem = new Map([["la28.follows", JSON.stringify(follows)], ...Object.entries(storage)]);
   const ctx = {
-    console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, setTimeout, clearTimeout,
+    console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, clearTimeout,
+    // Long timers (the 10-minute auto-refresh) mustn't keep Node alive after the tests.
+    setTimeout: (f, ms, ...a) => { const t = setTimeout(f, ms, ...a); if (ms > 1000) t.unref(); return t; },
     setInterval: () => 0, clearInterval(){},
     location: {hash: "", reload(){ ctx.reloads = (ctx.reloads || 0) + 1; }},
     history: {replaceState(){}},
@@ -1451,6 +1453,47 @@ test("approving an empty patch only closes the proposal; a real patch still stam
   w = JSON.parse(run("JSON.stringify(writes)"));
   const upd = w.find(x => x.col === "athletes");
   assert.ok(upd && upd.v.rank === "3 בעולם" && upd.v.updatedAt, "non-empty patch still writes updatedAt");
+});
+
+// Auto-refresh: re-read data.json, re-render only on change, keep focus and scroll, pause while hidden.
+test("auto-refresh: re-renders on a new export, keeps focus/scroll, skips unchanged, live and hidden", async () => {
+  const b = await boot({quotas: QUOTAS});
+  const {ctx, run, els} = b;
+  let calls = [], next = FIXTURE;
+  ctx.fetch = async url => { calls.push(url); const body = url === "quotas.json" ? QUOTAS : next;
+    return {ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(body))}; };
+  b.view("home");
+
+  await run("checkForUpdate()");
+  assert.deepStrictEqual(calls.sort(), ["data.json", "quotas.json"]);
+  assert.notStrictEqual(els.routeStatus.textContent, "הנתונים התעדכנו", "unchanged export: no update");
+
+  next = {...FIXTURE, generatedAt: "2099-01-01T00:00:00Z", athletes: FIXTURE.athletes.slice(1)};
+  run(`$("q")`); const q = els.q; let focused = 0, sel = null, scrolled = null;
+  q.focus = () => { focused++; }; q.setSelectionRange = (a) => { sel = a; };
+  ctx.document.activeElement = {id: "q", selectionStart: 3};
+  ctx.scrollY = 640; ctx.scrollTo = o => { scrolled = o.top; };
+  await run("checkForUpdate()");
+  assert.strictEqual(run("S.generatedAt"), "2099-01-01T00:00:00Z");
+  assert.strictEqual(run("S.athletes.length"), FIXTURE.athletes.length - 1);
+  assert.strictEqual(els.routeStatus.textContent, "הנתונים התעדכנו");
+  assert.ok(focused === 1 && sel === 3 && scrolled === 640, "focus, caret and scroll kept");
+  assert.ok(els.view.innerHTML.includes("נכון ל־"), "freshness says נכון ל־");
+
+  calls = [];
+  run("S.live = true");
+  await run("checkForUpdate()");
+  assert.deepStrictEqual(calls, [], "editors on live data don't poll");
+  run("S.live = false");
+
+  ctx.document.hidden = true;
+  run("lastCheck = 0; scheduleRefresh()");
+  await new Promise(r => setTimeout(r, 20));
+  assert.deepStrictEqual(calls, [], "hidden tab: no check");
+  ctx.document.hidden = false;
+  run("scheduleRefresh()");   // overdue (lastCheck = 0): runs at once when the tab is visible again
+  await new Promise(r => setTimeout(r, 20));
+  assert.ok(calls.includes("data.json"), "visible again: checks immediately");
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.

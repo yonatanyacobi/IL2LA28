@@ -697,7 +697,7 @@ function freshness(){
   if (!ts) return "";
   const stale = daysSince(ts) > 1.5;
   const when = new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
-  return `<span class="fresh ${stale ? "stale" : ""}"><i></i><span>${S.live ? "נתונים חיים · עדכון אוטומטי אחרון: " : "הנתונים עודכנו: "}${when}</span></span>`;
+  return `<span class="fresh ${stale ? "stale" : ""}"><i></i><span>${S.live ? "נתונים חיים · עדכון אוטומטי אחרון: " : "נכון ל־"}${when}</span></span>`;
 }
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
 
@@ -979,11 +979,18 @@ function navigate(){
   $("routeStatus").textContent = document.querySelector("#view h1")?.textContent || "";
 }
 // Data refreshes re-render in place without jumping the scroll position or losing search focus.
+// Focus is restored by id (search box, filters, buttons with ids); the scroll position is kept explicitly.
 function refresh(){
-  const focused = document.activeElement?.id;
-  const pos = focused === "q" ? $("q").selectionStart : null;
+  const el = document.activeElement, id = el?.id, y = window.scrollY;
+  let pos = null;
+  try { pos = typeof el?.selectionStart === "number" ? el.selectionStart : null; } catch {}
   route();
-  if (focused === "q" && $("q")) { $("q").focus(); $("q").setSelectionRange(pos, pos); }
+  const again = id ? $(id) : null;
+  if (again && again !== el) {
+    again.focus({preventScroll: true});
+    if (pos !== null) try { again.setSelectionRange(pos, pos); } catch {}
+  }
+  if (typeof y === "number") scrollTo({top: y, behavior: "auto"});
 }
 
 // ---------- events ----------
@@ -1154,6 +1161,36 @@ async function goLive(){
   } catch { /* stay on the public snapshot */ }
 }
 
+// ---------- auto-refresh (public data) ----------
+// An open tab re-reads data.json every REFRESH_MS and re-renders only when the export changed. Hidden tabs
+// don't poll; on return the check runs at once if it's due. Editors get live DB snapshots instead.
+const REFRESH_MS = 10 * 60e3;
+let lastCheck = Date.now(), refreshTimer = 0;
+async function checkForUpdate(){
+  lastCheck = Date.now();
+  if (S.live || !S.loaded) return;
+  try {
+    const prevQ = quotaFile, prevJson = JSON.stringify(quotaFile);
+    const [r] = await Promise.all([fetch("data.json", {cache: "no-cache"}), loadQuotas()]);
+    if (quotaFile === null) quotaFile = prevQ;   // a failed re-read keeps the quotas already shown
+    const quotasChanged = JSON.stringify(quotaFile) !== prevJson;
+    if (quotasChanged) applyQuotas();
+    const d = r.ok ? await r.json() : null;
+    if (S.live || !d || (str(d.generatedAt) === S.generatedAt && str(d.lastRun) === S.lastRun)) { if (quotasChanged) refresh(); return; }
+    publicSnapshot = d;
+    applySnapshot(d);
+    refresh();
+    $("routeStatus").textContent = "הנתונים התעדכנו";
+  } catch { /* keep what is on screen; freshness() turns stale after 1.5 days */ }
+}
+function scheduleRefresh(){
+  clearTimeout(refreshTimer);
+  if (document.hidden) return;
+  refreshTimer = setTimeout(async () => { await checkForUpdate(); scheduleRefresh(); }, Math.max(0, REFRESH_MS - (Date.now() - lastCheck)));
+}
+document.addEventListener("visibilitychange", scheduleRefresh);
+
 navigate();
 loadPublic();
 goLive();
+scheduleRefresh();
