@@ -23,8 +23,10 @@ Each athlete gets a write through `job/athlete_patch.py`:
 - `"result": {"at": "2026-10-24", "text": …, "source": <Official PDF>}`
 - `at` is the competition day.
 
-The texts were built with `tri_results.he_date()` and the competition name from data.json, and pass
-`athlete_patch.result_entry()` unchanged.
+Wording: the texts are in the gendered house style with the definite article (for example "זהב בגמר הקרקע"), the same
+style as #173 and #184 for 19.10 (coordinator decision, 18.10). Maya is adding the matching option to
+`gym_results.result_text()` (#219) so that the job produces the same strings. Each uses `tri_results.he_date()`
+and the data.json competition name, and passes `athlete_patch.result_entry()`.
 
 | Outcome | `result.text` | session `result` | other fields in the same write |
 |---|---|---|---|
