@@ -215,6 +215,23 @@ function weightKey(s){
 }
 const quotaAthletes = q => athletesOf(q.sportId).filter(a => (a.name && (q.israelNote.includes(a.name) || q.stakes.includes(a.name)))
   || (weightKey(a.event) && weightKey(a.event) === weightKey(q.event)));
+// Athlete page (round3.md §3). The matcher is heuristic, so the copy never says the quota is the athlete's.
+function athleteQuotaFacts(a){
+  const items = S.quotas.filter(q => q.sportId === a.sportId && quotaAthletes(q).includes(a))
+    .sort((x, y) => QUOTA_STATUSES.indexOf(qStatus(x.israelStatus)) - QUOTA_STATUSES.indexOf(qStatus(y.israelStatus))).slice(0, 3);
+  if (!items.length) return "";
+  const line = q => {
+    const w = awaitingOf(q), e = nxt(q), s = q.israelStatus;
+    if (s === "earned") return `המכסה שייכת למדינה, לא לספורטאי/ת.${isDate(q.earnedAt) ? ` הושגה ב־${fmt(q.earnedAt)}` : ""}`;
+    if (w) return awaitingLine(w);
+    if (s === "in-contention") return e ? `אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}` : "";
+    return s === "outside" ? "לפי המצב הנוכחי, מחוץ למקומות המכסה." : "עוד אין מידע על מצב ישראל במקצה הזה.";
+  };
+  return `<dt>מכסה</dt><dd class="stack">${items.map(q => { const l = line(q); return `
+    <span>${quotaStatusPill(q.israelStatus)} ${esc(q.event)}${awaitingOf(q) ? AWAIT_PILL : ""}</span>${l ? `
+    <span class="muted">${l}</span>` : ""}${q.israelStatus === "in-contention" && !awaitingOf(q) ? stakesLine(q, "stakes", "span") : ""}`; }).join("")}
+    <a href="#sport-${esc(a.sportId)}">לכל המכסות בענף</a></dd>`;
+}
 const dayNo = (from, to) => Math.round((new Date(to + "T12:00:00") - new Date(from + "T12:00:00")) / 864e5) + 1;
 
 // From the schedule, not live results. One row per running competition in a tracked sport, listing the
@@ -417,6 +434,7 @@ function viewAthlete(id){
     <dl class="facts">
       <dt>ענף</dt><dd><a href="#sport-${esc(a.sportId)}">${esc(sp?.he || a.sportId)}</a>${a.event ? ` · ${esc(a.event)}` : ""}</dd>
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}</dd>` : ""}
+      ${athleteQuotaFacts(a)}
       ${a.next ? `<dt>התחרות הבאה</dt><dd>${esc(a.next)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}</dd>` : ""}
       <dt>בדיקה</dt><dd>${trustChip(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}

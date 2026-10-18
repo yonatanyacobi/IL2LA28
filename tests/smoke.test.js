@@ -429,6 +429,29 @@ test("sport page earned rows (round3 §2): earned date, stage note once when no 
   assert.ok(!(await boot({quotas: SPORT_QUOTAS})).view("sport-judo").includes("הושגה ב־"), "no earnedAt, no date line");
 });
 
+test("athlete page quota line (round3 §3): per status, awaiting, max 3, no line without a match", async () => {
+  const factsOf = html => html.split("<dt>מכסה</dt>")[1]?.split("</dd>")[0] || "";
+  const {view, run} = await boot({quotas: SPORT_QUOTAS});
+  run(`S.quotas.find(q => q.israelStatus === "earned").earnedAt = "2026-10-15"`);
+  const lanir = factsOf(view("a-inbar-lanir"));   // "עד 78 ק״ג (נשים)": linked by weight class
+  assert.ok(lanir.includes("◐ במרוץ למכסה") && lanir.includes("אירוע המכסה הבא: גרנד סלאם אבו דאבי"), "in contention + next event");
+  assert.ok(lanir.includes('<span class="stakes"><b>מה זה אומר:</b> &lt;script&gt;') && !/<script/i.test(lanir), "stakes, escaped");
+  assert.ok(lanir.includes('<a href="#sport-judo">לכל המכסות בענף</a>'));
+  const shemesh = factsOf(view("a-inbal-shemesh"));
+  assert.ok(shemesh.includes("✓ מכסה הושגה") && shemesh.includes("המכסה שייכת למדינה, לא לספורטאי/ת. הושגה ב־"), "earned line");
+  assert.ok(!view("a-yonatan-elbaz").includes("<dt>מכסה</dt>"), "no matching item, no line");
+
+  const base = QUOTAS.items[0];
+  const item = (event, israelStatus, nextQuotaEvent = null) => ({...base, sportId: "judo", event, israelStatus, israelNote: "רז הרשקו", stakes: "stake", nextQuotaEvent});
+  const quotas = {updatedAt: "2026-10-18", items: [item("א", "outside"), item("ב", "unknown"),
+    item("ג", "in-contention", {name: "גמר<i>", start: "2026-10-20", end: "2026-10-20"}), item("ד", "unknown")]};
+  const raz = factsOf((await boot({quotas, now: "2026-10-21T08:00:00Z"})).view("a-raz-hershko"));
+  assert.strictEqual((raz.match(/class="pill q-(?!awaiting)/g) || []).length, 3, "max 3 items");
+  assert.ok(raz.indexOf("◐") < raz.indexOf("○") && raz.indexOf("○") < raz.indexOf("? אין"), "status order");
+  assert.ok(raz.includes("q-awaiting") && raz.includes("גמר&lt;i&gt; · ") && !raz.includes("stake"), "awaiting replaces next event and stakes");
+  assert.ok(raz.includes("לפי המצב הנוכחי, מחוץ למקומות המכסה.") && raz.includes("עוד אין מידע על מצב ישראל במקצה הזה."));
+});
+
 test("quota section: all-unknown note; hidden without items", async () => {
   const {view} = await boot({quotas: SPORT_QUOTAS});
   const shooting = view("sport-shooting");
