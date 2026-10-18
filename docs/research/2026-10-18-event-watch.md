@@ -36,7 +36,6 @@ Quota-relevant events in the next 30 days for shooting, surfing, triathlon and w
   - Only ARW carries a quota: 3 places, max 1 per NOC. The mixed team has no quota.
   - Sources: the entry list and final schedule links in the Doha row above.
 - **Ranking:** ISSF World Ranking 22 (ARW, 2026-10-01), https://www.issf-sports.org/competitions/worldranking/ARW
-- **Side note:** Walla spells the weightlifter "סיליה גולד" (https://sports.walla.co.il/item/3572237); the DB has "צליה גולד". Check the spelling.
 
 ## Sprint 2 (2026-10-18)
 
@@ -52,20 +51,7 @@ Quota-relevant events in the next 30 days for shooting, surfing, triathlon and w
   The IWF entry list and Start Book remain behind a bot-check.
 - **Lead for `celia-gold`'s category:** she won the Israeli championships in Herzliya in the **77 kg** class with a 228 kg total, beating Nicole Rubanovich.
   Source: https://www.juedische-allgemeine.de/kultur/228-kilogramm/ . This points to 77 kg as her Olympic category, but it is not an entry.
-- **Spelling:** Israeli press writes **"סיליה גולד"** (Sport1: https://sport1.maariv.co.il/other-industries/article/1085514/ , Kan, Walla). The DB has "צליה גולד". Propose renaming her through `proposals`.
 - **Still open:** an editor needs to open the IWF Start Book in a browser (link in the Ningbo row), or ask the federation directly.
-
-### Proposal for Dana: rename `celia-gold` (sent via the coordinator)
-```json
-{"id": "celia-gold-20261018-name", "kind": "update", "target": "celia-gold",
- "patch": {"name": "סיליה גולד"},
- "summary": "תיקון איות השם לפי העיתונות הישראלית: סיליה גולד",
- "evidence": [
-  {"url": "https://sport1.maariv.co.il/other-industries/article/1085514/", "label": "ספורט1 – 'סיליה גולד בת 24 תתחרה ב-71 ק״ג'"},
-  {"url": "https://sports.walla.co.il/item/3572237", "label": "וואלה – 'סיליה גולד בת 24 תתחרה ב-71 ק״ג'"}],
- "status": "pending", "createdAt": "2026-10-18"}
-```
-Kan also uses "סיליה גולד": https://www.kan.org.il/content/kan-news/sport/515787/
 
 ## Event radar 15.11–31.12.2026 (Yael's sports)
 "LA28 weight": **quota** = places are awarded; **ranking** = the event counts toward a qualification ranking; **none** = no LA28 effect.
