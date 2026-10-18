@@ -976,7 +976,7 @@ test("UX v45: #c- athletes as compact rows with the chip inside; \"מתחרים 
   const {run} = await boot({now: "2026-10-29T08:00:00Z"});
   const out = run(`viewEvent("judo-gs-abu-dhabi-2026")`);
   const panel = out.split('id="evAthH"')[1].split("</section>")[0];
-  assert.ok(panel.includes('<ul class="rows ath-rows">') && !panel.includes('class="card"'), "compact rows, not cards");
+  assert.ok(panel.includes('<ul class="rows"><li><span class="d"></span>') && !panel.includes('class="card"'), "athleteRow(), not cards");
   const raz = panel.split("<li>").find(x => x.includes('href="#a-raz-hershko"'));
   assert.ok(raz.includes("<small><bdi>") && raz.includes('<span><span class="pill s-live">מתחרה היום</span></span></li>'), "name, event, chip in the row");
   assert.ok(out.includes("5 ספורטאים ונבחרות · מתחרים היום: 5"), "label-first count of those competing today");
@@ -987,6 +987,27 @@ test("UX v45: #c- athletes as compact rows with the chip inside; \"מתחרים 
   const doha = await boot({now: "2026-11-02T08:00:00Z", storage: {"la28.followSports": '["shooting"]'}});
   const dohaRow = doha.view("following").split('id="nextH"')[1].split("</section>")[0].split("<li>").find(x => x.includes("#c-issf-wch-doha-2026"));
   assert.ok(dohaRow && dohaRow.includes("מתקיימת עכשיו"), "running competition: linked, with \"מתקיימת עכשיו\"");
+});
+
+test("components §6: athleteRow() and athleteCard() with a status inside", async () => {
+  const {run} = await boot({follows: ["raz-hershko"]});
+  const row = run(`athleteRow(S.athletes.find(a => a.id === "raz-hershko"), "<span>ST</span>")`);
+  assert.ok(row.startsWith('<li><span class="d"></span><span class="t"><span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span> <a href="#a-raz-hershko">'), "STAR for a followed athlete");
+  assert.ok(row.endsWith("<span><span>ST</span></span></li>") && row.includes("<small><bdi>"), "event, then the status cell");
+  const card = run(`athleteCard(S.athletes.find(a => a.id === "raz-hershko"), "<span>ST</span>")`);
+  assert.ok(/<span class="ln"><span>ST<\/span><\/span>\s*<\/a>$/.test(card), "status is the card's last line");
+});
+
+test("#today (today-route.md): same page as today's #day with \"היום, \"; other dates unchanged; moves at midnight", async () => {
+  const {view} = await boot({now: "2026-10-29T08:00:00Z"});
+  const t = view("today");
+  assert.ok(t.includes('<h1 tabindex="-1">היום, ') && t === view("day-2026-10-29") && t === view("day"), "#today = #day = #day-<today>");
+  const y = view("day-2026-10-28");
+  assert.ok(!y.includes("היום, ") && y.includes('<a href="#today">היום</a>'), "another date: no prefix, a link back to today");
+  // 23:59 and 00:01 Israel time (UTC+2 after 25.10).
+  const late = (await boot({now: "2026-10-29T21:59:00Z"})).view("today"), early = (await boot({now: "2026-10-29T22:01:00Z"})).view("today");
+  assert.ok(late.includes("29 באוק׳") && early.includes("30 באוק׳"), "#today follows Israel's date");
+  assert.ok((await boot({now: "2026-10-29T22:01:00Z"})).view("day-2026-10-29").includes("29 באוק׳"), "#day-<date> stays on its date");
 });
 
 test("fetch failure shows the retry view", async () => {

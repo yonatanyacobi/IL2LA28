@@ -96,11 +96,10 @@ function viewEvent(id){
     <div class="stack">
       ${stakes}
       ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH">הישראלים בתחרות (${athletes.length})</h2>
-        <ul class="rows ath-rows">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
+        <ul class="rows">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
           const st = last ? athleteStatus(last[0], last[1], a) : "";
           // A result is shown only in the schedule row, next to its source.
-          const chip = st === "result" ? `<span class="muted">תוצאה בלוח הסשנים</span>` : statusChip(st);
-          return `<li><span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${a.event ? `<small><bdi>${esc(a.event)}</bdi></small>` : ""}</span><span>${chip}</span></li>`; }).join("")}</ul></section>` : ""}
+          return athleteRow(a, st === "result" ? `<span class="muted">תוצאה בלוח הסשנים</span>` : statusChip(st)); }).join("")}</ul></section>` : ""}
     </div>
   </div>
   <p class="foot">${[tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)}` : "", CADENCE, safeUrl(c.source) ? `<bdi>${linkOut(c.source, host(c.source))}</bdi>` : ""].filter(Boolean).join(" · ")}</p>

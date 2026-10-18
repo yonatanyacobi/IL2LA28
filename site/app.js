@@ -230,7 +230,11 @@ function compRow(c, withSport){
   </div>`;
 }
 
-function athleteCard(a){
+// Followed marker for every component (components.md): visible ★ plus screen-reader text.
+const STAR = `<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span>`;
+
+// components.md §6: a card for grids; a page-specific status goes inside it, as the last line.
+function athleteCard(a, status = ""){
   const s = stageOf(a), fav = S.follows.has(a.id);
   return `<a class="card" href="#a-${esc(a.id)}">
     <span class="nm">${fav ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : ""}${esc(a.name)}${isNew(a) ? ` <span class="new">חדש</span>` : ""}</span>
@@ -238,7 +242,14 @@ function athleteCard(a){
     <span><span class="pill st${s}">${STAGES[s]}</span> ${trustChip(a, "card")}</span>
     ${a.rank ? `<span class="ln"><span>דירוג או הישג: </span>${esc(a.rank)}</span>` : ""}
     ${a.next ? `<span class="ln"><span>התחרות הבאה: </span>${esc(a.next)}${isDate(a.nextDate) ? ` (${fmtShort(a.nextDate)})` : ""}</span>` : ""}
+    ${status ? `<span class="ln">${status}</span>` : ""}
   </a>`;
+}
+
+// components.md §6: a row for side columns or more than 4 athletes, in <ul class="rows">; the status is the last cell.
+function athleteRow(a, status = ""){
+  return `<li><span class="d"></span><span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${
+    a.event ? `<small><bdi>${esc(a.event)}</bdi></small>` : ""}</span><span>${status}</span></li>`;
 }
 
 function changeRow(c){
@@ -963,7 +974,10 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
-  else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") html = viewDay(h === "today" || h === "day" ? today() : h.slice(4)), nav = "calendar";
+  else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") {
+    const d = h === "today" || h === "day" ? today() : h.slice(4);
+    html = viewDay(d), nav = d === today() ? "day" : "calendar";
+  }
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
   else if (/^following(-|$)/.test(h) && typeof viewFollowing === "function") html = viewFollowing(h.slice(10)), nav = "following";
