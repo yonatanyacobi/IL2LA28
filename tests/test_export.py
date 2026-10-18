@@ -1,4 +1,5 @@
 import contextlib, importlib.util, io, json, os, re, subprocess, sys, tempfile, unittest
+from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPT = os.path.join(HERE, "..", "job", "export_data.py")
@@ -7,6 +8,8 @@ ex = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ex)
 sys.path.insert(0, os.path.join(HERE, "..", "job"))
 import validate_data  # noqa: E402
+
+LAUNCH = "2026-10-22T09:00:00Z"  # injected launch date for the dated cases; the real one is set by the launch PR
 
 
 def athlete(sport="judo", **kw):
@@ -212,10 +215,27 @@ class ExportTest(unittest.TestCase):
                 "source": "https://www.ijf.org/x", "by": "reader"}
         return {**base, **kw}
 
+    def test_corrections_without_launch_date(self):
+        self.assertIsNone(ex.LAUNCH_AT, "the launch PR sets it; until then nothing is public")
+        corrections = {"ok": self.fix(), "bad": self.fix(source="")}
+        with Dump(athletes={"a": athlete()}, corrections=corrections) as d:
+            data = d.run()
+            log = d.log
+        self.assertEqual(validate_data.validate(data), [])
+        self.assertEqual((data["launchAt"], data["corrections"]), (None, []))
+        self.assertNotIn("'bad'", log)  # not reported either
+        with tempfile.TemporaryDirectory() as tmp:  # a previous file with entries doesn't trip the shrink guard
+            prev = os.path.join(tmp, "prev.json")
+            with open(prev, "w") as f:
+                json.dump({"sports": [{}], "athletes": [{}], "corrections": [{}] * 10}, f)
+            with Dump(athletes={"a": athlete()}, corrections=corrections) as d:
+                self.assertEqual(d.cli(prev).returncode, 0)
+
+    @mock.patch.object(ex, "LAUNCH_AT", LAUNCH)
     def test_corrections_exported_after_launch_newest_first_without_identity(self):
         corrections = {
-            "old": self.fix(at="2026-10-20T08:00:00Z"),                       # before LAUNCH_AT: not public
-            "at-launch": self.fix(at=ex.LAUNCH_AT),
+            "old": self.fix(at="2026-10-20T08:00:00Z"),                       # before launch: not public
+            "at-launch": self.fix(at=LAUNCH),
             "later": self.fix(at="2026-10-25T07:00:00+03:00", by="job", reportedAt=""),
             "with-ids": self.fix(at="2026-10-24T10:00:00Z", reporter="dana@example.org", reportedBy="u-1",
                                  createdBy="u-2", updatedBy="u-3", note="פנימי"),
@@ -224,6 +244,7 @@ class ExportTest(unittest.TestCase):
             data = d.run()
             log = d.log
         self.assertEqual(validate_data.validate(data), [])
+        self.assertEqual(data["launchAt"], LAUNCH)
         self.assertEqual([c["id"] for c in data["corrections"]], ["later", "with-ids", "at-launch"])
         self.assertEqual(set(data["corrections"][1]), {"id", "at", "reportedAt", "target", "changes", "source", "by"})
         raw = json.dumps(data["corrections"], ensure_ascii=False)
@@ -231,6 +252,7 @@ class ExportTest(unittest.TestCase):
             self.assertNotIn(secret, raw)
         self.assertNotIn("'old'", log)  # pre-launch is skipped, not reported as dropped
 
+    @mock.patch.object(ex, "LAUNCH_AT", LAUNCH)
     def test_corrections_invalid_dropped_and_reported(self):
         bad = {
             "no-source": self.fix(source=""), "http": self.fix(source="http://x.org"), "by": self.fix(by="editor"),
@@ -249,6 +271,7 @@ class ExportTest(unittest.TestCase):
         for cid in bad:
             self.assertIn(repr(cid), log)
 
+    @mock.patch.object(ex, "LAUNCH_AT", LAUNCH)
     def test_corrections_values_normalised(self):
         long = "א" * 250
         c = self.export(athletes={"a": athlete()}, corrections={"x": self.fix(
@@ -262,13 +285,13 @@ class ExportTest(unittest.TestCase):
         self.assertEqual(h[0]["kind"], "correction")
         self.assertEqual(ex.HISTORY_KINDS, validate_data.HISTORY_KINDS)
 
-    def test_corrections_launch_matches_site(self):
-        with open(os.path.join(HERE, "..", "site", "app.js"), encoding="utf-8") as f:
-            app = f.read()
-        m = re.search(r"\bLAUNCH_AT\s*=\s*[\"']([^\"']+)[\"']", app)
-        if not m:
-            self.skipTest("site/app.js has no LAUNCH_AT yet (Noa's #corrections UI)")
-        self.assertEqual(m.group(1), ex.LAUNCH_AT)
+    def test_launch_date_has_one_source(self):
+        # The page reads data.json launchAt; a second copy in the site would drift from the export.
+        for name in ("app.js", "corrections.js"):
+            p = os.path.join(HERE, "..", "site", name)
+            if os.path.exists(p):
+                with open(p, encoding="utf-8") as f:
+                    self.assertNotRegex(f.read(), r"\bLAUNCH_AT\s*=", name)
 
     def test_shrink_guard(self):
         with tempfile.TemporaryDirectory() as tmp:

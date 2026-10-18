@@ -40,10 +40,18 @@ class ValidateTest(unittest.TestCase):
                "changes": [{"field": "rank", "wrong": "2 בעולם", "right": "1 בעולם"}],
                "source": "https://www.ijf.org/x", "by": "reader"}
         later = {**fix, "id": "c2", "at": "2026-10-25T09:00:00Z", "reportedAt": "", "by": "job"}
-        with_c = lambda rows: lambda d: d.__setitem__("corrections", rows)
+        launch = "2026-10-22T09:00:00Z"
+        with_c = lambda rows, at=launch: lambda d: d.update(launchAt=at, corrections=rows)
+        # No launch date yet: only an empty list is valid; a missing launchAt counts as null.
+        self.assertEqual(self.broken(with_c([], None)), [])
+        self.assertEqual(self.broken(lambda d: d.pop("corrections", None)), [])
+        for at in (None, "", "2026-10-22", "2026-10-22T12:00:00+03:00", 5):
+            errors = self.broken(with_c([fix], at))
+            self.assertIn("no valid launchAt", "\n".join(errors), at)
+        self.assertIn("launchAt: expected", "\n".join(self.broken(with_c([], "soon"))))
         self.assertEqual(self.broken(with_c([])), [])
         self.assertEqual(self.broken(with_c([later, fix])), [])
-        self.assertEqual(self.broken(lambda d: d.pop("corrections", None)), [])  # optional
+        self.assertIn("on or after", "\n".join(self.broken(with_c([later, fix], "2026-10-25T00:00:00Z"))))
         cases = [
             ("not newest first", [fix, later]),
             ("on or after", [{**fix, "at": "2026-10-21T09:00:00Z"}]),
