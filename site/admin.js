@@ -69,14 +69,14 @@ function runPanel(){
 }
 
 // quotas.json is hand-curated (data/quotas → job/build_quotas.py); nothing refreshes it, so editors get reminders here.
-const QUOTA_MAX_AGE_D = 14, QUOTA_SOON_D = 3, RECHECK_DAYS = 14;   // RECHECK_DAYS matches the public "awaiting results" window
+const QUOTA_MAX_AGE_D = 14, QUOTA_SOON_D = 3;
 // Event over and the item not reviewed since its last day. Re-checked items that still name the past event are
 // left alone: the reviewer kept them on purpose.
 const uncheckedEnd = (q, t = today()) => { const end = quotaEventEnd(q); return q.nextQuotaEvent && end && end < t && checkedOf(q) <= end ? end : ""; };
 const daysAgo = (end, t = today()) => dayNo(end, t) - 1;
 function recheckCounts(t = today()){
   const ends = S.quotas.map(q => uncheckedEnd(q, t)).filter(Boolean);
-  return {overdue: ends.filter(e => daysAgo(e, t) > RECHECK_DAYS).length, awaiting: ends.filter(e => daysAgo(e, t) <= RECHECK_DAYS).length};
+  return {overdue: ends.filter(e => daysAgo(e, t) > AWAIT_DAYS).length, awaiting: ends.filter(e => daysAgo(e, t) <= AWAIT_DAYS).length};
 }
 function quotaHealthPanel(){
   const h = `<h2>בריאות נתוני המכסות</h2>`;
@@ -91,10 +91,10 @@ function quotaHealthPanel(){
   const recheckFoot = `לעדכן את <span dir="ltr">data/quotas/quotas.json</span> (סטטוס, אירוע מכסה הבא, review.at) ולהריץ את <span dir="ltr">build_quotas.py</span>.`;
   const unchecked = S.quotas.filter(q => uncheckedEnd(q, t));
   const flags = [
-    {key: "overdue", alert: true, label: `אירוע מכסה עבר לפני יותר מ־${RECHECK_DAYS} יום ולא נבדק מחדש`, pill: true, foot: recheckFoot, byEnd: true,
-      items: unchecked.filter(q => daysAgo(quotaEventEnd(q), t) > RECHECK_DAYS), why: recheck},
+    {key: "overdue", alert: true, label: `אירוע מכסה עבר לפני יותר מ־${AWAIT_DAYS} יום ולא נבדק מחדש`, pill: true, foot: recheckFoot, byEnd: true,
+      items: unchecked.filter(q => daysAgo(quotaEventEnd(q), t) > AWAIT_DAYS), why: recheck},
     {key: "awaiting", alert: false, label: "בהמתנה לבדיקה אחרי אירוע מכסה", pill: true, foot: recheckFoot, byEnd: true,
-      items: unchecked.filter(q => daysAgo(quotaEventEnd(q), t) <= RECHECK_DAYS), why: recheck},
+      items: unchecked.filter(q => daysAgo(quotaEventEnd(q), t) <= AWAIT_DAYS), why: recheck},
     {key: "earned", alert: true, label: "„מכסה הושגה” בלי ספורטאי/ת בשלב מכסה ומעלה בענף",
       items: S.quotas.filter(q => q.israelStatus === "earned" && !athletesOf(q.sportId).some(a => stageOf(a) >= 2)), why: () => "לבדוק את הפריט או את שלב הספורטאי/ת"},
     {key: "soon", alert: false, label: `אירוע מכסה ב־${QUOTA_SOON_D} הימים הקרובים: לעדכן אחרי התחרות`,

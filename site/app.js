@@ -139,7 +139,7 @@ const AWAIT_DAYS = 14;
 const awaitingOf = (q, t = today()) => {
   const e = q.nextQuotaEvent, end = quotaEventEnd(q);
   if (!e?.name || !end || end >= t || q.israelStatus === "earned") return null;
-  if (str(S.quotasUpdatedAt).slice(0, 10) > end) return null;
+  if (checkedOf(q) > end) return null;   // re-checked after the event: trust the status
   return dayNo(end, t) - 1 <= AWAIT_DAYS ? {...e, end} : null;
 };
 const AWAITING = `<span aria-hidden="true">◷</span> בהמתנה לתוצאות`;
