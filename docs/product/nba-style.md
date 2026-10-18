@@ -121,7 +121,7 @@ Run against `main` with the real fixture: signed out, 400px and 1280px, light an
 |---|---|---|---|
 | OD1 | Accept "near-live" (results within 2 hours of the official posting on event days, labelled with the time) instead of real time | **Yes.** True real time needs a server and live feeds we don't have | We build phase 1 with daily updates only |
 | OD2 | Run the extra event-day job (every 2 hours, only on days with Israelis competing) and accept its running cost | **Yes**, capped to session days, and reviewed after Doha | Results stay at the daily run, so a ≤ 24 h delay |
-| OD3 | A Telegram (or WhatsApp) channel pilot in phase 2, posted manually by the publisher | **Yes, as a 4-week pilot.** It's the only real "alert" without a new platform | Updates stay in-site only |
+| OD3 | A messaging-channel pilot (WhatsApp recommended, or Telegram), posted manually by the publisher from launch day; one-pager: `telegram-pilot.md` | **Yes, as a 4-week pilot.** It's the only real "alert" without a new platform | Updates stay in-site only |
 
 Phase 3 (another platform) is not a decision now.
 
