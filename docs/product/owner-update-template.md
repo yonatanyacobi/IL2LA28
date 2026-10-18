@@ -8,7 +8,7 @@ beyond the decisions list (PR #57).
 
 **הדרך ללוס אנג׳לס 28: עדכון שבועי, {DD.MM}**
 
-**In one line:** {the week's single most important fact, e.g. "Launched 22.10; first Israeli quota still open"}.
+**In one line:** {the week's single most important fact, e.g. "Readiness check: 7/8 gates green; first Israeli quota still open"}.
 
 **Published**
 - Quota changes: {n} ({sport/event → status, official source}). Results within 24 h: {k}/{n} (M3).

@@ -1,7 +1,7 @@
-# Verification drive before launch (19–22.10.2026)
+# Verification drive before the readiness check (19–22.10.2026)
 
 Owner: PM. Closes launch gate G3 and moves metric M2 off 0/99.
-**Goal:** the 30 records a visitor sees first are "נבדק ידנית" before the go/no-go at 12:00 on 22.10.
+**Goal:** the 30 records a visitor sees first are "נבדק ידנית" before the readiness check at 12:00 on 22.10, which is reported to the owner. The launch date is the owner's call (D1).
 
 ## What "verified" means
 A record is verified only when all of these hold:
@@ -48,8 +48,8 @@ They're chosen by where they appear between 22.10 and 1.11:
 | 19.10 20:00 | B1 logged, then its ✅ marked | Dana; coordinator |
 | 20.10 20:00 | B2 logged, then its ✅ marked | Tamar; coordinator |
 | 21.10 18:00 | B3 logged, then its ✅ marked | Dana; coordinator |
-| 22.10 11:00 | PM reports M2 for the go/no-go | PM |
-| 22.10 12:00 | **Go/no-go.** G3 passes at ≥ 27/30 marked, with none of the 10 B1 records missing | Coordinator (delegated) |
+| 22.10 11:00 | PM reports M2 in the gate report | PM |
+| 22.10 12:00 | **Readiness check.** G3 is green at ≥ 27/30 marked, with none of the 10 B1 records missing | PM, coordinator |
 
 Expected after the drive: M2 = 30/99 (30%). The remaining 69 go through the weekly audit rotation (Dana and Tamar
 on alternate weeks), aiming for ≥ 80% by 1.11.
