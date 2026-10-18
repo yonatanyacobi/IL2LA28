@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T14:19:49Z",
+ "updatedAt": "2026-10-18T17:35:50Z",
  "sessions": [
   {
    "id": "issf-wch-doha-2026-20261103-arm-q",
@@ -83,6 +83,48 @@
    "review": {
     "status": "unchecked",
     "by": "yael",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "golf-lpga-annika-2026-20261112-r1",
+   "competitionId": "golf-lpga-annika-2026",
+   "date": "2026-11-12",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "laetitia-beck"
+   ],
+   "phase": "סיבוב ראשון",
+   "source": "https://www.lpga.com/tournaments/the-annika-driven-by-gainbridge-at-pelican/entries",
+   "result": "",
+   "resultSource": "",
+   "resultAt": "",
+   "notes": "LPGA entries page lists Beck as \"Entered\" (read 2026-10-18 20:23 IDT; quote in #254). Untimed until LPGA posts tee times: then set timeLocal and tz America/New_York, source = the tee-times page. R3 (14.11) and R4 (15.11) only if she makes the cut.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "golf-lpga-annika-2026-20261113-r2",
+   "competitionId": "golf-lpga-annika-2026",
+   "date": "2026-11-13",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "laetitia-beck"
+   ],
+   "phase": "סיבוב שני",
+   "source": "https://www.lpga.com/tournaments/the-annika-driven-by-gainbridge-at-pelican/entries",
+   "result": "",
+   "resultSource": "",
+   "resultAt": "",
+   "notes": "LPGA entries page lists Beck as \"Entered\" (read 2026-10-18 20:23 IDT; quote in #254). Untimed until LPGA posts tee times: then set timeLocal and tz America/New_York, source = the tee-times page. R3 (14.11) and R4 (15.11) only if she makes the cut.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
     "at": "2026-10-18"
    }
   }
