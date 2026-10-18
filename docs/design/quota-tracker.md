@@ -1,0 +1,233 @@
+# Quota tracker + event-day strip — design spec
+
+Status: ready for implementation · Owner: UX · Base: `main` @ 65d362d
+Scope: (1) quota tracker on `#sport-<id>`, compact summary on `#sports` cards and on home;
+(2) "ישראלים מתחרים היום" strip on home. Read-only for visitors; no new routes.
+
+## 0. Data
+
+`site/quotas.json`, published next to `data.json` (not tracked, like `data.json`):
+
+```json
+{"generatedAt": "2026-10-18T14:00:00Z",
+ "items": [{"sportId": "judo", "event": "עד 57 ק״ג (נשים)", "totalQuotas": 18, "maxPerNOC": 1,
+            "allocation": "…", "israelStatus": "in-contention", "israelNote": "…",
+            "nextQuotaEvent": {"name": "גרנד סלאם אבו דאבי", "start": "2026-10-29"}, "source": "https://…"}]}
+```
+
+Load in parallel with `data.json` (`loadQuotas()`); failure is **non-fatal**: set `S.quotasFailed = true`,
+never touch `S.failed`. Accept a bare array too (`Array.isArray(d) ? d : d?.items`). Normalise each item:
+
+| Field | Rule |
+|---|---|
+| `sportId` | drop the item if `!sportById(sportId)` |
+| `israelStatus` | one of `earned`, `in-contention`, `outside`, `unknown`; anything else → `unknown` |
+| `totalQuotas`, `maxPerNOC` | `Number.isInteger(n) && n > 0` else `null` (text part is omitted) |
+| `nextQuotaEvent` | kept only if `name` and `isDate(start)` and `start >= today()`; else `null` |
+| `source` | rendered only through `linkOut()` |
+
+State: `S.quotas = []`, `S.quotasAt = ""`, `S.quotasLoaded = false`. Re-render via `refresh()` when loaded.
+Smoke-test shim returns the same payload for every fetch, so a `data.json` body must normalise to `[]`.
+
+Status vocabulary (one constant, used everywhere; symbol + text, never colour alone):
+
+```js
+const Q_ORDER = ["earned", "in-contention", "outside", "unknown"];
+const Q_LABEL = {earned: ["✓", "מכסה הושגה"], "in-contention": ["◐", "במרוץ למכסה"],
+                 outside: ["○", "מחוץ למכסות כרגע"], unknown: ["?", "אין מידע עדיין"]};
+```
+
+"outside" is deliberately neutral (not "נכשל"/"לא העפיל"): standings move until the window closes.
+
+Hebrew plurals: `plural(n, "מקצה אחד", "מקצים")` → "מקצה אחד" / "3 מקצים"; same for "מכסה אחת"/"מכסות".
+
+## 1a. Sport page — section "מכסות לישראל"
+
+Position: new `<section class="panel">` right **after** "שיטת ההעפלה", before "ספורטאים ונבחרות".
+Sort items by `Q_ORDER`, then `nextQuotaEvent.start` (null last), then `heCmp(event)`.
+
+```html
+<section class="panel" aria-labelledby="qH">
+  <div class="sec-head"><h2 id="qH">מכסות לישראל</h2><span class="foot">{plural(n,"מקצה אחד","מקצים")}</span></div>
+  <div class="bar4 qbar" role="img" aria-label="מכסה הושגה: 1, במרוץ למכסה: 2, מחוץ למכסות כרגע: 0, אין מידע עדיין: 1">
+    <i class="q-earned" style="width:25%"></i><i class="q-in-contention" style="width:50%"></i>…</div>
+  <ul class="legend">  <!-- existing class; only non-zero statuses -->
+    <li><i class="q-earned"></i>מכסה הושגה <b>1</b></li> …</ul>
+  <ul class="qlist">
+    <li>
+      <div class="q-top"><b>{event}</b><span class="pill q-earned">✓ מכסה הושגה</span></div>
+      <p class="q-meta">18 מכסות בעולם · עד מכסה אחת למדינה</p>        <!-- omit missing parts; omit line if both null -->
+      <p>{israelNote}</p>                                                <!-- omit if empty -->
+      <p class="q-meta">אירוע המכסה הבא: {name} · {fmt(start)}</p>      <!-- omit if null -->
+      <details><summary>איך מחולקות המכסות</summary>
+        <p>{allocation}</p><p class="foot">{linkOut(source, host(source))}</p></details>  <!-- omit details if both empty -->
+    </li>
+  </ul>
+  <p class="foot">ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת; הוועד האולימפי בישראל בוחר בהמשך מי ישתמש בה. נתוני מכסות עודכנו: {fmt(quotasAt)}.</p>
+</section>
+```
+
+`maxPerNOC` copy: 1 → "עד מכסה אחת למדינה"; n → "עד n מכסות למדינה". `totalQuotas` → "n מכסות בעולם".
+
+States:
+
+| State | Render |
+|---|---|
+| quotas not loaded yet | nothing (no skeleton; the section appears on `refresh()`) |
+| load failed | panel with h2 + `<p class="muted">נתוני המכסות לא נטענו כרגע. שאר הדף מעודכן.</p>` |
+| loaded, no items for sport | panel with h2 + `<p class="muted">עוד לא נאספו נתוני מכסות לענף הזה.</p>` |
+| all items `unknown` | bar is all hatched; line above list: `<p class="muted">עוד אין מידע על מצב ישראל במקצים האלה.</p>` |
+| ≥1 `earned` | normal; the `q-earned` chip carries the message — no confetti, no extra banner |
+
+## 1b. `#sports` card — compact summary
+
+Inside `a.sport`, after the stage bar, before `.meta`. Text only (card is one link: no nested
+interactive elements, no extra `role=img`). Show non-zero counts in `Q_ORDER`, skip `unknown` unless it is the only one:
+
+```html
+<span class="qsum"><span class="sr">מכסות: </span>
+  <span class="pill q-earned">✓ 1 הושגה</span><span class="pill q-in-contention">◐ 2 במרוץ</span></span>
+```
+
+All unknown → `<span class="qsum">מכסות: אין מידע עדיין</span>`. No items / not loaded → omit the line.
+
+## 1c. Home — one KPI line
+
+In the existing "התקדמות" panel, new `<p class="kpi">` directly after the current KPI line. Counts are
+**events across sports** (not athletes), so the copy says "מקצים":
+
+- earned ≥ 1: `<b>{e}</b> מקצים עם מכסה לישראל · <b>{c}</b> במרוץ למכסה · ב־{k} ענפים · <a href="#sports">לפי ענף</a>`
+- earned = 0: `טרם הושגו מכסות לישראל · <b>{c}</b> מקצים במרוץ למכסה ב־{k} ענפים · <a href="#sports">לפי ענף</a>`
+- no items / not loaded / failed: omit.
+
+Add to `#about` under "ארבעת השלבים": `<p><b>מכסה לפי מקצה</b>: מקום אולימפי שישראל השיגה במקצה מסוים. השלב של ספורטאי/ת והמכסה של המקצה מתעדכנים בנפרד, ולכן המספרים יכולים להיות שונים.</p>`
+(Mismatches, e.g. an `earned` quota with no stage-2 athlete in that sport, belong on `#admin`; out of scope here.)
+
+## 2. Home — event-day strip "ישראלים מתחרים היום"
+
+Inputs (`t = today()`): `athToday = athletes with nextDate === t`; `compsToday = comps with start <= t <= (end||start)`
+**and** `athletesOf(c.sportId).length > 0`. Grouping, so nothing appears twice:
+
+1. One row per `compsToday` item; the athletes of `athToday` with the same `sportId` are listed inside it.
+2. Remaining `athToday` (no running comp in their sport) → one row each.
+3. Order: rows containing a followed athlete first, then by sport name. Followed names get `★`.
+4. Cap at 6 rows; then `<a href="#calendar">ועוד {n} בלוח התחרויות</a>`.
+
+Render **nothing** when both lists are empty (no empty state on home). Position: directly after `.hero`,
+before `reviewPanel()`. Heading: `ישראלים מתחרים היום` if `athToday.length`, otherwise `היום בענפים שבמעקב`.
+When the strip shows athletes, start the "14 הימים הקרובים" list from tomorrow (`a.nextDate > t`).
+
+```html
+<section class="panel today" aria-labelledby="todayH">
+  <h2 id="todayH">ישראלים מתחרים היום</h2>
+  <ul class="rows">
+    <li><span class="d">יום 2 מתוך 4</span>          <!-- single-day comp or athlete row: "היום" -->
+      <span class="t"><a href="#sport-judo">ג׳ודו</a> · גרנד סלאם אבו דאבי
+        <small>★ <a href="#a-raz-hershko">רז הרשקו</a>, <a href="#a-…">…</a> · אבו דאבי · {linkOut(source)}</small></span>
+      <span class="now">מתקיימת עכשיו</span></li>
+    <li><span class="d">היום</span>
+      <span class="t"><a href="#a-…">{name}</a><small>{sportName} · {next}</small></span><span></span></li>
+  </ul>
+  <p class="foot">לפי התאריך בישראל. שעות מדויקות ותוצאות: באתר התחרות.</p>
+</section>
+```
+
+Comp row without any `athToday` in that sport: `<small>` reads `{location} · {n} ישראלים במעקב בענף` —
+never "מתחרים", because we don't know they are entered. Day index: `Math.round((Date(t) - Date(start)) / 864e5) + 1`, total likewise to `end`.
+
+Midnight: in the existing 60 s interval, if `today()` changed since last render, call `refresh()`.
+
+## 3. CSS (append to `site/styles.css`; tokens only)
+
+One new token, because `--ok` on `--ok-soft` is 4.29:1 in light (fails AA for 12px text):
+add `--ok-ink:#11693c` to `:root` (5.83:1) and `--ok-ink:#5fd18f` to **both** dark blocks.
+Borders use `var(--line-ui, var(--stage0))` so this works before and after `dev/shira/copy-a11y` merges.
+
+```css
+/* quota tracker + event-day strip */
+.q-earned{background:var(--ok)} .q-in-contention{background:var(--sun)} .q-outside{background:var(--stage0)}
+.q-unknown{background:repeating-linear-gradient(135deg,var(--stage0) 0 2px,var(--surface) 2px 6px)}
+.qbar i+i{border-inline-start:2px solid var(--surface)}
+.pill.q-earned{background:var(--ok-soft);color:var(--ok-ink)}
+.pill.q-in-contention{background:var(--sun-soft);color:var(--sun-ink)}
+.pill.q-outside{background:transparent;border:1px solid var(--line-ui,var(--stage0));color:var(--muted)}
+.pill.q-unknown{background:transparent;border:1px dashed var(--line-ui,var(--stage0));color:var(--muted)}
+.qlist{list-style:none;margin:0;padding:0;display:grid}
+.qlist>li{display:grid;gap:4px;padding-block:10px;border-top:1px solid var(--line);min-width:0;overflow-wrap:anywhere}
+.qlist>li:first-child{border-top:0}
+.q-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.q-meta{font-size:13.5px;color:var(--muted)}
+.qlist summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--blue);padding-block:10px}
+.qsum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
+.today{border-inline-start:4px solid var(--sun)}
+```
+
+Notes: `.legend i.q-*` reuses the bar classes (the legend `<i>` already has size). At 400px: `.q-top`
+wraps the chip under the event name; `.rows` already collapses the date column under 640px; summary
+gets ≥44px tap height from `padding-block`. No animation anywhere (no pulsing "live" dot).
+
+## 4. Accessibility
+
+- Bars: `role="img"` + full `aria-label` with all four counts (zero included), as `stageBar()` does. On cards, no bar — text only.
+- Every status is symbol + word; symbols sit inside the text, not in `::before`, so they are read as part of the label.
+- `<details>/<summary>` gives keyboard + SR disclosure for free; don't replace with a custom toggle.
+- Strip `section` and quota `section` use `aria-labelledby` to their h2; heading order stays h1 → h2.
+- External links only via `linkOut()` (already announces "נפתח בחלון חדש").
+- Followed ★ in the strip: wrap as `<span class="star-on" aria-label="במעקב שלך">★</span>` (same as cards).
+
+## 5. Wireframes (~400px, RTL)
+
+Sport page:
+```
+┌──────────────────────────────────────┐
+│                        כל הענפים →   │
+│ ג׳ודו                                │
+│ ┌ שיטת ההעפלה ───────── [חלון פתוח] ┐│
+│ └────────────────────────────────────┘│
+│ ┌ מכסות לישראל ────────── 4 מקצים ──┐│
+│ │ ████▌▓▓▓▓▓▓▓▓▓▓▌░░░░░░▌/////////  ││
+│ │ ■ מכסה הושגה 1  ■ במרוץ 2  / אין 1 ││
+│ │ עד 57 ק״ג (נשים)    [✓ מכסה הושגה] ││
+│ │ 18 מכסות בעולם · עד מכסה אחת למדינה││
+│ │ אירוע המכסה הבא: גרנד סלאם · 29 אוק׳││
+│ │ ▸ איך מחולקות המכסות               ││
+│ │ ────────────────────────────────── ││
+│ │ עד 78 ק״ג (נשים)    [◐ במרוץ למכסה] ││
+│ │ …                                  ││
+│ │ ברוב הענפים המכסה שייכת למדינה…    ││
+│ └────────────────────────────────────┘│
+│ ספורטאים ונבחרות (5)                  │
+└──────────────────────────────────────┘
+```
+
+`#sports` card:
+```
+┌──────────────────────────────────────┐
+│ ג׳ודו                    [חלון פתוח] │
+│ ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░                  │
+│ [✓ 1 הושגה] [◐ 2 במרוץ]               │
+│ 5 במעקב · התחרות הבאה: אבו דאבי (29.10)│
+└──────────────────────────────────────┘
+```
+
+Home, event day:
+```
+┌──────────────────────────────────────┐
+│ הדרך ללוס אנג׳לס 28        ┌ 635 ימים┐│
+│ ┃ ישראלים מתחרים היום                 │
+│ ┃ יום 2 מתוך 4                        │
+│ ┃ ג׳ודו · גרנד סלאם אבו דאבי  מתקיימת │
+│ ┃ ★ רז הרשקו, … · אבו דאבי · מקור     │
+│ ┃ ─────────────────────────────────  │
+│ ┃ היום                                │
+│ ┃ {שם} — שייט · {next}                │
+│ ┃ לפי התאריך בישראל. שעות ותוצאות…   │
+│ [ חיפוש ספורטאי/ת, נבחרת או ענף    ] │
+└──────────────────────────────────────┘
+```
+
+## 6. Done when
+
+- `node --check site/app.js` and `node tests/smoke.test.js` pass; new smoke cases: quotas fetch fails
+  (page still renders, sport page shows "לא נטענו"), all-unknown sport, fixture with today's `nextDate`.
+- Checked at 400px in light and dark: no horizontal scroll, chips wrap, hatch visible in both themes.
