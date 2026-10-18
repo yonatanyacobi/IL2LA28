@@ -1,19 +1,24 @@
 # Owner decisions (as of 18.10.2026)
 
-Each decision below needs the owner. To decide, reply with the decision number and an option letter, e.g. "D1-A".
-The PM updates this page and the backlog. Gates refer to `docs/product/launch-checklist.md`.
-This page will be aligned with the CEO's strategy doc once it's published.
+This is the single list of decisions needed from the owner, merged from the launch checklist (#43) and the company
+strategy (#58, `docs/company/strategy.md` §6). It's one batched ask, per the strategy.
+To decide, reply with the number and an option letter, e.g. "1-A". The PM keeps this page current.
 
 | # | Decision | Decide by | Options | Recommendation | If no decision |
 |---|---|---|---|---|---|
-| D1 | **Launch date** | 21.10 | A: Thu 22.10 · B: Tue 27.10 · C: after Abu Dhabi (1.11+) | **A**, if G2–G8 are green on 21.10; otherwise B | No launch. The site stays a link shared within the team, and Abu Dhabi passes without a public audience |
-| D2 | **Public contact address** (memo: PR #53) | 21.10 | A: keep the personal Gmail · B: dedicated address (~10 min setup) | **B**: no personal exposure, and reports go to an inbox someone watches | G5 stays red and the launch slips. The personal Gmail stays live on the site |
-| D3 | **Add Olga Tashtchiev** (shooting, 10 m air rifle women; on the ISSF Doha entry list, competing 3.11) | 28.10 | A: approve as a new athlete once Dana verifies the Hebrew spelling · B: approve now with the English name only · C: don't track | **A**: Doha is the first LA28 quota event and the women's air rifle quotas (3, max 1 per NOC) are real | She's missing from the strip, the digest and the calendar on Israel's first quota day, and the women's air rifle quota item can't refer to her |
-| D4 | **Who approves quota stage changes** on result nights (Rotterdam 20.10, Doha 3–4.11) | 19.10 | A: the owner only · B: the owner, or the lead + Dana when the owner can't be reached within 12 h | **B**, while keeping the official-source rule (`docs/runbooks/result-night.md`) | The site shows the result as a fact in `israelNote` and stays `in-contention` until the owner approves. Safe, but late |
-| D5 | **Manual verification before launch** (G3: ~20 athletes appearing 20.10–1.11) | 21.10 | A: the owner marks the records Dana checked ✅ (about 30 min in `#admin`) · B: launch with the "אוטומטי" chip on those records | **A**: these are the records the public sees first | G3 stays red. If D1-A is chosen, the launch slips to 27.10 |
-| D6 | **A second editor** | 25.10 | A: give edit rights to one trusted person · B: stay owner-only | **A**: the owner is a single point of failure for approvals and result nights | Every approval, proposal and verification waits for the owner |
-| D7 | **Launch announcement and channels** (copy: PR #46) | 21.10 | A: approve the copy and pick 2–3 channels (federation WhatsApp groups, X, personal network) · B: soft launch with no announcement | **A**, and lead with the quota tracker and `#digest` | Soft launch. Reach depends on links shared by chance |
-| D8 | **5 partial quota items** (athletics ×2, sailing ×3) | none | A: keep them unpublished until sourced · B: publish them with a "not verified" label | **A** | A. This is already the default, so nothing breaks |
+| 1 | **Launch date** | 20.10 | A: Wed 21.10, go/no-go at 12:00 on the gates in `launch-checklist.md` · B: Tue 27.10 | **A**, with B as the automatic fallback if a gate is red | No launch. Abu Dhabi (29–31.10) passes without a public audience |
+| 2 | **Dedicated public contact address** instead of the personal Gmail (memo: PR #53) | 20.10 | A: create a dedicated address (~10 min) · B: keep the Gmail | **A** | Gate G5 stays red, so the launch slips to 27.10 |
+| 3 | **Approval and publishing on result nights** | 19.10 | A: the owner edits, builds and publishes everything · B: Omer becomes publisher (runs `result-night.md`, publishes fact-checked quota changes); the owner approves only `earned`/stage 2–3, with Dana as second signer | **B** | A by default: the owner is the bottleneck on 20.10 and on Doha (3–4.11). An unapproved result stays `in-contention` with a factual note |
+| 4 | **Owner check of the launch-week records** (8 gymnasts, Sagiv, Gold, after Dana's ✅) | 21.10 12:00 | A: mark them "נבדק ידנית" in `#admin` (~15 min) · B: launch with the "אוטומטי" chip | **A** | Gate G3 stays red, so the launch slips to 27.10 |
+| 5 | **Add Olga Tashtchiev** (10 m air rifle women; on the ISSF Doha entry list, competing 3.11) | 28.10 | A: approve once Dana verifies the Hebrew spelling · B: approve with the English name only · C: don't track | **A** | She's missing on Israel's first quota day, in the strip, digest and calendar |
+| 6 | **Launch announcement and channels** (copy: PR #46) | 20.10 | A: approve the copy and pick 2–3 channels (federation WhatsApp groups, X, personal network) · B: soft launch | **A**: lead with `#quotas` and `#digest` | Soft launch, so reach depends on chance shares |
+| 7 | **Hires**: a second fact-checker, then an athletics and water-sports researcher | 25.10 | A: approve both · B: the fact-checker only · C: neither | **A**: Dana gates every publish, and November has 7 qualifying events | Results land late or unchecked in November |
+| 8 | **Scope**: no English version and no Paralympics until mid-2027 | 25.10 | A: confirm · B: reopen | **A** | Treated as confirmed |
+| 9 | **Digest-copy counter** (needs DB writes; only signed-in viewers can write) | 25.10 | A: allow it for signed-in viewers · B: don't count; use the owner's share log | **B**: it would count only claude.ai users, and it adds a DB write path to a read-only site | B |
+
+## Defaults (no decision needed)
+- The 5 partial quota items (athletics ×2, sailing ×3) stay unpublished until they're sourced. The build enforces this.
+- Unverified athlete records keep the "אוטומטי" chip.
 
 ## Decided
-- 18.10: the 25 audit corrections were applied to the DB by the coordinator under the owner's delegation (G1).
+- 18.10: the 25 audit corrections were applied to the DB by the coordinator under the owner's delegation (gate G1).
