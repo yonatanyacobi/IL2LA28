@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 
 function fakeEl(id){
@@ -490,6 +490,73 @@ test("site/quotas.json: all items load and render", async () => {
     assert.ok(out.includes("מכסות לישראל"), sid);
     assert.strictEqual((out.match(/<li>\s*<div class="q-top">/g) || []).length, real.items.filter(q => q.sportId === sid).length, sid);
   }
+});
+
+// Corrections log (docs/design/corrections-log.md §6). Export filtering is tested on the data side.
+const SRC = "https://www.ijf.org/wrl";
+const fix = (o, changes) => ({id: o.id || "x", at: o.at, reportedAt: o.reportedAt || "", by: o.by || "reader", source: o.source ?? SRC,
+  target: o.target || {kind: "athlete", id: "raz-hershko", name: "רז הרשקו"}, changes});
+const CORRECTIONS = [
+  fix({at: "2026-10-24T09:10:00Z", reportedAt: "2026-10-23T18:40:00Z"}, [{field: "rank", wrong: "2 בעולם", right: "1 <img src=x onerror=alert(1)>"}]),
+  fix({at: "2026-10-25T08:00:00Z", reportedAt: "2026-10-23T08:00:00Z", by: "audit", target: {kind: "athlete", id: "inbar-lanir", name: "ענבר לניר"}},
+    [{field: "notes", wrong: "", right: "נוסף כאן"}]),
+  fix({at: "2026-11-02T10:00:00Z", reportedAt: "2026-10-28T10:00:00Z", by: "job", target: {kind: "athlete", id: "gone-athlete", name: "שם ישן"}},
+    [{field: "notes", wrong: "הוסר מכאן", right: ""}]),
+  fix({at: "2026-11-01T10:00:00Z"}, [{field: "stage", wrong: 1, right: 2}]),
+  fix({at: "2026-10-30T10:00:00Z", by: "audit", target: {kind: "sport", id: "judo", name: "ג׳ודו"}}, [{field: "sportId", wrong: "athletics", right: "judo"}]),
+  fix({at: "2026-10-26T10:00:00Z", source: "", target: {kind: "athlete", id: "raz-hershko", name: "בלי מקור"}}, [{field: "rank", wrong: "a", right: "b"}]),
+  fix({at: "2026-10-26T10:00:00Z", by: "editor", target: {kind: "athlete", id: "raz-hershko", name: "מקור לא מוכר"}}, [{field: "rank", wrong: "a", right: "b"}]),
+];
+const bootFixes = async (corrections = CORRECTIONS) => boot({data: {...JSON.parse(JSON.stringify(FIXTURE)), corrections}});
+const entriesOf = html => html.split('<article class="fix">').slice(1);
+
+test("#corrections: months newest first, diffs, labels, speed, escaping, invalid entries dropped", async () => {
+  const {view} = await bootFixes();
+  const out = view("corrections");
+  assert.ok(out.includes('<h1 tabindex="-1">יומן התיקונים</h1>') && out.includes('<h2 id="howH">מטעות לתיקון</h2>'));
+  assert.ok(out.indexOf("נובמבר 2026") < out.indexOf("אוקטובר 2026"), "newest month first");
+  const fixes = entriesOf(out);
+  assert.strictEqual(fixes.length, 5, "no source and unknown 'by' are dropped");
+  assert.ok(!out.includes("בלי מקור") && !out.includes("מקור לא מוכר"));
+  assert.ok(!/<img/i.test(out) && out.includes("1 &lt;img"), "values escaped");
+  const raz = fixes.find(f => f.includes("1 &lt;img"));
+  assert.ok(raz.includes('<a href="#a-raz-hershko">רז הרשקו</a>') && raz.includes("דיווח של קורא/ת") && raz.includes("<dt>דירוג או הישג</dt>"));
+  assert.ok(raz.includes("היה: <del>2 בעולם</del>") && raz.includes("עכשיו: <ins>") && raz.includes("תוך פחות מיום") && raz.includes("ijf.org"));
+  assert.ok(out.includes("נוסף: <ins>נוסף כאן</ins>") && out.includes("הוסר: <del>הוסר מכאן</del>"), "empty wrong/right");
+  assert.ok(fixes.find(f => f.includes("נוסף כאן")).includes("תוך יומיים") && fixes.find(f => f.includes("הוסר מכאן")).includes("אחרי 5 ימים"), "speed thresholds");
+  const gone = fixes.find(f => f.includes("שם ישן"));
+  assert.ok(!gone.includes("<a href=\"#a-gone-athlete\"") && gone.includes("נמצא בעדכון האוטומטי"), "archived target: name without link");
+  assert.ok(out.includes("היה: <del>בחלון ההעפלה</del>") && out.includes("עכשיו: <ins>מכסה הושגה</ins>"), "stage shown by name");
+  assert.ok(out.includes("היה: <del>אתלטיקה</del>") && out.includes('<a href="#sport-judo">ג׳ודו</a>'), "sportId shown by name, sport target linked");
+  assert.ok(!fixes.join("").includes("@"), "no email in any entry");
+  assert.ok(!out.includes("בוצעו תוך 48 שעות"), "stat hidden below 5 timed entries");
+});
+
+test("#corrections: 48-hour stat from 5 timed entries", async () => {
+  const timed = [0, 1, 2, 3, 4].map(i => fix({at: `2026-10-2${4 + i}T10:00:00Z`, reportedAt: `2026-10-2${i ? 1 : 3}T10:00:00Z`}, [{field: "rank", wrong: "a", right: "b"}]));
+  const out = (await bootFixes(timed)).view("corrections");
+  assert.ok(out.includes("עד עכשיו, 1 מתוך 5 התיקונים בוצעו תוך 48 שעות."), out.split("היעד:")[1]?.slice(0, 120));
+});
+
+test("#corrections-<id>: one record's entries; unknown id shows the filtered empty state", async () => {
+  const {view} = await bootFixes();
+  const raz = view("corrections-raz-hershko");
+  assert.strictEqual(entriesOf(raz).length, 2);
+  assert.ok(raz.includes("מוצגים התיקונים של <b>רז הרשקו</b>") && raz.includes('<a href="#corrections">לכל התיקונים</a>') && !raz.includes("ענבר לניר"));
+  const none = view("corrections-nope");
+  assert.ok(!none.includes(NOT_FOUND) && none.includes("אין תיקונים מתועדים לרשומה הזאת.") && none.includes("מטעות לתיקון"));
+});
+
+test("#corrections empty state (launch day) and entry points", async () => {
+  const empty = (await bootFixes([])).view("corrections");
+  assert.ok(empty.includes("מטעות לתיקון") && empty.includes("עוד אין תיקונים מאז ההשקה.") && !empty.includes('class="month"'));
+  const {view} = await bootFixes();
+  const raz = view("a-raz-hershko"), lanir = view("a-inbar-lanir");
+  assert.ok(raz.includes('<dt>תיקונים</dt><dd><a href="#corrections-raz-hershko">2 תיקונים</a></dd>'));
+  assert.ok(lanir.includes('<a href="#corrections-inbar-lanir">תיקון אחד</a>'));
+  assert.ok(!view("a-yonatan-elbaz").includes("<dt>תיקונים</dt>"), "no entries, no fact");
+  for (const page of [raz, view("about")]) assert.ok(page.includes('ב<a href="#corrections">יומן התיקונים</a>, והיעד הוא תוך 48 שעות.'), "report box line");
+  assert.ok(!view("updates").includes("2 בעולם"), "#updates stays news only");
 });
 
 test("fetch failure shows the retry view", async () => {

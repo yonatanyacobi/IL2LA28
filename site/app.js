@@ -9,6 +9,13 @@ const PARIS_ATHLETES = 88;
 const SITE_NAME = "הדרך ללוס אנג׳לס 28";
 const SITE_URL ="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
 const CONTACT_EMAIL = "yacobiyonatan@gmail.com";
+// Corrections log (docs/design/corrections-log.md). LAUNCH_AT is shared with export_data.py; the PM sets it.
+// REPORT_EMAIL is the dedicated reports inbox (backlog D2): a placeholder until D2 is decided, and
+// #corrections must not ship before it is real.
+const LAUNCH_AT = "2026-10-22T09:00:00Z";
+const REPORT_EMAIL = "{REPORT_EMAIL}";
+const FIX_FIELDS = ["name", "event", "rank", "next", "nextDate", "notes", "stage", "sportId", "quota"];
+const FIX_MAX = 300;
 const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "next", "nextDate", "notes", "source"];
 const HISTORY_MAX = 20;
 const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
@@ -46,6 +53,7 @@ const store = {
 const S = {
   loaded: false, live: false, failed: false, liveLost: false, generatedAt: "", lastRun: "",
   sports: [], athletes: [], comps: [], changes: [], proposals: [],
+  corrections: [],
   quotas: [], quotasUpdatedAt: "", quotasLoaded: false, quotasError: false, quotasUnpublished: null,   // empty when quotas.json is missing or bad: quota UI must not render
   db: null, uid: null, isAdmin: false,
   cal: {sport: "", qual: false, past: false},
@@ -500,6 +508,8 @@ function viewAthlete(id){
       <dt>בדיקה</dt><dd>${trustChip(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
       ${safeUrl(a.source) ? `<dt>מקור</dt><dd>${linkOut(a.source, host(a.source))}</dd>` : ""}
+      ${(n => n && typeof viewCorrections === "function" ? `<dt>תיקונים</dt><dd><a href="#corrections-${esc(id)}">${plural(n, "תיקון אחד", "תיקונים")}</a></dd>` : "")(
+        S.corrections.filter(c => c.target.kind === "athlete" && c.target.id === id).length)}
     </dl>
     ${a.notes ? `<p>${esc(a.notes)}</p>` : ""}
   </section>
@@ -530,6 +540,7 @@ function reportBox(subject, link){
     <div class="share"><input id="mailAddr" readonly value="${esc(CONTACT_EMAIL)}" dir="ltr" aria-label="כתובת לדיווח"><button class="btn ghost small" data-copy="mailAddr">העתקת הכתובת</button>
       <a class="btn ghost small" href="${esc(mailto)}">פתיחת מייל</a></div>
     <p class="foot" id="copyMsg2" aria-live="polite"></p>
+    ${typeof viewCorrections === "function" ? `<p class="foot">כל התיקונים מתפרסמים ב<a href="#corrections">יומן התיקונים</a>, והיעד הוא תוך 48 שעות.</p>` : ""}
   </section>`;
 }
 
@@ -637,8 +648,10 @@ function reviewPanel(){
     }).join("")}</div></section>`;
 }
 
+const FIELD_LABELS = {rank:"דירוג או הישג", next:"התחרות הבאה", nextDate:"תאריך התחרות", notes:"הערות", event:"מקצה", name:"שם",
+  stage:"שלב", sportId:"ענף", quota:"מכסה"};
 function describePatch(p, t){
-  const labels = {rank:"דירוג או הישג", next:"התחרות הבאה", nextDate:"תאריך התחרות", notes:"הערות", event:"מקצה", name:"שם"};
+  const labels = FIELD_LABELS;
   return Object.entries(p.patch || {}).map(([k, v]) => {
     if (k === "stage") return `<li>שלב: ${STAGES[stageOf(t || {})]} ← ${STAGES[stageOf({stage: v})]}</li>`;
     if (k === "sportId") return `<li>ענף: ${esc(sportName(v))}</li>`;
@@ -792,6 +805,7 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about") html = viewAbout(), nav = "about";
+  else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function") html = viewCorrections(h.slice(12)), nav = "about";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (h === "digest" && typeof viewDigest === "function") html = viewDigest(), nav = "updates";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
@@ -873,8 +887,21 @@ function applySnapshot(d){
   S.athletes = Array.isArray(d.athletes) ? d.athletes : [];
   S.comps = (Array.isArray(d.competitions) ? d.competitions : []).filter(c => isDate(c.start));
   S.changes = Array.isArray(d.changes) ? d.changes : [];
+  S.corrections = correctionsFrom(d.corrections);
   S.loaded = true;
   applyQuotas();
+}
+
+// A correction without a source, target name or real change is dropped; reporters are never in the data.
+function correctionsFrom(list){
+  const kinds = ["athlete", "sport", "quota"], by = ["reader", "audit", "job"];
+  return (Array.isArray(list) ? list : []).filter(c => c && typeof c === "object" && isDate(str(c.at).slice(0, 10))
+      && kinds.includes(c.target?.kind) && str(c.target?.name).trim() && safeUrl(c.source) && by.includes(c.by) && Array.isArray(c.changes))
+    .map(c => ({...c, at: str(c.at), reportedAt: str(c.reportedAt), target: {kind: c.target.kind, id: str(c.target.id), name: str(c.target.name)},
+      changes: c.changes.filter(x => x && FIX_FIELDS.includes(x.field) && (str(x.wrong) || str(x.right))).slice(0, 5)
+        .map(x => ({field: x.field, wrong: str(x.wrong).slice(0, 200), right: str(x.right).slice(0, 200)}))}))
+    .filter(c => c.changes.length)
+    .sort((a, b) => b.at.localeCompare(a.at)).slice(0, FIX_MAX);
 }
 
 // quotas.json is hand-curated and optional: a bad item is dropped, a bad file only hides the quota UI.

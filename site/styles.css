@@ -309,3 +309,20 @@ div.track{background:none}
 .next-up b{color:var(--sun-ink)}
 /* editors' "view as visitor" preview */
 .visitor-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:center;background:var(--blue-soft);color:var(--ink);border-bottom:1px solid var(--line);padding:6px 16px;font-size:14px}
+
+/* corrections log (#corrections). Wrong/right carry no red/green: "היה"/"עכשיו" and the line-through do. */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;counter-reset:st}
+.steps li{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14.5px;counter-increment:st}
+.steps li b::before{content:counter(st) ". ";color:var(--sun-ink)}
+.steps li span{color:var(--muted)}
+.fix{display:grid;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.fix-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;font-weight:700}
+.fix-diff{display:grid;gap:4px 12px;grid-template-columns:auto 1fr;margin:0;font-size:15px}
+.fix-diff dt{color:var(--muted)}
+.fix-diff dd{margin:0;display:grid;gap:2px;min-width:0;overflow-wrap:anywhere}
+.fix-diff del{color:var(--muted)}
+.fix-diff ins{text-decoration:none;font-weight:600}
+.pill.by-reader{background:var(--blue-soft);color:var(--blue)}
+.pill.by-audit,.pill.by-job{background:transparent;border:1px solid var(--line-ui,var(--stage0));color:var(--muted)}
+.timeline li.k-correction::before{border-color:var(--muted)}
+@media (max-width:640px){.steps{grid-template-columns:1fr}.fix-diff{grid-template-columns:1fr}}
