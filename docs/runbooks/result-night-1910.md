@@ -29,10 +29,11 @@ No Official PDFs by the morning of 20.10: wait. Don't record anything from anoth
 1. **Athlete write** through `job/athlete_patch.py` (cur.json = the athlete as read; new.json as below), then
    `update` with the doc's `if_version`:
    ```json
-   {"next": "<next>", "nextDate": "<nextDate>", "source": "<Official PDF>",
+   {"next": "<next>", "nextDate": "<nextDate>",
     "result": {"at": "2026-10-19", "text": "<result.text>", "source": "<Official PDF>"}}
    ```
-   One write per result. An athlete who also makes the bars final gets a second write with the bars row.
+   No top-level `source`: it would replace the athlete's profile link with the results PDF (dry run, 18.10); the
+   history entry carries the PDF. One write per result. An athlete who also makes the bars final gets a second write with the bars row.
 2. **Session** `sessions/<session id>`: `result` = the session text below, `resultSource` = the Official PDF,
    `resultAt` = `date -u +%Y-%m-%dT%H:%M:%SZ`. All three, or the export blanks the result. Sub 10 holds both Raz
    and Shamai, so its `result` is `ליהיא רז: <text> · רוני שמאי: <text>`.
@@ -42,6 +43,10 @@ No Official PDFs by the morning of 20.10: wait. Don't record anything from anoth
 4. **After a Q only**: move the matching final from `pendingFinalBlocks` in `data/sessions/roni.json` to
    `sessions` with that athlete's `athleteIds` (AA final 23.10 19:30, bars final 24.10 14:00 Rotterdam time), Dana
    signs it, and it loads through `job/load_sessions.py`.
+
+5. **Publish:** the daily task publishes at **07:13** (20.10), which is also the run that must find the entries. To
+   have the results public tonight, run only step 5 (PUBLISH) of `job/SKILL.md` after the last write.
+   Dry run of the mechanical part on v49 (18.10): about 2 s; see the timings on #173.
 
 **Don't change:** `stage`, `quotas.json` (the 2026 Worlds give no individual quotas), `rankNum`.
 
