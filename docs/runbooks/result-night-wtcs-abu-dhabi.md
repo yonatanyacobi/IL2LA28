@@ -19,10 +19,10 @@ builds, which the job then skips (same `at` and `text`).
 | By | Step | Who |
 |---|---|---|
 | after 24.10 | `next`/`nextDate` → `סבב האליפות העולמית (WTCS) אבו דאבי` / `2026-11-13`, only once the Abu Dhabi start list shows him (Ofir's plan) | Ofir → coordinator |
-| 1.11 | Competition record for WTCS Abu Dhabi 2026 in the DB (Ofir's open item; main's fixture has only the 2027 one), `qualifying: true`, `source` https://triathlon.org/events/2026-wtcs-abu-dhabi (the slug is what `tri_results` matches), `end` 2026-11-14. Confirm in the **published** data.json | Ofir → editor |
+| done | Competition record `wtcs-abu-dhabi-2026` is in the DB (name above; source the triathlon.org race-info page, whose `2026-wtcs-abu-dhabi` slug is what `tri_results` matches). Confirm it reaches the **published** data.json | Ofir |
 | 1.11 | Session row for the men's sprint, start time from the event's schedule, Dana signs | Ofir → Dana → coordinator |
 | 11.11 | Start list: Sagiv on it? No: outcome DNS, no session, `next`/`nextDate` → `""` | Ofir |
-| 11.11 | Generate the exact strings from the **record's name** (it decides the text), and paste them into this file's table: `python3 -c "import sys; sys.path.insert(0,'job'); import tri_results as t; print(t.result_text({'position': 7}, '<record name>', 'sprint', '2026-11-13')[1])"` (and `'DNF'`, `'DSQ'`) | Ofir → Tamar |
+| 11.11 | If the record's name changed since 18.10, regenerate the strings: `python3 -c "import sys; sys.path.insert(0,'job'); import tri_results as t; print(t.result_text({'position': 7}, '<record name>', 'sprint', '2026-11-13')[1])"` (and `'DNF'`, `'DSQ'`) | Ofir → Tamar |
 | 11.11 | Item 34 after Abu Dhabi: `stakes` and `nextQuotaEvent` for the next event (not in Ofir's plan yet) | Ofir |
 
 ## 13.11
@@ -38,7 +38,7 @@ builds, which the job then skips (same `at` and `text`).
 ## Coordinator steps
 
 1. **Athlete write** through `job/athlete_patch.py`: `"result": {"at": "2026-11-13", "text": …, "source": "https://triathlon.org/events/2026-wtcs-abu-dhabi"}`.
-   On a podium also the job's notes string, `מקום <N> ב<record name> 2026`, so no proposal is opened.
+   On a podium also the job's notes string (Values), so no proposal is opened.
    `rank` waits for the first OQR list after 13.11.
 2. **Session**: `result`, `resultSource` (the results tab as on the night), `resultAt` = `date -u +%Y-%m-%dT%H:%M:%SZ`.
 3. **"מה התעדכן"**, podium only: `טריאתלון: שחר שגיב סיים <ראשון/שני/שלישי> בסבב האליפות העולמית באבו דאבי (ספרינט)`
@@ -46,16 +46,16 @@ builds, which the job then skips (same `at` and `text`).
 
 ## Values (`<N>` = his place)
 
-If the record is named like the 2027 one (`סבב האליפות העולמית (T50) אבו דאבי`), the job's strings are:
+Generated with `tri_results.result_text()` from the DB record's name, `סבב האליפות העולמית בטריאתלון (WTCS) אבו דאבי`:
 
 | Outcome | `result.text` | session `result` |
 |---|---|---|
-| Finished | `מקום <N> בסבב האליפות העולמית (T50) אבו דאבי (ספרינט, 13 בנוב׳ 2026)` | `מקום <N>` |
-| DNF | `לא סיים/ה את סבב האליפות העולמית (T50) אבו דאבי (13 בנוב׳ 2026)` | `לא סיים` |
-| DSQ | `נפסל/ה בסבב האליפות העולמית (T50) אבו דאבי (13 בנוב׳ 2026)` | `נפסל` |
+| Finished | `מקום <N> בסבב האליפות העולמית בטריאתלון (WTCS) אבו דאבי (ספרינט, 13 בנוב׳ 2026)` | `מקום <N>` |
+| DNF | `לא סיים/ה את סבב האליפות העולמית בטריאתלון (WTCS) אבו דאבי (13 בנוב׳ 2026)` | `לא סיים` |
+| DSQ | `נפסל/ה בסבב האליפות העולמית בטריאתלון (WTCS) אבו דאבי (13 בנוב׳ 2026)` | `נפסל` |
 | DNS | no entry | – |
 
-A different record name means different strings: regenerate them (11.11 step) before the night.
+Podium `notes` string (the job's): `מקום <N> בסבב האליפות העולמית בטריאתלון (WTCS) אבו דאבי 2026`. If the record's name changes, regenerate (command in Before).
 
 ## Risks
 1. **Distance label:** "ספרינט, " appears only if the API's `prog_distance_category` is `sprint`. Otherwise the 15.11
