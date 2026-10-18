@@ -57,16 +57,23 @@ async function boot(data, follows){
 
 const median = xs => xs.slice().sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 
-(async () => {
+// Median ms of `runs` renders of one route, after a warm-up.
+function timeRoute(b, r, runs = 15){
+  b.ctx.location.hash = "#" + r;
+  for (let i = 0; i < 3; i++) b.run("route()");
+  return median(Array.from({length: runs}, () => { const t = process.hrtime.bigint(); b.run("route()"); return Number(process.hrtime.bigint() - t) / 1e6; }));
+}
+
+// smoke.test.js reuses these for its render budget.
+module.exports = {dataAt, boot, timeRoute};
+if (require.main === module) (async () => {
   const scales = process.argv.slice(2).map(Number).filter(Boolean);
   for (const scale of scales.length ? scales : [1, 3]) {
     const data = dataAt(scale), b = await boot(data, data.athletes.slice(0, 10).map(a => a.id));
     console.log(`\nscale ${scale}: ${data.athletes.length} athletes, ${data.sessions.length} sessions, ${data.competitions.length} competitions`);
     for (const r of ROUTES) {
-      b.ctx.location.hash = "#" + r;
-      for (let i = 0; i < 3; i++) b.run("route()");   // warm-up
-      const times = Array.from({length: 15}, () => { const t = process.hrtime.bigint(); b.run("route()"); return Number(process.hrtime.bigint() - t) / 1e6; });
-      console.log(`  #${r.padEnd(26)} median ${median(times).toFixed(1).padStart(7)} ms   html ${(b.els.view.innerHTML.length / 1024).toFixed(0)} KB`);
+      const ms = timeRoute(b, r);
+      console.log(`  #${r.padEnd(26)} median ${ms.toFixed(1).padStart(7)} ms   html ${(b.els.view.innerHTML.length / 1024).toFixed(0)} KB`);
     }
   }
 })();
