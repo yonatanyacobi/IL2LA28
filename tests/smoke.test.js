@@ -921,11 +921,27 @@ test("game log: dedupe, team vs merged text, dropped sources, no competition, es
   const raz = glPanel(b.view("a-raz-hershko"));
   assert.ok(raz.includes("ארד (מהסשן)") && !raz.includes("ארד (מההיסטוריה)"), "same day: once, the session wins");
   assert.ok(raz.includes("ניצחון קבוצתי") && glPanel(b.view("a-yuli-alma-mishiner")).includes("ניצחון קבוצתי"), "a team result is each member's");
-  assert.ok(!raz.includes("בלי מקור"), "history result without an https source is dropped");
-  assert.ok(raz.includes('<span class="muted">תחרות שאינה במאגר</span>') && raz.includes("&lt;b&gt;מקום 7&lt;/b&gt;") && !raz.includes("<b>מקום 7"), "no competition; escaped");
+  assert.ok(!raz.includes("בלי מקור"), "a history result without an https source isn't in the log");
+  const razHist = b.view("a-raz-hershko").split("<h2>היסטוריה</h2>")[1].split("</section>")[0];
+  assert.ok(razHist.includes("בלי מקור") && !razHist.includes("מקום 7"), "...it stays in the timeline; logged results leave it");
+  assert.ok(raz.includes('<span class="muted">תחרות שאינה ברשימה</span>') && raz.includes("&lt;b&gt;מקום 7&lt;/b&gt;") && !raz.includes("<b>מקום 7"), "no competition; escaped");
   const inbal = glPanel(b.view("a-inbal-shemesh"));
   assert.ok(!inbal.includes("כסף") && inbal.includes("עוד לא תועדו תוצאות של ענבל שמש בתחרויות."), "a teammate's result never shows; empty state");
   for (const h of ["a-raz-hershko", "a-inbal-shemesh"]) assert.ok(!/חי\b|בזמן אמת/.test(glPanel(b.view(h))));
+});
+
+test("game log: a same-day history result dedupes only against her session in the same competition; no cap", async () => {
+  const data = glBase();
+  // Her session on 3.11 is at Doha; no judo competition runs that day, so her history result is a different one.
+  data.sessions = [{competitionId: DOHA, date: "2026-11-03", startUtc: null, athleteIds: ["raz-hershko"], phase: "", result: "מהסשן",
+    resultSource: GL_SRC, resultAt: "2026-11-03T18:00:00Z"}];
+  data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-11-03", kind: "result", text: "מההיסטוריה", source: GL_SRC},
+    ...Array.from({length: 60}, (_, i) => ({at: `2025-${String(1 + (i % 12)).padStart(2, "0")}-${String(1 + Math.floor(i / 12)).padStart(2, "0")}`,
+      kind: "result", text: `ישן ${i}`, source: GL_SRC}))];
+  const {run} = await boot({data, now: "2026-11-05T08:00:00Z"});
+  const log = run(`gameLog(athleteById("raz-hershko")).map(r => r.result)`);
+  assert.ok(log.includes("מהסשן") && log.includes("מההיסטוריה"), "different competitions: both kept");
+  assert.strictEqual(log.length, 62, "60 history results plus 2: nothing cut");
 });
 
 test("game log: 12 rows show 10 and a details with the rest's result count", async () => {

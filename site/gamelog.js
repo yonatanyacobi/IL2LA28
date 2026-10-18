@@ -2,28 +2,34 @@
 // Loaded after sessions.js (exportedSessions, compOn, byStart). Results are shown as written: nothing is parsed or added.
 "use strict";
 
-const GAMELOG_MAX = 50, GAMELOG_ROWS = 10;
+const GAMELOG_ROWS = 10;
+
+// A history result the log shows: it needs an https source, since every log line names one. Any other result stays
+// in the history timeline (app.js asks this too), so nothing disappears.
+const inGameLog = h => h?.kind === "result" && isDate(h.at) && !!str(h.text).trim() && !!safeUrl(h.source);
 
 // One athlete's results, newest first: [{date, comp, phase, result, source, resultAt, startUtc}]. Sources:
 // - exported sessions she is in with a result. exportedSessions() keeps only proven results (https source + resultAt),
 //   which are official for the whole session (e.g. a team). The merged per-athlete text that daySessions() builds
 //   for #day is not used here, so a teammate's result never lands in her log;
-// - her history entries of kind "result" with an https source (the job writes these), matched to the competition
-//   running that day.
-// A history result on a day that already has a session result is the same result: the session wins.
+// - her history results (inGameLog), matched to the competition running that day.
+// A history result for the same day and competition as one of her session results is that result: the session wins.
+// No cap: the job keeps at most RESULTS_MAX history results, and a cut here would hide them from both places.
 function gameLog(a){
   if (!a) return [];
-  const rows = [];
+  const rows = [], key = (date, comp) => `${date}|${comp?.id || ""}`;
   for (const s of exportedSessions()) {
     if (!s.athletes.includes(a) || !s.result) continue;
     rows.push({date: s.day, comp: s.comp, phase: s.phase, result: s.result, source: s.resultSource, resultAt: s.resultAt, startUtc: s.startUtc});
   }
-  const sessionDays = new Set(rows.map(r => r.date));
+  const fromSessions = new Set(rows.map(r => key(r.date, r.comp)));
   for (const h of Array.isArray(a.history) ? a.history : []) {
-    if (h?.kind !== "result" || !isDate(h.at) || !str(h.text).trim() || !safeUrl(h.source) || sessionDays.has(h.at)) continue;
-    rows.push({date: h.at, comp: compOn(a.sportId, h.at), phase: "", result: str(h.text).trim().slice(0, 120), source: h.source, resultAt: "", startUtc: null});
+    if (!inGameLog(h)) continue;
+    const comp = compOn(a.sportId, h.at);
+    if (fromSessions.has(key(h.at, comp))) continue;
+    rows.push({date: h.at, comp, phase: "", result: str(h.text).trim().slice(0, 120), source: h.source, resultAt: "", startUtc: null});
   }
-  return rows.sort((x, y) => y.date.localeCompare(x.date) || heCmp(x.comp?.name, y.comp?.name)).slice(0, GAMELOG_MAX);
+  return rows.sort((x, y) => y.date.localeCompare(x.date) || heCmp(x.comp?.name, y.comp?.name));
 }
 
 // Rows for the page: one per competition (prelims and final together), one per result without a competition.
@@ -50,7 +56,7 @@ function gameLogRow({comp, entries, first, last}, id){
   const shared = entries.every(e => e.source === entries[0].source);
   const src = e => linkOut(e.source, `מקור: ${host(e.source)}`);
   return `<li><span class="d">${logDays(first, last)}</span>
-    <span class="t">${comp ? compLink(comp, esc(comp.name)) : `<span class="muted">תחרות שאינה במאגר</span>`}${entries.map((e, i) =>
+    <span class="t">${comp ? compLink(comp, esc(comp.name)) : `<span class="muted">תחרות שאינה ברשימה</span>`}${entries.map((e, i) =>
       `<span class="res">${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${(k => rowMark(k, k))(`log|${id}|${e.date}|${e.phase}|${e.result}`)}</span>`).join("")}</span></li>`;
 }
 
