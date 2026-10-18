@@ -1,0 +1,59 @@
+<title>הדרך ללוס אנג׳לס 28</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="styles.css">
+
+<div dir="rtl" lang="he">
+  <nav class="nav" aria-label="ניווט ראשי">
+    <div class="nav-in">
+      <a class="brand" href="#home">הדרך ל<b>לוס אנג׳לס</b></a>
+      <div class="links">
+        <a href="#home" data-nav="home">ראשי</a>
+        <a href="#sports" data-nav="sports">ענפים</a>
+        <a href="#calendar" data-nav="calendar">לוח תחרויות</a>
+        <a href="#updates" data-nav="updates">עדכונים</a>
+        <a href="#about" data-nav="about">אודות</a>
+      </div>
+      <span class="admin-chip" id="adminChip" hidden>מצב עריכה</span>
+    </div>
+  </nav>
+  <p class="sr" id="routeStatus" aria-live="polite"></p>
+  <main id="view"><div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div></main>
+  <footer class="site-foot">
+    <p>אתר עצמאי ולא רשמי. אין לו קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של משחקי לוס אנג׳לס 2028 או לוועד האולימפי בישראל. הנתונים נאספים ממקורות פומביים, וכדאי לבדוק מול המקור המצורף. <a href="#about">איך הנתונים נאספים</a> · דיווח על טעות: <span dir="ltr">yacobiyonatan@gmail.com</span></p>
+  </footer>
+
+  <dialog id="dlg">
+    <form id="frm">
+      <h2 id="dlgTitle">ספורטאי/ת חדש/ה</h2>
+      <div class="row">
+        <label>שם<input id="fName" required maxlength="80"></label>
+        <label>שם באנגלית<input id="fNameEn" maxlength="80" dir="ltr" placeholder="Artem Dolgopyat"></label>
+      </div>
+      <div class="row">
+        <label>ענף<select id="fSportIn" required></select></label>
+        <label>מקצה / קטגוריה<input id="fEvent" maxlength="60"></label>
+      </div>
+      <div class="row">
+        <label>שלב<select id="fStageIn"></select></label>
+        <label>דירוג נוכחי<input id="fRank" maxlength="80" placeholder="למשל 7 בעולם"></label>
+      </div>
+      <div class="row">
+        <label>התחרות הבאה שלו/ה<input id="fNext" maxlength="100"></label>
+        <label>תאריך התחרות<input id="fNextDate" type="date"></label>
+      </div>
+      <label>הערות<textarea id="fNotes" rows="3" maxlength="500"></textarea></label>
+      <label>קישור למקור<input id="fSource" type="url" maxlength="400" dir="ltr" placeholder="https://"></label>
+      <p class="warn" id="frmWarn" hidden></p>
+      <p class="err" id="frmErr" hidden></p>
+      <div class="actions">
+        <button class="btn" id="saveBtn" type="submit">שמירה</button>
+        <button class="btn ghost" type="button" id="cancelBtn">ביטול</button>
+        <span class="sp"></span>
+        <button class="btn danger" type="button" id="archBtn" hidden>הסרה מהרשימה</button>
+      </div>
+    </form>
+  </dialog>
+</div>
+
+<script src="app.js"></script>
