@@ -92,3 +92,25 @@ git push -u origin dev/<you>/quotas-gymnastics-2026-10-20
 The coordinator opens the GitHub PR. The lead reviews and merges with `git merge --no-ff`, and the Publisher takes
 it from there: [publishing.md](publishing.md), from step 1.
 
+## Finals results in "מה התעדכן" (every result night)
+
+Every finals result gets its own `meta/status` change on the night, medal or not, with `athleteId`, so the Sunday
+digest shows how everyone finished (a running competition's results reach "תוצאות השבוע" only after it ends).
+Qualification rounds keep their own runbook rules (a line only for a Q, a reserve or a medal).
+
+`<sport>: ` is the sport's exact Hebrew name (the digest matches it). Gendered verbs; no date (it's in `at`); no
+trailing period; at most 120 characters.
+
+| Outcome | Template |
+|---|---|
+| Medal | `<sport>: <name> <זכה/זכתה> ב<זהב/כסף/ארד> בגמר <event> ב<competition>` |
+| Place | `<sport>: <name> <סיים/סיימה> במקום <N> בגמר <event> ב<competition>` |
+| Team, with a score | `<sport>: <team> ניצחה את <opponent> <HI>:<LO> בגמר <event> ב<competition>` / `… הפסידה ל<opponent> <HI>:<LO> בגמר …` |
+| Didn't start | no line; the session drops the athlete |
+
+- `<HI>:<LO>` is the higher score first (a dash flips in RTL). A team ("נבחרת…") is feminine: ניצחה, הפסידה, סיימה.
+- `<competition>` is short, as in the existing lines: "אליפות העולם ברוטרדם".
+- Examples (made up): `התעמלות מכשירים: רוני שמאי סיימה במקום 15 בגמר הקרב־רב באליפות העולם ברוטרדם`;
+  `התעמלות מכשירים: יהלי שושני סיימה במקום 5 בגמר המקבילים באליפות העולם ברוטרדם`;
+  `כדורסל: נבחרת הנשים ניצחה את פולין 78:65 בגמר <event> ב<competition>`.
+

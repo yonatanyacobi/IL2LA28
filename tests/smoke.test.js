@@ -217,9 +217,22 @@ test("hostile strings are escaped and unsafe links dropped", async () => {
   assert.ok(outs[3].includes("&lt;img"), "athlete page should show the escaped name");
 });
 
+// The full-site publish map (publishing.md step 5) and SCRIPTS must name every script index.html loads, or a new
+// file (e.g. sessions.js) is tested but never published, or published but never tested.
+test("every <script src> in index.html is in SCRIPTS and in the publish map", () => {
+  const html = fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8");
+  const runbook = fs.readFileSync(path.join(ROOT, "docs/runbooks/publishing.md"), "utf8");
+  const srcs = [...html.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]);
+  assert.ok(srcs.length >= 8, "index.html scripts found");
+  for (const f of srcs) {
+    assert.ok(SCRIPTS.includes(path.join(ROOT, "site", f)), `${f}: not in SCRIPTS`);
+    assert.ok(runbook.includes(`"${f}": "site/${f}"`), `${f}: not in the publishing.md files map`);
+  }
+});
+
 test("empty data renders empty states", async () => {
   const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}});
-  assert.ok(view("home").includes("אין תחרויות קרובות במאגר"));
+  assert.ok(view("home").includes("אין תחרויות קרובות ידועות."));
   assert.ok(view("home").includes("עוד אין עדכונים"));
   assert.ok(view("sport-judo").includes("אין כרגע ספורטאים או נבחרות מישראל במעקב"));
   assert.ok(view("calendar").includes("אין תחרויות שמתאימות לסינון"));
@@ -227,6 +240,37 @@ test("empty data renders empty states", async () => {
   assert.ok(view("sports").length > 0);
 });
 
+// UX S5 / components §9: a section's empty line is <p class="muted"> with what is known plus one way on (none on
+// athlete history); "במאגר" appears nowhere in site/.
+test("empty states (S5): p.muted lines, each table row's way on, no \"במאגר\"", async () => {
+  const fs = require("fs");
+  for (const f of fs.readdirSync(path.join(ROOT, "site")).filter(f => /\.(js|html)$/.test(f)))
+    assert.ok(!fs.readFileSync(path.join(ROOT, "site", f), "utf8").includes("במאגר"), `במאגר in site/${f}`);
+  const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}, now: "2026-10-19T09:00:00Z"});
+  const judo = view("sport-judo"), home = view("home");
+  assert.ok(judo.includes('<p class="muted">אין תחרויות קרובות ידועות בענף. <a href="#calendar-judo">לוח התחרויות</a></p>'), "sport row");
+  assert.ok(home.includes('<p class="muted">אין תחרויות קרובות ידועות. <a href="#calendar">לוח התחרויות</a></p>'), "home row");
+  assert.ok(home.includes('<p class="muted">אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.</p>'), "no Israeli day ahead: no link");
+  for (const out of [judo, home, view("updates"), view("calendar")])
+    assert.ok(!out.includes('class="empty"'), "a section's empty state is a p.muted line, not div.empty");
+  // With data: athlete "תחרויות קרובות" links to the sport's calendar, history has no link, and the home 14 days
+  // link to the next #day with Israelis.
+  const far = JSON.parse(JSON.stringify(FIXTURE));
+  far.athletes.forEach(a => { a.nextDate = ""; a.history = []; });
+  far.athletes[0].nextDate = "2026-12-20";
+  far.competitions = far.competitions.filter(c => c.sportId !== far.athletes[0].sportId);
+  far.sessions = [];
+  const b = await boot({data: far, now: "2026-10-19T09:00:00Z"});
+  const a0 = far.athletes[0], page = b.view(`a-${a0.id}`);
+  assert.ok(page.includes(`<p class="muted">אין תחרויות קרובות ידועות בענף. <a href="#calendar-${a0.sportId}">לוח התחרויות</a></p>`), "athlete row");
+  assert.ok(page.includes('<p class="muted">עוד אין אירועים מתועדים.</p>'), "athlete history: no way on");
+  assert.ok(b.view("home").includes(' <a href="#day-2026-12-20">ליום התחרויות הבא: '), "home 14-days row");
+  // Everyone in the next 14 days is in the today strip: the schedule says so instead of "no competitions".
+  far.athletes[0].nextDate = "2026-10-19";
+  const h = (await boot({data: far, now: "2026-10-19T09:00:00Z"})).view("home");
+  assert.ok(h.includes("כל מי שמתחרה ב־14 הימים הקרובים כבר מופיע למעלה.") && !h.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים"),
+    "strip-only day: no false 'no competitions'");
+});
 const rowsOf = strip => strip.split("<li>").slice(1);
 const count = (s, needle) => s.split(needle).length - 1;
 
@@ -1373,9 +1417,22 @@ test("#digest: athletes in a competition under way are listed under it", async (
   const competing = digestSection(text, "ישראלים מתחרים השבוע");
   const bullets = competing.split("\n• ");
   const gym = bullets.find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026"));
-  assert.ok(gym && gym.includes("עד 25 באוק׳") && gym.includes("מתקיימת עכשיו"), competing);
+  assert.ok(gym && gym.includes("עד 25 באוק׳") && gym.includes("(התעמלות מכשירים), בעיצומה"), competing);
   for (const n of ["ארטיום דולגופיאט", "ליהיא רז", "יהלי שושני"]) assert.strictEqual(count(competing, n), 1, n);
   assert.ok(competing.includes("שחר שגיב"), "upcoming athletes still listed");
+});
+
+test("#digest: no relative time for running competitions (one-day: date only; last day: יום אחרון)", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.competitions.push({id: "fra-marathon", sportId: "athletics", name: "מרתון פרנקפורט", location: "פרנקפורט", start: "2026-10-25", end: "2026-10-25", source: "https://example.org/f"});
+  const runner = data.athletes.find(a => a.sportId === "athletics");
+  runner.nextDate = "2026-10-25";
+  const gym = data.athletes.find(a => a.sportId === "artistic-gymnastics");
+  gym.nextDate = "2026-10-25";
+  const competing = digestSection((await digestOf({data, now: "2026-10-25T09:00:00Z"})).text, "ישראלים מתחרים השבוע");
+  assert.ok(competing.includes("• 25 באוק׳ · מרתון פרנקפורט (אתלטיקה)\n"), competing);
+  assert.ok(competing.includes("• עד 25 באוק׳ · אליפות העולם בהתעמלות מכשירים 2026 (התעמלות מכשירים), יום אחרון"), competing);
+  assert.ok(!/מתקיימת עכשיו|מסתיימת היום|, היום/.test(competing), competing);
 });
 
 test("#digest: one bullet per quota event, classes and athletes under it", async () => {
@@ -2324,6 +2381,25 @@ test("render budget: each main route under 50 ms at 3x today's data", async () =
   const slow = ["home", "today", "c-judo-gs-abu-dhabi-2026", "a-raz-hershko", "following", "sports", "calendar", "quotas", "day-2026-12-24"]
     .map(r => [r, bench.timeRoute(b, r, 5)]).filter(([, ms]) => ms > 50);
   assert.deepStrictEqual(slow.map(([r, ms]) => `#${r} ${ms.toFixed(0)} ms`), []);
+});
+
+// tests/probe.js: every route on 7 dates, visitor and with follows; ~1 s on the fixture.
+test("route probe: no throw, not-found, junk, banned copy, duplicate id, dangling aria or non-https link", async () => {
+  const {probe} = require("./probe.js");
+  const {renders, findings} = await probe({data: FIXTURE, quotas: QUOTAS_SNAPSHOT});
+  assert.ok(renders > 1000, `only ${renders} renders`);
+  assert.deepStrictEqual(findings, []);
+});
+
+test("route probe: each check fires", () => {
+  const {check} = require("./probe.js");
+  const found = html => { const out = []; check(html, "x", w => out.push(w)); return out; };
+  const bad = {
+    junk: "<p>undefined</p>", attr: '<a href="#a-null">x</a>', banned: "<span>השעה תפורסם</span>",
+    dup: '<h2 id="a"></h2><p id="a"></p>', aria: '<section aria-labelledby="nope"></section>', http: '<a href="http://x.org">x</a>',
+  };
+  for (const [k, html] of Object.entries(bad)) assert.strictEqual(found(html).length, 1, `${k}: ${found(html)}`);
+  assert.deepStrictEqual(found('<h2 id="h">ok</h2><section aria-labelledby="h"><a href="https://x.org">x</a> <a href="#home">y</a></section>'), []);
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
