@@ -1416,12 +1416,12 @@ test("#digest: athletes in a competition under way are listed under it", async (
   const competing = digestSection(text, "ישראלים מתחרים השבוע");
   const bullets = competing.split("\n• ");
   const gym = bullets.find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026"));
-  assert.ok(gym && gym.includes("עד 25 באוק׳") && gym.includes("מתקיימת עכשיו"), competing);
+  assert.ok(gym && gym.includes("עד 25 באוק׳") && gym.includes("(התעמלות מכשירים), בעיצומה"), competing);
   for (const n of ["ארטיום דולגופיאט", "ליהיא רז", "יהלי שושני"]) assert.strictEqual(count(competing, n), 1, n);
   assert.ok(competing.includes("שחר שגיב"), "upcoming athletes still listed");
 });
 
-test("#digest: a one-day or last-day competition says \"today\", not \"now\"", async () => {
+test("#digest: no relative time for running competitions (one-day: date only; last day: יום אחרון)", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
   data.competitions.push({id: "fra-marathon", sportId: "athletics", name: "מרתון פרנקפורט", location: "פרנקפורט", start: "2026-10-25", end: "2026-10-25", source: "https://example.org/f"});
   const runner = data.athletes.find(a => a.sportId === "athletics");
@@ -1429,9 +1429,9 @@ test("#digest: a one-day or last-day competition says \"today\", not \"now\"", a
   const gym = data.athletes.find(a => a.sportId === "artistic-gymnastics");
   gym.nextDate = "2026-10-25";
   const competing = digestSection((await digestOf({data, now: "2026-10-25T09:00:00Z"})).text, "ישראלים מתחרים השבוע");
-  assert.ok(competing.includes("• 25 באוק׳ · מרתון פרנקפורט (אתלטיקה), היום"), competing);
-  assert.ok(competing.includes("• עד 25 באוק׳ · אליפות העולם בהתעמלות מכשירים 2026 (התעמלות מכשירים), מסתיימת היום"), competing);
-  assert.ok(!competing.includes("מתקיימת עכשיו"), competing);
+  assert.ok(competing.includes("• 25 באוק׳ · מרתון פרנקפורט (אתלטיקה)\n"), competing);
+  assert.ok(competing.includes("• עד 25 באוק׳ · אליפות העולם בהתעמלות מכשירים 2026 (התעמלות מכשירים), יום אחרון"), competing);
+  assert.ok(!/מתקיימת עכשיו|מסתיימת היום|, היום/.test(competing), competing);
 });
 
 test("#digest: one bullet per quota event, classes and athletes under it", async () => {
