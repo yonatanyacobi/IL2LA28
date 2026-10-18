@@ -17,8 +17,13 @@
         <a href="#admin" data-nav="admin" id="adminLink" hidden>בקרה</a>
       </div>
       <span class="admin-chip" id="adminChip" hidden>מצב עריכה</span>
+      <button class="btn ghost small" type="button" id="visitorBtn" hidden>צפייה כגולש/ת</button>
     </div>
   </nav>
+  <div class="visitor-bar" id="visitorBar" role="status" hidden>
+    <span>את/ה צופה באתר כמו גולש/ת: נתונים מהפרסום הציבורי, בלי כלי עריכה.</span>
+    <button class="btn small" type="button" id="editModeBtn">חזרה למצב עריכה</button>
+  </div>
   <p class="sr" id="routeStatus" aria-live="polite"></p>
   <main id="view" tabindex="-1" aria-label="תוכן ראשי"><div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div></main>
   <footer class="site-foot">

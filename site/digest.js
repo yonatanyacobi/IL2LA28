@@ -31,11 +31,32 @@ function digestText(t = today()){
   const from = addDays(t, -6);
   const dataTs = str(S.live ? S.lastRun : (S.generatedAt || S.lastRun)).slice(0, 10);
   const day = c => str(c.at).slice(0, 10);
-  const changes = S.changes.filter(c => isDate(day(c)) && day(c) >= from && day(c) <= t)
+  const end = c => c.end || c.start;
+  const weekChanges = S.changes.filter(c => isDate(day(c)) && day(c) >= from && day(c) <= t);
+  // Results: competitions in tracked sports that ended in the 7 days before today, each with all changes about its
+  // sport since it started (a 9-day Worlds' first results are older than a week by the next Sunday).
+  // 7 full days, not t-6, so a Sunday digest still covers last Sunday's finals.
+  // Changes carry no competition id, so the sport is taken from athleteId, else from the "<sport>: " prefix the
+  // daily job writes.
+  const resFrom = addDays(t, -7);
+  const resChanges = S.changes.filter(c => isDate(day(c)) && day(c) <= t);
+  const changeSport = c => S.athletes.find(a => a.id === c.athleteId)?.sportId
+    || S.sports.find(s => waText(c.text).startsWith(waText(s.he) + ":"))?.id || "";
+  const used = new Set();
+  const results = S.comps.filter(c => end(c) >= resFrom && end(c) < t && dayNo(c.start, end(c)) <= SERIES_DAYS && athletesOf(c.sportId).length)
+    .sort((a, b) => end(b).localeCompare(end(a)) || heCmp(a.name, b.name))
+    .map(c => {
+      const who = S.athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && c.start <= a.nextDate && a.nextDate <= end(c));
+      const about = resChanges.filter(x => !used.has(x) && changeSport(x) === c.sportId && day(x) >= c.start);
+      about.forEach(x => used.add(x));
+      return [waCut(`• ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))})`),
+        ...(who.length ? waList("  ישראלים: ", names(who)) : []),
+        ...(about.length ? about.map(x => waCut(`  – ${waText(x.text)}`)) : ["  התוצאות עוד לא עודכנו באתר."])].join("\n");
+    });
+  const changes = weekChanges.filter(c => !used.has(c))
     .sort((a, b) => day(b).localeCompare(day(a)))
     .map(c => waCut(`• ${waText(c.text)}`));
   // Competitions already under way: their athletes' nextDate may be past, so they are listed per competition.
-  const end = c => c.end || c.start;
   const running = S.comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS)
     .map(c => ({c, list: S.athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && c.start <= a.nextDate && a.nextDate <= end(c))}))
     .filter(r => r.list.length);
@@ -66,13 +87,15 @@ function digestText(t = today()){
       ...(stakes ? [waCut(`  מה זה אומר: ${stakes}`)] : []),
     ].join("\n");
   });
-  const sections = [["מה התעדכן", changes], ["ישראלים מתחרים השבוע", competing], ["אירועי מכסה בשבועיים הקרובים", quotas]]
+  const sections = [["תוצאות השבוע", results], ["מה התעדכן", changes], ["ישראלים מתחרים השבוע", competing], ["אירועי מכסה בשבועיים הקרובים", quotas]]
     .filter(([, items]) => items.length).map(([title, items]) => ({title, items, cut: 0}));
+  // Results always get a heading once anything else is said, so "no results" is explicit rather than missing.
+  if (sections.length && !results.length) sections.unshift({title: "תוצאות השבוע", items: [], none: "לא הסתיימו השבוע תחרויות בענפים שבמעקב.", cut: 0});
   const head = [`*הדרך ללוס אנג׳לס 28 · תקציר שבועי*`, `${fmtRange(from, t)}${isDate(dataTs) ? ` · נכון ל־${fmt(dataTs)}` : ""}`,
     ...(isDate(dataTs) && dataTs < addDays(t, -2) ? [`שימו לב: הנתונים לא עודכנו מאז ${fmt(dataTs)}.`] : [])];
   const foot = ["", `לכל הפרטים: ${SITE_URL}`, "אתר לא רשמי. הנתונים ממקורות פומביים, כדאי לבדוק מול המקור."];
   const build = () => [...head,
-    ...(sections.length ? sections.flatMap(s => ["", `*${s.title}*`, ...s.items, ...(s.cut ? [`• ועוד ${s.cut} באתר`] : [])])
+    ...(sections.length ? sections.flatMap(s => ["", `*${s.title}*`, ...s.items, ...(s.none ? [s.none] : []), ...(s.cut ? [`• ועוד ${s.cut} באתר`] : [])])
       : ["", "שבוע שקט: אין עדכונים, תחרויות או אירועי מכסה ידועים."]),
     ...foot].join("\n");
   let text = build();
