@@ -11,6 +11,8 @@ Published as a claude.ai Artifact: https://claude.ai/artifact/RyYBeRXq6pYwKdXujv
 - `job/` — the daily scheduled Claude job: `SKILL.md` (its prompt) and `export_data.py` (DB dump → data.json,
   refuses to publish if a collection shrinks >20%). The live copy runs from
   `~/.claude/scheduled-tasks/la28-israel-daily-update/`; keep it in sync after merging changes here.
+- Quotas: edit only `data/quotas/quotas.json` (each item has a fact-check `review`); `job/build_quotas.py` writes
+  the tracked `site/quotas.json` with only `ok`/`fixed` items and no `review`. The daily job never touches either.
 - `tests/fixtures/data.json` — a real snapshot used by tests.
 
 ## Platform constraints (artifact sandbox)
