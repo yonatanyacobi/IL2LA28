@@ -78,7 +78,7 @@ function viewEvent(id){
   const dayHead = (d, only) => `<h3><a class="hlink" href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span>${only ? DATE_ONLY : ""}</h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
   const schedule = !flat.length
-    ? `<p class="muted">${t <= (c.end || c.start) ? "הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי." : "לא תועדו סשנים של ישראלים בתחרות הזו."}</p>`
+    ? calEmpty(t <= (c.end || c.start) ? "הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי." : "לא תועדו סשנים של ישראלים בתחרות הזו.", c.sportId)
     : [...groups].filter(([, list]) => list.length).map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k, dateOnly(list))}
         <ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list))).join("")}</ul></div>`).join("")
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועים סשנים של ישראלים.</p>` : "")(
@@ -93,7 +93,8 @@ function viewEvent(id){
   </div>
   <section class="panel" aria-labelledby="evSumH"><h2 id="evSumH">בקצרה</h2>
     ${athletes.length ? `<p class="kpi">${kpi}</p>`
-      : `<p>לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.${tracked ? ` <a href="#sport-${esc(c.sportId)}">${who(tracked)} במעקב בענף</a>` : ""}</p>`}
+      : tracked ? emptyLine("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", `#sport-${c.sportId}`, `${who(tracked)} ברשימה בענף`)
+        : calEmpty("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", c.sportId)}
   </section>
   <div class="event-cols">
     <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הסשנים</h2>${schedule}</section>

@@ -41,7 +41,8 @@ No final/Official list by the 25.10 run: wait. Nothing is recorded from another 
 2. **Session**: `result` from the table, `resultSource` (Tongyeong: the results tab URL as it is on the night;
    floor: the Official PDF), `resultAt` = `date -u +%Y-%m-%dT%H:%M:%SZ`. All three, or the export blanks the result.
    Floor session with both athletes: `ארטיום דולגופיאט: <result> · נועם ברקוביץ: <result>`.
-3. **"מה התעדכן"**: a medal only (Tongyeong 1–3, floor gold/silver/bronze). Prepend the line below to
+3. **"מה התעדכן"**: Tongyeong: a podium only. Floor (and every other final): **every finisher gets a line**, medal or
+   not, so the 25.10 digest shows how everyone finished (coordinator's decision, 18.10). Prepend the line below to
    `meta/status` `changes` (`{"at": "2026-10-24", "text": …, "athleteId": …}`), `if_version` from your read, keep 30.
 
 **Don't change:** `stage` (both); `rankNum`; `quotas.json` for gymnastics (no individual quotas at the 2026 Worlds).
@@ -71,7 +72,8 @@ Sagiv's rank waits for the first Olympic qualification ranking list dated after 
 
 ## Drafts for "מה התעדכן" (`meta/status`)
 
-Medals only. The date is in `at`; keep the sport prefix exactly (`changeSport()` in digest.js matches it).
+Tongyeong: podium only. Finals: every finisher. The date is in `at`; keep the sport prefix exactly
+(`changeSport()` in digest.js matches it). No trailing period.
 
 **שחר שגיב** (`shachar-sagiv`), Tongyeong 1–3:
 - `טריאתלון: שחר שגיב סיים <ראשון/שני/שלישי> בגביע העולם בטונגיונג (ספרינט)`
@@ -80,11 +82,15 @@ Medals only. The date is in `at`; keep the sport prefix exactly (`changeSport()`
 - Gold: `התעמלות מכשירים: <name> זכה בזהב בגמר הקרקע באליפות העולם ברוטרדם`
 - Silver: `התעמלות מכשירים: <name> זכה בכסף בגמר הקרקע באליפות העולם ברוטרדם`
 - Bronze: `התעמלות מכשירים: <name> זכה בארד בגמר הקרקע באליפות העולם ברוטרדם`
+- 4–8: `התעמלות מכשירים: <name> סיים במקום <N> בגמר הקרקע באליפות העולם ברוטרדם`
+
+The same form covers the other Rotterdam finals (women's all-around 23.10, bars 24.10, day 2 on 25.10): see
+"Finals results" in [result-night.md](result-night.md).
 
 Rotterdam stays in "מה התעדכן" until 1.11 (results of a running competition don't reach "תוצאות השבוע").
 
 ## Not covered yet
 
 - **Women's bars final, also 24.10 at 15:00** (14:00 Rotterdam), if Shoshani (or Raz/Shamay) qualifies on 19.10.
-  Roni's women's plan covers qualification only; no final wording. Don't write it until Roni adds it.
+  The "מה התעדכן" line follows the template in result-night.md; the history `result.text` still needs Roni's wording.
 - **#134 unresolved by 24.10:** no floor session and no floor result; their `next`/`nextDate` stay until it is.
