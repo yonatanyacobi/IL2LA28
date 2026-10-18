@@ -1204,7 +1204,10 @@ test("visitor bar markup: inside the sticky nav, not a live region; short toggle
   const bar = nav.match(/<div class="visitor-bar"[^>]*>/)?.[0] || "";
   assert.ok(bar.includes('id="visitorBar"') && !/\brole=/.test(bar), "bar inside <nav>, no role");
   assert.ok(nav.includes('id="visitorChip"'));
-  assert.ok(/id="visitorBtn"[^>]*aria-label="צפייה באתר כגולש\/ת"/.test(nav) || /aria-label="צפייה באתר כגולש\/ת"[^>]*id="visitorBtn"/.test(nav));
+  // WCAG 2.5.3: the accessible name contains the visible label, both the desktop and the phone form.
+  const btn = nav.match(/<button[^>]*id="visitorBtn"[^>]*>([\s\S]*?)<\/button>/);
+  const name = btn[0].match(/aria-label="([^"]*)"/)[1], visible = btn[1].replace(/<[^>]+>/g, "");
+  assert.ok(name.includes(visible) && name.includes("כגולש/ת"), `${name} vs ${visible}`);
 });
 
 test("view-as-visitor toggle with blocked storage shows a message instead of reloading", async () => {
@@ -1212,7 +1215,8 @@ test("view-as-visitor toggle with blocked storage shows a message instead of rel
   e.run(`localStorage.setItem = () => { throw new Error("blocked"); }; localStorage.getItem = () => { throw new Error("blocked"); }`);
   e.run("setVisitorView(true)");
   assert.ok(!e.ctx.reloads, "no reload");
-  assert.ok(!e.run(`$("visitorMsg").hidden`) && e.run(`$("visitorMsg").textContent`).includes("חוסם שמירה מקומית"));
+  assert.ok(!e.run(`$("visitorMsg").hidden`) && e.run(`$("visitorMsgText").textContent`).includes("חוסם שמירה מקומית"));
+  assert.ok(fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8").includes('id="visitorMsgClose"'), "message has a close button");
   const ok = await boot({claude: fakeEditor()});
   ok.run("setVisitorView(true)");
   assert.ok(ok.ctx.reloads === 1 && ok.run(`$("visitorMsg").hidden`), "normal storage: reload, no message");

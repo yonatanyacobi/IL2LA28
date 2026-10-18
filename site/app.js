@@ -951,6 +951,7 @@ document.addEventListener("click", e => {
 });
 $("frm").addEventListener("submit", saveForm);
 $("visitorBtn").addEventListener("click", () => setVisitorView(true));
+$("visitorMsgClose").addEventListener("click", () => { $("visitorMsg").hidden = true; });
 $("editModeBtn").addEventListener("click", () => setVisitorView(false));
 $("archBtn").addEventListener("click", archive);
 $("cancelBtn").addEventListener("click", () => $("dlg").close());
@@ -1030,7 +1031,7 @@ const VISITOR_KEY = "la28.viewAsVisitor";
 function setVisitorView(on){
   store.set(VISITOR_KEY, on);
   if (store.get(VISITOR_KEY, !on) !== on) {   // storage blocked: a reload would land in the same mode
-    $("visitorMsg").textContent = "אי אפשר להחליף תצוגה: הדפדפן חוסם שמירה מקומית באתר הזה.";
+    $("visitorMsgText").textContent = "אי אפשר להחליף תצוגה: הדפדפן חוסם שמירה מקומית באתר הזה.";
     $("visitorMsg").hidden = false;
     return;
   }
