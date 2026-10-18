@@ -2,7 +2,9 @@
 
 Usage: python3 athlete_patch.py <current.json> <proposed.json> [--now ISO]
 <current.json>: the athlete doc as read (bare or {"id", "data"}). <proposed.json>: the job's new values for the
-direct-write fields, optionally with "historyEntry": {at, kind, text, source}.
+direct-write fields, plus at most one of
+  "result": {at, text, source}: any competition result the write records (it becomes a kind "result" entry)
+  "historyEntry": {at, kind, text, source}: other entries (e.g. kind "rank")
 Prints the update as JSON: {} means nothing visible changed, so skip the write entirely.
 The page marks a verified record "stale" when updatedAt > verifiedAt, so an unchanged rewrite would undo
 human verification. Exit 2 on a field the job may not write directly.
@@ -11,7 +13,7 @@ import json, os, sys
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from export_data import text  # same normalisation the public file gets (strip, ' -> ׳)
+from export_data import date, https, text  # same normalisation and checks the public file gets
 
 VISIBLE = ["rank", "next", "nextDate", "notes", "event", "rankNum"]
 # Written when they differ, but alone they don't move updatedAt: not shown on the page.
@@ -28,14 +30,31 @@ def norm(k, v):
     return text(v, 10_000) if isinstance(v, str) else ("" if v is None else v)
 
 
+def result_entry(r):
+    """The history entry for a recorded result. Refused unless it has the competition day, text and an official link."""
+    if not isinstance(r, dict) or set(r) - {"at", "text", "source"}:
+        raise ValueError('"result" must be {at, text, source}')
+    if not date(r.get("at")):
+        raise ValueError('"result".at must be the competition day, YYYY-MM-DD')
+    if not text(r.get("text")):
+        raise ValueError('"result".text is empty')
+    if not https(r.get("source")):
+        raise ValueError('"result".source must be the official https results link')
+    return {"at": r["at"], "kind": "result", "text": text(r["text"], 300), "source": r["source"]}
+
+
 def build(current, proposed, now):
-    bad = set(proposed) - set(VISIBLE + SILENT + [SOURCE, "historyEntry"])
+    bad = set(proposed) - set(VISIBLE + SILENT + [SOURCE, "historyEntry", "result"])
     if bad:
         raise ValueError(f"not a direct-write field: {sorted(bad)}")
+    if "result" in proposed and "historyEntry" in proposed:
+        raise ValueError('one history entry per update: "result" or "historyEntry", not both')
+    entry = result_entry(proposed["result"]) if "result" in proposed else proposed.get("historyEntry")
+    if isinstance(entry, dict) and entry.get("kind") == "result" and "result" not in proposed:
+        entry = result_entry({k: entry.get(k) for k in ("at", "text", "source")})  # same checks either way
     changed = {k: proposed[k] for k in VISIBLE if k in proposed and norm(k, proposed[k]) != norm(k, current.get(k))}
     silent = {k: proposed[k] for k in SILENT if k in proposed and norm(k, proposed[k]) != norm(k, current.get(k))}
     hist = current.get("history") if isinstance(current.get("history"), list) else []
-    entry = proposed.get("historyEntry")
     # A new competition result is itself visible news on the athlete page; a repeat of one already logged is not.
     new_result = bool(entry) and entry.get("kind") == "result" and not any(
         isinstance(h, dict) and h.get("at") == entry.get("at") and norm("notes", h.get("text")) == norm("notes", entry.get("text"))
