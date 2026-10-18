@@ -102,9 +102,9 @@ The contract requires both whenever `result` is set. Without them the export bla
 It's based on #134, the item `artistic-gymnastics` / `קבוצתי גברים`, outcome (ב). Publish it **only after** Dana and Tamar
 sign #134 against FIG's Official results. Until then the digest has no team line.
 
-Line, one line, maqaf before numbers, absolute date:
+Line, one line, maqaf before numbers, date in the job's format (`he_date`, "18 באוק׳ 2026"):
 ```
-נבחרת הגברים במקום 20 במוקדמות אליפות העולם ברוטרדם (18.10.2026) ולא עלתה לגמר הקבוצתי; ללא מכסת נבחרת, והסיכוי הבא: 9 נבחרות במוקדמות אליפות העולם 2027
+נבחרת הגברים במקום 20 במוקדמות אליפות העולם ברוטרדם (18 באוק׳ 2026) ולא עלתה לגמר הקבוצתי; ללא מכסת נבחרת, והסיכוי הבא: 9 נבחרות במוקדמות אליפות העולם 2027
 ```
 - The rank (20) and the date come from #134's israelNote. If the Official PDF gives a different rank, change only the
   number.
