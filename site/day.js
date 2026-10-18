@@ -16,7 +16,9 @@ function compBlock(comp, sessions, sid, d){
   const t = today();
   const only = dateOnly(sessions), tail = only ? DATE_ONLY : "";
   const list = `<ul class="rows sess">${sessions.sort(sessionOrder).map(s => sessionRow(s, d, only)).join("")}</ul>`;
-  if (!comp) return `<h3>${esc(sessions[0].athletes[0].next || sportName(sid))}${tail}</h3>${list}`;
+  // An athlete's "next" names day d only when nextDate is d: a history result's athlete has usually moved on.
+  const nexts = new Set(sessions.flatMap(s => s.athletes.map(a => a.nextDate === d ? str(a.next).trim() : "")));
+  if (!comp) return `<h3>${esc(nexts.size === 1 && [...nexts][0] || sportName(sid))}${tail}</h3>${list}`;
   const total = dayNo(comp.start, comp.end || comp.start);
   const now = comp.start <= t && t <= (comp.end || comp.start) && d === t;
   // Stakes: in-contention items whose quota event covers this day (an earned item mustn't show pre-event stakes).

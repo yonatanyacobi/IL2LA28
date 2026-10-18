@@ -43,7 +43,7 @@ function followUpcoming(){
   const t = today();
   const athletes = followedAthletes().filter(a => isDate(a.nextDate) && a.nextDate >= t)
     .map(a => ({k: `up|a|${a.id}`, d: a.nextDate, chip: a.nextDate === t ? statusChip("competing") : "",
-      html: `<a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))}${a.next ? ` · ${esc(a.next)}` : ""}</small>`}));
+      html: `<a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))}${a.next ? ` · ${nextCompFact(a)}` : ""}</small>`}));
   const comps = upcoming().filter(c => S.followSports.has(c.sportId))
     .map(c => ({k: `up|c|${c.id}`, d: c.start, chip: c.start <= t ? `<span class="pill s-live">מתקיימת עכשיו</span>` : "",
       html: `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLinkOr(c)}<small>${esc(c.location)}</small>`}));
