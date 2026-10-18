@@ -240,6 +240,12 @@ test("empty states: one form, a next step, no \"במאגר\"", async () => {
   const a0 = far.athletes[0];
   assert.ok(b.view(`a-${a0.id}`).includes(`<div class="empty"><p>עוד אין אירועים מתועדים.</p><p><a href="#calendar-${a0.sportId}">ללוח התחרויות בענף</a></p></div>`));
   assert.ok(b.view("home").includes('<p><a href="#day-2026-12-20">לתחרות הבאה: '), "home schedule: next #day with Israelis");
+  // Everyone in the next 14 days is in the today strip: the schedule says so instead of "no competitions".
+  far.athletes[0].nextDate = "2026-10-19";
+  const c = await boot({data: far, now: "2026-10-19T09:00:00Z"});
+  const h = c.view("home");
+  assert.ok(h.includes("מופיעים למעלה, ב„ישראלים מתחרים היום”.") && !h.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים"),
+    "strip-only day: no false 'no competitions'");
 });
 
 const STRIP = "ישראלים מתחרים היום";
