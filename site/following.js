@@ -6,6 +6,11 @@
 const FEED_MAX = 20;
 // Baseline for "since your last visit to #following". A first visit sets it silently, so nothing is "new".
 const followSeenAtLoad = store.get("la28.followingSeen", null);
+// What the viewer saw of each followed record at that visit, so an updatedAt bump that changes nothing visible
+// (a source link, a verification stamp) doesn't count as news.
+const SHOWN_FIELDS = ["name", "event", "stage", "rank", "next", "nextDate"];
+const shownOf = a => SHOWN_FIELDS.map(k => str(a[k])).join("\u241f");
+const shownAtLoad = store.get("la28.followingShown", {});
 let badgeSince = followSeenAtLoad;
 S.followSports = new Set(store.get("la28.followSports", []));
 
@@ -26,8 +31,9 @@ function followFeed(since){
   return followedAthletes().flatMap(a => {
     const items = (Array.isArray(a.history) ? a.history : [])
       .filter(h => isDate(h.at) && (h.at > day || (h.at === day && str(a.updatedAt) > since))).map(h => ({a, h}));
-    const at = str(a.updatedAt).slice(0, 10);
-    return items.length || !(str(a.updatedAt) > since && isDate(at)) ? items : [{a, h: {at, text: "הפרטים עודכנו"}}];
+    const at = str(a.updatedAt).slice(0, 10), was = shownAtLoad[a.id];
+    const changed = str(a.updatedAt) > since && isDate(at) && was !== undefined && was !== shownOf(a);
+    return items.length || !changed ? items : [{a, h: {at, text: "הפרטים עודכנו"}}];
   }).sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(x.a.name, y.a.name)).slice(0, FEED_MAX);
 }
 
@@ -45,6 +51,7 @@ function viewFollowing(tab = ""){
   // Opening the page is the "visit": the badge clears, and the feed keeps showing what was new on arrival.
   badgeSince = new Date().toISOString();
   store.set("la28.followingSeen", badgeSince);
+  store.set("la28.followingShown", Object.fromEntries(followedAthletes().map(a => [a.id, shownOf(a)])));
   const athletes = S.athletes.filter(a => S.follows.has(a.id)).sort((a, b) => heCmp(a.name, b.name));
   const sports = S.sports.filter(s => S.followSports.has(s.id)).sort((a, b) => heCmp(a.he, b.he));
   const head = `<h1 tabindex="-1">במעקב שלי</h1>
@@ -85,9 +92,9 @@ function viewFollowing(tab = ""){
 function followingDecorate(h, html){
   if (h.startsWith("sport-") && sportById(h.slice(6))) {
     const id = h.slice(6), on = S.followSports.has(id), he = esc(sportName(id));
-    html = html.replace("</h1>", `</h1><button class="btn ghost follow" data-follow-sport="${esc(id)}" aria-pressed="${on}" aria-label="${on ? `${he} במעקב שלך` : `מעקב אחרי ${he}`}">${on ? `<span aria-hidden="true">★</span> הענף במעקב שלך` : `<span aria-hidden="true">☆</span> מעקב אחרי הענף`}</button>`);
+    html = html.replace("</h1>", `</h1><button class="btn ghost follow" data-follow-sport="${esc(id)}" aria-pressed="${on}">${on ? `<span aria-hidden="true">★</span> הענף<span class="sr"> ${he}</span> במעקב שלך` : `<span aria-hidden="true">☆</span> מעקב אחרי הענף<span class="sr"> ${he}</span>`}</button>`);
   }
-  if (h === "home") html = html.replace("<h2>במעקב שלי</h2>", `<h2>במעקב שלי</h2><a href="#following">לכל המעקב</a>`);
+  if (h === "home") html = html.replace("<h2>במעקב שלי</h2>", `<h2>במעקב שלי</h2><a href="#following">לדף המעקב</a>`);
   // The visible badge is aria-hidden; screen readers get "מעקב, N עדכונים חדשים" from the link text.
   const n = followFeed(badgeSince).length, badge = $("followBadge"), sr = $("followBadgeSr");
   if (badge) { badge.hidden = !n; badge.textContent = n > 9 ? "9+" : String(n); }

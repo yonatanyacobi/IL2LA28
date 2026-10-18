@@ -736,10 +736,10 @@ const withHistory = (id, entries) => {
 test("following a sport persists across reloads and shows on #following-sports", async () => {
   const b = await boot();
   const off = b.view("sport-judo");
-  assert.ok(off.includes('data-follow-sport="judo" aria-pressed="false" aria-label="מעקב אחרי ג׳ודו"><span aria-hidden="true">☆</span> מעקב אחרי הענף</button>'));
+  assert.ok(off.includes('data-follow-sport="judo" aria-pressed="false"><span aria-hidden="true">☆</span> מעקב אחרי הענף<span class="sr"> ג׳ודו</span></button>'), "label in name");
   b.fire("click", {closest: () => ({dataset: {followSport: "judo"}})});
   assert.strictEqual(b.ctx.localStorage.getItem("la28.followSports"), '["judo"]');
-  assert.ok(b.view("sport-judo").includes('aria-pressed="true" aria-label="ג׳ודו במעקב שלך"><span aria-hidden="true">★</span> הענף במעקב שלך</button>'));
+  assert.ok(b.view("sport-judo").includes('aria-pressed="true"><span aria-hidden="true">★</span> הענף<span class="sr"> ג׳ודו</span> במעקב שלך</button>'));
   const again = await boot({storage: {"la28.followSports": '["judo"]'}});
   const tab = again.view("following-sports");
   assert.ok(tab.includes("ענפים (1)") && tab.includes('<a class="sport" href="#sport-judo">') && tab.includes('aria-current="page">ענפים (1)'));
@@ -783,7 +783,7 @@ test("#following review fixes (#138): per-tab empty states, updatedAt fallback r
   const athletesOnly = await boot({follows: ["raz-hershko"], now: "2026-10-18T20:00:00Z"});
   const sportsTab = athletesOnly.view("following-sports");
   assert.ok(sportsTab.includes("עוד אין ענפים במעקב. לחצו על ☆ בדף של ענף כדי לעקוב.") && !sportsTab.includes("עוד אין כאן אף אחד"));
-  assert.ok(athletesOnly.view("home").includes('<h2>במעקב שלי</h2><a href="#following">לכל המעקב</a>'), "home link");
+  assert.ok(athletesOnly.view("home").includes('<h2>במעקב שלי</h2><a href="#following">לדף המעקב</a>'), "home link");
   const sportsOnly = await boot({storage: {"la28.followSports": '["judo"]'}, quotas: SPORT_QUOTAS});
   const athTab = sportsOnly.view("following");
   assert.ok(athTab.includes("עוד אין ספורטאים או נבחרות במעקב. לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב."));
@@ -792,11 +792,45 @@ test("#following review fixes (#138): per-tab empty states, updatedAt fallback r
   assert.ok(!none.includes("<h3>הצעות למעקב</h3>"), "suggestions heading is an h2");
   // History has only the snapshot's own entries before the last visit; the record itself changed after it.
   const data = withHistory("raz-hershko", [{at: "2026-10-01", kind: "start", text: "נכנסה למעקב"}]);
-  const b = await boot({data, follows: ["raz-hershko"], now: "2026-10-18T20:00:00Z", storage: {"la28.followingSeen": '"2026-10-12T00:00:00Z"'}});
+  // At the last visit she showed a different rank; a record whose shown fields didn't change gets no row.
+  const raz = data.athletes.find(a => a.id === "raz-hershko");
+  const shown = r => JSON.stringify({"raz-hershko": ["name", "event", "stage", "rank", "next", "nextDate"].map(k => k === "rank" ? r : String(raz[k] ?? "")).join("\u241f")});
+  const quiet = await boot({data, follows: ["raz-hershko"], now: "2026-10-18T20:00:00Z", storage: {"la28.followingSeen": '"2026-10-12T00:00:00Z"', "la28.followingShown": shown(String(raz.rank ?? ""))}});
+  quiet.view("home");
+  assert.ok(quiet.els.followBadge.hidden && quiet.view("following").includes("(0)"), "updatedAt bump without a visible change: no row, no badge");
+  const b = await boot({data, follows: ["raz-hershko"], now: "2026-10-18T20:00:00Z", storage: {"la28.followingSeen": '"2026-10-12T00:00:00Z"', "la28.followingShown": shown("2 בעולם")}});
   b.view("home");
   assert.strictEqual(b.els.followBadge.textContent, "1", "fallback row counts");
   const page = b.view("following");
   assert.ok(page.includes('<a href="#a-raz-hershko">רז הרשקו</a><small>הפרטים עודכנו</small>') && page.includes("18 באוק׳ 2026"), "dated by updatedAt");
+});
+
+test("followed first: sports page, today strip and chances panel put followed sports and athletes first", async () => {
+  const firstSport = html => html.split('<ul class="sports">')[1]?.match(/href="#sport-([^"]+)"/)?.[1];
+  const plain = await boot({now: "2026-10-29T08:00:00Z", quotas: REAL_QUOTAS});
+  const base = firstSport(plain.view("sports"));
+  const other = plain.run(`JSON.stringify(S.sports.filter(s => athletesOf(s.id).length).map(s => s.id))`);
+  const target = JSON.parse(other).find(id => id !== base);
+  const followed = await boot({now: "2026-10-29T08:00:00Z", quotas: REAL_QUOTAS, storage: {"la28.followSports": JSON.stringify([target])}});
+  assert.strictEqual(firstSport(followed.view("sports")), target, "followed sport first on #sports");
+
+  // 29.10: Abu Dhabi (judo) is running; athletics (אתלטיקה) sorts before judo (ג׳ודו) by name.
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  Object.assign(data.athletes.find(a => a.id === "adva-cohen"), {nextDate: "2026-10-29", next: "מרוץ"});
+  const rowsAt = async storage => rowsOf(stripOf((await boot({data, now: "2026-10-29T08:00:00Z", storage})).view("home")));
+  assert.ok((await rowsAt({}))[0].includes("adva-cohen"), "no follows: by sport name");
+  assert.ok((await rowsAt({"la28.followSports": '["judo"]'}))[0].includes("גרנד סלאם אבו דאבי"), "followed sport's row first");
+
+  const closest = async storage => {
+    const home = (await boot({now: "2026-10-18T08:00:00Z", quotas: REAL_QUOTAS, storage})).view("home");
+    return rowsOf(home.split('class="rows closest"')[1]?.split("</ul>")[0] || "").map(r => r.match(/href="#sport-([^"]+)"/)?.[1]);
+  };
+  const order = await closest({});
+  assert.ok(order.length > 1 && order[0] !== "judo" && order.includes("judo"), `fixture premise: ${order}`);
+  assert.strictEqual((await closest({"la28.followSports": '["judo"]'}))[0], "judo", "followed sport first in the chances panel");
+  assert.strictEqual((await closest({"la28.follows": '["raz-hershko"]'}))[0], "judo", "followed athlete's group first");
+  const home = (await boot({now: "2026-10-18T08:00:00Z", quotas: REAL_QUOTAS})).view("home");
+  assert.ok(home.includes("מקצים שבהם ישראל במרוץ למכסה. מה שבמעקב שלך מופיע ראשון, והשאר לפי מועד אירוע המכסה הבא."), "foot copy");
 });
 
 test("fetch failure shows the retry view", async () => {
