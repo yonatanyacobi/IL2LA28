@@ -1,20 +1,21 @@
 # רדאר אירועים 18.10–15.12.2026: ענפי הלחימה, ההתעמלות והמים (רוני)
 
 נכתב ב-18.10.2026. נכללו רק אירועים שיש בהם ישראלים, או שיש להם משקל במכסות או בדירוג של LA28.
-בעמודה "ישראלים" כתוב "לא ידוע" כשלא נמצאה רשימת רישום רשמית.
+בעמודה "ישראלים" כתוב "לא ידוע" כשלא נמצאה רשימת רישום רשמית. בעמודה "פתוח" מופיע מה שעוד חסר,
+ועד מתי הוא צפוי להתפרסם. תאריך שמסומן "(הערכה)" הוא לפי מועד פתיחת התחרות, לא לפי הודעה רשמית.
 
-| תאריכים | אירוע | ענף | ישראלים | מה על הכף | מקור |
-|---|---|---|---|---|---|
-| 17–25.10 | אליפות העולם, רוטרדם | התעמלות מכשירים | גברים: דולגופיאט, פיאטוב, אורטל, ליובימוב, ברקוביץ. נשים: ליהיא רז, רוני שמאי, יהלי שושני | **מכסה ישירה**: 3 הנבחרות הראשונות בגמר הקבוצתי (20.10). העלייה של ישראל לגמר טרם אומתה ב-FIG. קרב-רב 22.10; מכשירים 24–25.10 | [FIG](https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf), [ערוץ הספורט](https://www.sport5.co.il/articles.aspx?FolderID=8008&docID=564098) |
-| 27.10–8.11 | אליפות העולם, נינגבו | הרמת משקולות | לא ידוע (צליה גולד במעקב) | אירוע ההעפלה הראשון בתקופה 1 של דירוג OQR. נספרות 3 התוצאות הטובות מתקופה 1 | [IWF](https://cdn.nocnsf.nl/media/nlsj0xsh/wlf-la28-qualification-system.pdf), [Wikipedia](https://en.wikipedia.org/wiki/2026_World_Weightlifting_Championships) |
-| 29–31.10 | גרנד סלאם אבו דאבי | ג׳ודו | רשומים: אשפיז 60- (מדורג 2 בתחרות), אלבז 73- (מדורג 8) ומוריץ 73-, גפן פרימו 52- (3), נלסון לוי 57- (1), הרשקו 78+ (1), וגם סימין, גושן, סיון, קוקולייב, סימחייב | נקודות לדירוג האולימפי של IJF: 17 הראשונים בכל משקל עולים ב-12.6.2028. לא רשומות: שמש, כרם פרימו, לניר, מישינר | [IJF entries](https://www.ijf.org/competition/3157/judoka_athletes) |
-| 5–8.11 | אליפות העולם, נאנג׳ינג | טרמפולינה | לא ידוע (ננדזה, עמיאל במעקב) | **אין מכסה**. ההעפלה ל-LA28 מתחילה בגביעי העולם במאי 2027 ובאליפות העולם בנובמבר 2027 | [Wikipedia](https://en.wikipedia.org/wiki/2026_Trampoline_Gymnastics_World_Championships), [FIG](https://www.gymnastics.sport/publicdir/rules/files/en_1.3%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Trampoline.pdf) |
-| 13–15.11 | גרנד פרי זאגרב | ג׳ודו | לא ידוע | נקודות לדירוג IJF (פחות מגרנד סלאם) | [IJF calendar](https://www.ijf.org/calendar?age=world_tour) |
-| 28–29.11 | גמר הגרנד פרי, אסטנה | טאקוונדו | לא ידוע (בגמר רק המדורגים הגבוהים) | נקודות לדירוג האולימפי של WT. 5 הראשונים בכל משקל בדירוג של ינואר 2028 עולים | [WT](https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf), [allsportdb](https://allsportdb.com/Events/2026-World-Taekwondo-Grand-Prix-Final-20119) |
-| 1–6.12 | אליפות העולם בבריכה קצרה, בייג׳ינג | שחייה | לא ידוע | **אין מכסה**. תקופת הקריטריונים ל-LA28 נפתחת ב-1.3.2027, ורק בבריכה ארוכה | [World Aquatics](https://cdn.nocnsf.nl/media/vqxbcoln/swm-la28-qualification-system.pdf), [Beijing gov](https://english.beijing.gov.cn/latest/news/202509/t20250925_4210181.html) |
-| 5–6.12 | גרנד סלאם טוקיו | ג׳ודו | לא ידוע | נקודות לדירוג IJF | [IJF calendar](https://www.ijf.org/calendar?age=world_tour) |
-| 7–16.12 | IWF Qualifier I, דוחה | הרמת משקולות | לא ידוע | אירוע ההעפלה השני בתקופה 1 של OQR | [IWF](https://cdn.nocnsf.nl/media/nlsj0xsh/wlf-la28-qualification-system.pdf). התאריכים מהזמנת ההתאחדות הקטארית; הקישור לא נשמר |
-| 9–10.12, 12–13.12 | גרנד סלאם צ׳לנג׳ וסדרת האלופים, ווקסי | טאקוונדו | לא ידוע | לא ברור אם מהדורת 2026 נספרת לדירוג הגרנד סלאם. המכסה נקבעת לפי הדירוג שאחרי מהדורת 2027 | [WT](https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf), [allsportdb](https://allsportdb.com/Competitions/World-Taekwondo-Grand-Slam-624?year=2026) |
+| תאריכים | אירוע | ענף | ישראלים | מה על הכף | מקור | פתוח |
+|---|---|---|---|---|---|---|
+| 17–25.10 | אליפות העולם, רוטרדם | התעמלות מכשירים | גברים: דולגופיאט, פיאטוב, אורטל, ליובימוב, ברקוביץ. נשים: ליהיא רז, רוני שמאי, יהלי שושני | **מכסה ישירה**: 3 הנבחרות הראשונות בגמר הקבוצתי (20.10). העלייה של ישראל לגמר טרם אומתה ב-FIG. קרב-רב 22.10; מכשירים 24–25.10 | [FIG](https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf), [ערוץ הספורט](https://www.sport5.co.il/articles.aspx?FolderID=8008&docID=564098) | תוצאות רשמיות של FIG למוקדמות ועולי הגמרים: עד 20.10 (הערכה) |
+| 27.10–8.11 | אליפות העולם, נינגבו | הרמת משקולות | לא ידוע (צליה גולד במעקב) | אירוע ההעפלה הראשון בתקופה 1 של דירוג OQR. נספרות 3 התוצאות הטובות מתקופה 1 | [IWF](https://cdn.nocnsf.nl/media/nlsj0xsh/wlf-la28-qualification-system.pdf), [Wikipedia](https://en.wikipedia.org/wiki/2026_World_Weightlifting_Championships) | רשימת הרשומים של IWF: עד 27.10 (הערכה) |
+| 29–31.10 | גרנד סלאם אבו דאבי | ג׳ודו | רשומים: אשפיז 60- (מדורג 2 בתחרות), אלבז 73- (מדורג 8) ומוריץ 73-, גפן פרימו 52- (3), נלסון לוי 57- (1), הרשקו 78+ (1), וגם סימין, גושן, סיון, קוקולייב, סימחייב | נקודות לדירוג האולימפי של IJF: 17 הראשונים בכל משקל עולים ב-12.6.2028. לא רשומות: שמש, כרם פרימו, לניר, מישינר | [IJF entries](https://www.ijf.org/competition/3157/judoka_athletes) | הרשימה עשויה להשתנות עד ההגרלה: 28.10 (הערכה) |
+| 5–8.11 | אליפות העולם, נאנג׳ינג | טרמפולינה | לא ידוע (ננדזה, עמיאל במעקב) | **אין מכסה**. ההעפלה ל-LA28 מתחילה בגביעי העולם במאי 2027 ובאליפות העולם בנובמבר 2027 | [Wikipedia](https://en.wikipedia.org/wiki/2026_Trampoline_Gymnastics_World_Championships), [FIG](https://www.gymnastics.sport/publicdir/rules/files/en_1.3%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Trampoline.pdf) | רשימת הרשומים של FIG: עד 5.11 (הערכה) |
+| 13–15.11 | גרנד פרי זאגרב | ג׳ודו | **אין ישראלים** ברשימה של IJF נכון ל-18.10 (309 רשומים, נבדקו כל 14 המשקלים) | נקודות לדירוג IJF (פחות מגרנד סלאם) | [IJF entries](https://www.ijf.org/competition/3159/judoka_athletes) | רישום מאוחר אפשרי; לבדוק שוב עד ההגרלה, 12.11 (הערכה) |
+| 28–29.11 | גמר הגרנד פרי, אסטנה | טאקוונדו | לא ידוע (בגמר רק המדורגים הגבוהים) | נקודות לדירוג האולימפי של WT. 5 הראשונים בכל משקל בדירוג של ינואר 2028 עולים | [WT, אסטנה בלי תאריך](https://www.worldtaekwondo.org/news/NS/view?nid=142224), [WT qualification](https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf), [allsportdb, התאריכים](https://allsportdb.com/Events/2026-World-Taekwondo-Grand-Prix-Final-20119) | התאריכים לא נמצאו ב-WT, כי דף הלוח החזיר 404. יש לבדוק שוב ברשימת המוזמנים של WT עד 28.10 (הערכה: חודש לפני) |
+| 1–6.12 | אליפות העולם בבריכה קצרה, בייג׳ינג | שחייה | לא ידוע | **אין מכסה**. תקופת הקריטריונים ל-LA28 נפתחת ב-1.3.2027, ורק בבריכה ארוכה | [World Aquatics](https://cdn.nocnsf.nl/media/vqxbcoln/swm-la28-qualification-system.pdf), [Beijing gov](https://english.beijing.gov.cn/latest/news/202509/t20250925_4210181.html) | רשימת הרשומים: עד 1.12 (הערכה) |
+| 5–6.12 | גרנד סלאם טוקיו | ג׳ודו | **אין ישראלים** ברשימה של IJF נכון ל-18.10. הרישום רק נפתח: 46 רשומים | נקודות לדירוג IJF | [IJF entries](https://www.ijf.org/competition/3160/judoka_athletes) | רשימה מלאה: עד ההגרלה, 4.12 (הערכה) |
+| 7–16.12 | IWF Qualifier I, דוחה | הרמת משקולות | לא ידוע | אירוע ההעפלה השני בתקופה 1 של OQR | [IWF](https://cdn.nocnsf.nl/media/nlsj0xsh/wlf-la28-qualification-system.pdf), [תקנון והזמנה](https://ctwa.org.tw/uploads/1st-IWF-Qualifier-LA28_Doha-QAT_Regulations.pdf) (מתארח באתר התאחדות טאיוואן; זהה לקובץ שנקרא) | רשימת הרשומים: עד 7.12 (הערכה) |
+| 9–10.12, 12–13.12 | גרנד סלאם צ׳לנג׳ וסדרת האלופים, ווקסי | טאקוונדו | לא ידוע | לא ברור אם מהדורת 2026 נספרת לדירוג הגרנד סלאם. המכסה נקבעת לפי הדירוג שאחרי מהדורת 2027 | [WT](https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf), [allsportdb](https://allsportdb.com/Competitions/World-Taekwondo-Grand-Slam-624?year=2026) | התאריכים לא אומתו ב-WT: עד 9.11 (הערכה) |
 
 ## בלי אירוע רלוונטי בחלון
 
@@ -25,6 +26,6 @@
 
 ## לא אומת
 
-- התאריכים ומספר המשתתפים בטאקוונדו לקוחים מ-allsportdb ולא מ-WT.
-- רשימות הרישום לזאגרב ולטוקיו עוד לא נבדקו. כדאי לבדוק כשבוע לפני כל אירוע בכתובת ijf.org/competition/<id>/judoka_athletes.
+- התאריכים בטאקוונדו לקוחים מ-allsportdb. WT מאשרת רק את אסטנה כמקום הגמר.
+- רשימות הרישום לזאגרב (3159) ולטוקיו (3160) נבדקו ב-18.10.2026. כדאי לבדוק שוב כשבוע לפני כל אירוע.
 - לא נמצאה רשימת רישום רשמית של ישראלים לנינגבו ולנאנג׳ינג.
