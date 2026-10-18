@@ -13,7 +13,7 @@ PRIVATE_KEYS = {"updatedBy", "verifiedBy"}
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})", re.ASCII)
 STAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", re.ASCII)
-HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
+HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction"}  # = export_data.HISTORY_KINDS
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}

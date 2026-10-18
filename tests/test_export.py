@@ -256,6 +256,12 @@ class ExportTest(unittest.TestCase):
         ch = c["corrections"][0]["changes"]
         self.assertEqual((ch[0]["wrong"], len(ch[0]["right"]), ch[1]["wrong"]), ("200 מ׳ גב", 200, ""))
 
+    def test_correction_history_kind_kept(self):
+        hist = [{"at": "2026-10-24", "kind": "correction", "text": "תוקן: דירוג", "source": "https://ijf.org/x"}]
+        h = self.export(athletes={"a": athlete(history=hist)})["athletes"][0]["history"]
+        self.assertEqual(h[0]["kind"], "correction")
+        self.assertEqual(ex.HISTORY_KINDS, validate_data.HISTORY_KINDS)
+
     def test_corrections_launch_matches_site(self):
         with open(os.path.join(HERE, "..", "site", "app.js"), encoding="utf-8") as f:
             app = f.read()

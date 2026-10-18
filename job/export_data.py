@@ -16,7 +16,7 @@ DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})", re.ASCII)
 ATHLETE_FIELDS = ["name", "name_en", "sportId", "event", "rank", "next", "nextDate", "notes", "source", "updatedAt"]
 COMP_FIELDS = ["sportId", "name", "location", "start", "end", "notes", "source"]
-HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
+HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction"}
 HISTORY_PUBLIC = 10
 RANK_LIST_MAX = 80
 # Public corrections log (docs/design/corrections-log.md). Same value as LAUNCH_AT in site/app.js; the PM sets it.
