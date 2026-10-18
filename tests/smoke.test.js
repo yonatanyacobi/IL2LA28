@@ -892,7 +892,7 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-10-29", kind: "result", text: "<b>ארד</b>", source: "https://www.ijf.org/r"}];
   const res = (await eventAt(AD, "2026-10-30T08:00:00Z", {data})).out;
   assert.ok(res.includes("&lt;b&gt;ארד&lt;/b&gt;") && !res.includes("<b>ארד</b>"), "result escaped");
-  assert.ok(res.includes("תוצאה אחת") && !res.includes("1 תוצאות"), "kpi counts the result, singular");
+  assert.ok(res.includes("תוצאות: 1"), "kpi counts the result, label first");
   const athPanel = res.split('id="evAthH"')[1].split("</section>")[0];
   assert.ok(!athPanel.includes("ארד"), "no unsourced result line in the athletes panel");
 
@@ -911,7 +911,7 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   shared.sessions = [{competitionId: AD, date: "2026-10-29", athleteIds: ["timna-nelson-levy", "inbal-shemesh"], phase: "57- ק״ג"}];
   shared.athletes.find(a => a.id === "timna-nelson-levy").history = [{at: "2026-10-29", kind: "result", text: "ארד", source: "https://www.ijf.org/r"}];
   const sh = (await eventAt(AD, "2026-10-30T08:00:00Z", {data: shared})).out;
-  assert.ok(sh.includes("תוצאה אחת") && !sh.includes("2 תוצאות"), "results counted per athlete");
+  assert.ok(sh.includes("תוצאות: 1") && !sh.includes("תוצאות: 2"), "results counted per athlete");
   const inbal = sh.split('id="evAthH"')[1].split('<div class="stack"><a class="card" href="#a-').find(x => x.startsWith("inbal-shemesh")) || "";
   assert.ok(inbal.includes("pill s-wait") && !inbal.includes("ארד"), "Inbal: her own chip, not Timna's result");
 
@@ -1825,12 +1825,12 @@ test("near-live: the banned-word check is whole-word and leaves allowed copy alo
 
 test("near-live: awaiting fresh, checked (per-session checkedAt only) and long", async () => {
   const fresh = await nlRow("2026-11-03T11:00:00Z", {checkedAt: "2026-11-03T06:00:00Z"});   // 13:00, checked 08:00
-  assert.ok(fresh.includes("pill s-wait") && detailOf(fresh) === "נבדוק שוב בעדכון היומי הבא.", "fresh: " + detailOf(fresh));
+  assert.ok(fresh.includes("pill s-wait") && detailOf(fresh) === "נבדוק שוב בעדכון היומי הבא", "fresh: " + detailOf(fresh));
   const checked = await nlRow("2026-11-03T12:00:00Z", {checkedAt: "2026-11-03T11:00:00Z"});   // 14:00, checked 13:00
   assert.strictEqual(detailOf(checked), 'נבדק לאחרונה ב־<time datetime="2026-11-03T11:00:00.000Z">13:00</time> · התוצאה עוד לא נמצאה במקור הרשמי');
   // A run after the window is no proof this session was looked up (#156 HIGH): without checkedAt it stays "fresh".
   const runOnly = await nlRow("2026-11-03T12:00:00Z", {}, {generatedAt: "2026-11-03T11:00:00Z", lastRun: "2026-11-03T11:00:00Z"});
-  assert.ok(!runOnly.includes("נבדק לאחרונה") && runOnly.includes("נבדוק שוב בעדכון היומי הבא."), "run time alone: fresh wording");
+  assert.ok(!runOnly.includes("נבדק לאחרונה") && runOnly.includes("נבדוק שוב בעדכון היומי הבא"), "run time alone: fresh wording");
   const long = await nlRow("2026-11-06T10:00:00Z", {checkedAt: "2026-11-05T11:00:00Z"});
   assert.ok(detailOf(long).startsWith('התוצאה עוד לא נמצאה · <a href="https://www.issf-sports.org/schedule" target="_blank" rel="noopener">לוח התחרות הרשמי'), "long: " + detailOf(long));
   assert.ok(!detailOf(long).includes("<time") && !long.includes("נבדק"), "long: no time");
@@ -1861,7 +1861,7 @@ test("near-live: page line is stale only on a day with sessions today and an old
   assert.ok(fresh.includes('<p class="fresh"><i></i><span>נכון ל־<time datetime="2026-11-03T05:00:00.000Z">07:00</time> · מתעדכן פעם ביום</span></p>'), "fresh today: HH:MM");
 });
 
-test("near-live: #c- and #day render the same row; #c- line under the h1, schedule source, plural counts", async () => {
+test("near-live: #c- and #day render the same row; #c- line under the h1, schedule source, label-first counts", async () => {
   const data = withSessions([NL_SESS({checkedAt: "2026-11-03T11:00:00Z"})]);
   const b = await boot({data, quotas: SITE_QUOTAS, now: "2026-11-03T12:00:00Z"});
   const li = html => html.split('<ul class="rows sess">')[1].split("</ul>")[0];
@@ -1870,10 +1870,10 @@ test("near-live: #c- and #day render the same row; #c- line under the h1, schedu
   const head = c.split('<div class="event-head">')[1].split("</div>")[0];
   assert.ok(head.indexOf("</h1>") < head.indexOf('<p class="fresh'), "fresh line under the h1");
   assert.ok(c.includes('rel="noopener">לוח הזמנים: <bdi>issf-sports.org</bdi>'), "schedule source from the session");
-  assert.ok(c.includes("אחד/ת בהמתנה לתוצאה") && !/\b1 בהמתנה/.test(c), "singular awaiting count");
+  assert.ok(c.includes("בהמתנה לתוצאה: 1") && !c.includes("אחד/ת"), "awaiting count, label first");
   noLiveClaims(c, "#c-");
   const ad = (await eventAt(AD, "2026-11-05T08:00:00Z")).out;
-  assert.ok(ad.includes("5 בהמתנה לתוצאה"), "plural awaiting count");
+  assert.ok(ad.includes("<p class=\"kpi\">5 ספורטאים ונבחרות · בהמתנה לתוצאה: 5</p>"), "kpi line");
 });
 
 test("#day merges sessions with the fallback per athlete (lead review on #151, MEDIUM)", async () => {

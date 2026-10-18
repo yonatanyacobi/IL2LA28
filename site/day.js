@@ -7,7 +7,7 @@
 
 // CADENCE and NEXT_CHECK change together when event-day runs are approved (OD2).
 const CADENCE = "מתעדכן פעם ביום";
-const NEXT_CHECK = "נבדוק שוב בעדכון היומי הבא.";
+const NEXT_CHECK = "נבדוק שוב בעדכון היומי הבא";
 const STALE_H = 26;                  // a page showing today's sessions is stale past this since the last check
 const AWAIT_LONG_H = 48;             // past this since the window end, an awaiting row stops implying a next check
 const DAY_STRIP = 3;                 // chips on each side of the selected date

@@ -54,9 +54,9 @@ function viewEvent(id){
   // Counted per athlete in each session, not per session.
   const count = is => flat.reduce((n, [s, d]) => n + s.athletes.filter(a => is(athleteStatus(s, d, a))).length, 0);
   const who = n => plural(n, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות");
-  const kpi = [who(athletes.length), ...[[isResult, n => plural(n, "תוצאה אחת", "תוצאות")],
-    [isAwait, n => plural(n, "אחד/ת בהמתנה לתוצאה", "בהמתנה לתוצאה")], [st => st === "before", n => plural(n, "אחד/ת לפני התחרות", "לפני התחרות")]]
-    .map(([is, label]) => (n => n ? label(n) : "")(count(is)))].filter(Boolean).join(" · ");
+  // Label first ("תוצאות: 1"), so one count needs no singular form (Shira on #182).
+  const kpi = [who(athletes.length), ...[[isResult, "תוצאות"], [isAwait, "בהמתנה לתוצאה"], [st => st === "before", "לפני התחרות"]]
+    .map(([is, label]) => (n => n ? `${label}: ${n}` : "")(count(is)))].filter(Boolean).join(" · ");
   const stakes = eventStakes(c);
   const tracked = athletesOf(c.sportId).length;
   // Stale-aware only while something happens today; a season-long series isn't "running" on every day of it.
