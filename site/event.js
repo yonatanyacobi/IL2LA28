@@ -21,11 +21,20 @@ function eventSessions(c){
 }
 const groupBy = (list, key) => list.reduce((m, x) => m.set(key(x), [...(m.get(key(x)) || []), x]), new Map());
 
+// One athlete's status in a session. A shared session's merged text ("תמנע נלסון לוי: ארד") is not every athlete's
+// result: an athlete has a result only from her own history entry, a single-athlete session, or an exported
+// session result (resultAt, official for the whole session, e.g. a team).
+function athleteStatus(s, d, a){
+  const own = historyResult(a, d) || (s.result && (s.athletes.length === 1 || s.resultAt));
+  return own ? "result" : sessStatus({...s, result: ""}, d);
+}
+
 function eventStatus(c, sessions){
   const t = today(), end = c.end || c.start, total = dayNo(c.start, end);
   if (t < c.start) return `<span class="pill s-before">מתחילה ב־${fmt(c.start)}</span>`;
-  if (t <= end) return `<span class="pill s-live">מתקיימת עכשיו${total > 1 ? ` · יום ${dayNo(c.start, t)} מתוך ${total}` : ""}</span>`;
-  return sessions.some(([s, d]) => sessStatus(s, d) === "wait")
+  // "יום 243 מתוך 487" says nothing for a season-long series.
+  if (t <= end) return `<span class="pill s-live">מתקיימת עכשיו${total > 1 && total <= SERIES_DAYS ? ` · יום ${dayNo(c.start, t)} מתוך ${total}` : ""}</span>`;
+  return sessions.some(([s, d]) => s.athletes.some(a => athleteStatus(s, d, a) === "wait"))
     ? `<span class="pill s-wait"><span aria-hidden="true">◷</span> הסתיימה · בהמתנה לתוצאות</span>` : `<span class="pill ended">הסתיימה</span>`;
 }
 
@@ -49,7 +58,8 @@ function viewEvent(id){
   const flat = [...groups].flatMap(([d, list]) => list.map(s => [s, series ? s.day : d]));
   const athletes = [...new Map(flat.flatMap(([s]) => s.athletes.map(a => [a.id, a]))).values()]
     .sort((x, y) => S.follows.has(y.id) - S.follows.has(x.id) || heCmp(x.name, y.name));
-  const count = k => flat.filter(([s, d]) => sessStatus(s, d) === k).length;
+  // Counted per athlete in each session, not per session.
+  const count = k => flat.reduce((n, [s, d]) => n + s.athletes.filter(a => athleteStatus(s, d, a) === k).length, 0);
   const who = n => plural(n, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות");
   const kpi = [who(athletes.length), ...[["result", n => plural(n, "תוצאה אחת", "תוצאות")], ["wait", n => `${n} בהמתנה לתוצאה`], ["before", n => `${n} לפני התחרות`]]
     .map(([k, label]) => (n => n ? label(n) : "")(count(k)))].filter(Boolean).join(" · ");
@@ -61,9 +71,10 @@ function viewEvent(id){
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
   const schedule = !flat.length
     ? `<p class="muted">${t <= (c.end || c.start) ? "הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי." : "לא תועדו סשנים של ישראלים בתחרות הזו."}</p>`
-    : [...groups].map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k)}
-        ${list.length ? `<ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k)).join("")}</ul>`
-          : `<p class="muted">אין סשנים ידועים של ישראלים ביום הזה.</p>`}</div>`).join("");
+    : [...groups].filter(([, list]) => list.length).map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k)}
+        <ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k)).join("")}</ul></div>`).join("")
+      + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועים סשנים של ישראלים.</p>` : "")(
+        series ? 0 : [...groups].filter(([, list]) => !list.length).length));
   return `<p class="crumb"><a href="#sport-${esc(c.sportId)}">→ ${esc(sportName(c.sportId))}</a></p>
   <div class="event-head">
     <h1 tabindex="-1">${esc(c.name)}</h1>
@@ -81,7 +92,7 @@ function viewEvent(id){
       ${stakes}
       ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH">הישראלים בתחרות (${athletes.length})</h2>
         <div class="stack">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
-          const st = last ? sessStatus(last[0], last[1]) : "";
+          const st = last ? athleteStatus(last[0], last[1], a) : "";
           // A result is shown only in the schedule row, next to its source.
           const line = st === "wait" ? `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`
             : st === "live" ? `<span class="pill s-live">מתחרה היום</span>` : st === "before" ? `<span class="pill s-before">לפני התחרות</span>` : "";
