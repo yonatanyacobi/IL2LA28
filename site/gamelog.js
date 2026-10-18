@@ -1,5 +1,5 @@
 // Athlete results log ("game log", issue #178; docs/design/athlete-game-log.md) on the athlete page.
-// Loaded after app.js and day.js (exportedSessions, compOn). Results are shown as written: nothing is parsed or added.
+// Loaded after sessions.js (exportedSessions, compOn, byStart). Results are shown as written: nothing is parsed or added.
 "use strict";
 
 const GAMELOG_MAX = 50, GAMELOG_ROWS = 10;
@@ -45,13 +45,13 @@ function logDays(first, last){
   return first.slice(0, 7) === last.slice(0, 7) ? `<time datetime="${first}">${Number(first.slice(8))}</time>–${one(last)}` : `${one(first)}–${one(last)}`;
 }
 
-function gameLogRow({comp, entries, first, last}){
+function gameLogRow({comp, entries, first, last}, id){
   // One source for the whole row is shown once, on its last entry.
   const shared = entries.every(e => e.source === entries[0].source);
   const src = e => linkOut(e.source, `מקור: ${host(e.source)}`);
   return `<li><span class="d">${logDays(first, last)}</span>
-    <span class="t">${comp ? `<a href="#c-${esc(comp.id)}">${esc(comp.name)}</a>` : `<span class="muted">תחרות שאינה במאגר</span>`}${entries.map((e, i) =>
-      `<span class="res">${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}</span>`).join("")}</span></li>`;
+    <span class="t">${comp ? compLink(comp, esc(comp.name)) : `<span class="muted">תחרות שאינה במאגר</span>`}${entries.map((e, i) =>
+      `<span class="res">${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${(k => rowMark(k, k))(`log|${id}|${e.date}|${e.phase}|${e.result}`)}</span>`).join("")}</span></li>`;
 }
 
 function gameLogSection(a){
@@ -59,8 +59,8 @@ function gameLogSection(a){
   const shown = rows.slice(0, GAMELOG_ROWS), more = rows.slice(GAMELOG_ROWS), k = more.reduce((x, r) => x + r.entries.length, 0);
   return `<section class="panel" aria-labelledby="logH"><h2 id="logH">תוצאות בתחרויות</h2>
     ${n ? `<p class="kpi muted">${plural(n, "תוצאה אחת", "תוצאות")}${(m => !m ? "" : m === 1 ? " בתחרות אחת" : ` ב־${m} תחרויות`)(rows.filter(r => r.comp).length)}</p>
-    <ul class="rows game-log">${shown.map(gameLogRow).join("")}</ul>
-    ${more.length ? `<details><summary>${k === 1 ? "הצגת עוד תוצאה אחת" : `הצגת עוד ${k} תוצאות`}</summary><ul class="rows game-log">${more.map(gameLogRow).join("")}</ul></details>` : ""}
+    <ul class="rows game-log">${shown.map(r => gameLogRow(r, a.id)).join("")}</ul>
+    ${more.length ? `<details><summary>${k === 1 ? "הצגת עוד תוצאה אחת" : `הצגת עוד ${k} תוצאות`}</summary><ul class="rows game-log">${more.map(r => gameLogRow(r, a.id)).join("")}</ul></details>` : ""}
     <p class="foot">כל תוצאה מופיעה עם המקור שלה · ${CADENCE}</p>`
     : `<p class="muted">עוד לא תועדו תוצאות של ${esc(a.name)} בתחרויות.</p>`}
   </section>`;

@@ -37,12 +37,19 @@ function followFeed(since){
   }).sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(x.a.name, y.a.name)).slice(0, FEED_MAX);
 }
 
+// Athletes followed only through their sport have no star, so their feed rows say why they're there.
+const viaSport = a => S.follows.has(a.id) ? "" : `<small>ענף במעקב: ${esc(sportName(a.sportId))}</small>`;
+
+const compLinkOr = c => typeof compLink === "function" ? compLink(c, esc(c.name)) : esc(c.name);
+
 function followUpcoming(){
   const t = today();
   const athletes = followedAthletes().filter(a => isDate(a.nextDate) && a.nextDate >= t)
-    .map(a => ({d: a.nextDate, html: `<a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))}${a.next ? ` · ${esc(a.next)}` : ""}</small>`}));
+    .map(a => ({k: `up|a|${a.id}`, d: a.nextDate, chip: a.nextDate === t ? statusChip("competing") : "",
+      html: `<a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))}${a.next ? ` · ${nextCompFact(a)}` : ""}</small>`}));
   const comps = upcoming().filter(c => S.followSports.has(c.sportId))
-    .map(c => ({d: c.start, html: `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${esc(c.name)}<small>${esc(c.location)}</small>`}));
+    .map(c => ({k: `up|c|${c.id}`, d: c.start, chip: c.start <= t ? `<span class="pill s-live">מתקיימת עכשיו</span>` : "",
+      html: `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLinkOr(c)}<small>${esc(c.location)}</small>`}));
   return [...athletes, ...comps].sort((x, y) => x.d.localeCompare(y.d)).slice(0, 5);
 }
 
@@ -73,11 +80,11 @@ function viewFollowing(tab = ""){
   <section class="panel" aria-labelledby="feedH">
     <h2 id="feedH">מאז הביקור הקודם (${feed.length})</h2>
     ${feed.length ? `<ul class="rows">${feed.map(({a, h}) => `<li><span class="d">${fmt(h.at)}</span>
-      <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small></span><span></span></li>`).join("")}</ul>`
+      <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small>${viaSport(a)}${(k => rowMark(k, k))(`feed|${a.id}|${h.at}|${h.text}`)}</span><span></span></li>`).join("")}</ul>`
       : `<p class="muted">${followSeenAtLoad ? "אין עדכונים חדשים מאז הביקור הקודם." : "עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."}</p>`}
   </section>
   ${next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
-    <ul class="rows">${next.map(x => `<li><span class="d">${fmtShort(x.d)}</span><span class="t">${x.html}</span><span></span></li>`).join("")}</ul></section>` : ""}
+    <ul class="rows">${next.map(x => `<li><span class="d">${fmtShort(x.d)}</span><span class="t">${x.html}${rowMark(x.k, x.d + x.html)}</span><span>${x.chip}</span></li>`).join("")}</ul></section>` : ""}
   ${tab ? (sports.length ? `<ul class="sports">${sports.map(s => { const ws = winStatus(s.window); return `<li><a class="sport" href="#sport-${esc(s.id)}">
       <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</span>${stageBar(athletesOf(s.id), true).html}
       ${quotaCardSummary(s.id)}<span class="meta">${athletesOf(s.id).length} במעקב</span></a></li>`; }).join("")}</ul>`

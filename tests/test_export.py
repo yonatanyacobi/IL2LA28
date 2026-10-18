@@ -87,6 +87,17 @@ class ExportTest(unittest.TestCase):
         self.assertEqual([a["source"] for a in data["athletes"]], ["", "https://x.org"])
         self.assertEqual(data["competitions"][0]["source"], "")
 
+    def test_history_results_capped_apart_from_others(self):
+        res = [{"at": f"2025-{1 + i // 28:02d}-{1 + i % 28:02d}", "kind": "result", "text": f"r{i}",
+                "source": "https://x.org/r"} for i in range(70)]
+        other = [{"at": f"2026-0{1 + i // 9}-{1 + i % 9:02d}", "kind": "rank", "text": f"o{i}"} for i in range(15)]
+        h = self.export(athletes={"a": athlete(history=res + other)})["athletes"][0]["history"]
+        self.assertEqual([x["text"] for x in h if x["kind"] == "result"], [f"r{i}" for i in range(10, 70)])
+        self.assertEqual([x["text"] for x in h if x["kind"] != "result"], [f"o{i}" for i in range(5, 15)])
+        self.assertEqual([x["at"] for x in h], sorted(x["at"] for x in h), "one list, by date")
+        few = self.export(athletes={"a": athlete(history=other[:3] + res[:2])})["athletes"][0]["history"]
+        self.assertEqual(len(few), 5)
+
     def test_history(self):
         hist = [{"at": f"2026-01-{d:02d}", "kind": "rank", "text": f"t{d}"} for d in range(15, 0, -1)]
         hist += [{"at": "2026-02-01", "kind": "weird", "text": "unknown kind", "source": "http://x"},
@@ -189,6 +200,23 @@ class ExportTest(unittest.TestCase):
                 left.extend(re.findall(r"[א-ת]['\"][א-ת\s]", ex.geresh(v)))
         walk(fixture)
         self.assertEqual(left, [])
+
+    def test_olympic_rank_fields_apart_from_world_rank(self):
+        W, O, D = "IJF World Ranking List", "IJF Olympic Ranking List", "2026-10-13"
+        cases = {
+            "both": ({"rankNum": 1, "rankList": W, "rankAsOf": D, "olympicRankNum": 3, "olympicRankList": O,
+                      "olympicRankAsOf": D}, (1, W, D, 3, O, D)),
+            "olympic-only": ({"olympicRankNum": "12", "olympicRankList": O, "olympicRankAsOf": D}, (None, "", "", 12, O, D)),
+            "no-olympic-list": ({"rankNum": 5, "rankList": W, "rankAsOf": D, "olympicRankNum": 9, "olympicRankAsOf": D},
+                                (5, W, D, None, "", D)),
+            "bad-olympic": ({"olympicRankNum": 0, "olympicRankList": O, "olympicRankAsOf": "13.10.2026"},
+                            (None, "", "", None, O, "")),
+            "none": ({}, (None, "", "", None, "", "")),
+        }
+        data = self.export(athletes={k: athlete(**f) for k, (f, _) in cases.items()})
+        keys = ("rankNum", "rankList", "rankAsOf", "olympicRankNum", "olympicRankList", "olympicRankAsOf")
+        self.assertEqual({a["id"]: tuple(a[k] for k in keys) for a in data["athletes"]},
+                         {k: want for k, (_, want) in cases.items()})
 
     def test_rank_fields(self):
         L, D = "IJF World Ranking List", "2026-10-13"

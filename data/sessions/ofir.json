@@ -1,0 +1,95 @@
+{
+ "updatedAt": "2026-10-18T17:40:00Z",
+ "sessions": [
+  {
+   "id": "tri-world-cup-tongyeong-2026-20261024-men",
+   "competitionId": "tri-world-cup-tongyeong-2026",
+   "date": "2026-10-24",
+   "timeLocal": "10:30",
+   "tz": "Asia/Seoul",
+   "athleteIds": ["shachar-sagiv"],
+   "phase": "גביע העולם בטריאתלון – עלית גברים, ספרינט",
+   "source": "https://triathlon.org/events/2026-world-triathlon-cup-tongyeong/start-lists",
+   "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
+   "notes": "HOLD (contract §5): sign off only once the elite men start list shows Sagiv. On 2026-10-18 the page showed the time (Oct 24, 2026, 10:30) but no names; recheck 2026-10-22. startUtc 2026-10-24T01:30:00Z (04:30 Israel). Result night: docs/research/result-watch-tongyeong.md."
+  },
+  {
+   "id": "frankfurt-marathon-2026-20261025-men",
+   "competitionId": "frankfurt-marathon-2026",
+   "date": "2026-10-25",
+   "timeLocal": "10:00",
+   "tz": "Europe/Berlin",
+   "athleteIds": ["haimro-alame"],
+   "phase": "מרתון פרנקפורט – גברים",
+   "source": "https://www.frankfurt-marathon.com/en/runners/marathon/",
+   "review": {"status": "ok", "by": "dana", "at": "2026-10-18"},
+   "notes": "The organiser lists one start (10:00); no separate elite time. Germany leaves summer time that night, so this is 09:00Z = 11:00 Israel. Entry: organiser's field announcement, 7.10.2026. No bib or elite list published as of 18.10."
+  },
+  {
+   "id": "wtcs-abu-dhabi-2026-20261113-men",
+   "competitionId": "wtcs-abu-dhabi-2026",
+   "date": "2026-11-13",
+   "timeLocal": "16:00",
+   "tz": "Asia/Dubai",
+   "athleteIds": ["shachar-sagiv"],
+   "phase": "סבב האליפות העולמית בטריאתלון – עלית גברים, ספרינט",
+   "source": "https://triathlon.org/events/2026-wtcs-abu-dhabi/race-info",
+   "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
+   "notes": "HOLD: sign off only once the elite men start list (https://triathlon.org/events/2026-wtcs-abu-dhabi/start-lists; names load in a browser only) shows Sagiv. Today only his profile lists it. 16:00 Abu Dhabi = 12:00Z = 14:00 Israel. Mixed relay (14.11) omitted: no tracked Israeli relay."
+  }
+ ],
+ "pendingFinalBlocks": [
+  {
+   "why": "Competition record not in the DB yet; load_sessions.py errors on an unknown competitionId even for unsigned rows. Move into sessions once the record exists and Tamar signs the row.",
+   "competitionRecord": {
+    "id": "amsterdam-marathon-2026",
+    "sportId": "athletics",
+    "name": "מרתון אמסטרדם",
+    "location": "אמסטרדם, הולנד",
+    "start": "2026-10-18",
+    "end": "2026-10-18",
+    "notes": "",
+    "source": "https://worldathletics.org/news/report/amsterdam-marathon-2026-diriba-berhanu",
+    "qualifying": false
+   },
+   "session": {
+    "id": "amsterdam-marathon-2026-20261018-women",
+    "competitionId": "amsterdam-marathon-2026",
+    "date": "2026-10-18",
+    "timeLocal": "",
+    "tz": "",
+    "athleteIds": ["selamawit-teferi"],
+    "phase": "מרתון אמסטרדם – נשים",
+    "source": "https://worldathletics.org/news/report/amsterdam-marathon-2026-diriba-berhanu",
+    "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
+    "notes": "Official result (WA report, 2026-10-18): Selamawit Teferi 9th, 2:22:58. The batch can't carry results (contract §6); the job or an editor writes result 'מקום 9, 2:22:58' with resultSource = the WA report. No official start time found."
+   }
+  },
+  {
+   "why": "Competition record not in the DB yet, and Ivri's entry is not confirmed (only the university roster). Move into sessions once both exist.",
+   "competitionRecord": {
+    "id": "big-ten-xc-2026",
+    "sportId": "athletics",
+    "name": "אליפות הביג טן בקרוס קאנטרי (NCAA)",
+    "location": "מדיסון, ויסקונסין, ארה״ב",
+    "start": "2026-10-30",
+    "end": "2026-10-30",
+    "notes": "",
+    "source": "https://uwbadgers.com/news/2026/7/29/mens-cross-country-wisconsin-announces-2026-cross-country-schedule",
+    "qualifying": false
+   },
+   "session": {
+    "id": "big-ten-xc-2026-20261030-men",
+    "competitionId": "big-ten-xc-2026",
+    "date": "2026-10-30",
+    "timeLocal": "",
+    "tz": "",
+    "athleteIds": ["matan-ivri"],
+    "phase": "אליפות הביג טן בקרוס קאנטרי – 8 ק״מ גברים",
+    "source": "https://uwbadgers.com/sports/mens-cross-country/roster/matan-ivri/15841",
+    "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
+    "notes": "Men's 8K at 11:35 local per Wisconsin's official schedule (found by Tamar on #160). When the session moves into sessions: timeLocal 11:35, tz America/Chicago (16:35Z, 18:35 Israel)."
+   }
+  }
+ ]
+}
