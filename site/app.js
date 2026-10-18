@@ -6,7 +6,8 @@
 const STAGES = ["במעקב", "בחלון ההעפלה", "מכסה הושגה", "נבחר/ה לנבחרת"];
 const OPENING = new Date("2028-07-14T00:00:00-07:00");
 const PARIS_ATHLETES = 88;
-const SITE_URL = "https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
+const SITE_NAME = "הדרך ללוס אנג׳לס 28";
+const SITE_URL ="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
 const CONTACT_EMAIL = "yacobiyonatan@gmail.com";
 const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "next", "nextDate", "notes", "source"];
 const HISTORY_MAX = 20;
@@ -28,6 +29,9 @@ const heCmp = (a, b) => str(a).localeCompare(str(b), "he");
 const plural = (n, one, many) => n === 1 ? one : `${n} ${many}`;
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };
+// Match key for search: keyboards type ' and " where the data has ׳ and ״ (and vice versa).
+const searchKey = s => str(s).normalize("NFD").replace(/[֑-ׇֽֿׁׂׅׄ]/g, "")
+  .replace(/[׳'`’‘]/g, "'").replace(/[״"“”]/g, '"').replace(/\s+/g, " ").trim().toLowerCase();
 const linkOut = (u, label = "מקור") => safeUrl(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}<span class="sr"> (נפתח בחלון חדש)</span></a>` : "";
 
 // Per-viewer conveniences only; the page must work when storage is blocked.
@@ -275,10 +279,10 @@ function viewHome(){
 function renderResults(){
   const box = $("results");
   if (!box) return;
-  const q = S.q.trim().toLowerCase();
+  const q = searchKey(S.q);
   if (!q) { box.innerHTML = ""; $("qCount").textContent = ""; return; }
-  const sports = S.sports.filter(s => (s.he + " " + s.en).toLowerCase().includes(q));
-  const hits = S.athletes.filter(a => [a.name, a.name_en, a.event, sportName(a.sportId)].map(str).join(" ").toLowerCase().includes(q));
+  const sports = S.sports.filter(s => searchKey(str(s.he) + " " + str(s.en)).includes(q));
+  const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportName(a.sportId)].map(str).join(" ")).includes(q));
   $("qCount").textContent = `נמצאו ${hits.length} ספורטאים ו־${sports.length} ענפים`;
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
@@ -459,7 +463,7 @@ function viewAbout(){
   ${reportBox("טעות באתר הדרך ללוס אנג׳לס 28", SITE_URL)}`;
 }
 
-const notFound = () => `<div class="empty">הדף לא נמצא. <a href="#home">חזרה לדף הראשי</a></div>`;
+const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
 
 function freshness(){
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
@@ -652,8 +656,12 @@ function route(){
   else if (h === "about") html = viewAbout(), nav = "about";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
-  else html = notFound(), nav = "";
+  else html = notFound();
+  if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
   $("view").innerHTML = banner() + html;
+  // Here, not in navigate(): a deep link's first render is the skeleton, and navigate() skips the re-render after load.
+  const h1 = document.querySelector("#view h1")?.textContent.trim();
+  document.title = h1 && h1 !== SITE_NAME ? `${h1} · ${SITE_NAME}` : SITE_NAME;
   $("adminLink").hidden = !(S.isAdmin && S.live);
   document.querySelectorAll(".links a").forEach(a => a.dataset.nav === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   if (nav === "home") renderResults();

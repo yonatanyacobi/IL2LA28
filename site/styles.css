@@ -245,3 +245,15 @@ h2 .pill{font-family:var(--f-body);font-size:15px;vertical-align:middle}
 .q-meta{font-size:13.5px;color:var(--muted)}
 .qlist summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--blue);padding-block:10px}
 .cal-results{display:grid;gap:22px}
+
+/* QA 2026-10-18 layout fixes */
+/* An implicit auto column grows to fit one unbreakable string (a pasted URL), pushing RTL content off-screen. */
+main,.panel,.stack,.card,.sport{grid-template-columns:minmax(0,1fr)}
+main{min-width:0}
+.panel{align-content:start}
+h1,.card,.panel p,.panel dd{overflow-wrap:anywhere}
+/* .track.s1 etc. would otherwise pick up the stage-bar fills from .s0–.s3 and colour the gaps. */
+div.track{background:none}
+@media (max-width:640px){
+  .links{flex-wrap:wrap;overflow-x:visible}
+}

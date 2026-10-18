@@ -48,7 +48,12 @@ async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = 
     scrollTo(){}, addEventListener(){}, removeEventListener(){},
     document: {
       getElementById: id => els[id] ??= fakeEl(id),
-      querySelector: () => null, querySelectorAll: () => [],
+      // Only "#view h1" is needed (focus, route announcement, document.title).
+      querySelector: sel => {
+        const m = sel === "#view h1" && /<h1\b[^>]*>([\s\S]*?)<\/h1>/.exec(els.view?.innerHTML || "");
+        return m ? {...fakeEl("h1"), textContent: m[1].replace(/<[^>]*>/g, "").replace(/&amp;/g, "&")} : null;
+      },
+      querySelectorAll: () => [],
       addEventListener: (type, fn) => (listeners[type] ??= []).push(fn), activeElement: null,
     },
     fetch: async url => {
@@ -115,6 +120,32 @@ test("search finds an athlete by Hebrew name", async () => {
   run(`S.q = "הרשקו"; renderResults()`);
   assert.ok(els.results.innerHTML.includes("רז הרשקו"));
   assert.match(els.qCount.textContent, /נמצאו [1-9]/);
+});
+
+test("search ignores apostrophe/geresh, quote/gershayim, niqqud, spacing and Latin case", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const a = data.athletes.find(x => x.id === "raz-hershko");
+  a.event = `ק"מ אחד`; a.name_en = "Raz Hershko";
+  const {run, els, view} = await boot({data});
+  view("home");
+  const count = q => { run(`S.q = ${JSON.stringify(q)}; renderResults()`); return els.qCount.textContent; };
+  const judo = count("ג׳ודו");
+  assert.match(judo, /נמצאו [1-9]/);
+  for (const q of ["ג'ודו", "ג`ודו", "ג’ודו", "  גּ׳וּדוֹ  "]) assert.strictEqual(count(q), judo, q);
+  for (const q of ["ק״מ אחד", "ק\"מ   אחד", "RAZ hershko"]) assert.match(count(q), /נמצאו [1-9]/, q);
+});
+
+test("not-found has an h1, is announced and clears the nav", async () => {
+  const {ctx, view} = await boot();
+  const links = ["home", "sports"].map(nav => ({dataset: {nav}, current: false,
+    setAttribute(){ this.current = true; }, removeAttribute(){ this.current = false; }}));
+  ctx.document.querySelectorAll = sel => sel === ".links a" ? links : [];
+  for (const h of ["nope", "sport-nope", "a-nope"]) {
+    view("sports");
+    assert.ok(links[1].current);
+    assert.ok(view(h).includes(`<h1 tabindex="-1">${NOT_FOUND}</h1>`), h);
+    assert.ok(links.every(l => !l.current), `${h}: nav still marked`);
+  }
 });
 
 test("hostile strings are escaped and unsafe links dropped", async () => {
@@ -251,6 +282,15 @@ test("quota section: all-unknown note; hidden without items", async () => {
   const shooting = view("sport-shooting");
   assert.ok(shooting.includes("מקצה אחד") && shooting.includes("עוד אין מידע על מצב ישראל"));
   assert.ok(!view("sport-surfing").includes("מכסות לישראל"));
+});
+
+test("document.title follows the page heading", async () => {
+  const {view, ctx} = await boot();
+  const SITE = "הדרך ללוס אנג׳לס 28";
+  const cases = {home: SITE, sports: `ענפים · ${SITE}`, "a-raz-hershko": `רז הרשקו · ${SITE}`, calendar: `לוח תחרויות · ${SITE}`};
+  for (const [h, title] of Object.entries(cases)) { view(h); assert.strictEqual(ctx.document.title, title, h); }
+  view("a-nope");
+  assert.ok(ctx.document.title.endsWith(SITE));
 });
 
 test("fetch failure shows the retry view", async () => {
