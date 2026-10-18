@@ -33,10 +33,10 @@ const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.
 
 // `data` is the data.json payload; `fetchFails` makes every fetch reject.
 // `quotas`: quotas.json payload; undefined → 404, "fail" → that fetch rejects.
-// `now` pins the clock (ISO instant).
-async function boot({data = FIXTURE, fetchFails = false, quotas, now} = {}){
+// `now` pins the clock (ISO instant); `follows` seeds localStorage.
+async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = []} = {}){
   const els = {};
-  const mem = new Map();
+  const mem = new Map([["la28.follows", JSON.stringify(follows)]]);
   const ctx = {
     console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, setTimeout, clearTimeout,
     setInterval: () => 0, clearInterval(){},
@@ -147,33 +147,58 @@ test("empty data renders empty states", async () => {
 });
 
 const STRIP = "ישראלים מתחרים היום";
-const stripOf = html => html.split('class="panel today-strip"')[1]?.split("</section>")[0] || "";
+const stripOf = html => html.split('class="panel today"')[1]?.split("</section>")[0] || "";
+const rowsOf = strip => strip.split("<li>").slice(1);
+const count = (s, needle) => s.split(needle).length - 1;
+const busyOf = html => html.split("ב־14 הימים הקרובים")[1]?.split("</section>")[0] || "";
 
-test("today strip: mid-way through a multi-day competition", async () => {
+test("today strip: one row per running competition, athletes listed once", async () => {
   // 21:30 UTC on 19 Oct is already 20 Oct in Israel; gymnastics Worlds run 17–25 Oct.
   const {view, run} = await boot({now: "2026-10-19T21:30:00Z"});
   assert.strictEqual(run("today()"), "2026-10-20");
   const strip = stripOf(view("home"));
-  assert.ok(strip.includes(STRIP) && strip.includes("תוצאות יתעדכנו בעדכון היומי"), "strip/label missing");
-  assert.ok(strip.includes('href="#a-artem-dolgopyat"'), "athlete whose nextDate is inside the competition");
-  assert.ok(strip.includes("אליפות העולם בהתעמלות מכשירים 2026"), "competition name");
+  assert.ok(strip.startsWith(' aria-labelledby="todayH"') && strip.includes(`<h2 id="todayH">${STRIP}</h2>`), "heading/aria");
+  assert.ok(strip.includes("תוצאות יתעדכנו בעדכון היומי"), "not-live label");
+  const rows = rowsOf(strip);
+  assert.strictEqual(rows.length, 1);
+  assert.ok(rows[0].includes("אליפות העולם בהתעמלות מכשירים 2026") && rows[0].includes("יום 4 מתוך 9"));
+  for (const id of ["artem-dolgopyat", "lihie-raz", "yali-shoshani"]) assert.strictEqual(count(strip, `href="#a-${id}"`), 1, id);
   assert.ok(!strip.includes("raz-hershko"), "judo athlete competing on 29 Oct");
 });
 
-test("today strip: nextDate == today, ordered by sport", async () => {
+test("today strip: followed first, solo rows, escaping, 14-day list starts after the strip", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
-  Object.assign(data.athletes.find(a => a.id === "adva-cohen"), {nextDate: "2026-10-29", next: "מרוץ בדיקה", event: "<img src=x onerror=alert(1)>"});
-  const {view} = await boot({data, now: "2026-10-29T08:00:00Z"});
+  Object.assign(data.athletes.find(a => a.id === "adva-cohen"), {nextDate: "2026-10-29", next: "<img src=x onerror=alert(1)>"});
+  const {view} = await boot({data, now: "2026-10-29T08:00:00Z", follows: ["raz-hershko"]});
+  const home = view("home"), rows = rowsOf(stripOf(home));
+  assert.strictEqual(rows.length, 3);
+  assert.ok(rows[0].includes("גרנד סלאם אבו דאבי") && rows[0].includes('aria-label="במעקב שלך">★</span> <a href="#a-raz-hershko"'), "followed row first, starred");
+  assert.ok(rows[1].includes("adva-cohen") && rows[1].includes(">היום<"), "solo row for athlete without a competition");
+  assert.ok(!/<img/i.test(rows[1]) && rows[1].includes("&lt;img"), "next must be escaped");
+  assert.ok(rows[2].includes("ישראלים במעקב בענף") && !rows[2].includes('href="#a-'), "running comp, nobody listed");
+  assert.ok(!stripOf(home).includes("סדרת גביעי העולם בהתעמלות אמנותית"), "season-long series excluded");
+  assert.ok(!busyOf(home).includes("raz-hershko") && !busyOf(home).includes("adva-cohen"), "no repeat in 14-day list");
+  const before = await boot({now: "2026-10-26T08:00:00Z"});
+  assert.ok(busyOf(before.view("home")).includes("raz-hershko"), "14-day list unchanged without the strip");
+});
+
+test("today strip: competitions without listed athletes, capped at 6", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const sports = [...new Set(data.athletes.map(a => a.sportId))].slice(0, 8);
+  sports.forEach((sportId, i) => data.competitions.push({id: `t${i}`, sportId, name: `תחרות ${i}`, location: "מקום", start: "2026-10-26", end: "2026-10-27"}));
+  data.athletes.forEach(a => { if (a.nextDate >= "2026-10-26" && a.nextDate <= "2026-10-27") a.nextDate = ""; });
+  const {view} = await boot({data, now: "2026-10-26T08:00:00Z"});
   const strip = stripOf(view("home"));
-  assert.ok(strip.includes("גרנד סלאם אבו דאבי") && strip.includes("מרוץ בדיקה"));
-  assert.ok(strip.indexOf("adva-cohen") < strip.indexOf("raz-hershko"), "אתלטיקה sorts before ג׳ודו");
-  assert.ok(!/<img/i.test(strip) && strip.includes("&lt;img"), "event must be escaped");
+  assert.ok(strip.includes('<h2 id="todayH">היום בענפים שבמעקב</h2>'), "heading when nobody is listed");
+  assert.strictEqual(rowsOf(strip).length, 6);
+  assert.ok(strip.includes('<a href="#calendar">ועוד 2 בלוח התחרויות</a>'));
+  assert.ok(strip.includes("ישראלים במעקב בענף") && !strip.includes('href="#a-'));
 });
 
 test("today strip: hidden on a day with no competitions", async () => {
-  const {view} = await boot({now: "2026-10-27T08:00:00Z"});
+  const {view} = await boot({now: "2026-10-26T08:00:00Z"});
   const home = view("home");
-  assert.ok(home.length > 200 && !home.includes(STRIP));
+  assert.ok(home.length > 200 && !home.includes("todayH"));
 });
 
 test("quotas.json loads into S.quotas and invalid items are dropped", async () => {
