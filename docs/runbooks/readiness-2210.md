@@ -5,6 +5,8 @@ are in [launch-day.md](launch-day.md), Part 1 (QA 10:00, report 11:00, coordinat
 is what gets checked and how. The draft below is filled in as of 18.10 evening: **re-check every row on the day**, and give each
 row a source. Anything not green gets an owner and an ETA.
 
+The numbers for §1–§3 are on one screen: `#admin` → "מוכנות להשקה" (editors, live mode). Each row links to its list.
+
 **22.10 is not a result night**, but the 24.10 result day comes two days later. Launch dates to avoid: 24–25.10,
 29.10–1.11 and 3–4.11 (release plan on #238).
 
