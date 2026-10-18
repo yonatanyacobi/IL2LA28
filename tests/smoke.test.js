@@ -1869,7 +1869,7 @@ test("#day: today's states, a result on another day, #day alone, impossible date
   const y = view("day-2026-10-29");
   assert.ok(y.includes("<b>תוצאה:</b> &lt;b&gt;ארד&lt;/b&gt;") && !y.includes("<b>ארד"), "result escaped");
   for (const bad of ["day-2026-02-30", "day-2026-13-45", "day-nope", "day-<img>"]) assert.ok(view(bad).includes(NOT_FOUND), bad);
-  assert.ok(view("home").includes('<h2 id="todayH"><a href="#today">היום, '), "home h2 → #today");
+  assert.ok(view("home").includes('<h2 id="todayH"><a class="hlink" href="#today">היום, '), "home h2 → #today, a.hlink");
   const quiet = run(`(() => { for (let d = "2026-11-15"; d < "2027-06-01"; d = addDays(d, 1)) if (!daySessions(d).length) return d; })()`);
   const empty = view("day-" + quiet);
   assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
@@ -2093,7 +2093,7 @@ test("home today: 8 sessions show 6, followed first, each row links its #c-, the
   assert.strictEqual(rows.length, 6);
   assert.ok(rows[0].includes('href="#a-raz-hershko"') && rows[0].includes("במעקב שלך"), "followed first");
   for (const r of rows) assert.ok(r.includes('<small><a href="#c-issf-wch-doha-2026">אליפות העולם בקליעה</a></small>') && !r.includes("#sport-"), r);
-  assert.ok(sec.includes('<a href="#today">ועוד 2 סשנים היום</a>') && sec.includes('<h2 id="todayH"><a href="#today">היום, יום ג׳, 3 בנוב׳</a></h2>'));
+  assert.ok(sec.includes('<a href="#today">ועוד 2 סשנים היום</a>') && sec.includes('<h2 id="todayH"><a class="hlink" href="#today">היום, יום ג׳, 3 בנוב׳</a></h2>'));
   const seven = await boot({data: only(list.slice(1)), quotas: SITE_QUOTAS, now: "2026-11-03T00:30:00Z"});
   assert.ok(todayOf(seven.view("home")).includes(">ועוד סשן אחד היום</a>"), "one more");
 });
@@ -2101,11 +2101,12 @@ test("home today: 8 sessions show 6, followed first, each row links its #c-, the
 test("home today: Abu Dhabi on 29.10, an empty day with הבא בתור, running competitions without a session", async () => {
   const ad = todayOf((await boot({data: judoOn29(), quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home"));
   assert.ok(ad.includes('<a href="#c-judo-gs-abu-dhabi-2026">גרנד סלאם אבו דאבי</a>') && ad.includes("pill s-live") && !ad.includes("לכל התחרויות היום"));
+  // components §1: no time in the group → empty .d, "תאריך בלבד" once on the heading.
   const dates = ad.split("<li>").slice(1).map(li => /<span class="d">([^<]*)<\/span>/.exec(li)?.[1]);
-  assert.deepStrictEqual(dates, ["תאריך בלבד", undefined, undefined, undefined, undefined], "date-only once per competition");
-  assert.ok(ad.includes('<span class="d"><span class="sr">תאריך בלבד</span></span>'), "the rest keep it for screen readers");
-  const empty = todayOf((await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"})).view("home"));
-  const nextRows = empty.split("<h3>הבא בתור: יום ה׳, 29 באוק׳</h3>")[1]?.split("</ul>")[0] || "";
+  assert.ok(dates.length === 5 && dates.every(d => d === ""), "empty .d: " + dates);
+  assert.ok(/<h2 id="todayH"><a class="hlink" href="#today">[^<]+<\/a><span class="muted"> · תאריך בלבד<\/span><\/h2>/.test(ad), "on the heading, once");
+  const empty = todayOf((await boot({data: judoOn29(), quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"})).view("home"));
+  const nextRows = empty.split('<h3>הבא בתור: יום ה׳, 29 באוק׳<span class="muted"> · תאריך בלבד</span></h3>')[1]?.split("</ul>")[0] || "";
   assert.ok(empty.includes('<p class="muted">אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.</p>')
     && (nextRows.match(/<li>/g) || []).length === 3 && nextRows.includes("pill s-before")
     && empty.includes('<p><a href="#day-2026-10-29">לכל הסשנים ב־29 באוק׳</a></p>'), "empty day: the next day's first 3 rows (PM on #171)");
@@ -2157,7 +2158,9 @@ test("home results: 48 h window, date-only history, no source dropped, session a
   const sec = resultsOf((await boot({data, quotas: SITE_QUOTAS, now: "2026-11-05T10:00:00Z"})).view("home"));
   assert.ok(sec.includes("תוצאה in") && !sec.includes("תוצאה out"), "47 h in, 49 h out");
   assert.ok(sec.includes('<time datetime="2026-11-03T11:00:00.000Z">3 בנוב׳, 13:00</time>') && sec.includes('<a href="#c-issf-wch-doha-2026">'));
-  assert.ok(sec.includes('<span class="d">4 בנוב׳</span>') && sec.includes("<b>תוצאה:</b> אתמול · ") && !sec.includes("עודכן"), "history: date only");
+  assert.ok(sec.includes('<h3>יום ד׳, 4 בנוב׳<span class="muted"> · תאריך בלבד</span></h3>') && sec.includes("<b>תוצאה:</b> אתמול · ")
+    && !sec.split("<h3>יום ד׳, 4 בנוב׳")[1].split("<h3>")[0].includes("עודכן"), "history: a date-only group, no stamp");
+  assert.ok(sec.includes('<h3>יום ג׳, 3 בנוב׳</h3>') && sec.includes('<span class="d"><time datetime="2026-11-03T06:15:00.000Z">08:15</time></span>'), "session rows: shared sessionRow, by day");
   assert.ok(!sec.includes("בלי מקור") && !sec.includes("כפול"), "no source, no row; the session wins");
   assert.ok(sec.includes('rel="noopener">מקור: <bdi>issf-sports.org</bdi>') && !sec.includes("pill") && !sec.includes("✓"), "source, no chip");
   assert.ok(sec.indexOf("אתמול") < sec.indexOf("תוצאה in"), "newest first");
@@ -2198,6 +2201,11 @@ test("home today lists only athletes competing today, not the rest of a running 
 test("#digest: a 'מתקיימת עכשיו' note from before an event isn't printed under its results (Gil P3)", async () => {
   const {text} = await digestOf({now: "2026-10-26T09:00:00Z"});
   const gym = digestSection(text, "תוצאות השבוע").split("\n• ").find(b => b.includes("התעמלות מכשירים")) || "";
+  // Only that status phrase: a result that happens to say "עכשיו" stays (Gil, blocking on #237).
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.changes.unshift({at: "2026-10-24", text: "התעמלות מכשירים: ליהיא רז עכשיו במקום 12 בדירוג.", athleteId: "lihie-raz"});
+  const kept = digestSection((await digestOf({data, now: "2026-10-26T09:00:00Z"})).text, "תוצאות השבוע");
+  assert.ok(kept.includes("ליהיא רז עכשיו במקום 12 בדירוג"), kept);
   assert.ok(gym && !gym.includes("עכשיו"), gym);
   assert.ok(!digestSection(text, "מה התעדכן").includes("ברוטרדם מתקיימת עכשיו"), "not moved to the changes section either");
 });
