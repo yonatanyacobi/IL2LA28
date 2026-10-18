@@ -129,11 +129,14 @@ The Publisher prepares the call and the coordinator runs it. The page itself is 
 2. Hand the coordinator this call (main checked out at the SHA from step 1):
    > Publish to https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT with file_path = site/index.html and
    > files = {"app.js": "site/app.js", "admin.js": "site/admin.js", "quotas.js": "site/quotas.js",
-   > "digest.js": "site/digest.js", "styles.css": "site/styles.css", "quotas.json": "site/quotas.json"}.
+   > "digest.js": "site/digest.js", "corrections.js": "site/corrections.js", "sessions.js": "site/sessions.js",
+   > "day.js": "site/day.js", "event.js": "site/event.js", "following.js": "site/following.js",
+   > "styles.css": "site/styles.css", "quotas.json": "site/quotas.json"}.
    > Don't pass force, capabilities, icon or contract.
 
    `data.json` is not in the list. It was published in step 3, and files left out are kept. If a new `site/*.js` or
    asset was added in the merge, add it to the map, and also check it has a `<script>` tag in `index.html`.
+   The map must list every `<script src>` in `index.html`: `grep -o 'src="[^"]*"' site/index.html`.
 3. Note in the PR thread: the published SHA and the time.
 
 ### 6. Live check at 400px
