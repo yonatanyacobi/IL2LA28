@@ -84,7 +84,7 @@ function viewFollowing(tab = ""){
     <ul class="rows">${next.map(x => `<li><span class="d">${fmtShort(x.d)}</span><span class="t">${x.html}${rowMark(x.k, x.d + x.html)}</span><span>${x.chip}</span></li>`).join("")}</ul></section>` : ""}
   ${tab ? (sports.length ? `<ul class="sports">${sports.map(s => { const ws = winStatus(s.window); return `<li><a class="sport" href="#sport-${esc(s.id)}">
       <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</span>${stageBar(athletesOf(s.id), true).html}
-      ${quotaCardSummary(s.id)}<span class="meta">${athletesOf(s.id).length} במעקב</span></a></li>`; }).join("")}</ul>`
+      ${quotaCardSummary(s.id)}<span class="meta">${athletesOf(s.id).length} ברשימה</span></a></li>`; }).join("")}</ul>`
       : emptyTab)
     : (athletes.length ? `<div class="cards">${athletes.map(athleteCard).join("")}</div>`
       : emptyTab)}

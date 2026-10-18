@@ -221,7 +221,7 @@ test("empty data renders empty states", async () => {
   const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}});
   assert.ok(view("home").includes("אין תחרויות קרובות במאגר"));
   assert.ok(view("home").includes("עוד אין עדכונים"));
-  assert.ok(view("sport-judo").includes("אין כרגע ספורטאים או נבחרות מישראל במעקב"));
+  assert.ok(view("sport-judo").includes("אין כרגע ספורטאים או נבחרות מישראל ברשימה"));
   assert.ok(view("calendar").includes("אין תחרויות שמתאימות לסינון"));
   assert.ok(view("updates").includes("עוד אין עדכונים"));
   assert.ok(view("sports").length > 0);
@@ -233,10 +233,22 @@ const rowsOf = strip => strip.split("<li>").slice(1);
 const count = (s, needle) => s.split(needle).length - 1;
 const busyOf = html => html.split("ב־14 הימים הקרובים")[1]?.split("</section>")[0] || "";
 
+test("S1: \"במעקב\" is only the viewer's own follow; stage 0 and the site's list have their own words", async () => {
+  const {view} = await boot();
+  assert.ok(view("about").includes("<b>לפני חלון ההעפלה</b>"), "stage 0 name");
+  assert.ok(/<b>\d+<\/b> ספורטאים ונבחרות ברשימה/.test(view("home")), "home KPI: ברשימה");
+  // Every remaining "במעקב" in the site code is personal-follow copy.
+  for (const f of fs.readdirSync(path.join(ROOT, "site")).filter(n => n.endsWith(".js"))) {
+    const bad = fs.readFileSync(path.join(ROOT, "site", f), "utf8").split("\n")
+      .filter(l => /במעקב/.test(l) && !/במעקב (שלך|שלי)|עוד אין (ענפים|ספורטאים או נבחרות) במעקב|שבמעקב שלך/.test(l));
+    assert.deepStrictEqual(bad, [], f);
+  }
+});
+
 test("home KPI uses the singular for one athlete and one verified record", async () => {
   const one = {...FIXTURE.athletes[0], verifiedAt: "2026-10-01", updatedAt: "2026-09-01"};
   const kpi = (await boot({data: {...FIXTURE, athletes: [one]}})).view("home").match(/<p class="kpi">.*?<\/p>/)[0];
-  assert.ok(kpi.includes("ספורטאי/ת או נבחרת אחת במעקב") && !kpi.includes("ספורטאים ונבחרות"), kpi);
+  assert.ok(kpi.includes("ספורטאי/ת או נבחרת אחת ברשימה") && !kpi.includes("ספורטאים ונבחרות"), kpi);
   assert.ok(kpi.includes("נבדק/ה ידנית"), kpi);
 });
 
@@ -263,7 +275,7 @@ test("today strip: followed first, solo rows, escaping, 14-day list starts after
   assert.ok(rows[0].includes("גרנד סלאם אבו דאבי") && rows[0].includes('aria-label="במעקב שלך">★</span> <a href="#a-raz-hershko"'), "followed row first, starred");
   assert.ok(rows[1].includes("adva-cohen") && rows[1].includes(">היום<"), "solo row for athlete without a competition");
   assert.ok(!/<img/i.test(rows[1]) && rows[1].includes("&lt;img"), "next must be escaped");
-  assert.ok(rows[2].includes("ספורטאי/ת או נבחרת אחת במעקב בענף") && !rows[2].includes('href="#a-'), "running comp, nobody listed (singular)");
+  assert.ok(rows[2].includes("ספורטאי/ת או נבחרת אחת ברשימה בענף") && !rows[2].includes('href="#a-'), "running comp, nobody listed (singular)");
   assert.ok(!stripOf(home).includes("סדרת גביעי העולם בהתעמלות אמנותית"), "season-long series excluded");
   assert.ok(!busyOf(home).includes("raz-hershko") && !busyOf(home).includes("adva-cohen"), "no repeat in 14-day list");
   const before = await boot({now: "2026-10-26T08:00:00Z"});
@@ -277,10 +289,10 @@ test("today strip: competitions without listed athletes, capped at 6", async () 
   data.athletes.forEach(a => { if (a.nextDate >= "2026-10-26" && a.nextDate <= "2026-10-27") a.nextDate = ""; });
   const {view} = await boot({data, now: "2026-10-26T08:00:00Z"});
   const strip = stripOf(view("home"));
-  assert.ok(strip.includes('<h2 id="todayH">היום בענפים שבמעקב</h2>'), "heading when nobody is listed");
+  assert.ok(strip.includes('<h2 id="todayH">היום בענפים שברשימה</h2>'), "heading when nobody is listed");
   assert.strictEqual(rowsOf(strip).length, 6);
   assert.ok(strip.includes('<a href="#calendar">ועוד 2 בלוח התחרויות</a>'));
-  assert.ok(strip.includes("ספורטאים ונבחרות במעקב בענף") && !strip.includes('href="#a-'));
+  assert.ok(strip.includes("ספורטאים ונבחרות ברשימה בענף") && !strip.includes('href="#a-'));
 });
 
 test("today strip: hidden on a day with no competitions", async () => {
@@ -941,7 +953,7 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   noIsraelis.sessions = [];
   noIsraelis.athletes = noIsraelis.athletes.filter(a => a.sportId !== "shooting" || a.id === "sergey-richter");
   const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z", {data: noIsraelis})).out;
-  assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת במעקב בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
+  assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת ברשימה בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
   assert.ok(doha.includes('id="evStakesH"') && doha.includes("הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
   const dohaItems = doha.split('id="evStakesH"')[1].split("</section>")[0].split("<li>").slice(1);
   for (const li of dohaItems) assert.ok(li.includes("q-in-contention") || !li.includes("מה זה אומר"), "stakes only for in-contention items");
@@ -1386,7 +1398,7 @@ test("#digest: results logged in athlete history count, even after nextDate move
 
 test("#digest: this week's results group ended competitions with their changes", async () => {
   const empty = digestSection((await digestOf()).text, "תוצאות השבוע");
-  assert.strictEqual(empty, "לא הסתיימו השבוע תחרויות בענפים שבמעקב.");
+  assert.strictEqual(empty, "לא הסתיימו השבוע תחרויות בענפים שברשימה.");
 
   const data = JSON.parse(JSON.stringify(FIXTURE));
   data.changes.unshift(
@@ -1599,7 +1611,7 @@ test("next-up fallback with no entrants never says מתחרים; quotas error hi
   data.athletes.forEach(a => { a.nextDate = ""; });
   const {view} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
   const line = nextUpOf(view("home"));
-  assert.ok(/במעקב בענף/.test(line) && !line.includes("מתחרים"), line);
+  assert.ok(/ברשימה בענף/.test(line) && !line.includes("מתחרים"), line);
 
   const failed = await boot({quotas: "fail", now: "2026-10-26T08:00:00Z"});
   const home = failed.view("home");

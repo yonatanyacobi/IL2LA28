@@ -93,7 +93,7 @@ function viewEvent(id){
   </div>
   <section class="panel" aria-labelledby="evSumH"><h2 id="evSumH">בקצרה</h2>
     ${athletes.length ? `<p class="kpi">${kpi}</p>`
-      : `<p>לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.${tracked ? ` <a href="#sport-${esc(c.sportId)}">${who(tracked)} במעקב בענף</a>` : ""}</p>`}
+      : `<p>לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.${tracked ? ` <a href="#sport-${esc(c.sportId)}">${who(tracked)} ברשימה בענף</a>` : ""}</p>`}
   </section>
   <div class="event-cols">
     <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הסשנים</h2>${schedule}</section>
