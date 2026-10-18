@@ -46,7 +46,9 @@ function rowMark(key, sig){
   if (diffRender && rowSigs.get(key) !== sig && !changedRows.has(key) && ts && !isNaN(Date.parse(ts))) { changedRows.set(key, ts); newlyChanged++; }
   rowSigs.set(key, sig);
   const at = changedRows.get(key);
-  return at ? `<span class="pill chg">השתנה ב־<time datetime="${esc(at)}">${ilTime(at)}</time></span>` : "";   // out of the flow: see styles.css
+  // Out of the flow (styles.css), so visually it never touches the row's text; in the reading order it follows that text
+  // directly, so an sr-only separator keeps "מקום 5" and "השתנה ב־" from running together.
+  return at ? `<span class="pill chg"><span class="sr"> · </span>השתנה ב־<time datetime="${esc(at)}">${ilTime(at)}</time></span>` : "";
 }
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };
