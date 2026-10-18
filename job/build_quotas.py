@@ -2,7 +2,8 @@
 
 Usage: python3 build_quotas.py <master.json> <out.json>
 Only items the fact-checker signed off (review.status "ok" or "fixed") are published; "partial" and
-"unchecked" stay in the master until reviewed. The review field itself never leaves the master.
+"unchecked" stay in the master until reviewed. The review field itself never leaves the master; only
+their count ("unpublished") does, so #admin can show what is still waiting.
 Edit the master, never site/quotas.json: the next build overwrites it.
 """
 import json, sys
@@ -13,7 +14,7 @@ PUBLISH = {"ok", "fixed"}
 def build(master):
     items = [{k: v for k, v in it.items() if k != "review"}
              for it in master["items"] if (it.get("review") or {}).get("status") in PUBLISH]
-    return {"updatedAt": master["updatedAt"], "items": items}
+    return {"updatedAt": master["updatedAt"], "items": items, "unpublished": len(master["items"]) - len(items)}
 
 
 def main(master_file, out_file):

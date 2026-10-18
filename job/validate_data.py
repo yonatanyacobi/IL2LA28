@@ -157,8 +157,11 @@ def validate_quotas(q, data):
     # The sprint backlog says YYYY-MM-DD, the agreed format says ISO; both are accepted.
     if not (is_date(q.get("updatedAt")) or is_iso(q.get("updatedAt"))):
         err(f"updatedAt: expected YYYY-MM-DD or ISO datetime, got {q.get('updatedAt')!r}")
-    if set(q) - {"updatedAt", "items"}:
-        err(f"top level: unexpected keys {sorted(set(q) - {'updatedAt', 'items'})}")
+    top = {"updatedAt", "items", "unpublished"}   # unpublished: optional count of master items awaiting sign-off
+    if set(q) - top:
+        err(f"top level: unexpected keys {sorted(set(q) - top)}")
+    if "unpublished" in q and not (type(q["unpublished"]) is int and q["unpublished"] >= 0):
+        err(f"unpublished: expected a non-negative int, got {q['unpublished']!r}")
     if not isinstance(q.get("items"), list):
         return errors + ["items: expected a list"]
     sports = {s.get("id") for s in data.get("sports") or [] if isinstance(s, dict)}

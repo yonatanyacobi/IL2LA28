@@ -81,6 +81,8 @@ const tests = [];
 const test = (name, fn) => tests.push({name, fn});
 
 const NOT_FOUND = "הדף לא נמצא";
+// Pill symbols are wrapped in aria-hidden spans; tests that read pill text see "✓ מכסה הושגה".
+const unhide = html => html.replace(/<span aria-hidden="true">([^<]*)<\/span>/g, "$1");
 
 test("routes render expected content", async () => {
   const {view} = await boot();
@@ -298,7 +300,8 @@ test("sport page quota section: order, counts, escaping", async () => {
   assert.ok(out.indexOf("שיטת ההעפלה") < out.indexOf("מכסות לישראל") && out.indexOf("מכסות לישראל") < out.indexOf("ספורטאים ונבחרות"));
   const order = ["עד 57", "עד 78", "קבוצה מעורבת", "עד 100"].map(e => out.indexOf(e));
   assert.deepStrictEqual([...order].sort((x, y) => x - y), order, "earned → in-contention → outside → unknown");
-  for (const l of ["✓ מכסה הושגה", "◐ במרוץ למכסה", "○ מחוץ למכסות כרגע", "? אין מידע עדיין"]) assert.ok(out.includes(l), l);
+  for (const l of ["✓ מכסה הושגה", "◐ במרוץ למכסה", "○ מחוץ למכסות כרגע", "? אין מידע עדיין"]) assert.ok(unhide(out).includes(l), l);
+  assert.ok(out.includes('<span class="pill q-earned"><span aria-hidden="true">✓</span> מכסה הושגה</span>'), "symbol hidden from screen readers");
   assert.ok(out.includes("18 מכסות בעולם · עד מכסה אחת למדינה"));
   assert.ok(out.includes("0 מכסות בעולם · עד 2 מכסות למדינה"), "a real 0 is shown, not dropped");
   assert.ok(out.includes("גרנד סלאם אבו דאבי") && !out.includes("תחרות שעברה"), "past quota event hidden");
@@ -380,7 +383,7 @@ test("awaiting results after a quota event (round3 §1): sport page, #quotas, ho
   ]});
   const AW = '<span aria-hidden="true">◷</span> בהמתנה לתוצאות';
   const PILL = `<span class="pill q-awaiting">${AW}</span>`;
-  const LINE = "גמר קבוצתי&lt;i&gt; · ";
+  const LINE = "גמר קבוצתי&lt;i&gt; (";
   const at = async (now, updatedAt = "2026-10-18") => {
     const {view} = await boot({quotas: quotas(updatedAt), now});
     const home = view("home");
@@ -393,16 +396,16 @@ test("awaiting results after a quota event (round3 §1): sport page, #quotas, ho
 
   const next = await at("2026-10-21T08:00:00Z");
   const row = next.sport.split("<li>").find(x => x.includes("קבוצתי&lt;b&gt;"));
-  assert.ok(row.includes(`<span class="actions"><span class="pill q-in-contention">◐ במרוץ למכסה</span>${PILL}</span>`), "status pill + awaiting pill");
-  assert.ok(row.includes(`<p class="q-meta">${LINE}`) && row.includes("ממתינים לעדכון המכסות לפי ההודעה הרשמית.") && !row.includes("stake קבוצתי"), "line replaces stale stakes");
-  const order = ["הושגה", "קבוצתי&lt;b&gt;", "אישי"].map(e => next.sport.indexOf(`<b>${e}</b>`));
+  assert.ok(row.includes(`<span class="actions"><span class="pill q-in-contention"><span aria-hidden="true">◐</span> במרוץ למכסה</span>${PILL}</span>`), "status pill + awaiting pill");
+  assert.ok(row.includes(`<p class="q-meta">${LINE}`) && row.includes("). עדכון המכסות יפורסם אחרי ההודעה הרשמית.") && !row.includes("stake קבוצתי"), "line replaces stale stakes");
+  const order = ["הושגה", "קבוצתי&lt;b&gt;", "אישי"].map(e => next.sport.indexOf(`<b><bdi>${e}</bdi></b>`));
   assert.deepStrictEqual([...order].sort((x, y) => x - y), order, "earned, then awaiting, then the rest");
-  assert.ok(!next.sport.split("<li>").find(x => x.includes("<b>הושגה</b>")).includes(PILL), "earned never awaits");
+  assert.ok(!next.sport.split("<li>").find(x => x.includes("<b><bdi>הושגה</bdi></b>")).includes(PILL), "earned never awaits");
   const panel = next.all.split('id="qWaitH"')[1]?.split("</section>")[0] || "";
   assert.ok(panel.includes("גמר קבוצתי&lt;i&gt;") && panel.includes("קבוצתי&lt;b&gt;") && !panel.includes("הושגה") && !/<[bi]>/.test(panel.replace(/<\/?b>/g, "")), "#quotas panel, escaped");
   assert.ok(next.all.indexOf('id="qWaitH"') < next.all.indexOf('id="qNextH"'), "panel above upcoming");
-  assert.ok(next.home.includes(" · <b>1</b> בהמתנה לתוצאות"), "home KPI");
-  assert.ok(next.strip.includes(`<small class="stakes awaiting"><b>${AW}:</b> קבוצתי&lt;b&gt;</small>`) && !next.strip.includes("stake קבוצתי"), "strip: no stale stakes");
+  assert.ok(next.home.includes(" · מקצה אחד בהמתנה לתוצאות"), "home KPI names what it counts");
+  assert.ok(next.strip.includes(`<small class="stakes awaiting"><b>${AW}:</b> <bdi>קבוצתי&lt;b&gt;</bdi> · `) && !next.strip.includes("stake קבוצתי"), "strip: no stale stakes");
 
   const updated = await at("2026-10-21T08:00:00Z", "2026-10-21T06:00:00Z");
   for (const page of Object.values(updated)) assert.ok(!page.includes("בהמתנה לתוצאות") && !page.includes("stake קבוצתי"), "curated after the event: no awaiting");
@@ -510,6 +513,28 @@ test("#admin last-run panel shows the newest run's warnings, escaped", async () 
   assert.ok(!quiet.view("admin").includes('id="runWarnings"'), "no box without warnings");
 });
 
+test("#admin launch readiness: counts link to where each issue is fixed", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const [a, b, c] = data.athletes;
+  a.source = "javascript:alert(1)"; b.nextDate = "2026-10-01"; c.verifiedAt = "2026-10-17T00:00:00Z";
+  const {run, view} = await boot({data, quotas: {...QUOTAS, unpublished: 5}, now: "2026-10-18T08:00:00Z"});
+  run(`S.isAdmin = true; S.live = true; S.proposals = [{id: "p1", status: "pending"}, {id: "p2", status: "pending"}]`);
+  const panel = view("admin").split('id="launch"')[1].split("</section>")[0];
+  const num = label => { const before = panel.split(label)[0]; return before.slice(before.lastIndexOf('digits">') + 8).split("<")[0]; };
+  assert.strictEqual(num("הצעות ממתינות"), "2");
+  assert.strictEqual(num("פריטי מכסות שלא פורסמו"), "5");
+  assert.strictEqual(num("בלי אימות ידני"), String(data.athletes.filter(x => !x.verifiedAt).length));
+  assert.strictEqual(num("תאריך התחרות הבאה עבר"), String(data.athletes.filter(x => /^\d{4}-\d\d-\d\d$/.test(x.nextDate || "") && x.nextDate < "2026-10-18").length));
+  for (const href of ["#home", "#admin-nosource", "#admin-noverified", "#admin-pastnext"]) assert.ok(panel.includes(`href="${href}"`), href);
+  const list = view("admin-nosource");
+  assert.ok(list.includes(`href="#a-${a.id}"`) && !list.includes(`href="#a-${c.id}"`), "list rows link to the athlete page");
+  assert.ok(view("admin-pastnext").includes(`href="#a-${b.id}"`));
+
+  const plain = await boot({quotas: QUOTAS});
+  plain.run(`S.isAdmin = true; S.live = true`);
+  assert.ok(plain.view("admin").split('id="launch"')[1].includes("לא ידוע"), "no count in quotas.json → unknown, not 0");
+});
+
 test("#admin quota health: stale file, past/soon events, earned without a stage-2 athlete", async () => {
   const base = QUOTAS.items[0];   // judo, valid
   const item = (sportId, event, israelStatus, start) => ({...base, sportId, event, israelStatus,
@@ -578,7 +603,7 @@ test("#quotas renders the fixture grouped by status, with links and the as-of da
   assert.ok(out.includes("נכון ל־"), "as-of date");
   const home = view("home"), sports = view("sports");
   assert.ok(home.includes('href="#quotas"') && home.includes("מקצה אחד עם מכסה לישראל"));
-  assert.ok(sports.includes('href="#quotas"') && sports.includes("✓ 1 הושגה"));
+  assert.ok(sports.includes('href="#quotas"') && unhide(sports).includes("✓ 1 הושגה"));
 });
 
 test("home quota line uses singular forms for 1", async () => {
@@ -738,6 +763,57 @@ test("#digest: copy succeeds, and a refused clipboard selects the textarea", asy
     } else {
       assert.strictEqual(copied, text);
       assert.strictEqual(els.digestMsg.textContent, "הועתק.");
+    }
+  }
+});
+
+// Date matrix on the real snapshot + published quotas: the strip, #quotas and the sport page must show the
+// event that is on, keep a multi-day quota event current until its last day, and drop its stakes after.
+// tests/test_quota_due.py checks the job's warnings on the same dates.
+const SITE_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+// Last day of each quota event, as the page derives it (own end, else the containing competition, else start).
+const EVENT_END = {
+  "אליפות העולם רוטרדם – גמר קבוצתי גברים": "2026-10-20",
+  "גביע העולם בטריאתלון, טונגיונג": "2026-10-24",
+  "גרנד סלאם אבו דאבי": "2026-10-31",
+  "אליפות העולם": "2026-11-08",   // weightlifting worlds
+};
+const upcomingOf = html => html.split('id="qNextH"')[1]?.split("</section>")[0] || "";
+const DATE_MATRIX = {
+  "2026-10-20": {strip: ["אליפות העולם בהתעמלות מכשירים 2026", "יום 4 מתוך 9"], notStrip: ["גרנד סלאם"],
+    upcoming: ["אליפות העולם רוטרדם – גמר קבוצתי גברים"]},
+  "2026-10-24": {strip: ["יום 8 מתוך 9", "שחר שגיב"], upcoming: ["גביע העולם בטריאתלון, טונגיונג"],
+    notUpcoming: ["רוטרדם"]},
+  "2026-10-27": {strip: ["#sport-weightlifting", "יום 1 מתוך 13", "class=\"stakes\""], notStrip: ["התעמלות מכשירים"],
+    upcoming: ["אליפות העולם"], notUpcoming: ["טונגיונג", "רוטרדם"]},
+  "2026-10-30": {strip: ["גרנד סלאם אבו דאבי", "יום 2 מתוך 3", "ועוד 5 מקצים"], upcoming: ["גרנד סלאם אבו דאבי"],
+    judoStakes: true},
+  "2026-11-01": {strip: ["אליפות העולם בקליעה", "#sport-shooting"], notStrip: ["גרנד סלאם"],
+    upcoming: ["אליפות העולם בקליעה"], notUpcoming: ["גרנד סלאם"], judoStakes: false},
+};
+
+test("date matrix: strip, #quotas and sport page follow the event calendar; no stale stakes", async () => {
+  const withStakes = SITE_QUOTAS.items.filter(q => q.stakes && q.nextQuotaEvent);
+  assert.ok(withStakes.length >= 8, "published quotas should carry stakes");
+  for (const [t, exp] of Object.entries(DATE_MATRIX)) {
+    const {view, run} = await boot({quotas: SITE_QUOTAS, now: `${t}T08:00:00Z`});
+    assert.strictEqual(run("today()"), t);
+    const home = view("home"), strip = stripOf(home), quotas = view("quotas"), up = upcomingOf(quotas), judo = view("sport-judo");
+    for (const s of exp.strip || []) assert.ok(strip.includes(s), `${t}: strip lacks ${s}`);
+    for (const s of exp.notStrip || []) assert.ok(!strip.includes(s), `${t}: strip shows ${s}`);
+    for (const s of exp.upcoming || []) assert.ok(up.includes(s), `${t}: #quotas upcoming lacks ${s}`);
+    for (const s of exp.notUpcoming || []) assert.ok(!up.includes(s), `${t}: #quotas upcoming shows ${s}`);
+    if ("judoStakes" in exp) {
+      const s = run(`esc(${JSON.stringify(withStakes.find(q => q.sportId === "judo").stakes)})`);
+      assert.strictEqual(judo.includes(s), exp.judoStakes, `${t}: judo stakes on #sport-judo`);
+      assert.strictEqual(up.includes(s), exp.judoStakes, `${t}: judo stakes on #quotas`);
+    }
+    for (const q of withStakes) {
+      const end = EVENT_END[q.nextQuotaEvent.name];
+      if (!end || end >= t) continue;
+      const pages = {home, quotas, [`sport-${q.sportId}`]: view(`sport-${q.sportId}`)};
+      for (const [page, html] of Object.entries(pages))
+        assert.ok(!html.includes(run(`esc(${JSON.stringify(q.stakes)})`)), `${t}: stale stakes on ${page}: ${q.event}`);
     }
   }
 });
