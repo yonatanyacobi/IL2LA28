@@ -1,4 +1,5 @@
-import os, subprocess, sys, unittest
+import copy, json, os, subprocess, sys, unittest, zlib
+from datetime import date
 from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -122,6 +123,127 @@ class GymResultsTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("DOLGOPYAT Artem", r.stdout)
         self.assertEqual(subprocess.run([sys.executable, script, "nope", RANKING], capture_output=True).returncode, 1)
+        self.assertEqual(subprocess.run([sys.executable, script, "plan", "/no/such/dir"], capture_output=True).returncode, 1)
+
+
+def cid_pdf(cmaps, content):
+    """A minimal PDF with ToUnicode CMaps and one content stream, as FIG's results books are built."""
+    streams = [b"/CIDInit /ProcSet findresource begin begincmap\n" + c + b"\nendcmap" for c in cmaps] + [content]
+    return b"%PDF-1.7\n" + b"".join(b"1 0 obj <<>> stream\n" + zlib.compress(s) + b"endstream\n" for s in streams)
+
+
+class PdfCidTest(unittest.TestCase):
+    # Glyph = character - 29, as in fidb_23893; "]" (0x5D) is the code for "z".
+    CMAP = b"1 beginbfrange\n<0003><0003><0020>\nendbfrange\n1 beginbfrange\n<0024><005d><0041>\nendbfrange"
+
+    def test_two_byte_strings_through_tounicode(self):
+        enc = lambda s: b"".join(b"\x00" + bytes([ord(ch) - 29]) for ch in s)
+        z = enc("HRIBAR Anze")   # holds a raw "]" byte: the TJ array must not end there
+        self.assertIn(b"]", z)
+        content = (b"BT [(" + enc("SHAMAY") + b")-300(" + enc("Roni") + b")] TJ T* [(" + z + b")] TJ ET "
+                   b"BT (\\000\\053\\000\\053) Tj ET")   # octal escapes: two "H"
+        self.assertEqual(gr.pdf_text(cid_pdf([self.CMAP], content)), "SHAMAY Roni\nHRIBAR Anze\nHH")
+
+    def test_disagreeing_cmaps_read_as_nothing(self):
+        other = b"1 beginbfchar\n<0024><0058>\nendbfchar"   # code 0x24 is "A" in one font, "X" in the other
+        self.assertEqual(gr.pdf_text(cid_pdf([self.CMAP, other], b"BT [(\x00\x24)] TJ ET")), "")
+
+
+BOOK = os.path.join(FIX, "fig-paris-wcc-2026-results-book.txt")   # pdf_text() of fidb_23893, FIG WCC Paris 2026
+BOOK_URL = "https://www.gymnastics.sport/asset.php?id=fidb_23893"
+PARIS_PAGE = "https://www.gymnastics.sport/site/events/detail.php?id=18305"
+PARIS = {"id": "ag-wcc-paris-2026", "sportId": "artistic-gymnastics", "name": "גביע העולם פריז 2026",
+         "start": "2026-09-26", "end": "2026-09-27", "source": PARIS_PAGE}
+EVENT_PAGE = ('<a href="../../asset.php?id=fidb_23751">4_Nominative Registration</a>'
+              '<a href="../../asset.php?id=fidb_23893">Results book (Media)</a>').encode()
+
+
+class GymPlanTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        with open(BOOK, encoding="utf-8") as f:
+            cls.book = f.read()
+        with open(os.path.join(HERE, "fixtures", "data.json"), encoding="utf-8") as f:
+            cls.athletes = json.load(f)["athletes"]
+
+    def run_plan(self, comps=(PARIS,), athletes=None, sessions=(), page=EVENT_PAGE, today="2026-09-29"):
+        calls = []
+        def get(url):
+            calls.append(url)
+            return page if url == PARIS_PAGE else b"%PDF"
+        data = {"athletes": copy.deepcopy(athletes or self.athletes), "competitions": list(comps), "sessions": list(sessions)}
+        with mock.patch.object(gr, "pdf_text", return_value=self.book):
+            out = gr.plan(data, get, date.fromisoformat(today))
+        return out, calls
+
+    def test_parse_results_book(self):
+        rows = gr.parse_results_book(self.book)
+        self.assertEqual(len(rows), 353)
+        finals = [r for r in rows if r["phase"] == "final"]
+        self.assertEqual((len(finals), {r["qualified"] for r in finals}), (80, {None}), "10 finals of 8")
+        isr = {(r["name"], r["apparatus"], r["phase"]): (r["day"], r["rank"], r["qualified"], r["reserve"])
+               for r in rows if r["noc"] == "ISR"}
+        self.assertEqual(len(isr), 19)
+        self.assertEqual(isr[("SHAMAY Roni", "floor", "qual")], ("2026-09-26", 9, False, 1), "R1 is a reserve")
+        self.assertEqual(isr[("SHAMAY Roni", "balancebeam", "qual")], ("2026-09-26", 7, True, None))
+        self.assertEqual(isr[("DOLGOPYAT Artem", "floor", "final")], ("2026-09-27", 1, None, None))
+        # A "z" name: its rows were lost before the TJ fix, which left the floor final without a silver.
+        self.assertEqual([r["rank"] for r in rows if r["name"] == "HRIBAR Anze" and r["phase"] == "final"], [2])
+        vault = [r for r in rows if r["apparatus"] == "vault" and r["phase"] == "qual" and r["gender"] == "f"]
+        self.assertEqual([r["rank"] for r in vault if r["qualified"]], list(range(1, 9)), "Q after the first vault")
+        self.assertEqual(gr.parse_results_book("Men's Team Final\nResults\n1 1 CHINA CHN 250.000"), [], "team tables closed")
+
+    def test_dry_run_on_paris(self):
+        out, calls = self.run_plan()
+        self.assertEqual(calls, [PARIS_PAGE, BOOK_URL], "one event page, one official book")
+        self.assertEqual(out["warnings"], [])
+        self.assertEqual(len(out["updates"]), 19)
+        self.assertTrue(all(u["result"]["source"] == BOOK_URL for u in out["updates"]))
+        texts = {(u["athleteId"], u["result"]["at"], u["result"]["text"]) for u in out["updates"]}
+        for want in [("roni-shamay", "2026-09-26", "מקום 9 בקרקע במוקדמות גביע העולם פריז 2026 (26 בספט׳ 2026), מחליפה 1 לגמר הקרקע"),
+                     ("roni-shamay", "2026-09-27", "מקום 8 בגמר קורה בגביע העולם פריז 2026 (27 בספט׳ 2026)"),
+                     ("noam-berkovich", "2026-09-26", "מקום 2 במתח במוקדמות גביע העולם פריז 2026 (26 בספט׳ 2026), עלה לגמר המתח"),
+                     ("artem-dolgopyat", "2026-09-27", "זהב בגמר קרקע בגביע העולם פריז 2026 (27 בספט׳ 2026)")]:
+            self.assertIn(want, texts)
+        self.assertEqual([(p["id"], p["doc"]["kind"], p["doc"]["status"]) for p in out["proposals"]],
+                         [("artem-dolgopyat-20260927-floor-result", "update", "pending")], "podium in a final only")
+        self.assertTrue(out["proposals"][0]["doc"]["patch"]["notes"].endswith("זהב בקרקע בגביע העולם פריז 2026"))
+        self.assertNotIn("stage", json.dumps(out["proposals"]), "never a stage or quota change")
+
+    def test_already_logged_and_rerun(self):
+        out, _ = self.run_plan()
+        done = copy.deepcopy(self.athletes)
+        for a in done:
+            a["history"] = (a.get("history") or []) + [u["result"] for u in out["updates"] if u["athleteId"] == a["id"]]
+        again, _ = self.run_plan(athletes=done)
+        self.assertEqual((again["updates"], again["warnings"]), ([], []), "a later run (or a manual entry with result_text) finds them logged")
+
+    def test_warnings_instead_of_writes(self):
+        cases = [
+            (dict(page=b'<a href="../../asset.php?id=fidb_1">5_Work Plan</a>'), "ספר התוצאות הרשמי עוד לא פורסם"),
+            (dict(comps=[{**PARIS, "source": "https://en.wikipedia.org/wiki/x"}]), "אינו דף האירוע ב־FIG"),
+            (dict(comps=[{**PARIS, "sportId": "rhythmic-gymnastics"}]), "עוד לא נקרא אוטומטית"),
+            (dict(sessions=[{"competitionId": PARIS["id"], "athleteIds": ["lihie-raz"]}]), "lihie-raz רשום/ה בסשן"),
+            (dict(athletes=[a for a in self.athletes if a["id"] != "ron-ortal"]), "ORTAL Ron (ISR) לא נמצא/ה במאגר"),
+        ]
+        for kw, needle in cases:
+            out, _ = self.run_plan(**kw)
+            self.assertIn(needle, "\n".join(out["warnings"]), kw)
+        out, _ = self.run_plan(page=b"")
+        self.assertEqual(out["updates"], [])
+
+    def test_window(self):
+        for today in ("2026-09-27", "2026-10-02"):   # not yet ended; ended more than 4 days ago
+            out, calls = self.run_plan(today=today)
+            self.assertEqual((calls, out["updates"]), ([], []), today)
+        out, calls = self.run_plan(today="2026-09-28")
+        self.assertEqual(len(out["updates"]), 19)
+
+    def test_fig_unreachable(self):
+        def down(url):
+            raise OSError("timed out")
+        out = gr.plan({"athletes": [], "competitions": [PARIS], "sessions": []}, down, date(2026, 9, 29))
+        self.assertEqual((out["updates"], out["warnings"]), ([], ["תוצאות התעמלות: גביע העולם פריז 2026 (2026-09-27): FIG לא זמין (OSError); לבדוק ידנית"]))
 
 
 if __name__ == "__main__":
