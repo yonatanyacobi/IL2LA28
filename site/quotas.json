@@ -190,22 +190,6 @@
    "checkedAt": "2026-10-18"
   },
   {
-   "sportId": "weightlifting",
-   "event": "נשים (הקטגוריה עוד לא אומתה)",
-   "totalQuotas": 10,
-   "maxPerNOC": 1,
-   "allocation": "8 הראשונות בדירוג OQR בכל קטגוריה (3 טוטאלים מתקופה 1 + 2 מתקופה 2, 27 ביולי 2026–7 במאי 2028) + מקום יבשתי אחד.",
-   "israelStatus": "unknown",
-   "israelNote": "סיליה גולד (76 ק״ג באירופה 2025); קטגוריה אולימפית (69/77) ודירוג OQR לא נמצאו",
-   "stakes": "אליפות העולם (מ־27 באוק׳ 2026) היא אחד מ־6 אירועי תקופה 1; נדרשים 3 טוטאלים באותה קטגוריה בתקופה זו",
-   "nextQuotaEvent": {
-    "name": "אליפות העולם",
-    "start": "2026-10-27"
-   },
-   "source": "https://cdn.nocnsf.nl/media/nlsj0xsh/wlf-la28-qualification-system.pdf",
-   "checkedAt": "2026-10-18"
-  },
-  {
    "sportId": "wrestling",
    "event": "כל המשקלים",
    "totalQuotas": 288,
@@ -795,22 +779,6 @@
    "checkedAt": "2026-10-18"
   },
   {
-   "sportId": "lacrosse",
-   "event": "סיקסס גברים ונשים",
-   "totalQuotas": 12,
-   "maxPerNOC": 2,
-   "allocation": "לכל מגדר (6 קבוצות, אחת למדינה): אליפויות יבשתיות 2026 (באירופה: 5 הראשונות בסאלו עולות ישירות) ← אליפות העולם בסיקסס 2027 (4 מקומות, חובה טופ 12) ← טורניר העפלה אחרון ב־2028 (מקום אחד).",
-   "israelStatus": "in-contention",
-   "israelNote": "שתי הנבחרות ישחקו באליפות אירופה בסיקסס בסאלו (נשים מ־2 בנוב׳, גברים מ־10 בנוב׳ 2026)",
-   "stakes": "אליפות אירופה בסאלו (נשים מ־2 בנוב׳, גברים מ־10 בנוב׳ 2026) מעפילה לאליפות העולם 2027, שבה 4 מקומות לאולימפיאדת לוס אנג׳לס 2028 לכל מגדר",
-   "nextQuotaEvent": {
-    "name": "אליפות אירופה בלקרוס סיקסס – נשים, סאלו",
-    "start": "2026-11-02"
-   },
-   "source": "https://worldlacrosse.sport/lacrosse-qualification-set-for-olympic-games-los-angeles-2028/",
-   "checkedAt": "2026-10-18"
-  },
-  {
    "sportId": "baseball",
    "event": "גברים",
    "totalQuotas": 6,
@@ -879,5 +847,5 @@
    "checkedAt": "2026-10-18"
   }
  ],
- "unpublished": 4
+ "unpublished": 8
 }
