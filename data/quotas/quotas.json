@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T11:36:13Z",
+ "updatedAt": "2026-10-18T16:00:00Z",
  "items": [
   {
    "sportId": "judo",
@@ -1065,16 +1065,19 @@
    "event": "סקיף יחיד (1x) גברים ונשים",
    "totalQuotas": 33,
    "maxPerNOC": 1,
-   "allocation": "לכל מגדר: 10 באליפות העולם 2027 בלוצרן, 3 במקצה הקליטה היבשתי של אירופה, 2 במקצה הקליטה האחרון 2028, ועוד מקום מארחת ו-2 אוניברסליות.",
+   "allocation": "לכל מגדר: 10 באליפות העולם 2027 בלוצרן, 15 במקצי קליטה יבשתיים (3 מהם באירופה), 2 במקצה הקליטה האחרון, ועוד מקום מארחת ו-2 אוניברסליות.",
    "israelStatus": "unknown",
    "israelNote": "אין חותר/ת ישראלי/ת אולימפי/ת במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
    "nextQuotaEvent": {
     "name": "אליפות העולם בחתירה, לוצרן",
-    "start": "2027-08-23"
+    "start": "2027-08-23",
+    "end": "2027-08-29"
    },
    "source": "https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked"
+    "status": "fixed",
+    "by": "tamar",
+    "at": "2026-10-18"
    }
   },
   {
@@ -1082,13 +1085,15 @@
    "event": "קאנו ספרינט – גברים ונשים",
    "totalQuotas": 117,
    "maxPerNOC": 8,
-   "allocation": "לכל מגדר: רוב המקומות לפי דירוג הקליטה האולימפי ב-31.12.2027 (תוצאות מ-20.4.2026), והיתר באירועי קליטה יבשתיים ב-2028; סירה אחת למדינה בכל מקצה.",
+   "allocation": "לכל מגדר: רוב המקומות לפי דירוג הקליטה האולימפי ב-31.12.2027 (תוצאות מ-20.4.2026), והיתר באירועי קליטה יבשתיים ב-2028; עד 2 סירות למדינה בכל מקצה.",
    "israelStatus": "unknown",
    "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו ספרינט במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
    "nextQuotaEvent": null,
    "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
    "review": {
-    "status": "unchecked"
+    "status": "fixed",
+    "by": "tamar",
+    "at": "2026-10-18"
    }
   },
   {
@@ -1100,12 +1105,15 @@
    "israelStatus": "unknown",
    "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו סלאלום במעקב",
    "nextQuotaEvent": {
-    "name": "אליפות העולם בקאנו סלאלום",
-    "start": "2027-09-08"
+    "name": "אליפות העולם בקאנו סלאלום, לה סאו",
+    "start": "2027-09-07",
+    "end": "2027-09-12"
    },
    "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
    "review": {
-    "status": "unchecked"
+    "status": "fixed",
+    "by": "tamar",
+    "at": "2026-10-18"
    }
   }
  ]
