@@ -431,6 +431,7 @@ function calendarResults(){
 }
 
 function viewCalendar(sportFilter = ""){
+  if (sportFilter && !sportById(sportFilter)) return notFound();
   S.cal.sport = sportFilter;
   const {sport, qual, past} = S.cal;
   const used = [...new Set(S.comps.map(c => c.sportId))].map(sportById).filter(Boolean).sort((a, b) => heCmp(a.he, b.he));
@@ -693,6 +694,9 @@ function route(){
 
 let lastRoute = null;
 function navigate(){
+  // Filters last only while you stay on the calendar: arriving at it (from elsewhere or another sport) starts clean.
+  const next = currentRoute();
+  if (next !== lastRoute && /^calendar(-|$)/.test(next)) S.cal = {sport: "", qual: false, past: false};
   const h = route();
   if (h === lastRoute) return;
   const first = lastRoute === null;

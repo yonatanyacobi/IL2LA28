@@ -493,6 +493,22 @@ test("#quotas: a 404 or empty file reads as not collected yet; a broken file as 
   }
 });
 
+test("calendar: unknown sport is not-found; arriving at #calendar resets all filters", async () => {
+  const {ctx, run, els, fire} = await boot({now: "2026-10-18T08:00:00Z"});
+  const go = h => { ctx.location.hash = "#" + h; run("navigate()"); return els.view.innerHTML; };
+  assert.ok(go("calendar-nope").includes(NOT_FOUND), "unknown sport");
+  assert.strictEqual(run("S.cal.sport"), "", "unknown sport must not stick as a filter");
+  assert.ok(go("calendar-judo").includes('value="judo" selected'));
+  fire("input", {id: "cQual", checked: true});
+  fire("input", {id: "cPast", checked: true});
+  run("refresh()");   // a data refresh while on the page keeps the filters
+  assert.deepStrictEqual(JSON.parse(run("JSON.stringify(S.cal)")), {sport: "judo", qual: true, past: true});
+  go("sports");
+  const cal = go("calendar");
+  assert.deepStrictEqual(JSON.parse(run("JSON.stringify(S.cal)")), {sport: "", qual: false, past: false});
+  assert.ok(!cal.includes(" selected") && !/id="cQual" checked|id="cPast" checked/.test(cal), "controls render unchecked");
+});
+
 test("calendar filters update only the results list, so focus and scroll survive", async () => {
   const {view, els, fire, run} = await boot({now: "2026-10-18T08:00:00Z"});
   const page = view("calendar");
