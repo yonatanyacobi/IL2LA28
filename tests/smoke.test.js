@@ -1955,6 +1955,21 @@ test("home: fresh line in the hero, no live wording for editors either, today's 
   assert.ok(!live.includes("עדכון אוטומטי אחרון"), "editor freshness says נכון ל־ too");
 });
 
+test("home today lists only athletes competing today, not the rest of a running competition (Gil P3)", async () => {
+  // 30.10, day 2 of Abu Dhabi: the judo athletes' nextDate is 29.10, so none of them competes today.
+  const sec = todayOf((await boot({quotas: SITE_QUOTAS, now: "2026-10-30T08:00:00Z"})).view("home"));
+  for (const id of ["gefen-primo", "izhak-ashpiz", "raz-hershko", "timna-nelson-levy", "yonatan-elbaz"])
+    assert.ok(!sec.split("<h3>")[0].includes(`href="#a-${id}"`), id);
+  assert.ok(/עוד היום, בלי סשן ידוע של ישראלים: [^\n]*#c-judo-gs-abu-dhabi-2026/.test(sec), "the competition is still named");
+});
+
+test("#digest: a 'מתקיימת עכשיו' note from before an event isn't printed under its results (Gil P3)", async () => {
+  const {text} = await digestOf({now: "2026-10-26T09:00:00Z"});
+  const gym = digestSection(text, "תוצאות השבוע").split("\n• ").find(b => b.includes("התעמלות מכשירים")) || "";
+  assert.ok(gym && !gym.includes("עכשיו"), gym);
+  assert.ok(!digestSection(text, "מה התעדכן").includes("ברוטרדם מתקיימת עכשיו"), "not moved to the changes section either");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {
