@@ -67,10 +67,26 @@ const S = {
 };
 store.set("la28.seen", new Date().toISOString());
 
-const sportById = id => S.sports.find(s => s.id === id);
+// Lookup indexes (docs/perf/2026-10.md), rebuilt only when a source array is replaced. Every data load replaces
+// S.athletes / S.sports / S.comps / S.quotas wholesale (nothing mutates them in place), so no invalidation hooks.
+function memoOn(sources, build){
+  let refs = null, value;
+  return () => { const now = sources(); if (!refs || now.some((r, i) => r !== refs[i])) { refs = now; value = build(...now); } return value; };
+}
+const groupOn = (list, key) => { const m = new Map(); for (const x of list) { const k = key(x); m.has(k) ? m.get(k).push(x) : m.set(k, [x]); } return m; };
+const firstById = list => { const m = new Map(); for (const x of list) if (!m.has(x.id)) m.set(x.id, x); return m; };   // as find(): first wins
+const IDX = {
+  sport: memoOn(() => [S.sports], firstById),
+  athlete: memoOn(() => [S.athletes], firstById),
+  athletesBySport: memoOn(() => [S.athletes], as => groupOn(as, a => a.sportId)),
+  quotasBySport: memoOn(() => [S.quotas], qs => groupOn(qs, q => q.sportId)),
+  compsBySport: memoOn(() => [S.comps], cs => groupOn(cs, c => c.sportId)),
+};
+const sportById = id => IDX.sport().get(id);
+const athleteById = id => IDX.athlete().get(id);
 const sportName = id => sportById(id)?.he || id;
-const athletesOf = sid => S.athletes.filter(a => a.sportId === sid);
-const quotasOf = sid => S.quotas.filter(q => q.sportId === sid);
+const athletesOf = sid => (IDX.athletesBySport().get(sid) || []).slice();   // copies: callers sort them in place
+const quotasOf = sid => (IDX.quotasBySport().get(sid) || []).slice();
 const upcoming = () => { const t = today(); return S.comps.filter(c => (c.end || c.start) >= t).sort((a, b) => a.start.localeCompare(b.start)); };
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;

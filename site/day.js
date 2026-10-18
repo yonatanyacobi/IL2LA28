@@ -23,15 +23,19 @@ const ilDate = iso => IL_DAY.format(new Date(iso));
 const STAR = `<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span>`;
 
 // The ≤ 31-day competition of a sport that contains day d (season-long series don't count).
-const compOn = (sid, d) => S.comps.find(c => c.sportId === sid && c.start <= d && d <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS) || null;
+const compOn = (sid, d) => (IDX.compsBySport().get(sid) || []).find(c => c.start <= d && d <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS) || null;
 
 // data.json.sessions, re-checked as defense in depth: unknown competition or no known athlete → dropped; a result
 // without its proof (https source + resultAt) is not shown. Read from the public snapshot, which editors load too.
-function exportedSessions(){
+// Validated once per data load and indexed by Israel day (docs/perf/2026-10.md); callers don't mutate the result.
+const sessionsIdx = memoOn(() => [typeof publicSnapshot !== "undefined" ? publicSnapshot?.sessions : undefined, S.comps, S.athletes],
+  () => { const all = buildExportedSessions(); return {all, byDay: groupOn(all, s => s.day)}; });
+const exportedSessions = () => sessionsIdx().all;
+function buildExportedSessions(){
   const list = typeof publicSnapshot !== "undefined" && Array.isArray(publicSnapshot?.sessions) ? publicSnapshot.sessions : [];
   return list.filter(s => s && typeof s === "object" && isDate(s.date)).map(s => {
     const comp = S.comps.find(c => c.id === s.competitionId);
-    const athletes = (Array.isArray(s.athleteIds) ? s.athleteIds : []).map(id => S.athletes.find(a => a.id === id)).filter(Boolean);
+    const athletes = (Array.isArray(s.athleteIds) ? s.athleteIds : []).map(athleteById).filter(Boolean);
     const proven = str(s.result).trim() && safeUrl(s.resultSource) && isUtc(s.resultAt);
     return comp && athletes.length ? {comp, athletes, sportId: comp.sportId, phase: str(s.phase).slice(0, 120),
       startUtc: isUtc(s.startUtc) ? s.startUtc : null, day: isUtc(s.startUtc) ? ilDate(s.startUtc) : s.date, timed: true,
@@ -40,9 +44,16 @@ function exportedSessions(){
 }
 
 // Fallback pseudo-sessions for day d, one per athlete (deduped by athlete + day; a recorded result wins).
+// Athletes with a nextDate or a result on a day, in S.athletes order: the empty-day look-ahead asks for 120 days.
+const athletesByDay = memoOn(() => [S.athletes], as => {
+  const m = new Map(), add = (d, a) => { if (!isDate(d)) return; const l = m.get(d); l ? l[l.length - 1] !== a && l.push(a) : m.set(d, [a]); };
+  for (const a of as) { add(a.nextDate, a); for (const h of Array.isArray(a.history) ? a.history : []) if (h?.kind === "result") add(h.at, a); }
+  return m;
+});
+
 function fallbackSessions(d){
   const out = new Map();
-  for (const a of S.athletes) {
+  for (const a of athletesByDay().get(d) || []) {
     const res = (Array.isArray(a.history) ? a.history : []).find(h => h.kind === "result" && h.at === d && str(h.text).trim());
     if (!res && a.nextDate !== d) continue;   // most athletes have nothing that day: skip compOn() (docs/perf/2026-10.md)
     const base ={athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null, timed: false};
@@ -61,7 +72,7 @@ const historyResult = (a, d) => (Array.isArray(a.history) ? a.history : []).find
 function daySessions(d){
   const all = exportedSessions();
   const inComp = new Set(all.flatMap(s => s.athletes.map(a => `${s.comp.id}|${a.id}`)));
-  const real = all.filter(s => s.day === d).map(s => {
+  const real = (sessionsIdx().byDay.get(d) || []).map(s => {
     if (s.result) return s;
     const found = s.athletes.map(a => [a, historyResult(a, d)]).filter(([, h]) => h);
     if (!found.length) return s;
