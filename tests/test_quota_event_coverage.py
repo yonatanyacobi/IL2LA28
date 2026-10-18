@@ -34,7 +34,7 @@ def missing_competitions(data, quotas):
 class QuotaEventCoverageTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.missing = missing_competitions(load("fixtures", "data.json"), load("..", "site", "quotas.json"))
+        cls.missing = missing_competitions(load("fixtures", "data.json"), load("fixtures", "site-quotas-2026-10-18.json"))
 
     def test_no_new_gaps(self):
         self.assertEqual(self.missing - KNOWN_MISSING, set())
