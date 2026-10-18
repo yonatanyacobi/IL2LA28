@@ -598,7 +598,7 @@ const digestSection = (text, title) => (text.split(`*${title}*\n`)[1] || "").spl
 
 test("#digest: this week's results group ended competitions with their changes", async () => {
   const empty = digestSection((await digestOf()).text, "תוצאות השבוע");
-  assert.strictEqual(empty, "אין תחרויות שהסתיימו השבוע.");
+  assert.strictEqual(empty, "לא הסתיימו השבוע תחרויות בענפים שבמעקב.");
 
   const data = JSON.parse(JSON.stringify(FIXTURE));
   data.changes.unshift(
@@ -608,14 +608,14 @@ test("#digest: this week's results group ended competitions with their changes",
   const {text} = await digestOf({data, now: "2026-10-26T09:00:00Z"});
   const results = digestSection(text, "תוצאות השבוע");
   const gym = results.split("\n• ").find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026"));
-  assert.ok(gym && gym.includes("25 באוק׳") && gym.includes("הסתיימה"), results);
+  assert.ok(gym && gym.includes("25 באוק׳") && !gym.includes("הסתיימה"), results);
   assert.ok(gym.includes("  – התעמלות מכשירים: נבחרת הגברים סיימה שישית") && gym.includes("  – ארטיום דולגופיאט זכה בכסף"), gym);
   const changes = digestSection(text, "מה התעדכן");
   assert.ok(!changes.includes("סיימה שישית") && !changes.includes("זכה בכסף"), "no repeat under מה התעדכן");
   assert.ok(changes.includes("ג׳ודו: עדכון שאינו קשור"), "other sports' changes stay put");
 
   const judo = digestSection((await digestOf({now: "2026-11-01T09:00:00Z"})).text, "תוצאות השבוע");
-  assert.ok(judo.includes("גרנד סלאם אבו דאבי (ג׳ודו), הסתיימה") && judo.includes("  ישראלים: ") && judo.includes("התוצאות עוד לא עודכנו באתר."), judo);
+  assert.ok(judo.includes("גרנד סלאם אבו דאבי (ג׳ודו)\n") && judo.includes("  ישראלים: ") && judo.includes("התוצאות עוד לא עודכנו באתר."), judo);
 });
 
 test("#digest: athletes in a competition under way are listed under it", async () => {
