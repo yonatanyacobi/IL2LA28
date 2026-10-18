@@ -784,7 +784,7 @@ test("#following: first visit, empty state with suggestions, sport followers see
   assert.ok(first.els.followBadge.hidden, "no baseline yet: no badge");
   assert.ok(first.view("following").includes("עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."));
   const none = (await boot({now: "2026-10-28T08:00:00Z"})).view("following");
-  assert.ok(none.includes("עוד אין כאן אף אחד. לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב."));
+  assert.ok(none.includes("<b>איך:</b> לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף."));
   assert.ok(!none.includes("<h3>הצעות למעקב</h3>") || none.includes('class="card"'), "suggestions are athlete cards");
   const data = withHistory("raz-hershko", [{at: "2026-10-15", kind: "result", text: "ארד"}]);
   const sport = await boot({data, now: "2026-10-18T08:00:00Z", storage: {"la28.followSports": '["judo"]', "la28.followingSeen": '"2026-10-10T00:00:00Z"'}});
@@ -813,14 +813,30 @@ test("#following S2: a followed sport alone shows on home, and the badge counts 
   const direct = await boot({data, follows: ["raz-hershko"], now: "2026-10-19T08:00:00Z", storage: seen});
   const razRow = direct.view("following").split("<li>").find(r => r.includes("ארד"));
   assert.ok(razRow && !razRow.includes("ענף במעקב"), "a direct follow isn't labelled by sport");
-  const tip = (await boot({})).view("home");
+  const tip = (await boot({storage: {"la28.seen": '"2026-10-10T00:00:00Z"'}})).view("home");
   assert.ok(tip.includes("טיפ: לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב"), "tip names sports");
+});
+
+test("F5: the empty #following explains what, how and the limit; the home tip is for returning visitors, after the updates", async () => {
+  const none = (await boot({now: "2026-10-28T08:00:00Z"})).view("following");
+  const box = none.split('<div class="empty">')[1].split("</div>")[0];
+  assert.strictEqual((box.match(/<p>/g) || []).length, 3, box);
+  assert.ok(box.includes("<b>מה מקבלים:</b> תג עם מספר השינויים מאז הביקור הקודם") && box.includes('<a href="#today">היום</a>'), "what");
+  assert.ok(box.includes("<b>איך:</b> לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף."), "how");
+  assert.ok(box.includes("<b>שימו לב:</b> המעקב נשמר רק בדפדפן הזה, בלי חשבון."), "limit");
+  assert.ok(!none.includes('<p class="foot">המעקב נשמר'), "the foot line isn't repeated");
+  const TIP = "טיפ: לחצו על ☆";
+  assert.ok(!(await boot({})).view("home").includes(TIP), "first-time home load: no tip");
+  const back = (await boot({storage: {"la28.seen": '"2026-10-10T00:00:00Z"'}})).view("home");
+  assert.ok(back.indexOf(TIP) > back.indexOf("<h2>מה התעדכן</h2>") && back.indexOf("<h2>מה התעדכן</h2>") > 0, "returning: tip after the updates");
+  const following = (await boot({follows: ["raz-hershko"], storage: {"la28.seen": '"2026-10-10T00:00:00Z"'}})).view("home");
+  assert.ok(!following.includes(TIP), "no tip once something is followed");
 });
 
 test("#following review fixes (#138): per-tab empty states, updatedAt fallback row, sport cards, home link", async () => {
   const athletesOnly = await boot({follows: ["raz-hershko"], now: "2026-10-18T20:00:00Z"});
   const sportsTab = athletesOnly.view("following-sports");
-  assert.ok(sportsTab.includes("עוד אין ענפים במעקב. לחצו על ☆ בדף של ענף כדי לעקוב.") && !sportsTab.includes("עוד אין כאן אף אחד"));
+  assert.ok(sportsTab.includes("עוד אין ענפים במעקב. לחצו על ☆ בדף של ענף כדי לעקוב.") && !sportsTab.includes("<b>איך:</b>"));
   assert.ok(athletesOnly.view("home").includes('<h2>במעקב שלי</h2><a href="#following">לדף המעקב</a>'), "home link");
   const sportsOnly = await boot({storage: {"la28.followSports": '["judo"]'}, quotas: SPORT_QUOTAS});
   const athTab = sportsOnly.view("following");
