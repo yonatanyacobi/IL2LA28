@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
 // (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
@@ -552,6 +552,108 @@ test("site/quotas.json: all items load and render", async () => {
     assert.ok(out.includes("מכסות לישראל"), sid);
     assert.strictEqual((out.match(/<li>\s*<div class="q-top">/g) || []).length, real.items.filter(q => q.sportId === sid).length, sid);
   }
+});
+
+// Corrections log (docs/design/corrections-log.md §6). Export filtering is tested on the data side.
+const SRC = "https://www.ijf.org/wrl";
+const fix = (o, changes) => ({id: o.id || "x", at: o.at, reportedAt: o.reportedAt || "", by: o.by || "reader", source: o.source ?? SRC,
+  target: o.target || {kind: "athlete", id: "raz-hershko", name: "רז הרשקו"}, changes});
+const CORRECTIONS = [
+  fix({at: "2026-10-24T09:10:00Z", reportedAt: "2026-10-23T18:40:00Z"}, [{field: "rank", wrong: "2 בעולם", right: "1 <img src=x onerror=alert(1)>"}]),
+  fix({at: "2026-10-25T08:00:00Z", reportedAt: "2026-10-23T08:00:00Z", by: "audit", target: {kind: "athlete", id: "inbar-lanir", name: "ענבר לניר"}},
+    [{field: "notes", wrong: "", right: "נוסף כאן"}]),
+  fix({at: "2026-11-02T10:00:00Z", reportedAt: "2026-10-28T10:00:00Z", by: "job", target: {kind: "athlete", id: "gone-athlete", name: "שם ישן"}},
+    [{field: "notes", wrong: "הוסר מכאן", right: ""}]),
+  fix({at: "2026-11-01T10:00:00Z"}, [{field: "stage", wrong: 1, right: 2}]),
+  fix({at: "2026-10-30T10:00:00Z", by: "audit", target: {kind: "sport", id: "judo", name: "ג׳ודו"}}, [{field: "sportId", wrong: "athletics", right: "judo"}]),
+  fix({at: "2026-10-26T10:00:00Z", source: "", target: {kind: "athlete", id: "raz-hershko", name: "בלי מקור"}}, [{field: "rank", wrong: "a", right: "b"}]),
+  fix({at: "2026-10-26T10:00:00Z", by: "editor", target: {kind: "athlete", id: "raz-hershko", name: "מקור לא מוכר"}}, [{field: "rank", wrong: "a", right: "b"}]),
+];
+const LAUNCH = "2026-10-22T09:00:00Z";
+const bootFixes = async (corrections = CORRECTIONS) => boot({data: {...JSON.parse(JSON.stringify(FIXTURE)), corrections, launchAt: LAUNCH}});
+const entriesOf = html => html.split('<article class="fix">').slice(1);
+
+test("#corrections: months newest first, diffs, labels, speed, escaping, invalid entries dropped", async () => {
+  const {view} = await bootFixes();
+  const out = view("corrections");
+  assert.ok(out.includes('<h1 tabindex="-1">יומן התיקונים</h1>') && out.includes('<h2 id="howH">מטעות לתיקון</h2>'));
+  assert.ok(out.indexOf("נובמבר 2026") < out.indexOf("אוקטובר 2026"), "newest month first");
+  const fixes = entriesOf(out);
+  assert.strictEqual(fixes.length, 5, "no source and unknown 'by' are dropped");
+  assert.ok(!out.includes("בלי מקור") && !out.includes("מקור לא מוכר"));
+  assert.ok(!/<img/i.test(out) && out.includes("1 &lt;img"), "values escaped");
+  const raz = fixes.find(f => f.includes("1 &lt;img"));
+  assert.ok(raz.includes('<a href="#a-raz-hershko">רז הרשקו</a>') && raz.includes("דיווח של קורא/ת") && raz.includes("<dt>דירוג או הישג</dt>"));
+  assert.ok(raz.includes("היה: <del>2 בעולם</del>") && raz.includes("עכשיו: <ins>") && raz.includes("תוך פחות מיום") && raz.includes("ijf.org"));
+  assert.ok(out.includes("נוסף: <ins>נוסף כאן</ins>") && out.includes("הוסר: <del>הוסר מכאן</del>"), "empty wrong/right");
+  assert.ok(fixes.find(f => f.includes("נוסף כאן")).includes("תוך יומיים") && fixes.find(f => f.includes("הוסר מכאן")).includes("אחרי 5 ימים"), "speed thresholds");
+  const gone = fixes.find(f => f.includes("שם ישן"));
+  assert.ok(!gone.includes("<a href=\"#a-gone-athlete\"") && gone.includes("נמצא בעדכון האוטומטי"), "archived target: name without link");
+  assert.ok(out.includes("היה: <del>בחלון ההעפלה</del>") && out.includes("עכשיו: <ins>מכסה הושגה</ins>"), "stage shown by name");
+  assert.ok(out.includes("היה: <del>אתלטיקה</del>") && out.includes('<a href="#sport-judo">ג׳ודו</a>'), "sportId shown by name, sport target linked");
+  assert.ok(!fixes.join("").includes("@"), "no email in any entry");
+  assert.ok(!out.includes("בוצעו תוך 48 שעות"), "stat hidden below 5 timed entries");
+  // #112 review: audit label, month count read out, check link, date values formatted, intro count.
+  assert.ok(out.includes('<span class="pill by-audit">בדיקה ידנית</span>'));
+  assert.ok(out.includes('<span class="sr"> תיקונים</span>') && out.includes('<a href="#about-trust">איך אנחנו בודקים</a>'));
+  assert.ok(out.includes("בבדיקה מול המקורות לפני ההשקה תיקנו 25 רשומות."));
+  const dated = (await bootFixes([fix({at: "2026-10-24T09:10:00Z"}, [{field: "nextDate", wrong: "2026-10-29", right: "2026-10-30"}])])).view("corrections");
+  assert.ok(dated.includes("<del>29 באוק׳ 2026</del>") && !dated.includes("2026-10-29"), "nextDate through fmt()");
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  for (const id of ["raz-hershko", "inbar-lanir"]) Object.assign(data.athletes.find(a => a.id === id), {verifiedAt: "2026-10-20T10:00:00Z", updatedAt: "2026-10-19T10:00:00Z"});
+  const counted = (await boot({data: {...data, corrections: CORRECTIONS, launchAt: LAUNCH}})).view("corrections");
+  assert.ok(counted.includes(" 2 רשומות כבר נבדקו ידנית מול המקור."), "computed manual-check count");
+});
+
+test("#corrections: 48-hour stat from 5 timed entries", async () => {
+  const timed = [0, 1, 2, 3, 4].map(i => fix({at: `2026-10-2${4 + i}T10:00:00Z`, reportedAt: `2026-10-2${i ? 1 : 3}T10:00:00Z`}, [{field: "rank", wrong: "a", right: "b"}]));
+  const out = (await bootFixes(timed)).view("corrections");
+  assert.ok(out.includes("עד עכשיו, 1 מתוך 5 התיקונים בוצעו תוך 48 שעות."), out.split("היעד:")[1]?.slice(0, 120));
+});
+
+test("#corrections-<id>: one record's entries; no entries or unknown id -> not found", async () => {
+  const {view} = await bootFixes();
+  const raz = view("corrections-raz-hershko");
+  assert.strictEqual(entriesOf(raz).length, 2);
+  assert.ok(raz.includes("מוצגים התיקונים של <b>רז הרשקו</b>") && raz.includes('<a href="#corrections">לכל התיקונים</a>') && !raz.includes("ענבר לניר"));
+  assert.ok(view("corrections-yonatan-elbaz").includes(NOT_FOUND), "athlete without entries");
+  assert.ok(view("corrections-nope").includes(NOT_FOUND), "unknown id");
+  assert.ok(entriesOf(view("corrections-gone-athlete")).length === 1, "archived athlete with entries still has a log");
+});
+
+test("#corrections empty state (launch day) and entry points", async () => {
+  const empty = (await bootFixes([])).view("corrections");
+  assert.ok(empty.includes("מטעות לתיקון") && empty.includes("עוד אין תיקונים מאז ההשקה.") && !empty.includes('class="month"'));
+  const {view, els, run} = await bootFixes();
+  const raz = view("a-raz-hershko"), lanir = view("a-inbar-lanir");
+  assert.ok(raz.includes('<dt>תיקונים</dt><dd><a href="#corrections-raz-hershko">2 תיקונים</a></dd>'));
+  assert.ok(lanir.includes('<a href="#corrections-inbar-lanir">תיקון אחד</a>'));
+  assert.ok(!view("a-yonatan-elbaz").includes("<dt>תיקונים</dt>"), "no entries, no fact");
+  for (const page of [raz, view("about")]) assert.ok(page.includes('ב<a href="#corrections">יומן התיקונים</a>, והיעד הוא תוך 48 שעות.'), "report box line");
+  assert.ok(!view("updates").includes("2 בעולם"), "#updates stays news only");
+  assert.ok(els.fixLink.innerHTML.includes('href="#corrections"'), "footer link once live");
+  assert.ok(empty.includes(`<span dir="ltr">${run("CONTACT_EMAIL")}</span>`) && !empty.includes("{REPORT_EMAIL}"), "one contact address");
+});
+
+test("corrections before launchAt are not shown, even if an export includes them", async () => {
+  const early = fix({at: "2026-10-21T08:00:00Z", target: {kind: "athlete", id: "raz-hershko", name: "רז הרשקו"}}, [{field: "rank", wrong: "לפני", right: "ההשקה"}]);
+  const {view} = await bootFixes([early, ...CORRECTIONS]);
+  assert.ok(!view("corrections").includes("ההשקה</ins>") && entriesOf(view("corrections")).length === 5);
+  const {run, view: preview} = await boot({data: {...JSON.parse(JSON.stringify(FIXTURE)), corrections: [early], launchAt: null}});
+  run("S.isAdmin = true");
+  assert.strictEqual(entriesOf(preview("corrections")).length, 1, "editors' preview before launch shows everything");
+});
+
+test("corrections log before launch (launchAt null): not found for visitors, no links; preview for editors", async () => {
+  const {view, run, els} = await boot({data: {...JSON.parse(JSON.stringify(FIXTURE)), corrections: CORRECTIONS, launchAt: null}});
+  for (const h of ["corrections", "corrections-raz-hershko"]) assert.ok(view(h).includes(NOT_FOUND), h);
+  for (const h of ["home", "about", "a-raz-hershko", "a-inbar-lanir", "updates"]) assert.ok(!view(h).includes('href="#corrections'), h);
+  assert.strictEqual(els.fixLink.innerHTML, "", "no footer link");
+  run("S.isAdmin = true");
+  const preview = view("corrections");
+  assert.ok(preview.includes("תצוגה מקדימה לעורכים: היומן יתפרסם לציבור אחרי שייקבע מועד ההשקה.") && preview.includes("יומן התיקונים"));
+  assert.ok(!preview.includes("מאז ההשקה ב־"), "no launch date yet");
+  assert.ok(!view("a-raz-hershko").includes("<dt>תיקונים</dt>"), "entry points stay hidden for editors too");
 });
 
 // docs/product/spec-rank-tiebreak.md: IJF ranks from the real items' notes, as of mid-October.
