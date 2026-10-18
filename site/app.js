@@ -235,7 +235,7 @@ function changeRow(c){
   return `<li><span class="d">${fmt(str(c.at).slice(0, 10))}</span><span class="t">${body}</span><span></span></li>`;
 }
 
-const TODAY_MAX = 6, SERIES_DAYS = 31, STAKES_MAX = 2;   // STAKES_MAX: quota lines per strip row
+const TODAY_MAX = 6, SERIES_DAYS = 31, STAKES_MAX = 2;   // STAKES_MAX: quota lines per competition on #day
 // Quota items don't reference athletes: link by the athlete's name in the item text, or by weight class,
 // which the two files spell differently ("עד 57 ק״ג (נשים)" vs "57- ק״ג נשים").
 function weightKey(s){

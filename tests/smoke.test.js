@@ -1846,6 +1846,68 @@ test("refresh keeps focus without an id (href, data-follow), reopens <details>, 
   assert.ok(details[1].open && !details[0].open, "open <details> reopened by index");
 });
 
+// Home "today" hub (#176, docs/design/home-today.md §6).
+const todayOf = html => html.split('aria-labelledby="homeTodayH"')[1]?.split("</section>")[0] || "";
+const resultsOf = html => html.split('aria-labelledby="homeResH"')[1]?.split("</section>")[0] || "";
+
+test("home today: 8 sessions show 6, followed first, each row links its sport and #c-, the more link counts all", async () => {
+  const list = Array.from({length: 8}, (_, i) => SESS({id: `s${i}`, startUtc: `2026-11-03T0${i + 1}:00:00Z`, phase: `מקצה ${i}`}));
+  list[7].athleteIds = ["raz-hershko"];
+  const b = await boot({data: withSessions(list), quotas: SITE_QUOTAS, now: "2026-11-03T00:30:00Z", follows: ["raz-hershko"]});
+  const sec = todayOf(b.view("home"));
+  const rows = sec.split('<ul class="rows sess">')[1].split("</ul>")[0].split("<li>").slice(1);
+  assert.strictEqual(rows.length, 6);
+  assert.ok(rows[0].includes('href="#a-raz-hershko"') && rows[0].includes("במעקב שלך"), "followed first");
+  for (const r of rows) assert.ok(r.includes('<small><a href="#sport-shooting">') && r.includes('<a href="#c-issf-wch-doha-2026">'), r);
+  assert.ok(sec.includes('<a href="#today">לכל 8 הסשנים היום</a>') && sec.includes('<h2 id="homeTodayH">היום, יום ג׳, 3 בנוב׳</h2>'));
+  const seven = await boot({data: withSessions(list.slice(1)), quotas: SITE_QUOTAS, now: "2026-11-03T00:30:00Z"});
+  assert.ok(todayOf(seven.view("home")).includes(">לסשן נוסף אחד היום</a>"), "one more");
+});
+
+test("home today: Abu Dhabi on 29.10, an empty day with הבא בתור, running competitions without a session", async () => {
+  const ad = todayOf((await boot({quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home"));
+  assert.ok(ad.includes('<a href="#c-judo-gs-abu-dhabi-2026">גרנד סלאם אבו דאבי</a>') && ad.includes("pill s-live") && ad.includes('<a href="#today">לכל התחרויות היום</a>'));
+  const empty = todayOf((await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"})).view("home"));
+  assert.ok(empty.includes('<p class="muted">אין היום סשנים ידועים של ספורטאים ונבחרות מישראל.</p>')
+    && empty.includes('<p>הבא בתור: <a href="#day-2026-10-29">29 באוק׳ 2026</a> · גרנד סלאם אבו דאבי</p>'), empty);
+  const doha = todayOf((await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-11-05T08:00:00Z"})).view("home"));
+  assert.ok(/<p class="foot">מתקיימות היום, בלי סשן ידוע של ישראלים: .*<a href="#c-issf-wch-doha-2026">אליפות העולם בקליעה<\/a>/.test(doha), doha);
+  assert.ok(!doha.includes('<ul class="rows sess">'));
+});
+
+test("home results: 48 h window, date-only history, no source dropped, session and history once", async () => {
+  const at = h => new Date(Date.parse("2026-11-05T10:00:00Z") - h * 36e5).toISOString().replace(".000", "");
+  const res = (id, h, over = {}) => SESS({id, date: "2026-11-03", result: `תוצאה ${id}`, resultSource: "https://www.issf-sports.org/r", resultAt: at(h), ...over});
+  const data = withSessions([res("in", 47), res("out", 49, {athleteIds: ["raz-hershko"]})]);
+  const richter = data.athletes.find(a => a.id === "sergey-richter"), gefen = data.athletes.find(a => a.id === "gefen-primo");
+  richter.history.push({at: "2026-11-03", kind: "result", text: "כפול", source: "https://x.org"});   // same athlete + day as "in"
+  gefen.history.push({at: "2026-11-04", kind: "result", text: "אתמול", source: "https://www.ijf.org/r"},
+    {at: "2026-11-05", kind: "result", text: "בלי מקור"});
+  const sec = resultsOf((await boot({data, quotas: SITE_QUOTAS, now: "2026-11-05T10:00:00Z"})).view("home"));
+  assert.ok(sec.includes("תוצאה in") && !sec.includes("תוצאה out"), "47 h in, 49 h out");
+  assert.ok(sec.includes('<time datetime="2026-11-03T11:00:00.000Z">3 בנוב׳, 13:00</time>') && sec.includes('<a href="#c-issf-wch-doha-2026">'));
+  assert.ok(sec.includes('<span class="d">4 בנוב׳</span>') && sec.includes("<b>תוצאה:</b> אתמול · ") && !sec.includes("עודכן"), "history: date only");
+  assert.ok(!sec.includes("בלי מקור") && !sec.includes("כפול"), "no source, no row; the session wins");
+  assert.ok(sec.includes('rel="noopener">מקור: <bdi>issf-sports.org</bdi>') && !sec.includes("pill") && !sec.includes("✓"), "source, no chip");
+  assert.ok(sec.indexOf("אתמול") < sec.indexOf("תוצאה in"), "newest first");
+  const empty = resultsOf((await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"})).view("home"));
+  assert.ok(empty.includes("אין תוצאות חדשות מ־48 השעות האחרונות.") && empty.includes('<p class="foot">מ־48 השעות האחרונות · מתעדכן פעם ביום</p>'));
+});
+
+test("home: fresh line in the hero, no live wording for editors either, today's athletes not repeated in 14 days", async () => {
+  const b = await boot({quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"});
+  const home = b.view("home");
+  const hero = home.split('<section class="hero">')[1].split("</section>")[0];
+  assert.ok(/<p class="fresh( stale)?"><i><\/i><span>/.test(hero) && hero.includes("<time datetime="), "freshLine in the hero");
+  noLiveClaims(home, "home");
+  const fourteen = home.split("ב־14 הימים הקרובים")[1].split("</section>")[0];
+  assert.ok(!fourteen.includes('href="#a-raz-hershko"'), "today's athlete isn't repeated");
+  b.run("S.live = true; S.lastRun = '2026-10-29T07:00:00Z'");
+  const live = b.view("home");
+  noLiveClaims(live, "home, S.live");
+  assert.ok(!live.includes("עדכון אוטומטי אחרון"), "editor freshness says נכון ל־ too");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {
