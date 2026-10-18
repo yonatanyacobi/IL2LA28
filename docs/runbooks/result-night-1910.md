@@ -44,9 +44,8 @@ No Official PDFs by the morning of 20.10: wait. Don't record anything from anoth
    `sessions` with that athlete's `athleteIds` (AA final 23.10 19:30, bars final 24.10 14:00 Rotterdam time), Dana
    signs it, and it loads through `job/load_sessions.py`.
 
-5. **Publish:** the daily task publishes at **07:13** (20.10), which is also the run that must find the entries. To
-   have the results public tonight, run only step 5 (PUBLISH) of `job/SKILL.md` after the last write.
-   Dry run of the mechanical part on v49 (18.10): about 2 s; see the timings on #173.
+5. **Publish the same night** (coordinator's decision): right after the last write, export and publish as in
+   step 5 (PUBLISH) of `job/SKILL.md`; don't wait for the 07:13 run. Mechanical part about 2 s in the dry run (#173).
 
 **Don't change:** `stage`, `quotas.json` (the 2026 Worlds give no individual quotas), `rankNum`.
 
