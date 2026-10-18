@@ -74,7 +74,7 @@ Sagiv's rank waits for the first Olympic qualification ranking list dated after 
 Medals only. The date is in `at`; keep the sport prefix exactly (`changeSport()` in digest.js matches it).
 
 **שחר שגיב** (`shachar-sagiv`), Tongyeong 1–3:
-- `טריאתלון: שחר שגיב סיים במקום <N> בגביע העולם בטריאתלון טונגיונג`
+- `טריאתלון: שחר שגיב סיים <ראשון/שני/שלישי> בגביע העולם בטונגיונג (ספרינט)`
 
 **ארטיום דולגופיאט** (`artem-dolgopyat`) / **נועם ברקוביץ** (`noam-berkovich`), floor:
 - Gold: `התעמלות מכשירים: <name> זכה בזהב בגמר הקרקע באליפות העולם ברוטרדם`
