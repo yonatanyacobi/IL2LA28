@@ -682,6 +682,57 @@ test("#digest: copy succeeds, and a refused clipboard selects the textarea", asy
   }
 });
 
+// Date matrix on the real snapshot + published quotas: the strip, #quotas and the sport page must show the
+// event that is on, keep a multi-day quota event current until its last day, and drop its stakes after.
+// tests/test_quota_due.py checks the job's warnings on the same dates.
+const SITE_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+// Last day of each quota event, as the page derives it (own end, else the containing competition, else start).
+const EVENT_END = {
+  "אליפות העולם רוטרדם – גמר קבוצתי גברים": "2026-10-20",
+  "גביע העולם בטריאתלון, טונגיונג": "2026-10-24",
+  "גרנד סלאם אבו דאבי": "2026-10-31",
+  "אליפות העולם": "2026-11-08",   // weightlifting worlds
+};
+const upcomingOf = html => html.split('id="qNextH"')[1]?.split("</section>")[0] || "";
+const DATE_MATRIX = {
+  "2026-10-20": {strip: ["אליפות העולם בהתעמלות מכשירים 2026", "יום 4 מתוך 9"], notStrip: ["גרנד סלאם"],
+    upcoming: ["אליפות העולם רוטרדם – גמר קבוצתי גברים"]},
+  "2026-10-24": {strip: ["יום 8 מתוך 9", "שחר שגיב"], upcoming: ["גביע העולם בטריאתלון, טונגיונג"],
+    notUpcoming: ["רוטרדם"]},
+  "2026-10-27": {strip: ["#sport-weightlifting", "יום 1 מתוך 13", "class=\"stakes\""], notStrip: ["התעמלות מכשירים"],
+    upcoming: ["אליפות העולם"], notUpcoming: ["טונגיונג", "רוטרדם"]},
+  "2026-10-30": {strip: ["גרנד סלאם אבו דאבי", "יום 2 מתוך 3", "ועוד 5 מקצים"], upcoming: ["גרנד סלאם אבו דאבי"],
+    judoStakes: true},
+  "2026-11-01": {strip: ["אליפות העולם בקליעה", "#sport-shooting"], notStrip: ["גרנד סלאם"],
+    upcoming: ["אליפות העולם בקליעה"], notUpcoming: ["גרנד סלאם"], judoStakes: false},
+};
+
+test("date matrix: strip, #quotas and sport page follow the event calendar; no stale stakes", async () => {
+  const withStakes = SITE_QUOTAS.items.filter(q => q.stakes && q.nextQuotaEvent);
+  assert.ok(withStakes.length >= 8, "published quotas should carry stakes");
+  for (const [t, exp] of Object.entries(DATE_MATRIX)) {
+    const {view, run} = await boot({quotas: SITE_QUOTAS, now: `${t}T08:00:00Z`});
+    assert.strictEqual(run("today()"), t);
+    const home = view("home"), strip = stripOf(home), quotas = view("quotas"), up = upcomingOf(quotas), judo = view("sport-judo");
+    for (const s of exp.strip || []) assert.ok(strip.includes(s), `${t}: strip lacks ${s}`);
+    for (const s of exp.notStrip || []) assert.ok(!strip.includes(s), `${t}: strip shows ${s}`);
+    for (const s of exp.upcoming || []) assert.ok(up.includes(s), `${t}: #quotas upcoming lacks ${s}`);
+    for (const s of exp.notUpcoming || []) assert.ok(!up.includes(s), `${t}: #quotas upcoming shows ${s}`);
+    if ("judoStakes" in exp) {
+      const s = run(`esc(${JSON.stringify(withStakes.find(q => q.sportId === "judo").stakes)})`);
+      assert.strictEqual(judo.includes(s), exp.judoStakes, `${t}: judo stakes on #sport-judo`);
+      assert.strictEqual(up.includes(s), exp.judoStakes, `${t}: judo stakes on #quotas`);
+    }
+    for (const q of withStakes) {
+      const end = EVENT_END[q.nextQuotaEvent.name];
+      if (!end || end >= t) continue;
+      const pages = {home, quotas, [`sport-${q.sportId}`]: view(`sport-${q.sportId}`)};
+      for (const [page, html] of Object.entries(pages))
+        assert.ok(!html.includes(run(`esc(${JSON.stringify(q.stakes)})`)), `${t}: stale stakes on ${page}: ${q.event}`);
+    }
+  }
+});
+
 (async () => {
   let failed = 0;
   for (const {name, fn} of tests) {
