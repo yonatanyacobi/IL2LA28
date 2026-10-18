@@ -357,7 +357,8 @@ div.track{background:none}
 .day-nav > a{min-height:44px;display:inline-flex;align-items:center;font-weight:600;text-decoration:none}
 .day-nav .day-prev{order:-1}   /* h1 comes first in the DOM (reading/tab order); visually prev stays at the start */
 .rows.sess li{grid-template-columns:70px 1fr auto}
-.res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px}
+.res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px;color:var(--muted)}
+.res b{color:var(--ink)}
 .day-sport h3{font-family:var(--f-body);font-size:16px;font-weight:700;overflow-wrap:anywhere}
 .pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}

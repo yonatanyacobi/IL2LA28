@@ -1,15 +1,7 @@
 // Competition page #c-<id> (docs/design/event-page.md). Loaded after app.js and day.js; reuses day.js's sessions
-// (exported sessions plus nextDate/history fallbacks) and sessionRow(), so #day and #c- render identically.
-// No live scores: results arrive with the job run, and the footer says when.
+// (exported sessions plus nextDate/history fallbacks), sessionRow() and the near-live labels, so #day and #c- render
+// identically. No live scores: results arrive with the job run, and the line under the h1 says when.
 "use strict";
-
-// Same rule as sessionRow()'s chip: a result, or before / today / awaiting by start time or date.
-function sessStatus(s, d){
-  if (s.result) return "result";
-  const t = today(), start = s.startUtc ? Date.parse(s.startUtc) : NaN;
-  if (!isNaN(start)) return Date.now() < start ? "before" : Date.now() < start + SESSION_WINDOW_H * 36e5 ? "live" : "wait";
-  return d < t ? "wait" : d === t ? "live" : "before";
-}
 
 // Sessions of one competition, grouped by Israel day. A season-long series (> SERIES_DAYS) has no daily fallback
 // (compOn() skips it), so only its exported sessions count, grouped by month.
@@ -24,9 +16,10 @@ const groupBy = (list, key) => list.reduce((m, x) => m.set(key(x), [...(m.get(ke
 // One athlete's status in a session. A shared session's merged text ("תמנע נלסון לוי: ארד") is not every athlete's
 // result: an athlete has a result only from her own history entry, a single-athlete session, or an exported
 // session result (resultAt, official for the whole session, e.g. a team).
+// Returns a sessionState() state.
 function athleteStatus(s, d, a){
-  const own = historyResult(a, d) || (s.result && (s.athletes.length === 1 || s.resultAt));
-  return own ? "result" : sessStatus({...s, result: ""}, d);
+  const shared = isResult(sessionState(s, d)) && (s.athletes.length === 1 || s.resultAt);
+  return historyResult(a, d) || shared ? "result" : sessionState({...s, result: ""}, d);
 }
 
 function eventStatus(c, sessions){
@@ -34,7 +27,7 @@ function eventStatus(c, sessions){
   if (t < c.start) return `<span class="pill s-before">מתחילה ב־${fmt(c.start)}</span>`;
   // "יום 243 מתוך 487" says nothing for a season-long series.
   if (t <= end) return `<span class="pill s-live">מתקיימת עכשיו${total > 1 && total <= SERIES_DAYS ? ` · יום ${dayNo(c.start, t)} מתוך ${total}` : ""}</span>`;
-  return sessions.some(([s, d]) => s.athletes.some(a => athleteStatus(s, d, a) === "wait"))
+  return sessions.some(([s, d]) => s.athletes.some(a => isAwait(athleteStatus(s, d, a))))
     ? `<span class="pill s-wait"><span aria-hidden="true">◷</span> הסתיימה · בהמתנה לתוצאות</span>` : `<span class="pill ended">הסתיימה</span>`;
 }
 
@@ -59,13 +52,16 @@ function viewEvent(id){
   const athletes = [...new Map(flat.flatMap(([s]) => s.athletes.map(a => [a.id, a]))).values()]
     .sort((x, y) => S.follows.has(y.id) - S.follows.has(x.id) || heCmp(x.name, y.name));
   // Counted per athlete in each session, not per session.
-  const count = k => flat.reduce((n, [s, d]) => n + s.athletes.filter(a => athleteStatus(s, d, a) === k).length, 0);
+  const count = is => flat.reduce((n, [s, d]) => n + s.athletes.filter(a => is(athleteStatus(s, d, a))).length, 0);
   const who = n => plural(n, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות");
-  const kpi = [who(athletes.length), ...[["result", n => plural(n, "תוצאה אחת", "תוצאות")], ["wait", n => `${n} בהמתנה לתוצאה`], ["before", n => `${n} לפני התחרות`]]
-    .map(([k, label]) => (n => n ? label(n) : "")(count(k)))].filter(Boolean).join(" · ");
+  const kpi = [who(athletes.length), ...[[isResult, n => plural(n, "תוצאה אחת", "תוצאות")],
+    [isAwait, n => plural(n, "אחד/ת בהמתנה לתוצאה", "בהמתנה לתוצאה")], [st => st === "before", n => plural(n, "אחד/ת לפני התחרות", "לפני התחרות")]]
+    .map(([is, label]) => (n => n ? label(n) : "")(count(is)))].filter(Boolean).join(" · ");
   const stakes = eventStakes(c);
   const tracked = athletesOf(c.sportId).length;
-  const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun), tsOk = ts && !isNaN(Date.parse(ts));
+  // Stale-aware only while something happens today; a season-long series isn't "running" on every day of it.
+  const hasToday = series ? flat.some(([, d]) => d === t) : c.start <= t && t <= (c.end || c.start);
+  const schedSrc = flat.map(([s]) => s.source).find(Boolean) || c.source;
   const link = `${SITE_URL}#c-${id}`;
   const dayHead = d => `<h3><a href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span></h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
@@ -78,6 +74,7 @@ function viewEvent(id){
   return `<p class="crumb"><a href="#sport-${esc(c.sportId)}">→ ${esc(sportName(c.sportId))}</a></p>
   <div class="event-head">
     <h1 tabindex="-1">${esc(c.name)}</h1>
+    ${freshLine(hasToday)}
     <p class="muted">${[fmtRange(c.start, c.end), esc(c.location)].filter(Boolean).join(" · ")}</p>
     <div class="pills">${eventStatus(c, flat)}${c.qualifying ? `<span class="pill open">העפלה</span>` : ""}${series ? `<span class="pill ended">סדרה עונתית</span>` : ""}</div>
     ${!stakes && c.qualifying ? `<p>תחרות שנספרת להעפלה. <a href="#sport-${esc(c.sportId)}">שיטת ההעפלה בענף</a></p>` : ""}
@@ -94,12 +91,11 @@ function viewEvent(id){
         <div class="stack">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
           const st = last ? athleteStatus(last[0], last[1], a) : "";
           // A result is shown only in the schedule row, next to its source.
-          const line = st === "wait" ? `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`
-            : st === "live" ? `<span class="pill s-live">מתחרה היום</span>` : st === "before" ? `<span class="pill s-before">לפני התחרות</span>` : "";
+          const line = st ? statusChip(st) : "";
           return `<div class="stack">${athleteCard(a)}${line ? `<p>${line}</p>` : ""}</div>`; }).join("")}</div></section>` : ""}
     </div>
   </div>
-  <p class="foot">${[tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)}` : "", CADENCE, safeUrl(c.source) ? `<bdi>${linkOut(c.source, host(c.source))}</bdi>` : ""].filter(Boolean).join(" · ")}</p>
+  ${safeUrl(schedSrc) ? `<p class="foot">${hostLink(schedSrc, "לוח הזמנים")}</p>` : ""}
   <section class="panel" aria-labelledby="evShareH"><h2 id="evShareH">שיתוף</h2>
     <div class="share"><input id="evShare" readonly value="${esc(link)}" dir="ltr" aria-label="קישור לתחרות"><button class="btn ghost small" data-copy="evShare" data-copy-msg="evShareMsg">העתקה</button></div>
     <p class="foot" id="evShareMsg" aria-live="polite"></p>
