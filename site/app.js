@@ -268,7 +268,7 @@ function viewHome(){
         : `<p class="muted">אין תחרויות ידועות של ספורטאים ישראלים בשבועיים הקרובים.</p>`}
     </section>
     <section class="panel">
-      <div class="sec-head"><h2>מה התעדכן</h2><a href="#updates">כל העדכונים</a></div>
+      <div class="sec-head"><h2>מה התעדכן</h2><span class="actions">${typeof viewDigest === "function" ? `<a href="#digest">תקציר שבועי לשיתוף</a>` : ""}<a href="#updates">כל העדכונים</a></span></div>
       ${S.changes.length ? `<ul class="rows">${S.changes.slice(0, 5).map(changeRow).join("")}</ul>` : `<p class="muted">עוד אין עדכונים.</p>`}
     </section>
   </div>
@@ -440,6 +440,7 @@ function viewCalendar(sportFilter = ""){
 
 function viewUpdates(){
   return `<h1 tabindex="-1">מה התעדכן</h1>
+  ${typeof viewDigest === "function" ? `<p><a href="#digest">תקציר שבועי לשיתוף</a></p>` : ""}
   <section class="panel">${S.changes.length ? `<ul class="rows">${S.changes.map(changeRow).join("")}</ul>` : `<p class="muted">עוד אין עדכונים.</p>`}</section>
   <p class="foot">העדכונים נאספים פעם ביום ממקורות רשמיים ומכלי תקשורת. שינוי שלב (מכסה או בחירה לנבחרת) מתפרסם רק אחרי אימות ידני.</p>`;
 }
@@ -657,6 +658,7 @@ function route(){
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about") html = viewAbout(), nav = "about";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
+  else if (h === "digest" && typeof viewDigest === "function") html = viewDigest(), nav = "updates";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound();
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
@@ -711,7 +713,7 @@ document.addEventListener("click", e => {
   if ("retry" in t.dataset) { S.failed = false; route(); return loadPublic(); }
   if (t.dataset.copy) {
     const input = $(t.dataset.copy);
-    const msg = $(t.dataset.copy === "mailAddr" ? "copyMsg2" : "copyMsg");
+    const msg = $(t.dataset.copyMsg || (t.dataset.copy === "mailAddr" ? "copyMsg2" : "copyMsg"));
     const done = ok => { msg.textContent = ok ? "הועתק." : "לא ניתן להעתיק אוטומטית. הטקסט מסומן, אפשר להעתיק ידנית."; if (!ok) input.select(); };
     try { navigator.clipboard.writeText(input.value).then(() => done(true), () => done(false)); } catch { done(false); }
   }

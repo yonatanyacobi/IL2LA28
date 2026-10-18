@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 
 function fakeEl(id){
@@ -382,6 +382,71 @@ test("calendar filters update only the results list, so focus and scroll survive
   assert.ok(!els.calResults.innerHTML.includes("<h1"), "toolbar/heading stay outside the results");
   fire("input", {id: "cSport", value: "nope-sport"});
   assert.ok(els.calResults.innerHTML.includes("אין תחרויות שמתאימות לסינון"));
+});
+
+// ---------- #digest ----------
+const REAL_QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+const DIGEST_NOW = "2026-10-18T09:00:00Z";
+const digestOf = async opts => { const b = await boot({now: DIGEST_NOW, quotas: REAL_QUOTAS, ...opts}); return {...b, text: b.run("digestText()")}; };
+const boldLines = text => text.split("\n").filter(l => l.includes("*"));
+
+test("#digest: page, entry points and the week's text", async () => {
+  const {view, text} = await digestOf();
+  const page = view("digest");
+  assert.ok(page.includes('<h1 tabindex="-1">תקציר שבועי</h1>') && page.includes("<textarea id=\"digestText\" readonly"));
+  assert.ok(page.includes('data-copy="digestText" data-copy-msg="digestMsg"'));
+  assert.ok(view("home").includes('href="#digest"') && view("updates").includes('href="#digest"'), "entry points");
+  const lines = text.split("\n");
+  assert.strictEqual(lines[0], "*הדרך ללוס אנג׳לס 28 · תקציר שבועי*");
+  assert.deepStrictEqual(boldLines(text).slice(1), ["*מה התעדכן*", "*ישראלים מתחרים השבוע*", "*אירועי מכסה בשבועיים הקרובים*"]);
+  assert.ok(text.includes("מתן רודיטי פרש"), "this week's change");
+  const competing = text.split("*ישראלים מתחרים השבוע*")[1].split("\n\n")[0];
+  assert.match(competing, /• 18 באוק׳ · .+ \(התעמלות מכשירים\)/, "athlete competing this week");
+  assert.ok(!competing.includes("רז הרשקו"), "29 Oct is outside the 7-day window");
+  assert.ok(text.includes("גרנד סלאם אבו דאבי"), "quota event inside 14 days");
+  assert.ok(lines.at(-2).startsWith("לכל הפרטים: https://claude.ai/artifact/") && lines.at(-1).startsWith("אתר לא רשמי"));
+  assert.ok(page.includes(text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")), "textarea holds the text");
+});
+
+test("#digest: ≤3500 chars with 60 long changes, no data asterisks, bullets cut at 160", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.changes = Array.from({length: 60}, (_, i) => ({at: "2026-10-17", text: `*עדכון* _${i}_ ~x~ ` + "מילה ".repeat(60)}));
+  const {text} = await digestOf({data});
+  assert.ok(text.length <= 3500, String(text.length));
+  assert.match(text, /• ועוד \d+ באתר/);
+  assert.strictEqual(boldLines(text).length, 4, "only the header and section headings are bold");
+  assert.ok(!/[_~]/.test(text));
+  assert.ok(text.split("\n").filter(l => l.startsWith("• ") || l.startsWith("  ")).every(l => l.length <= 160));
+  assert.ok(text.endsWith("כדאי לבדוק מול המקור."), "footer never trimmed");
+});
+
+test("#digest: quiet week and stale data", async () => {
+  const data = {...FIXTURE, generatedAt: "2026-10-01T09:00:00Z", changes: [], athletes: FIXTURE.athletes.map(a => ({...a, nextDate: ""}))};
+  const {text} = await digestOf({data, quotas: undefined});
+  assert.ok(text.includes("שבוע שקט: אין עדכונים, תחרויות או אירועי מכסה ידועים."));
+  assert.ok(text.includes("שימו לב: הנתונים לא עודכנו מאז"));
+  assert.strictEqual(boldLines(text).length, 1);
+});
+
+test("#digest: copy succeeds, and a refused clipboard selects the textarea", async () => {
+  for (const refuse of [false, "reject", "missing"]) {
+    const {ctx, view, fire, text} = await digestOf();
+    view("digest");
+    const els = {digestText: ctx.document.getElementById("digestText"), digestMsg: ctx.document.getElementById("digestMsg")};
+    let copied = null, selected = false;
+    ctx.navigator.clipboard = refuse === "missing" ? undefined
+      : {writeText: async s => { if (refuse) throw new Error("denied"); copied = s; }};
+    Object.assign(els.digestText, {value: text, select(){ selected = true; }});
+    const btn = {dataset: {copy: "digestText", copyMsg: "digestMsg"}};
+    fire("click", {closest: () => btn});
+    await new Promise(r => setTimeout(r, 0));
+    if (refuse) {
+      assert.ok(selected && els.digestMsg.textContent.includes("אפשר להעתיק ידנית"), String(refuse));
+    } else {
+      assert.strictEqual(copied, text);
+      assert.strictEqual(els.digestMsg.textContent, "הועתק.");
+    }
+  }
 });
 
 (async () => {
