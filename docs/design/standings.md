@@ -31,7 +31,7 @@ After "שיטת ההעפלה", before "תחרויות קרובות בענף": `<
 │ IJF Olympic Ranking List · שיטת ההעפלה │  ← .foot: linkOut(cutoff.url, list) · linkOut(q.source, "שיטת ההעפלה")
 │  5  ★ יצחק אשפיז · 3 באוק׳ 2026       │  ← .d = rankNum; .t = name · rankAsOf
 │ ┄┄ קו המכסה: מקום 17 ┄┄┄┄┄┄┄┄┄┄┄┄┄┄  │  ← li.cutline
-│ 41  {name} · 12 ביולי 2026 [◷ ישן]    │
+│ 41  {name} · 12 ביולי 2026 [דירוג מ־12 ביולי 2026] │
 │ ללא דירוג: {name}, {name}             │
 │ הקו הוא מקום ברשימה, לא תחזית: …      │  ← the caveat line
 └──────────────────────────────────────┘
@@ -47,7 +47,8 @@ After "שיטת ההעפלה", before "תחרויות קרובות בענף": `<
 
 ## 3. Stale ranks (flagged, not hidden)
 `rankAsOf` older than `RANK_MAX_AGE_D` (60 days): the row stays in order and gets
-`<span class="pill s-wait"><span aria-hidden="true">◷</span> דירוג מ־{fmt(rankAsOf)}</span>`.
+`<span class="pill ended">דירוג מ־{fmt(rankAsOf)}</span>`: the neutral pill, not the ◷ awaiting style, since nothing
+is awaited; the date says the rest.
 
 ## 4. Athlete page
 In `.facts`, for an athlete in a block: `<dt>מול קו המכסה</dt><dd>מקום {n} · הקו: מקום {cutoff.rank} ·
@@ -62,10 +63,10 @@ In `.facts`, for an athlete in a block: `<dt>מול קו המכסה</dt><dd>מק
 | unranked | `ללא דירוג: {names}` |
 | not open | `תקופת הדירוג להעפלה נפתחת ב־{date}.` |
 | stale pill | `דירוג מ־{date}` |
-| caveat (`.foot`) | `הקו הוא מקום ברשימה, לא תחזית. נספר/ת לרוב רק נציג/ה אחד/ת לכל מדינה, ויש גם מסלולים יבשתיים. הדירוג הקובע: {fmt(final)}.` |
+| caveat (`.foot`) | `הקו הוא מקום ברשימה, לא תחזית. ברוב השיטות כל מדינה יכולה לקבל לכל היותר מכסה אחת במקצה, ויש גם מסלולים יבשתיים. הדירוג הסופי נקבע ב־{fmt(final)}.` |
 | sr above / below | `מעל קו המכסה` / `מתחת לקו המכסה` |
 
-Never: "עולה", "בפנים", "הבטיח/ה", "מכסה בדרך", or any word that turns a position into a verdict.
+Never: "עולה", "בפנים", "הבטיח/ה", "מכסה בדרך", "מעפיל", "בטוח", "כמעט", or any word that turns a position into a verdict.
 
 ## 6. CSS (tokens only)
 ```css
@@ -76,7 +77,7 @@ Never: "עולה", "בפנים", "הבטיח/ה", "מכסה בדרך", or any wo
 ## 7. Tests (fixture + injected ranks and cutoffs)
 - Judo 60 kg, cutoff 17: ranks 5 and 41 → 5, the line, 41; an athlete without `rankNum` is in `ללא דירוג`.
 - Everyone above the line → the line is last; everyone below → first.
-- A 75-day-old rank keeps its place and shows `דירוג מ־`; a different `rankList` goes to `בדירוג אחר`, never above the line.
+- A 75-day-old rank keeps its place and shows the neutral `דירוג מ־` pill (not `s-wait`); a different `rankList` goes to `בדירוג אחר`, never above the line.
 - `today < opens` → only the "not open" line. No `cutoff` → no block.
 - The list name links to `cutoff.url` and "שיטת ההעפלה" to `q.source`, both via `linkOut`; output has none of the §5 "never" words.
 
