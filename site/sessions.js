@@ -15,8 +15,11 @@ const SESSION_WINDOW_H = 3;          // a timed session counts as "now" from its
 const asDate = d => new Date(d + "T12:00:00");
 const isUtc = v => typeof v === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d+)?)?Z$/.test(v) && !isNaN(Date.parse(v));
 const dayTitle = d => asDate(d).toLocaleDateString("he-IL", {weekday: "short", day: "numeric", month: "short", year: "numeric"});
-const hhmm = iso => new Date(iso).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
-const ilDate = iso => new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Jerusalem"}).format(new Date(iso));
+// Built once; a new Intl.DateTimeFormat per call dominated #day (docs/perf/2026-10.md). IL_DAY comes from app.js.
+const HHMM = new Intl.DateTimeFormat("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
+const IL_HOUR = new Intl.DateTimeFormat("en-GB", {timeZone: "Asia/Jerusalem", hour: "numeric", hourCycle: "h23"});
+const hhmm = iso => HHMM.format(new Date(iso));
+const ilDate = iso => IL_DAY.format(new Date(iso));
 
 // The ≤ 31-day competition of a sport that contains day d (season-long series don't count).
 const compOn = (sid, d) => S.comps.find(c => c.sportId === sid && c.start <= d && d <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS) || null;
@@ -45,6 +48,7 @@ function fallbackSessions(d){
   const out = new Map();
   for (const a of S.athletes) {
     const res = historyResult(a, d);
+    if (!res && a.nextDate !== d) continue;   // most athletes have nothing that day: skip compOn() (docs/perf/2026-10.md)
     const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null};
     if (res) out.set(a.id, {...base, result: str(res.text).slice(0, 120), resultSource: res.source, resultAt: ""});
     else if (a.nextDate === d) out.set(a.id, {...base, result: ""});
@@ -86,7 +90,7 @@ const hostLink = (u, label) => safeUrl(u)
 function windowEnd(s, d){
   if (s.startUtc) return Date.parse(s.startUtc) + SESSION_WINDOW_H * 36e5;
   const next = Date.parse(addDays(d, 1) + "T00:00:00Z");
-  const ilHour = Number(new Intl.DateTimeFormat("en-GB", {timeZone: "Asia/Jerusalem", hour: "numeric", hourCycle: "h23"}).format(next));
+  const ilHour = Number(IL_HOUR.format(next));
   return next - ilHour * 36e5;
 }
 

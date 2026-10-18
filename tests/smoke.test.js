@@ -2270,6 +2270,16 @@ test("refresh keeps focus without an id (href, data-follow), reopens <details>, 
   assert.ok(details[1].open && !details[0].open, "open <details> reopened by index");
 });
 
+// #sports took ~500 ms and an empty day ~140 ms here before the perf fixes; every route is now under 20 ms.
+// The budget is loose so a slow machine doesn't flake, but a superlinear loop still blows through it.
+test("render budget: each main route under 50 ms at 3x today's data", async () => {
+  const bench = require("./bench.js");
+  const data = bench.dataAt(3), b = await bench.boot(data, data.athletes.slice(0, 10).map(a => a.id));
+  const slow = ["home", "today", "c-judo-gs-abu-dhabi-2026", "a-raz-hershko", "following", "sports", "calendar", "quotas", "day-2026-12-24"]
+    .map(r => [r, bench.timeRoute(b, r, 5)]).filter(([, ms]) => ms > 50);
+  assert.deepStrictEqual(slow.map(([r, ms]) => `#${r} ${ms.toFixed(0)} ms`), []);
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {

@@ -23,13 +23,17 @@ const str = v => typeof v === "string" ? v : (v == null ? "" : String(v));
 const esc = s => str(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeUrl = u => /^https:\/\//i.test(str(u)) ? str(u) : "";
 const isDate = d => /^\d{4}-\d{2}-\d{2}$/.test(str(d));
-const fmt = d => isDate(d) ? new Date(d + "T12:00:00").toLocaleDateString("he-IL", {day:"numeric", month:"short", year:"numeric"}) : "";
-const fmtShort = d => isDate(d) ? new Date(d + "T12:00:00").toLocaleDateString("he-IL", {day:"numeric", month:"short"}) : "";
+// Formatters are built once: building an Intl.DateTimeFormat costs far more than formatting (docs/perf/2026-10.md).
+const FMT = new Intl.DateTimeFormat("he-IL", {day:"numeric", month:"short", year:"numeric"});
+const FMT_SHORT = new Intl.DateTimeFormat("he-IL", {day:"numeric", month:"short"});
+const IL_DAY = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Jerusalem"});
+const fmt = d => isDate(d) ? FMT.format(new Date(d + "T12:00:00")) : "";
+const fmtShort = d => isDate(d) ? FMT_SHORT.format(new Date(d + "T12:00:00")) : "";
 const fmtShortY = d => isDate(d) && d.slice(0, 4) !== today().slice(0, 4) ? fmt(d) : fmtShort(d);
 // Same-year ranges show the year once, at the end.
 const fmtRange = (a, b) => !isDate(b) || a === b ? fmt(a) : (a.slice(0, 4) === b.slice(0, 4) ? fmtShort(a) : fmt(a)) + " – " + fmt(b);
 // Israel's calendar date, so "live"/"past" don't flip at UTC midnight.
-const today = () => new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Jerusalem"}).format(new Date());
+const today = () => IL_DAY.format(new Date());
 const addDays = (d, n) => new Date(new Date(d + "T12:00:00").getTime() + n * 864e5).toISOString().slice(0, 10);
 const daysSince = iso => (Date.now() - new Date(str(iso))) / 864e5;
 const stageOf = a => Math.min(3, Math.max(0, Number(a.stage) | 0));
@@ -40,7 +44,8 @@ const plural = (n, one, many) => n === 1 ? one : `${n} ${many}`;
 // The time is the export's (as in #updateNote), kept from the refresh that first marked the row.
 const rowSigs = new Map(), changedRows = new Map();
 let diffRender = false, newlyChanged = 0;
-const ilTime = ts => new Date(ts).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
+const IL_TIME = new Intl.DateTimeFormat("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
+const ilTime = ts => IL_TIME.format(new Date(ts));
 function rowMark(key, sig){
   const ts = S.generatedAt || S.lastRun;
   if (diffRender && rowSigs.get(key) !== sig && !changedRows.has(key) && ts && !isNaN(Date.parse(ts))) { changedRows.set(key, ts); newlyChanged++; }
@@ -80,7 +85,7 @@ const sportById = id => S.sports.find(s => s.id === id);
 const sportName = id => sportById(id)?.he || id;
 const athletesOf = sid => S.athletes.filter(a => a.sportId === sid);
 const quotasOf = sid => S.quotas.filter(q => q.sportId === sid);
-const upcoming = () => S.comps.filter(c => (c.end || c.start) >= today()).sort((a, b) => a.start.localeCompare(b.start));
+const upcoming = () => { const t = today(); return S.comps.filter(c => (c.end || c.start) >= t).sort((a, b) => a.start.localeCompare(b.start)); };
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
 // Per-viewer follows: athletes in S.follows, sports in S.followSports (following.js; absent before it loads).
@@ -531,7 +536,10 @@ function renderResults(){
 function viewSports(){
   const withA = S.sports.filter(s => athletesOf(s.id).length);
   const without = S.sports.filter(s => !athletesOf(s.id).length).sort((a, b) => heCmp(a.he, b.he));
-  const nextStart = s => upcomingIn(s.id)[0]?.start || "9999";
+  // One pass over the upcoming competitions, not one per sort comparison.
+  const firstStart = new Map();
+  for (const c of upcoming()) if (!firstStart.has(c.sportId)) firstStart.set(c.sportId, c.start);
+  const nextStart = s => firstStart.get(s.id) || "9999";
   withA.sort((a, b) => followsSport(b.id) - followsSport(a.id) || nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
