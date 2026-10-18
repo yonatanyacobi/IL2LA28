@@ -136,6 +136,7 @@ def history(items):
 
 
 SESSION_TEXT_MAX = 120
+SIGNED_OFF = {"ok", "fixed"}  # = build_quotas.PUBLISH: only fact-checked rows reach data.json
 HHMM = re.compile(r"([01]\d|2[0-3]):[0-5]\d", re.ASCII)
 
 
@@ -153,6 +154,9 @@ def session(sid, s, comps, athlete_ids, held):
     """Public form of sessions/<id> (whitelist), or None to drop it. held collects ids exported with a field blanked."""
     comp = comps.get(s.get("competitionId"))
     day = date(s.get("date"))
+    review = s.get("review") if isinstance(s.get("review"), dict) else {}
+    if review.get("status") not in SIGNED_OFF:  # fact-check gate, as build_quotas.py does for quota items
+        return None
     if (not comp or not day or not comp["start"] <= day <= (comp["end"] or comp["start"]) or not https(s.get("source"))
             or not text(s.get("phase"))):
         return None
