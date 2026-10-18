@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js", "site/event.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/sessions.js", "site/day.js", "site/event.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // The fixture is a real export and gets refreshed (tests/README.md). A test that needs a precondition the real data
 // may lose (no ranks, a given nextDate…) sets it on its own copy instead of relying on the snapshot.
@@ -933,7 +933,7 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   shared.athletes.find(a => a.id === "timna-nelson-levy").history = [{at: "2026-10-29", kind: "result", text: "ארד", source: "https://www.ijf.org/r"}];
   const sh = (await eventAt(AD, "2026-10-30T08:00:00Z", {data: shared})).out;
   assert.ok(sh.includes("תוצאות: 1") && !sh.includes("תוצאות: 2"), "results counted per athlete");
-  const inbal = sh.split('id="evAthH"')[1].split('<div class="stack"><a class="card" href="#a-').find(x => x.startsWith("inbal-shemesh")) || "";
+  const inbal = sh.split('id="evAthH"')[1].split("</section>")[0].split("<li>").find(x => x.includes('href="#a-inbal-shemesh"')) || "";
   assert.ok(inbal.includes("pill s-wait") && !inbal.includes("ארד"), "Inbal: her own chip, not Timna's result");
 
   // Doha with no known Israelis: one tracked shooter, no session, no nextDate inside it.
@@ -977,6 +977,75 @@ test("entry points link to #c-<id>: calendar rows, today strip, #day heading, at
   Object.assign(data.athletes.find(a => a.id === "raz-hershko"), {next: "אימון", nextDate: "2026-09-01"});
   const none = (await boot({data, now: "2026-08-01T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
   assert.ok(!none.includes('href="#c-'), "no matching competition: no link");
+});
+
+test("#c-: arrival scrolls today's day into view once; the athletes panel points results to the schedule", async () => {
+  const b = await boot({now: "2026-10-29T08:00:00Z"});
+  b.run(`var __scrolls = []; document.querySelector = sel => sel.includes('aria-current="date"')
+    ? {closest: () => ({scrollIntoView: o => __scrolls.push(o)})} : null`);
+  const tick = () => new Promise(r => setTimeout(r, 5));
+  b.view("c-judo-gs-abu-dhabi-2026"); await tick();
+  assert.strictEqual(b.run("__scrolls.length"), 1, "arrival scrolls");
+  b.view("c-judo-gs-abu-dhabi-2026"); await tick();
+  assert.strictEqual(b.run("__scrolls.length"), 1, "a re-render of the same page does not");
+  b.view("home"); b.view("c-judo-gs-abu-dhabi-2026"); await tick();
+  assert.strictEqual(b.run("__scrolls.length"), 2, "coming back scrolls again");
+  assert.strictEqual(b.run("__scrolls[0].block"), "start");
+  b.ctx.scrollY = 300;
+  b.view("home"); b.view("c-judo-gs-abu-dhabi-2026"); await tick();
+  assert.strictEqual(b.run("__scrolls.length"), 2, "no scroll when the reader already scrolled");
+  const css = fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8");
+  assert.ok(/\.sess-day\{scroll-margin-top:64px\}/.test(css) && /max-width:640px\)\{\.sess-day\{scroll-margin-top:110px\}/.test(css), "clears the sticky nav");
+
+  // Pinned: her only day here is 29.10, with a result (the fixture's own nextDate moves with refreshes, #234).
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  Object.assign(data.athletes.find(a => a.id === "raz-hershko"), {nextDate: "2026-10-29",
+    history: [{at: "2026-10-29", kind: "result", text: "ארד", source: "https://www.ijf.org/r"}]});
+  const out = (await boot({data, now: "2026-10-30T08:00:00Z"})).run(`viewEvent("judo-gs-abu-dhabi-2026")`);
+  const raz = out.split('id="evAthH"')[1].split("</section>")[0].split("<li>").find(x => x.includes('href="#a-raz-hershko"')) || "";
+  assert.ok(raz.includes('<span class="muted">תוצאה בלוח הסשנים</span>') && !raz.includes("ארד"), "Gil nit: result points to the schedule");
+});
+
+test("UX v45: #c- athletes as compact rows with the chip inside; \"מתחרה היום\"; #following next-up chips", async () => {
+  // Pinned: Raz competes on 29.10; the count is computed from the data, not from the fixture's dates (#234).
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.find(a => a.id === "raz-hershko").nextDate = "2026-10-29";
+  const competing = data.athletes.filter(a => a.sportId === "judo" && a.nextDate === "2026-10-29").length;
+  const {run} = await boot({data, now: "2026-10-29T08:00:00Z"});
+  const out = run(`viewEvent("judo-gs-abu-dhabi-2026")`);
+  const panel = out.split('id="evAthH"')[1].split("</section>")[0];
+  assert.ok(panel.includes('<ul class="rows"><li><span class="d"></span>') && !panel.includes('class="card"'), "athleteRow(), not cards");
+  const raz = panel.split("<li>").find(x => x.includes('href="#a-raz-hershko"'));
+  assert.ok(raz.includes("<small><bdi>") && raz.includes('<span><span class="pill s-live">מתחרה היום</span></span></li>'), "name, event, chip in the row");
+  assert.ok(out.includes(` · מתחרה היום: ${competing}`) && !out.includes("מתחרים היום"), "label-first count of those competing today (Shira)");
+  const f = await boot({data, now: "2026-10-29T08:00:00Z", follows: ["raz-hershko"], storage: {"la28.followSports": '["judo"]'}});
+  const next = f.view("following").split('id="nextH"')[1].split("</section>")[0];
+  const razRow = next.split("<li>").find(x => x.includes('href="#a-raz-hershko"'));
+  assert.ok(razRow.includes('<span class="d">') && razRow.includes("מתחרה היום"), "today's athlete: date column and chip");
+  const doha = await boot({now: "2026-11-02T08:00:00Z", storage: {"la28.followSports": '["shooting"]'}});
+  const dohaRow = doha.view("following").split('id="nextH"')[1].split("</section>")[0].split("<li>").find(x => x.includes("#c-issf-wch-doha-2026"));
+  assert.ok(dohaRow && dohaRow.includes('<span class="pill s-live">מתקיימת עכשיו</span>'), "running competition: linked, s-live pill (Shira)");
+});
+
+test("components §6: athleteRow() and athleteCard() with a status inside", async () => {
+  const {run} = await boot({follows: ["raz-hershko"]});
+  const row = run(`athleteRow(S.athletes.find(a => a.id === "raz-hershko"), "<span>ST</span>")`);
+  assert.ok(row.startsWith('<li><span class="d"></span><span class="t"><span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span> <a href="#a-raz-hershko">'), "STAR for a followed athlete");
+  assert.ok(row.endsWith("<span><span>ST</span></span></li>") && row.includes("<small><bdi>"), "event, then the status cell");
+  const card = run(`athleteCard(S.athletes.find(a => a.id === "raz-hershko"), "<span>ST</span>")`);
+  assert.ok(/<span class="ln"><span>ST<\/span><\/span>\s*<\/a>$/.test(card), "status is the card's last line");
+});
+
+test("#today (today-route.md): same page as today's #day with \"היום, \"; other dates unchanged; moves at midnight", async () => {
+  const {view} = await boot({now: "2026-10-29T08:00:00Z"});
+  const t = view("today");
+  assert.ok(t.includes('<h1 tabindex="-1">היום, ') && t === view("day-2026-10-29") && t === view("day"), "#today = #day = #day-<today>");
+  const y = view("day-2026-10-28");
+  assert.ok(!y.includes("היום, ") && y.includes('<a href="#today">היום</a>'), "another date: no prefix, a link back to today");
+  // 23:59 and 00:01 Israel time (UTC+2 after 25.10).
+  const late = (await boot({now: "2026-10-29T21:59:00Z"})).view("today"), early = (await boot({now: "2026-10-29T22:01:00Z"})).view("today");
+  assert.ok(late.includes("29 באוק׳") && early.includes("30 באוק׳"), "#today follows Israel's date");
+  assert.ok((await boot({now: "2026-10-29T22:01:00Z"})).view("day-2026-10-29").includes("29 באוק׳"), "#day-<date> stays on its date");
 });
 
 test("fetch failure shows the retry view", async () => {
@@ -2024,7 +2093,7 @@ test("near-live: #c- and #day render the same row; #c- line under the h1, schedu
   const li = html => html.split('<ul class="rows sess">')[1].split("</ul>")[0];
   const c = b.run(`viewEvent("issf-wch-doha-2026")`);
   assert.strictEqual(li(c), li(b.view("day-2026-11-03")), "same row on both pages");
-  const head = c.split('<div class="event-head">')[1].split("</div>")[0];
+  const head = c.split('<div class="event-head"')[1].split("</div>")[0];
   assert.ok(head.indexOf("</h1>") < head.indexOf('<p class="fresh'), "fresh line under the h1");
   assert.ok(c.includes('rel="noopener">לוח הזמנים: <bdi>issf-sports.org</bdi>'), "schedule source from the session");
   assert.ok(c.includes("בהמתנה לתוצאה: 1") && !c.includes("אחד/ת"), "awaiting count, label first");
