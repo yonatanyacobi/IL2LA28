@@ -40,7 +40,7 @@ function followFeed(since){
 // Athletes followed only through their sport have no star, so their feed rows say why they're there.
 const viaSport = a => S.follows.has(a.id) ? "" : `<small>ענף במעקב: ${esc(sportName(a.sportId))}</small>`;
 
-const compLinkOr =c => typeof compLink === "function" ? compLink(c, esc(c.name)) : esc(c.name);
+const compLinkOr = c => typeof compLink === "function" ? compLink(c, esc(c.name)) : esc(c.name);
 
 function followUpcoming(){
   const t = today();

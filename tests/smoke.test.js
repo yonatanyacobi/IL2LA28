@@ -801,7 +801,7 @@ test("#following S2: a followed sport alone shows on home, and the badge counts 
   const b = await boot({data, now: "2026-10-19T08:00:00Z", storage: seen});
   const home = b.view("home");
   const panel = home.split("<h2>במעקב שלי</h2>")[1]?.split("</section>")[0] ?? "";
-  assert.ok(panel.includes(`<div class="chips"><a href="#sport-judo">${judo}</a></div>`), "sport chip on home");
+  assert.ok(panel.includes(`<div class="chips" role="group" aria-labelledby="mineSportsL"><span class="chips-lbl" id="mineSportsL">ענפים במעקב:</span><a href="#sport-judo">${judo}</a></div>`), "labelled sport chip on home");
   assert.ok(!panel.includes('class="cards"') && !home.includes("טיפ: לחצו על ☆"), "no athlete cards, no tip");
   const badge = Number(b.els.followBadge.textContent);
   assert.ok(!b.els.followBadge.hidden && badge === 2, "badge before the visit");
