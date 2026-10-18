@@ -2,9 +2,8 @@
 
 Researcher: Ofir. Research only: this PR does not edit `data/quotas/quotas.json`. Kite items 37/38 are applied in
 `dev/ofir/kite-items`. Every row needs
-sign-off from Dana or Tamar. Item ids are indexes in `data/quotas/quotas.json`. Items 0–56 are on main.
-Items 57–59 exist only in PR #64 (Yael's canoe/rowing items, signed off by Tamar). This doc only proposes
-follow-ups to them.
+sign-off from Dana or Tamar. Item ids are indexes in `data/quotas/quotas.json`. Items 57–59 are Yael's canoe/rowing
+items from PR #64, signed off by Tamar and merged to main. This doc only proposes follow-ups to them.
 
 Sources used (official, or the IOC-approved qualification-system PDF mirrored by NOC*NSF):
 - [WA-240] World Athletics, 240th Council meeting, 2026-03-18/19, Information and Decisions §2.1.3:
