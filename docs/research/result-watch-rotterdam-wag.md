@@ -98,6 +98,20 @@ The contract requires both whenever `result` is set. Without them the export bla
 - `quotas.json`: the 2026 Worlds give no individual quotas, which start at the 2027 Worlds;
 - `rankNum`.
 
+## The men's team line in "מה התעדכן" (Omer's digest, owned by Roni)
+It's based on #134, the item `artistic-gymnastics` / `קבוצתי גברים`, outcome (ב). Publish it **only after** Dana and Tamar
+sign #134 against FIG's Official results. Until then the digest has no team line.
+
+Line, one line, maqaf before numbers, absolute date:
+```
+נבחרת הגברים במקום 20 במוקדמות אליפות העולם ברוטרדם (18.10.2026) ולא עלתה לגמר הקבוצתי; ללא מכסת נבחרת, והסיכוי הבא: 9 נבחרות במוקדמות אליפות העולם 2027
+```
+- The rank (20) and the date come from #134's israelNote. If the Official PDF gives a different rank, change only the
+  number.
+- No individual finalists in this line. Dolgopyat's and Berkovich's floor final (24.10) is its own line, from the
+  result on 24.10.
+- The source link is the Official FIG/Longines team qualification PDF, the same one #134 cites.
+
 ## Risks
 1. **Duplicate entry from the job.** The job (step 2a) may write its own result for Rotterdam on 20.10.
    - `athlete_patch.py` treats it as a repeat only if `at` **and** `text` both match exactly.
