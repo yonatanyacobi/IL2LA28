@@ -1,6 +1,5 @@
-// Competition page #c-<id> (docs/design/event-page.md). Loaded after app.js and day.js; reuses day.js's sessions
-// (exported sessions plus nextDate/history fallbacks), sessionRow() and the near-live labels, so #day and #c- render
-// identically. No live scores: results arrive with the job run, and the line under the h1 says when.
+// Competition page #c-<id> (docs/design/event-page.md). Loaded after app.js and sessions.js, whose sessions,
+// near-live labels and rows it shares with #day, so both render a session identically. No live scores: results arrive with the job run, and the line under the h1 says when.
 "use strict";
 
 // Sessions of one competition, grouped by Israel day. A season-long series (> SERIES_DAYS) has no daily fallback
@@ -44,9 +43,22 @@ function eventStakes(c){
     <p><a href="#sport-${esc(c.sportId)}">לכל המכסות בענף</a></p></section>`;
 }
 
+// On arrival (the view isn't showing this competition yet), scroll today's day group into view after navigate()'s
+// scroll-to-top; data refreshes re-render the same page and leave the scroll alone. Focus stays on the h1.
+function scrollToTodayOnArrival(id){
+  if (str($("view")?.innerHTML).includes(`data-event="${esc(id)}"`)) return;
+  setTimeout(() => {
+    if ((typeof scrollY === "number" ? scrollY : 0) > 0) return;   // the reader already scrolled (e.g. while data loaded)
+    const day = document.querySelector('#view .sess-day a[aria-current="date"]')?.closest(".sess-day");
+    const reduce = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    day?.scrollIntoView({block: "start", behavior: reduce ? "auto" : "smooth"});
+  }, 0);
+}
+
 function viewEvent(id){
   const c = S.comps.find(x => x.id === id);
   if (!c) return notFound();
+  scrollToTodayOnArrival(id);
   const t = today(), {series, groups} = eventSessions(c);
   const flat = [...groups].flatMap(([d, list]) => list.map(s => [s, series ? s.day : d]));
   const athletes = [...new Map(flat.flatMap(([s]) => s.athletes.map(a => [a.id, a]))).values()]
@@ -55,7 +67,7 @@ function viewEvent(id){
   const count = is => flat.reduce((n, [s, d]) => n + s.athletes.filter(a => is(athleteStatus(s, d, a))).length, 0);
   const who = n => plural(n, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות");
   // Label first ("תוצאות: 1"), so one count needs no singular form (Shira on #182).
-  const kpi = [who(athletes.length), ...[[isResult, "תוצאות"], [isAwait, "בהמתנה לתוצאה"], [st => st === "before", "לפני התחרות"]]
+  const kpi = [who(athletes.length), ...[[st => st === "competing", "מתחרה היום"], [isResult, "תוצאות"], [isAwait, "בהמתנה לתוצאה"], [st => st === "before", "לפני התחרות"]]
     .map(([is, label]) => (n => n ? `${label}: ${n}` : "")(count(is)))].filter(Boolean).join(" · ");
   const stakes = eventStakes(c);
   const tracked = athletesOf(c.sportId).length;
@@ -72,7 +84,7 @@ function viewEvent(id){
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועים סשנים של ישראלים.</p>` : "")(
         series ? 0 : [...groups].filter(([, list]) => !list.length).length));
   return `<p class="crumb"><a href="#sport-${esc(c.sportId)}">→ ${esc(sportName(c.sportId))}</a></p>
-  <div class="event-head">
+  <div class="event-head" data-event="${esc(id)}">
     <h1 tabindex="-1">${esc(c.name)}</h1>
     ${freshLine(hasToday)}
     <p class="muted">${[fmtRange(c.start, c.end), esc(c.location)].filter(Boolean).join(" · ")}</p>
@@ -88,11 +100,10 @@ function viewEvent(id){
     <div class="stack">
       ${stakes}
       ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH">הישראלים בתחרות (${athletes.length})</h2>
-        <div class="stack">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
+        <ul class="rows">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
           const st = last ? athleteStatus(last[0], last[1], a) : "";
-          // A result is shown only in the schedule row, next to its source.
-          const line = st ? statusChip(st) : "";
-          return `<div class="stack">${athleteCard(a)}${line ? `<p>${line}</p>` : ""}</div>`; }).join("")}</div></section>` : ""}
+          // A result is shown only in the schedule row, next to its source; components.md §6 row.
+          return athleteRow(a, isResult(st) ? `<span class="muted">תוצאה בלוח הסשנים</span>` : statusChip(st)); }).join("")}</ul></section>` : ""}
     </div>
   </div>
   ${safeUrl(schedSrc) ? `<p class="foot">${hostLink(schedSrc, "לוח הזמנים")}</p>` : ""}

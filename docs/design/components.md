@@ -15,7 +15,8 @@ All: 400px and 1280px, light and dark, tokens only, every dynamic string through
   <span><span class="pill s-live">מתחרה היום</span></span></li>
 ```
 - **No time anywhere in the group:** `.d` stays empty and the group heading ends with `<span class="muted"> · תאריך בלבד</span>`,
-  once. Some rows timed: untimed rows show `השעה תפורסם`.
+  once. Some rows timed: untimed rows show `תאריך בלבד` in `.d`. Never `השעה תפורסם`: we don't promise a time that
+  hasn't been announced (near-live §1).
 - ≤ 640px: `.d` on its own line above `.t` (the `.rows.sess` override, #182).
 
 ## 2. Status pill — `.pill.{kind}`
@@ -28,7 +29,7 @@ Glyphs are `<span aria-hidden="true">`.
 | competition | `s-before` / `s-live` / `s-wait` / `ended` | `מתחילה ב־{d}` / `מתקיימת עכשיו · יום {n} מתוך {N}` / `◷ הסתיימה · בהמתנה לתוצאות` / `הסתיימה` |
 | qualifying, series | `open`, `ended` | `העפלה`, `סדרה עונתית` |
 | quota | `q-earned` / `q-in-contention` / `q-outside` / `q-unknown` / `q-awaiting` | via `quotaStatusPill()` |
-| stage | `st0`–`st3` | `STAGES[n]` |
+| stage | `st0`–`st3` | `STAGES[n]`; stage 0 is `לפני חלון ההעפלה` (copy-rules §5) |
 | neutral fact (old rank etc.) | `ended` | e.g. `דירוג מ־{d}` |
 | changed by auto-refresh | `chg` | `השתנה ב־<time>{HH:MM}</time>` (near-live §3, #235) |
 
@@ -106,6 +107,6 @@ A whole-page failure gets an h1 and `role="alert"`; a section's empty line is a 
 After a negation: "ספורטאים **או** נבחרות" (Shira).
 
 ## Checks (smoke)
-- No output contains `class="now"` or `נתונים חיים`.
+- No output contains `class="now"`, `נתונים חיים` or `השעה תפורסם`.
 - On `#day` and `#c-` every `<h2>`/`<h3>` link has `class="hlink"`.
 - Each `#c-` athlete's status pill is inside its `.card` or row.
