@@ -70,6 +70,8 @@ const quotasOf = sid => S.quotas.filter(q => q.sportId === sid);
 const upcoming = () => S.comps.filter(c => (c.end || c.start) >= today()).sort((a, b) => a.start.localeCompare(b.start));
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
+// Per-viewer follows: athletes in S.follows, sports in S.followSports (following.js; absent before it loads).
+const followsSport = id => !!S.followSports?.has(id);
 // Compared as instants: the job and the page write ISO strings with different precision.
 const trustOf = a => { const v = Date.parse(str(a.verifiedAt)), u = Date.parse(str(a.updatedAt)); return isNaN(v) ? "auto" : isNaN(u) || v >= u ? "ok" : "stale"; };
 
@@ -109,9 +111,18 @@ function winStatus(w){
   return t < w.from ? ["soon", "טרם נפתח"] : isDate(w.to) && t > w.to ? ["done", "נסגר"] : ["open", "פתוח"];
 }
 
+// When the browser blocks storage the follow still holds until the page closes; say so instead of failing
+// silently (QA F1). Uses the same status bar as the visitor toggle.
+function saveFollows(key, list){
+  store.set(key, list);
+  if (JSON.stringify(store.get(key, null)) === JSON.stringify(list)) return;
+  $("visitorMsgText").textContent = "לא הצלחנו לשמור את המעקב: הדפדפן חוסם שמירת נתונים באתר הזה. השינוי יישאר רק עד שתסגרו או תרעננו את הדף.";
+  $("visitorMsg").hidden = false;
+}
+
 function toggleFollow(id){
   S.follows.has(id) ? S.follows.delete(id) : S.follows.add(id);
-  store.set("la28.follows", [...S.follows]);
+  saveFollows("la28.follows", [...S.follows]);
 }
 
 // ---------- shared fragments ----------
@@ -273,7 +284,7 @@ function todayRows(){
     if (c) rows.get(c).athletes.push(a);
     else if (a.nextDate === t) rows.set(a, {comp: null, sportId: a.sportId, athletes: [a]});
   }
-  const fav = r => r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1;
+  const fav = r => r.athletes.some(a => S.follows.has(a.id)) || followsSport(r.sportId) ? 0 : 1;
   return [...rows.values()].sort((x, y) => fav(x) - fav(y) || heCmp(sportName(x.sportId), sportName(y.sportId))
     || heCmp(x.comp?.name || x.athletes[0].name, y.comp?.name || y.athletes[0].name));
 }
@@ -354,10 +365,11 @@ function closestGroups(rows, t = today()){
     if (!groups.has(k)) groups.set(k, {sportId: q.sportId, start: q.nextQuotaEvent.start, name: q.nextQuotaEvent.name, items: []});
     groups.get(k).items.push({q, as: quotaAthletes(q)});
   }
-  const fav = g => g.items.some(i => i.as.some(a => S.follows.has(a.id))) ? 0 : 1;
+  const fav = g => followsSport(g.sportId) || g.items.some(i => i.as.some(a => S.follows.has(a.id))) ? 0 : 1;
   const matched = g => g.items.some(i => i.as.length) ? 0 : 1;
   for (const g of groups.values()) g.items.sort((x, y) => (y.as.length > 0) - (x.as.length > 0) || heCmp(x.q.event, y.q.event));
-  return [...groups.values()].sort((x, y) => x.start.localeCompare(y.start) || fav(x) - fav(y) || matched(x) - matched(y)
+  // Followed first (also so the cap never drops them), then by date.
+  return [...groups.values()].sort((x, y) => fav(x) - fav(y) || x.start.localeCompare(y.start) || matched(x) - matched(y)
     || heCmp(sportName(x.sportId), sportName(y.sportId))).slice(0, CLOSE_MAX);
 }
 
@@ -377,7 +389,7 @@ function closestPanel(rows){
   return `<section class="panel today" aria-labelledby="closeH">
     <h2 id="closeH">ההזדמנויות הקרובות למכסה</h2>
     <ul class="rows closest">${groups.map(row).join("")}</ul>
-    <p class="foot">מקצים שבהם ישראל במרוץ למכסה, ממוינים לפי מועד אירוע המכסה הבא. <a href="#quotas">לתמונת המכסות המלאה${groups.length > 3 ? `<span class="sm-only"> (עוד ${groups.length - 3})</span>` : ""}</a></p>
+    <p class="foot">מקצים שבהם ישראל במרוץ למכסה. מה שבמעקב שלך מופיע ראשון, והשאר לפי מועד אירוע המכסה הבא. <a href="#quotas">לתמונת המכסות המלאה${groups.length > 3 ? `<span class="sm-only"> (עוד ${groups.length - 3})</span>` : ""}</a></p>
   </section>`;
 }
 
@@ -425,6 +437,7 @@ function viewHome(){
   <p class="sr" id="qCount" aria-live="polite"></p>
   <div id="results"></div>
   ${todayStrip(rows)}
+  ${typeof viewDay === "function" ? `<p class="foot"><a href="#today">לכל התחרויות היום</a></p>` : ""}
   ${wonPanel()}
   ${closestPanel(rows)}
   ${reviewPanel()}
@@ -478,7 +491,7 @@ function viewSports(){
   const withA = S.sports.filter(s => athletesOf(s.id).length);
   const without = S.sports.filter(s => !athletesOf(s.id).length).sort((a, b) => heCmp(a.he, b.he));
   const nextStart = s => upcomingIn(s.id)[0]?.start || "9999";
-  withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
+  withA.sort((a, b) => followsSport(b.id) - followsSport(a.id) || nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
   <p class="muted">${withA.length === 1 ? "ענף אחד עם ספורטאים ונבחרות מישראל במעקב." : `${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.`}${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
@@ -938,13 +951,16 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
+  else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") html = viewDay(h === "today" || h === "day" ? today() : h.slice(4)), nav = "calendar";
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
+  else if (/^following(-|$)/.test(h) && typeof viewFollowing === "function") html = viewFollowing(h.slice(10)), nav = "following";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (h === "digest" && typeof viewDigest === "function") html = viewDigest(), nav = "updates";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound();
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
+  if (typeof followingDecorate === "function") html = followingDecorate(h, html);
   $("view").innerHTML = banner() + html;
   $("fixLink").innerHTML = fixLogLive() ? ` · <a href="#corrections">יומן התיקונים</a>` : "";
   if (focusTrust && S.loaded) {   // once per arrival, so data refreshes don't steal focus

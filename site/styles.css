@@ -347,3 +347,23 @@ div.track{background:none}
 .stakes.won-line{border-inline-start-color:var(--ok)} .stakes.won-line b{color:var(--ok-ink)}
 /* About trust block: chips stack above their explanation on phones */
 @media (max-width:640px){.trust-legend{grid-template-columns:1fr}}
+/* daily view (#today, #day-<date>; daily-and-following.md §3) */
+.daystrip{display:flex;gap:6px;overflow-x:auto;padding-block:4px;scrollbar-width:thin}
+.daystrip a{flex:0 0 auto;min-width:44px;min-height:44px;display:grid;place-items:center;gap:2px;padding:4px 8px;border:1px solid var(--line-ui);border-radius:10px;text-decoration:none;color:var(--ink);font-size:14px;line-height:1.2}
+.daystrip a.has::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--sun)}
+.daystrip a[aria-current="date"]{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.daystrip a[aria-current="date"].has::after{background:var(--on-blue)}   /* sun on blue is 1.2:1 in dark */
+.day-nav{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.day-nav > a{min-height:44px;display:inline-flex;align-items:center;font-weight:600;text-decoration:none}
+.rows.sess li{grid-template-columns:70px 1fr auto}
+.res{font-size:14.5px;overflow-wrap:anywhere;margin-top:2px}
+.day-sport h3{font-family:var(--f-body);font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
+.pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
+.pill.s-wait{background:var(--blue-soft);color:var(--blue)}
+@media (max-width:640px){.day-nav h1{flex-basis:100%;order:-1}}
+
+/* following (#following): nav badge */
+.nav-badge{display:inline-block;min-width:18px;margin-inline-start:4px;padding:0 5px;border-radius:99px;background:var(--sun);color:var(--on-sun);font-size:11px;font-weight:700;line-height:18px;text-align:center}
+@media (max-width:640px){.links a{padding-inline:8px}}
+.site-foot .foot-link{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px}   /* "אודות" left the nav: keep a full tap target */
