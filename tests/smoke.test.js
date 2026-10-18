@@ -2528,7 +2528,10 @@ test("first-visitor audit F1/F3: hero tag links to #about, the line names the so
   const sub = hero.split('<p class="muted hero-sub">')[1].split("</p>")[0];
   assert.ok(!sub.includes("#about") && !sub.includes("fresh"), "not inside the hidden subtitle");
   const stale = (await boot({data: {...FIXTURE, generatedAt: "2026-10-27T05:00:00Z", lastRun: "2026-10-27T05:00:00Z"}, quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home");
-  assert.ok(stale.split('<section class="hero">')[1].split("</section>")[0].includes('<p class="fresh stale">'), "stale keeps freshLine's wording");
+  const staleHero = stale.split('<section class="hero">')[1].split("</section>")[0];
+  assert.ok(new RegExp(`<p class="fresh stale"><i></i><span>הנתונים לא עודכנו מאז <time[^>]+>[^<]+</time> · ייתכן שיש תוצאות שעוד לא מופיעות כאן · ממקורות רשמיים · \\d+ מתוך ${n} נבדקו ידנית · <a href="#about-trust">איך בודקים</a></span></p>`).test(staleHero), "stale: warning first, the checks stay (Noa)");
+  const noTs = (await boot({data: {...FIXTURE, generatedAt: "", lastRun: ""}, quotas: SITE_QUOTAS, now: "2026-10-18T15:00:00Z"})).view("home");
+  assert.ok(noTs.split('<section class="hero">')[1].split("</section>")[0].includes(`<p class="fresh"><i></i><span>ממקורות רשמיים · ${verified} מתוך ${n} נבדקו ידנית · <a href="#about-trust">איך בודקים</a></span></p>`), "no check time: the checks stay");
   const busy = home.split("ב־14 הימים הקרובים")[1].split("</section>")[0];
   assert.ok(/<small>[^<]+ · (<a href="#c-[^"]+">|[^<]+)/.test(busy) && !busy.includes("undefined"), "ישראלים בפעולה rows: nextCompFact (S3)");
 });

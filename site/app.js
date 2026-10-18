@@ -450,15 +450,10 @@ function nextUpLine(rows){
   return `<p class="next-up"><b>הבא בתור:</b> <a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLink(c, esc(c.name))} · ${fmtRange(c.start, c.end)} · ${names}${c.qualifying ? ` · <span class="pill open">העפלה</span>` : ""}</p>`;
 }
 
-// F3 (first-visitor audit): the hero's line also says where the data comes from and how much was checked by hand.
-// A stale or unknown check time keeps freshLine()'s own wording.
-function heroFresh(hasToday, verified){
-  const ts = checkTime(), line = freshLine(hasToday);
-  if (!ts || line.includes("fresh stale")) return line;
-  const checked = verified ? `${verified} מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית` : "";
-  return `<p class="fresh"><i></i><span>${[`נכון ל־${whenIL(ts)}`, "ממקורות רשמיים", checked, `<a href="#about-trust">איך בודקים</a>`]
-    .filter(Boolean).join(" · ")}</span></p>`;
-}
+// F3 (first-visitor audit): the hero's line also says where the data comes from and how much was checked by hand,
+// in place of the cadence; when stale or with no check time, those parts stay after freshLine()'s own wording.
+const heroFresh = (hasToday, verified) => freshLine(hasToday, ["ממקורות רשמיים",
+  verified ? `${verified} מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית` : "", `<a href="#about-trust">איך בודקים</a>`]);
 
 // ---------- views ----------
 function viewHome(){
