@@ -36,8 +36,7 @@ runs out). Every change goes through a PR on `dev/<name>/<slug>`. Each file has 
   - Owns the publishing pipeline: steps 2 and 5–9 of `docs/runbooks/result-night.md` (edit the master after
     sign-off, build, validate, open the PR, publish after merge, check it live). Also owns the Sunday `#digest`.
   - Standing duty: put every signed-off quota change live within 24 hours, and publish the digest every Sunday.
-  - He never sets `earned` without the owner's approval (or the fallback the owner picks in D4). He does not
-    research or sign off.
+  - He sets `earned` only after both Dana and Tamar sign off (D4). He does not research or sign off.
   - `site/digest.js` stays his.
 
 ## Product
@@ -62,7 +61,7 @@ runs out). Every change goes through a PR on `dev/<name>/<slug>`. Each file has 
   - Standing duty: the same as Roni's.
   - First tasks: the World Athletics LA28 system and the 5 ❓ quota items; quota items for canoe and rowing.
 - **Dana, fact-checker.**
-  - Owns sign-off for Roni's sports, plus the second sign-off on every `earned` (proposed; pending D4).
+  - Owns sign-off for Roni's sports, plus the second sign-off on every `earned`.
   - Standing duty: the weekly audit (data.json and quotas) in odd ISO weeks.
 - **Tamar, fact-checker (new).**
   - Owns sign-off for Yael's and Ofir's sports.
@@ -77,12 +76,14 @@ runs out). Every change goes through a PR on `dev/<name>/<slug>`. Each file has 
   first item's sport.
 - **Overflow:** if a PR waits longer than 4 hours (1 hour on event days), the other fact-checker takes it. The
   coordinator moves it on the board.
-- **`earned`, retirements and selection claims:** both fact-checkers must sign off (proposed for `earned`;
-  who approves it is D4, pending the owner).
+- **`earned`, retirements and selection claims:** both fact-checkers must sign off. For `earned`,
+  that is the approval (D4); the owner is not needed.
 - **Neither fact-checker signs off their own edits.** A fix made during checking needs the other fact-checker's
   sign-off.
 - **The audit alternates weekly.** The checker not on audit duty that week takes event-day sign-offs first.
 
 ## Data-writing rules (everyone who edits data, the DB or a dated file)
+- **New athletes (D5):** a fact-checker signs off, then the coordinator writes the record; the owner is not needed.
+  A Hebrew name without a source is marked as a transliteration in `notes`.
 - Timestamps (`updatedAt`, `verifiedAt`, `at`) are real UTC: `date -u +%Y-%m-%dT%H:%M:%SZ`. Israel local time
   with a `Z` appended lands 2–3 hours in the future. Reviewers reject any timestamp later than the commit time.

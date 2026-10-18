@@ -17,11 +17,11 @@ There are no analytics, so we measure what we control:
 - **Freshness**: hours from an official result to the site, and the age of quotas.json.
 - **Fact-check latency**: the time a PR waits for sign-off.
 - **Corrections**: errors found after publishing.
-- **Digest copies**: a per-viewer DB counter. This needs owner approval.
+- **Digest copies**: a DB counter is D8, still open. The PM recommends no counter and a share log instead.
 
 | Horizon | Targets |
 |---|---|
-| Launch (target 22.10, fallback 27.10; to 1.11.2026) | 0 open ✏️ audit fixes. At most 10 ❓ athletes, or the rest hidden. 33/33 sports have quota items. Results are live within 24 hours. |
+| Launch (date set by the owner in D1; readiness check 22.10; to 1.11.2026) | 0 open ✏️ audit fixes. At most 10 ❓ athletes, or the rest hidden. 33/33 sports have quota items. Results are live within 24 hours. |
 | Season (to 30.6.2027) | About 60 qualifying events, peaking at about 3 a week. Results are live within 24 hours. Sign-off takes ≤4 hours on event days and ≤24 hours otherwise. A weekly audit runs. Fewer than 2 public corrections a month. A digest every Sunday. |
 | Games (Jun–Jul 2028) | Every qualified Israeli has a schedule and stakes. Same-day results. Zero unsourced "earned" or "selected" claims. |
 
@@ -51,7 +51,8 @@ Workload over the next 2 months, which hold about 14 qualifying events:
 - **Yael: overloaded.** About 20 sports and 52 athletes, including athletics and sailing (most of the ❓) and every
   November event.
 - **Roni: full but sustainable.** About 10 sports and 47 athletes.
-- **Owner: a hidden single point of failure.** The result-night runbook has the owner edit, build and publish.
+- **Owner: no longer on the result-night path.** Omer publishes, and Dana and Tamar approve `earned` without the
+  owner.
 - **Five developers and UX: more capacity than work** after launch. The recurring work is results tooling and
   regression, not features.
 
@@ -68,7 +69,6 @@ Workload over the next 2 months, which hold about 14 qualifying events:
    - What breaks without: Yael misses events in the June 2027 peak.
 3. **Publisher: convert Omer, don't hire.**
    - Standing duty: result-night edit, build, PR, publish and live check, plus the Sunday digest.
-   - The owner keeps only verification and approval of `earned` status.
 
 **Not hiring:**
 - a translator (no English version);
@@ -78,16 +78,18 @@ Workload over the next 2 months, which hold about 14 qualifying events:
 **Merge:** after round 3, UX moves to one design a month under the PM. The total becomes 14 workers.
 
 ## 5. Top risks
-1. **A wrong public fact, above all a false "earned".** Mitigations: two-person sign-off on `earned` (proposed in D4), the
+1. **A wrong public fact, above all a false "earned".** Mitigations: two-person sign-off on `earned`, the
    validator's stage cross-check, a weekly audit and a corrections log.
 2. **Single points of failure** (Dana, the owner, the team lead). Mitigations: the second fact-checker; the
    publisher role; Noa as backup reviewer for doc-only PRs.
 3. **Platform limits** (no fetch, no push, no analytics, host changes). Mitigation: keep `site/` static and portable.
 4. **Owner bandwidth.** Mitigations: at most one batched ask a week, each with a recommendation; the publisher role.
 5. **Legal and brand.** Risks: unofficial status, athlete names, a personal email shown publicly. Mitigations: an
-   "unofficial" tag, no logos, a dedicated contact address, and a corrections and removal policy on `#about`.
+   "unofficial" tag, no logos, a dedicated contact address (D2 decided; `{REPORT_EMAIL}` until it exists), and a corrections and removal policy on `#about`.
 
 ## 6. Owner decisions
-The single list is `docs/product/owner-decisions.md` (PM). Its D1–D8 are aligned with this doc. In addition:
-- D9: no English version and no Paralympics coverage until mid-2027. [Confirm]
-- The hires and the publisher role were approved on 18.10.
+The single list is `docs/product/owner-decisions.md` (PM, #57). Decided there and applied here: D2 (the contact
+address), D4 (`earned` approved by Dana and Tamar), D5 (new athletes are added without the owner), D6 (no launch
+announcement) and D-R1 (the World Triathlon API key stays outside the repo). The hires and the publisher role were
+approved on 18.10.
+- Still to propose: no English version and no Paralympics coverage until mid-2027. [Confirm]
