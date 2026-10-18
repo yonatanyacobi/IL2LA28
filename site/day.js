@@ -140,12 +140,13 @@ function freshLine(hasToday){
     : `<p class="fresh"><i></i><span>נכון ל־${whenIL(ts)} · ${CADENCE}</span></p>`;
 }
 
-function sessionRow(s, d){
+// `extra`: markup after the names (the home adds sport and competition links).
+function sessionRow(s, d, extra = ""){
   const names = s.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   const state = sessionState(s, d);
   const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : s.timed ? "השעה תפורסם" : "תאריך בלבד";
   return `<li><span class="d">${when}</span>
-    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${sessionDetail(s, state)}</span>
+    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${extra}${sessionDetail(s, state)}</span>
     <span>${statusChip(state)}</span></li>`;
 }
 

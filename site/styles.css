@@ -359,6 +359,8 @@ div.track{background:none}
 .rows.sess li{grid-template-columns:70px 1fr auto}
 .res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px;color:var(--muted)}
 .res b{color:var(--ink)}
+.home-now{display:grid;gap:22px}
+@media (min-width:900px){.home-now{grid-template-columns:3fr 2fr;align-items:start}}
 .day-sport h3{font-family:var(--f-body);font-size:16px;font-weight:700;overflow-wrap:anywhere}
 .pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}

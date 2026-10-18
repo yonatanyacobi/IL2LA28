@@ -305,51 +305,6 @@ function wonPanel(){
   </section>`;
 }
 
-function todayStrip(rows){
-  if (!rows.length) return "";
-  const t = today();
-  const star = a => S.follows.has(a.id) ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : "";
-  const who = a => `${star(a)}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`;
-  const row = ({comp: c, sportId, athletes}) => {
-    if (!c) { const a = athletes[0]; return `<li><span class="d">היום</span>
-      <span class="t">${who(a)}<small>${[sportName(sportId), a.next].filter(Boolean).map(esc).join(" · ")}</small></span><span></span></li>`; }
-    const total = dayNo(c.start, c.end || c.start);
-    const small = [athletes.length ? athletes.sort((a, b) => heCmp(a.name, b.name)).map(who).join(", ") : "",
-      esc(c.location), athletes.length ? "" : (n => n === 1 ? "ספורטאי/ת או נבחרת אחת במעקב בענף" : `${n} ספורטאים ונבחרות במעקב בענף`)(athletesOf(sportId).length), linkOut(c.source)].filter(Boolean).join(" · ");
-    // Matched by sport + date (names are free text). Not via stakesLine: the event may have started before today.
-    // Followed athletes' items first, then items of athletes listed in this row, then file order (stable sort).
-    const rank = q => { const as = quotaAthletes(q); return as.some(a => S.follows.has(a.id)) ? 0 : as.some(a => athletes.includes(a)) ? 1 : 2; };
-    const best = q => Math.min(Infinity, ...quotaAthletes(q).map(a => rankOf(a, t)));
-    // An earned item shows "earned" (only with earnedAt; otherwise nothing, as its stakes are stale). An item whose
-    // own event already ended inside this still-running competition (a team final in a 9-day Worlds) shows
-    // "awaiting" instead of its stale stakes.
-    const won = q => q.israelStatus === "earned";
-    // An earned item is matched by earnedAt: once earned, its nextQuotaEvent is usually cleared to null.
-    const inComp = d => isDate(d) && c.start <= d && d <= (c.end || c.start);
-    const stakes = quotasOf(sportId).filter(q => won(q) ? inComp(q.earnedAt)
-        : (q.stakes && nxt(q) || awaitingOf(q)) && inComp(q.nextQuotaEvent?.start))
-      .sort((x, y) => won(y) - won(x) || rank(x) - rank(y) || (best(x) - best(y) || 0));   // earned first; || 0: Infinity - Infinity is NaN
-    const onLine = stakes.slice(0, STAKES_MAX).map(q => won(q)
-      ? `<small class="stakes won-line"><b>✓ מכסה הושגה:</b> <bdi>${esc(q.event)}</bdi></small>`
-      : awaitingOf(q)
-      ? (w => `<small class="stakes awaiting"><b>${AWAITING}:</b> <bdi>${esc(q.event)}</bdi> · ${fmtRange(w.start, w.end)}</small>`)(awaitingOf(q))
-      : `<small class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</small>`).join("")
-      + (stakes.length > STAKES_MAX ? `<small>ועוד ${plural(stakes.length - STAKES_MAX, "מקצה אחד", "מקצים")} — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
-    return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
-      <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small>${onLine}</span>
-      <span class="now">מתקיימת עכשיו</span></li>`;
-  };
-  const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
-  const when = ts ? new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
-  const more = rows.length - TODAY_MAX;
-  return `<section class="panel today" aria-labelledby="todayH">
-    <h2 id="todayH">${rows.some(r => r.athletes.length) ? "ישראלים מתחרים היום" : "היום בענפים שבמעקב"}</h2>
-    <ul class="rows">${rows.slice(0, TODAY_MAX).map(row).join("")}</ul>
-    ${more > 0 ? `<p><a href="#calendar">ועוד ${more} בלוח התחרויות</a></p>` : ""}
-    <p class="foot">${when ? `לפי הנתונים מ־${when}` : "לפי לוח התחרויות"}, תוצאות יתעדכנו בעדכון היומי</p>
-  </section>`;
-}
-
 // ---------- home: next quota chances + "הבא בתור" (round3.md §5) ----------
 const CLOSE_MAX = 5, CLOSE_EVENTS = 3;
 // Sorted by date only: the data says when the next chance is, not how close anyone is to a quota.
@@ -415,9 +370,10 @@ function viewHome(){
   const {counts, html: bar} = stageBar(S.athletes);
   const quota = counts[2] + counts[3];
   const t = today(), soon = addDays(t, 14), rows = todayRows();
-  // Athletes in the strip (all of today's, plus later days of a running competition) aren't repeated below.
-  const inStrip = new Set(rows.flatMap(r => r.athletes.map(a => a.id)));
-  const busy = S.athletes.filter(a => isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= soon && !inStrip.has(a.id))
+  const hub = typeof homeNow === "function";
+  // Athletes in today's sessions aren't repeated in the 14-day list.
+  const inToday = new Set(hub ? daySessions(t).flatMap(s => s.athletes.map(a => a.id)) : []);
+  const busy = S.athletes.filter(a => isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= soon && !inToday.has(a.id))
     .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name));
   const mine = S.athletes.filter(a => S.follows.has(a.id)).sort((a, b) => heCmp(a.name, b.name));
   const mineNew = mine.filter(isNew).length;
@@ -428,23 +384,22 @@ function viewHome(){
     <div>
       <h1 tabindex="-1">הדרך ללוס אנג׳לס 28</h1>
       <p class="muted">מעקב אחרי מסלול ההעפלה של ספורטאיות, ספורטאים ונבחרות מישראל לאולימפיאדת לוס אנג׳לס, 14–30 ביולי 2028.<span class="tag">מעקב לא רשמי</span></p>
-      ${freshness()}
+      ${hub ? freshLine(inToday.size > 0) : freshness()}
       ${nextUpLine(rows)}
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
-  <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
-  <p class="sr" id="qCount" aria-live="polite"></p>
-  <div id="results"></div>
-  ${todayStrip(rows)}
-  ${typeof viewDay === "function" ? `<p class="foot"><a href="#today">לכל התחרויות היום</a></p>` : ""}
-  ${wonPanel()}
-  ${closestPanel(rows)}
-  ${reviewPanel()}
+  ${hub ? homeNow() : ""}
   ${mine.length ? `<section class="panel">
       <div class="sec-head"><h2>במעקב שלי</h2>${mineNew ? `<span class="new">${mineNew} עודכנו מאז הביקור הקודם</span>` : ""}</div>
       <div class="cards">${mine.map(athleteCard).join("")}</div></section>`
     : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>`}
+  <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
+  <p class="sr" id="qCount" aria-live="polite"></p>
+  <div id="results"></div>
+  ${wonPanel()}
+  ${closestPanel(rows)}
+  ${reviewPanel()}
   <section class="panel" aria-label="התקדמות בהעפלה">
     <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה${verified ? ` · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית עד כה · <a href="#about-trust">איך בודקים</a>` : ""}</p>
     ${quotaKpi()}
@@ -710,7 +665,7 @@ function freshness(){
   if (!ts) return "";
   const stale = daysSince(ts) > 1.5;
   const when = new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
-  return `<span class="fresh ${stale ? "stale" : ""}"><i></i><span>${S.live ? "נתונים חיים · עדכון אוטומטי אחרון: " : "נכון ל־"}${when}</span></span>`;
+  return `<span class="fresh ${stale ? "stale" : ""}"><i></i><span>נכון ל־${when}</span></span>`;
 }
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
 
