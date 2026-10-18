@@ -221,3 +221,63 @@ If there are no candidates, omit the line.
 - **`S.quotasError`**: no panel, and the page still renders.
 - **Judo group**: exactly 3 `<bdi>` items + "ועוד 4 מקצים", and no stakes line.
 - **Escaping**: the event and competition names from the fixture are escaped.
+
+## 6. Verification status for visitors (the pre-launch verification drive)
+
+Today `trustChip()` shows the same chip everywhere, including "◌ איסוף אוטומטי" on every unverified card. In the
+fixture that is all 99 cards. During the drive most cards would carry a grey "not checked" mark, which reads as
+"this site is unchecked". Principle: **show the check where it exists, explain its absence once, on the athlete
+page.** Classification stays as is: `trustOf(a)` returns `ok | stale | auto`. No data change.
+
+### 6a. Card (`athleteCard()`: home, sport page, search)
+| State | Render |
+|---|---|
+| `ok` | `<span class="trust ok"><span aria-hidden="true">✓</span> נבדק {fmtShortY(verifiedAt)}</span>` |
+| `stale`, `auto` | nothing |
+
+`fmtShortY(d)` = `fmtShort(d)`, plus the year when it differs from `today()`'s year. Call it as
+`trustChip(a, "card")`. The card is one link, so the chip has no link of its own.
+
+### 6b. Athlete page (`dl.facts`, row "בדיקה")
+The chip comes first, then one muted explanation line, then the link to the trust block. The `<dd>` is `class="stack"`.
+
+| State | Chip | Line |
+|---|---|---|
+| `ok` | `✓ נבדק ידנית ב־{fmt(verifiedAt)}` (`.trust.ok`) | `הרשומה הושוותה למקור ({host(source)}) ולא השתנתה מאז.` |
+| `stale` | `✓ נבדק ב־{fmt(verifiedAt)}` (`.trust.stale`) | `מאז התעדכנו פרטים אוטומטית ({fmt(updatedAt)}). הם ייכללו בבדיקה הבאה.` |
+| `auto` | `◌ טרם נבדק ידנית` (`.trust.auto`) | `הפרטים נאספו אוטומטית ממקורות פומביים, והרשומות נבדקות ידנית בהדרגה. בינתיים כדאי להיעזר בקישור למקור.` |
+
+All three states end with `<a href="#about-trust">איך אנחנו בודקים</a>`. Each symbol sits in `<span aria-hidden="true">`.
+- `({host(source)})` is omitted when there is no `safeUrl(source)`.
+- In the `auto` line, "בקישור למקור" only appears when a source exists. Without one, the line ends at "…בהדרגה."
+- No line says "לא אמין", "חשוד" or "שגוי". "טרם" frames the state as a queue position, not a verdict.
+
+### 6c. Link to the About trust block (#48)
+Only bare `#token` hashes work, so add a route token rather than an in-page anchor:
+- **Router:** `h === "about" || h === "about-trust"` → `viewAbout()`, nav "about".
+- **After render:** for `about-trust`, focus `#trustH`: `tabindex="-1"`, `focus({preventScroll:false})`. Skip the
+  default h1 focus.
+- **Trust-block legend:** the legend (`about-trust.md`) keeps calling the real `trustChip(a)` for each of the three
+  states, so it shows exactly the 6b chips.
+
+### 6d. Home KPI during the drive
+In the current KPI line, `<b>{V}</b> מתוך {N} נבדקו ידנית` becomes `<b>{V}</b> מתוך {N} נבדקו ידנית עד כה ·
+<a href="#about-trust">איך בודקים</a>`. If heuristics fix #4 lands first, this line moves to the trust block and
+is not on home at all. With V = 0, show nothing (no "0 נבדקו").
+
+### 6e. CSS (tokens only, both themes)
+```css
+.trust.stale{background:transparent;border:1px solid var(--line-ui);color:var(--ink)}   /* was sun = warning */
+.trust.auto{background:transparent;border:1px dashed var(--line-ui);color:var(--muted)}
+```
+`ok` is unchanged: `--ok-ink` on `--ok-soft`, 5.8:1 in light and 6.8:1 in dark. `stale` moves off the warning
+colours: it is lower confidence, not a problem. At 400px the athlete `dd` stacks chip, line and link. Card chips
+wrap with the stage pill.
+
+### 6f. Tests
+- **Card:** an `auto` card has no `class="trust`; an `ok` card has `נבדק` and its date.
+- **Year:** a `verifiedAt` from the previous year includes the year.
+- **Athlete page:** each state renders its line and `href="#about-trust"`, and nothing says "איסוף אוטומטי".
+- **`auto` without a source:** no "בקישור למקור".
+- **`#about-trust`:** renders `#about` content with nav "about".
+- **KPI:** with V = 0 the KPI has no "נבדקו".
