@@ -353,9 +353,9 @@ div.track{background:none}
 .daystrip a.has::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--sun)}
 .daystrip a[aria-current="date"]{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
 .daystrip a[aria-current="date"].has::after{background:var(--on-blue)}   /* sun on blue is 1.2:1 in dark */
-.day-nav{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.day-nav{display:flex;justify-content:flex-start;align-items:baseline;gap:8px 16px;flex-wrap:wrap}
 .day-nav > a{min-height:44px;display:inline-flex;align-items:center;font-weight:600;text-decoration:none}
-.day-nav h1{order:-2;margin-inline-end:auto}
+.day-nav h1{order:-2}   /* start of the line; prev/next sit right after it (UX QA on #208) */
 .day-nav .day-prev{order:-1}   /* h1 comes first in the DOM (reading/tab order); visually prev stays at the start */
 .rows.sess li{grid-template-columns:70px 1fr auto}
 .res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px}
