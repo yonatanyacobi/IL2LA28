@@ -29,8 +29,8 @@ A new section between the facts panel and "היסטוריה":
 ┌ תוצאות בתחרויות ─────────────────────┐
 │ 3 תוצאות ב־2 תחרויות                 │  ← .kpi, muted
 │ 29–30 באוק׳ │ גרנד סלאם אבו דאבי      │  ← .d │ .t: <a href="#c-…">
-│             │ מוקדמות 57- ק״ג: עלייה לסיבוב 2 │  ← one line per entry: <bdi>{phase}</bdi>: {result}
-│             │ חצי גמר: הדחה · מקור: ijf.org │
+│             │ מוקדמות 57- ק״ג: {result as written} │  ← one line per entry: <bdi>{phase}</bdi>: {result}
+│             │ חצי גמר: {result} · מקור: ijf.org │
 │ 12 בספט׳    │ גביע העולם זאגרב         │
 │             │ מקום 7 · מקור: ijf.org   │
 └──────────────────────────────────────┘
@@ -39,11 +39,11 @@ A new section between the facts panel and "היסטוריה":
   `<ul class="rows">`, one `<li>` per row.
 - **`.d`:** `fmtShort(day)` for one day, `fmtRange(first, last)` for several (`29–30 באוק׳`); with the year when it isn't
   the current year. Wrapped in `<time datetime="{day}">`.
-- **`.t`:** `<a href="#c-{id}">{comp.name}</a>` (no competition: `<span class="muted">תחרות לא מזוהה</span>`), then per
+- **`.t`:** `<a href="#c-{id}">{comp.name}</a>` (no competition: `<span class="muted">תחרות שאינה במאגר</span>`), then per
   entry `<span class="res">{phase ? "<bdi>{phase}</bdi>: " : ""}{result} · {linkOut(src, "מקור: " + host)}</span>`.
   - **Same source** for every entry in a row: shown once, on the last entry.
   - `עודכן ב־{whenIL(resultAt)}` is **not** shown here: in a log, the competition day is the date that matters.
-- **Cap:** 10 rows. More go into `<details><summary>הצגת כל {n} התוצאות</summary>…</details>` (no JS; works without
+- **Cap:** 10 rows. The other rows go into `<details><summary>הצגת עוד {k} תוצאות</summary>…</details>`, k = their results (no JS; works without
   the clipboard or storage).
 - **History timeline:** drops `kind:"result"` entries (they are in the log now) and keeps start, stage, rank and the rest.
 
@@ -51,10 +51,10 @@ A new section between the facts panel and "היסטוריה":
 | Key | Hebrew |
 |---|---|
 | h2 | `תוצאות בתחרויות` |
-| summary | `{plural(n, "תוצאה אחת", "תוצאות")} ב־{plural(m, "תחרות אחת", "תחרויות")}` |
+| summary | `{plural(n, "תוצאה אחת", "תוצאות")} בתחרות אחת` / `… ב־{m} תחרויות` (maqaf only before a digit) |
 | row | `{phase}: {result} · מקור: {host}` |
-| no competition | `תחרות לא מזוהה` |
-| more | `הצגת כל {n} התוצאות` |
+| no competition | `תחרות שאינה במאגר` |
+| more | `הצגת עוד {k} תוצאות` (k = 1: `הצגת עוד תוצאה אחת`); k counts results, not rows |
 | empty | `עוד לא תועדו תוצאות של {name} בתחרויות.` (the athlete or team name; no gendered verb) |
 | footer (`.foot`) | `כל תוצאה מופיעה עם המקור שלה · {CADENCE}` |
 
@@ -69,8 +69,8 @@ Never: "חי", "בזמן אמת", "עכשיו", a verdict ("ניצחון", "הד
   newest row first, entries oldest first inside it.
 - A session result and a history result on the same day show once (the session's text).
 - A shared session's merged text never shows on one athlete's log; a team result with `resultAt` does.
-- A history result without an https source is dropped; one outside every competition shows `תחרות לא מזוהה`.
-- 12 rows: 10 visible plus a `<details>` with `הצגת כל 12 התוצאות`. The history timeline has no result entries.
+- A history result without an https source is dropped; one outside every competition shows `תחרות שאינה במאגר`.
+- 12 rows: 10 visible plus a `<details>` with `הצגת עוד {k} תוצאות`, k = the results in the 2 hidden rows. The history timeline has no result entries.
 - `<b>` in a result renders as text. No output contains "חי" or "בזמן אמת".
 
 ## Asks
