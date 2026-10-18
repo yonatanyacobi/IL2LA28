@@ -69,8 +69,50 @@ Rank date for every sailing `rank`: "(World Sailing, 2026-09-15)" (datafeed rele
   Source: https://fir.com.pl/results/IKA/men.html · https://assets.sailing.org/ranking_results/9a8de7e0-72ab-40cf-8040-06af65dd23ac.json
 
 ## Drive records (6)
-shachar-sagiv, matan-ivri, maru-teferi, selamawit-teferi, tamar-steinberg, anat-lelior: still being checked; they
-follow in the next commit on this branch. Two items are already known:
-- **selamawit-teferi:** Amsterdam 2026-10-18, 9th in 2:22:58 (https://worldathletics.org/news/report/amsterdam-marathon-2026-diriba-berhanu).
-- **maru-teferi:** no official Amsterdam result yet. Neither his WA profile nor a WA results page shows it on
-  2026-10-18; only one media report has "20th, 2:07:22". So no session row or result is added.
+Checked directly on 2026-10-18. For World Athletics, the facts come from the embedded data of each profile page
+(results, honours and current ranking; the results list runs to 2026-10-14).
+
+- **shachar-sagiv** ✅ after edits. rank ← "91 בדירוג ההעפלה האולימפי, 63 בדירוג העולמי (World Triathlon, 2026-10-12)";
+  rankNum 91 / "World Triathlon Individual Olympic Qualification Ranking" / 2026-10-12 (as in #95 and Yael's #84).
+  next/nextDate (Tongyeong, 2026-10-24) are on his IF profile's next events, which meets the drive rule; the start
+  list is still unpublished. Notes were all confirmed in Dana's 2026-10-18 audit (docs/audit/2026-10-18.md) → no change.
+  Source: https://triathlon.org/athletes/profile/41870 · https://triathlon.org/world-rankings/olympic/men
+- **matan-ivri** ✅ after edits. rank ← "76 בעולם ב-1500 מ׳ (World Athletics, 2026-10-13)".
+  notes ← "שיא ישראלי 3:34.51 (קורטרייק, 11.7.2026); מקום 14 במוקדמות 1500 מ׳ באליפות אירופה 2026 (3:36.93)".
+  next/nextDate (Big Ten XC, 2026-10-30): the only source is his university's official team site, not an entry
+  list. Tamar decides whether that meets the `next` rule; if not, clear next/nextDate until the meet's entry list.
+  Source: https://worldathletics.org/athletes/israel/matan-ivri-14943253 · https://uwbadgers.com/sports/mens-cross-country/roster/matan-ivri/15841
+- **maru-teferi** ✏️ next/nextDate ("מרתון אמסטרדם", 2026-10-18) is now past: clear both. Today no official source
+  confirms he ran (see the Amsterdam note below). rank ← "238 בעולם במרתון (World Athletics, 2026-10-13)".
+  Notes are all confirmed by WA: NR 2:04:44 (Valencia, 2024-12-01); Paris 2024 26th, 2:10:42; DNF at the 2025
+  Worlds; 22nd at the 2026 Europeans, 2:13:36. Keep them; optionally add "מקום 7 במרתון קייפטאון (2026-05-24, 2:06:46)".
+  Source: https://worldathletics.org/athletes/israel/maru-teferi-14526757
+- **selamawit-teferi** ✅ after edits. rank ← "248 בעולם במרתון (World Athletics, 2026-10-13)"; next/nextDate (Amsterdam,
+  2026-10-18) are past: clear both.
+  notes ← "מקום 9 במרתון אמסטרדם (2026-10-18, 2:22:58); מקום 11 באליפות אירופה 2026 (2:28:26), הישראלית הטובה במרוץ".
+  Tiyouri was 12th, so "best Israeli" holds. WA lists her as "Selamawit TEFERI"; the Hebrew/English double name
+  was set in Dana's audit, so no change.
+  Source: https://worldathletics.org/athletes/israel/selamawit-teferi-14794741 · https://worldathletics.org/news/report/amsterdam-marathon-2026-diriba-berhanu
+- **tamar-steinberg** ✅ after edits. rank ← "1 בעולם (World Sailing, 2026-09-15)". Every note is confirmed by her
+  WS breakdown: 2026 Worlds 1st of 70 (2026-09-12); 2026 Europeans 1st of 75 (2026-05-23); 2025 Worlds 2nd of 79;
+  Princesa Sofia 2026 1st of 70. source ← her breakdown file instead of the generic rankings page.
+  Source: https://assets.sailing.org/ranking_results/1fd2291d-b683-4498-9738-4fdc3e88ff65.json
+- **anat-lelior** ✏️
+  - source ← https://www.worldsurfleague.com/athletes/7491/anat-lelior (not Wikipedia).
+  - rank ← "15 בדירוג סבב ה-CT (WSL, 2026-10-18)". The WSL page is a live ranking, so it may move during the
+    Portugal event.
+  - notes ← "השתתפה בטוקיו ובפריז; הישראלית הראשונה בסבב ה-CT של ה-WSL (2026); מקום 2 בטהיטי פרו 2026". This
+    cuts "דירוג CT נוכחי לא אומת". All three facts are on her WSL bio.
+  - **next is wrong:** the record says Pipe Masters (2026-12-08). Since Abu Dhabi was dropped (WSL, 2026-09-04),
+    two CT stops come first: MEO Rip Curl Pro Portugal (2026-10-16 to 2026-10-25, women's heats on standby on
+    2026-10-18) and the Philippines Pro (2026-10-31 to 2026-11-10). next ← "MEO Rip Curl Pro Portugal (פנישה)" /
+    2026-10-16, but only once the women's draw shows her. Otherwise use the Philippines Pro / 2026-10-31. Either way
+    it is in #158's 14-day window, so a session row follows when the draw is published.
+  Source: https://www.worldsurfleague.com/athletes/tour/wct · https://www.worldsurfleague.com/posts/559746/surf-abu-dhabi-pro-removed-from-2026-championship-tour-calendar · https://www.worldsurfleague.com/events/2026/ct/445/meo-rip-curl-pro-portugal/results
+
+**Amsterdam, Maru Teferi:** no official result yet. His WA profile (results to 2026-10-14) and the WA race report
+don't list him; only one media report has "20th, 2:07:22". So no session row or result. Recheck WA on 2026-10-19
+in the morning.
+
+**Correction to my radar (#111):** it lists Pipe Masters as Lelior's next event and misses the Portugal and
+Philippines CT stops. Both are worth a radar fix in a follow-up.
