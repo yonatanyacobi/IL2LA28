@@ -942,7 +942,12 @@ test("entry points link to #c-<id>: calendar rows, today strip, #day heading, at
   const differ = JSON.parse(JSON.stringify(FIXTURE));
   differ.athletes.find(a => a.id === "raz-hershko").next = "GS <Abu Dhabi>";
   const d = (await boot({data: differ, now: "2026-10-29T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
-  assert.ok(d.startsWith('<dd><a href="#c-judo-gs-abu-dhabi-2026">GS &lt;Abu Dhabi&gt;</a>') && !d.includes("גרנד סלאם"), "her own text is the link, no repeated name");
+  assert.ok(d.startsWith(`<dd>GS &lt;Abu Dhabi&gt; · ${AD_LINK}`), "text names something else: her text plain, the competition's name is the link");
+  // Her text names the competition (with more words): her text is the link, the name isn't repeated.
+  const longer = JSON.parse(JSON.stringify(FIXTURE));
+  longer.athletes.find(a => a.id === "raz-hershko").next = "גרנד סלאם אבו דאבי (מעל 78)";
+  const l = (await boot({data: longer, now: "2026-10-29T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
+  assert.ok(l.startsWith('<dd><a href="#c-judo-gs-abu-dhabi-2026">גרנד סלאם אבו דאבי (מעל 78)</a>') && l.split("גרנד סלאם").length === 2, "matching text is the link");
   const data = JSON.parse(JSON.stringify(FIXTURE));
   Object.assign(data.athletes.find(a => a.id === "raz-hershko"), {next: "אימון", nextDate: "2026-09-01"});
   const none = (await boot({data, now: "2026-08-01T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
