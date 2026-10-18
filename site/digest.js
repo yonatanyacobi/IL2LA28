@@ -26,6 +26,11 @@ function commonStakes(list){
   return all.every(s => s.split(";")[0] === lead) ? lead.trim() : "";
 }
 
+// A digest is read for days after it's sent, so a one-day or last-day competition says "today", not "now", and a
+// one-day one has no "עד".
+const runningHead = c => (c.end || c.start) === c.start ? `• ${fmtShort(c.start)}` : `• עד ${fmtShort(c.end)}`;
+const runningWhen = (c, t) => (c.end || c.start) === c.start ? "היום" : c.end === t ? "מסתיימת היום" : "מתקיימת עכשיו";
+
 // Depends only on `t` and the loaded data in S, so tests can pin the week.
 function digestText(t = today()){
   const from = addDays(t, -6);
@@ -73,7 +78,7 @@ function digestText(t = today()){
   const inRunning = new Set(running.flatMap(r => r.list.map(a => a.id)));
   const competing = [
     ...running.sort((x, y) => heCmp(sportName(x.c.sportId), sportName(y.c.sportId)))
-      .map(({c, list}) => [waCut(`• עד ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))}), מתקיימת עכשיו`), ...waList("  ", names(list))].join("\n")),
+      .map(({c, list}) => [waCut(`${runningHead(c)} · ${waText(c.name)} (${waText(sportName(c.sportId))}), ${runningWhen(c, t)}`), ...waList("  ", names(list))].join("\n")),
     ...S.athletes.filter(a => !inRunning.has(a.id) && isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6))
       .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name))
       .map(a => waCut(`• ${fmtShort(a.nextDate)} · ${waText(a.name)} (${waText(sportName(a.sportId))})${a.next ? ": " + waText(a.next) : ""}`)),

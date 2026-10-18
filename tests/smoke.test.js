@@ -1421,6 +1421,19 @@ test("#digest: athletes in a competition under way are listed under it", async (
   assert.ok(competing.includes("שחר שגיב"), "upcoming athletes still listed");
 });
 
+test("#digest: a one-day or last-day competition says \"today\", not \"now\"", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.competitions.push({id: "fra-marathon", sportId: "athletics", name: "מרתון פרנקפורט", location: "פרנקפורט", start: "2026-10-25", end: "2026-10-25", source: "https://example.org/f"});
+  const runner = data.athletes.find(a => a.sportId === "athletics");
+  runner.nextDate = "2026-10-25";
+  const gym = data.athletes.find(a => a.sportId === "artistic-gymnastics");
+  gym.nextDate = "2026-10-25";
+  const competing = digestSection((await digestOf({data, now: "2026-10-25T09:00:00Z"})).text, "ישראלים מתחרים השבוע");
+  assert.ok(competing.includes("• 25 באוק׳ · מרתון פרנקפורט (אתלטיקה), היום"), competing);
+  assert.ok(competing.includes("• עד 25 באוק׳ · אליפות העולם בהתעמלות מכשירים 2026 (התעמלות מכשירים), מסתיימת היום"), competing);
+  assert.ok(!competing.includes("מתקיימת עכשיו"), competing);
+});
+
 test("#digest: one bullet per quota event, classes and athletes under it", async () => {
   const {text} = await digestOf({now: "2026-10-29T09:00:00Z"});
   const quotas = digestSection(text, "אירועי מכסה בשבועיים הקרובים");
