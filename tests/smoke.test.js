@@ -276,6 +276,21 @@ test("empty states (S5): p.muted lines, each table row's way on, no \"במאגר
 const rowsOf = strip => strip.split("<li>").slice(1);
 const count = (s, needle) => s.split(needle).length - 1;
 
+test("F2/F4: one sentence per stage on the athlete page, About and the home legend; no \"סשן\" in visible copy", async () => {
+  const {view, run} = await boot();
+  const help = JSON.parse(run("JSON.stringify(STAGE_HELP)"));
+  assert.strictEqual(help.length, 4);
+  const a = JSON.parse(run("JSON.stringify(S.athletes[0])")), s = Number(run(`stageOf(S.athletes[0])`));
+  assert.ok(view(`a-${a.id}`).includes(`<p class="muted stage-help">${help[s]} <a href="#about">מה אומרים השלבים?</a></p>`), "athlete page: the current stage's sentence");
+  const about = view("about");
+  help.forEach((h, i) => assert.ok(about.includes(`: ${h}</li>`), `About lists stage ${i} from STAGE_HELP`));
+  assert.ok(view("home").includes('<p class="foot"><a href="#about">מה אומרים השלבים?</a></p>'), "home legend link");
+  for (const f of fs.readdirSync(path.join(ROOT, "site")).filter(n => n.endsWith(".js"))) {
+    const bad = fs.readFileSync(path.join(ROOT, "site", f), "utf8").split("\n").filter(l => /סשן|סשנ/.test(l) && !/^\s*\/\//.test(l));
+    assert.deepStrictEqual(bad, [], f);
+  }
+});
+
 test("S1: \"במעקב\" is only the viewer's own follow; stage 0 and the site's list have their own words", async () => {
   const {view} = await boot();
   assert.ok(view("about").includes("<b>לפני חלון ההעפלה</b>"), "stage 0 name");
@@ -871,7 +886,7 @@ test("#c- Abu Dhabi (fallback data): header, 3 days, athletes once each, quota i
   assert.ok(out.includes('<h1 tabindex="-1">גרנד סלאם אבו דאבי</h1>') && out.includes('<a href="#sport-judo"><span aria-hidden="true">→</span>&nbsp;ג׳ודו</a>'));
   assert.ok(out.includes("מתקיימת עכשיו · יום 1 מתוך 3") && out.includes('<span class="pill open">העפלה</span>'));
   assert.strictEqual(out.split('class="sess-day"').length - 1, 1, "only the day with sessions");
-  assert.ok(out.includes("ב־2 ימים נוספים בתחרות לא ידועים סשנים של ישראלים."), "empty days collapsed into one line");
+  assert.ok(out.includes("ב־2 ימים נוספים בתחרות לא ידועות הופעות של ישראלים."), "empty days collapsed into one line");
   assert.ok(out.includes('<a class="hlink" href="#day-2026-10-29" aria-current="date">'), "today's group marked");
   const sched = out.split('id="evSchedH"')[1].split("</section>")[0];
   for (const id of ["gefen-primo", "izhak-ashpiz", "raz-hershko", "timna-nelson-levy", "yonatan-elbaz"])
@@ -921,15 +936,114 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   noIsraelis.athletes = noIsraelis.athletes.filter(a => a.sportId !== "shooting" || a.id === "sergey-richter");
   const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z", {data: noIsraelis})).out;
   assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת ברשימה בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
-  assert.ok(doha.includes('id="evStakesH"') && doha.includes("הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
+  assert.ok(doha.includes('id="evStakesH"') && doha.includes("ההופעות של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
   const dohaItems = doha.split('id="evStakesH"')[1].split("</section>")[0].split("<li>").slice(1);
   for (const li of dohaItems) assert.ok(li.includes("q-in-contention") || !li.includes("מה זה אומר"), "stakes only for in-contention items");
   const withSess = {...JSON.parse(JSON.stringify(FIXTURE)), sessions: [{competitionId: DOHA, date: "2026-11-03", startUtc: "2026-11-03T06:30:00Z",
     athleteIds: ["sergey-richter"], phase: "מוקדמות רובה אוויר"}]};
   const s = (await eventAt(DOHA, "2026-11-02T08:00:00Z", {data: withSess})).out;
   assert.strictEqual(s.split('class="sess-day"').length - 1, 1, "Doha: only the day with a session");
-  assert.ok(s.includes("ב־13 ימים נוספים בתחרות לא ידועים סשנים של ישראלים."), "13 empty days in one line");
+  assert.ok(s.includes("ב־13 ימים נוספים בתחרות לא ידועות הופעות של ישראלים."), "13 empty days in one line");
   assert.ok(s.includes("08:30") && s.includes('href="#a-sergey-richter"') && s.includes("לפני התחרות"), "timed session (Israel time)");
+});
+
+// Athlete game log (#178; docs/design/athlete-game-log.md §5).
+const GL_AD = "judo-gs-abu-dhabi-2026", GL_SRC = "https://www.ijf.org/r";
+const glBase = () => JSON.parse(JSON.stringify(FIXTURE));
+const glPanel = html => html.split('id="logH"')[1]?.split("</section>")[0] || "";
+const glRows = html => glPanel(html).split("<li>").slice(1);
+const glSess = (date, startUtc, phase, result, ids = ["raz-hershko"]) => ({competitionId: GL_AD, date, startUtc, athleteIds: ids, phase,
+  result, resultSource: GL_SRC, resultAt: `${date}T18:00:00Z`});
+
+test("game log: rows per competition, newest row first, entries oldest first, links, one shared source", async () => {
+  const data = glBase();
+  data.sessions = [glSess("2026-10-29", "2026-10-29T12:00:00Z", "גמר", "ארד"), glSess("2026-10-29", "2026-10-29T06:00:00Z", "מוקדמות", "עלתה")];
+  data.athletes.find(a => a.id === "raz-hershko").history = [
+    {at: "2026-02-06", kind: "result", text: "זהב", source: "https://www.ijf.org/p"},
+    {at: "2026-01-02", kind: "start", text: "נכנסה למעקב"}];
+  const out = (await boot({data, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko");
+  const rows = glRows(out);
+  assert.strictEqual(rows.length, 2, "2 rows");
+  assert.ok(rows[0].includes(`<a href="#c-${GL_AD}">גרנד סלאם אבו דאבי</a>`), "newest row first, linked to #c-");
+  assert.ok(rows[0].indexOf("מוקדמות") < rows[0].indexOf("גמר"), "entries oldest first");
+  assert.strictEqual(rows[0].split("מקור: ijf.org").length - 1, 1, "a shared source is shown once");
+  assert.ok(rows[0].includes('<time datetime="2026-10-29">29 באוק׳</time>'), "date without the current year");
+  assert.ok(glPanel(out).includes("3 תוצאות בתחרות אחת") && glPanel(out).includes("כל תוצאה מופיעה עם המקור שלה · מתעדכן פעם ביום"),
+    "a row with no known competition isn't counted as a competition (Gil P3)");
+  // Gil P3: a range within one month names the month once.
+  const range = glBase();
+  range.sessions = [glSess("2026-10-29", null, "מוקדמות", "עלתה"), glSess("2026-10-31", null, "גמר", "ארד")];
+  const r = glRows((await boot({data: range, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko"))[0];
+  assert.ok(r.includes('<time datetime="2026-10-29">29</time>–<time datetime="2026-10-31">31 באוק׳</time>'), "29–31 באוק׳");
+  const loose = glBase();
+  loose.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-02-06", kind: "result", text: "זהב", source: GL_SRC}];
+  const lp = glPanel((await boot({data: loose, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko"));
+  assert.ok(lp.includes('<p class="kpi muted">תוצאה אחת</p>'), "no known competition: no competition count");
+  const hist = out.split("<h2>היסטוריה</h2>")[1].split("</section>")[0];
+  assert.ok(!hist.includes("זהב") && hist.includes("נכנסה למעקב"), "results leave the history timeline");
+});
+
+test("game log: dedupe, team vs merged text, dropped sources, no competition, escaping, empty", async () => {
+  const data = glBase();
+  data.sessions = [glSess("2026-10-29", null, "57- ק״ג", "ארד (מהסשן)"),
+    glSess("2026-10-30", null, "קבוצתי", "ניצחון קבוצתי", ["raz-hershko", "yuli-alma-mishiner"])];
+  data.athletes.find(a => a.id === "raz-hershko").history = [
+    {at: "2026-10-29", kind: "result", text: "ארד (מההיסטוריה)", source: GL_SRC},
+    {at: "2026-09-12", kind: "result", text: "<b>מקום 7</b>", source: "https://www.ijf.org/z"},
+    {at: "2026-09-01", kind: "result", text: "בלי מקור", source: "http://x.example"}];
+  data.athletes.find(a => a.id === "timna-nelson-levy").history = [{at: "2026-10-29", kind: "result", text: "כסף", source: GL_SRC}];
+  data.athletes.find(a => a.id === "inbal-shemesh").nextDate = "2026-10-29";
+  const b = await boot({data, now: "2026-11-01T08:00:00Z"});
+  const raz = glPanel(b.view("a-raz-hershko"));
+  assert.ok(raz.includes("ארד (מהסשן)") && !raz.includes("ארד (מההיסטוריה)"), "same day: once, the session wins");
+  assert.ok(raz.includes("ניצחון קבוצתי") && glPanel(b.view("a-yuli-alma-mishiner")).includes("ניצחון קבוצתי"), "a team result is each member's");
+  assert.ok(!raz.includes("בלי מקור"), "a history result without an https source isn't in the log");
+  const razHist = b.view("a-raz-hershko").split("<h2>היסטוריה</h2>")[1].split("</section>")[0];
+  assert.ok(razHist.includes("בלי מקור") && !razHist.includes("מקום 7"), "...it stays in the timeline; logged results leave it");
+  assert.ok(raz.includes('<span class="muted">תחרות שאינה ברשימה</span>') && raz.includes("&lt;b&gt;מקום 7&lt;/b&gt;") && !raz.includes("<b>מקום 7"), "no competition; escaped");
+  const inbal = glPanel(b.view("a-inbal-shemesh"));
+  assert.ok(!inbal.includes("כסף") && inbal.includes("עוד לא תועדו תוצאות של ענבל שמש בתחרויות."), "a teammate's result never shows; empty state");
+  for (const h of ["a-raz-hershko", "a-inbal-shemesh"]) assert.ok(!/חי\b|בזמן אמת/.test(glPanel(b.view(h))));
+});
+
+test("game log: a same-day history result dedupes only against her session in the same competition; no cap", async () => {
+  const data = glBase();
+  // Her session on 3.11 is at Doha; no judo competition runs that day, so her history result is a different one.
+  data.sessions = [{competitionId: DOHA, date: "2026-11-03", startUtc: null, athleteIds: ["raz-hershko"], phase: "", result: "מהסשן",
+    resultSource: GL_SRC, resultAt: "2026-11-03T18:00:00Z"}];
+  data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-11-03", kind: "result", text: "מההיסטוריה", source: GL_SRC},
+    ...Array.from({length: 60}, (_, i) => ({at: `2025-${String(1 + (i % 12)).padStart(2, "0")}-${String(1 + Math.floor(i / 12)).padStart(2, "0")}`,
+      kind: "result", text: `ישן ${i}`, source: GL_SRC}))];
+  const {run} = await boot({data, now: "2026-11-05T08:00:00Z"});
+  const log = run(`gameLog(athleteById("raz-hershko")).map(r => r.result)`);
+  assert.ok(log.includes("מהסשן") && log.includes("מההיסטוריה"), "different competitions: both kept");
+  assert.strictEqual(log.length, 62, "60 history results plus 2: nothing cut");
+});
+
+test("game log: two results added to one row by an auto-refresh show one change mark (Gil on #268)", async () => {
+  const b = await boot({now: "2026-11-01T08:00:00Z"});
+  const {ctx, run, els} = b;
+  const next = glBase();
+  next.generatedAt = "2099-01-01T00:00:00Z";
+  next.sessions = [glSess("2026-10-29", "2026-10-29T06:00:00Z", "מוקדמות", "עלתה"), glSess("2026-10-29", "2026-10-29T12:00:00Z", "גמר", "ארד")];
+  ctx.location.hash = "#a-raz-hershko"; run("navigate()");
+  ctx.fetch = async () => ({ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(next))});
+  await run("checkForUpdate()");
+  const rows = glRows(els.view.innerHTML);
+  assert.ok(rows[0].includes("עלתה") && rows[0].includes("ארד"), "both results in one row");
+  assert.strictEqual(rows[0].split("השתנה ב־").length - 1, 1, "one mark per row");
+  assert.ok(rows[0].lastIndexOf("השתנה ב־") > rows[0].indexOf("ארד"), "on the row's last line");
+});
+
+test("game log: 12 rows show 10 and a details with the rest's result count", async () => {
+  const data = glBase();
+  data.athletes.find(a => a.id === "raz-hershko").history = Array.from({length: 12}, (_, i) =>
+    ({at: `2025-${String(i + 1).padStart(2, "0")}-15`, kind: "result", text: `תוצאה ${i}`, source: GL_SRC}));
+  const panel = glPanel((await boot({data, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko"));
+  const [visible, hidden] = panel.split("<details>");
+  assert.strictEqual(visible.split("<li>").length - 1, 10, "10 rows visible");
+  assert.ok(hidden.includes("<summary>הצגת עוד 2 תוצאות</summary>") && hidden.split("<li>").length - 1 === 2, "2 rows in details");
+  assert.ok(visible.includes('<time datetime="2025-12-15">15 בדצמ׳ 2025</time>'), "the year when it isn't this year");
 });
 
 test("lookup indexes follow data replacement; athletesOf/quotasOf return copies", async () => {
@@ -1000,7 +1114,7 @@ test("#c-: arrival scrolls today's day into view once; the athletes panel points
     history: [{at: "2026-10-29", kind: "result", text: "ארד", source: "https://www.ijf.org/r"}]});
   const out = (await boot({data, now: "2026-10-30T08:00:00Z"})).run(`viewEvent("judo-gs-abu-dhabi-2026")`);
   const raz = out.split('id="evAthH"')[1].split("</section>")[0].split("<li>").find(x => x.includes('href="#a-raz-hershko"')) || "";
-  assert.ok(raz.includes('<span class="muted">תוצאה בלוח הסשנים</span>') && !raz.includes("ארד"), "Gil nit: result points to the schedule");
+  assert.ok(raz.includes('<span class="muted">תוצאה בלוח הזמנים</span>') && !raz.includes("ארד"), "Gil nit: result points to the schedule");
 });
 
 test("UX v45: #c- athletes as compact rows with the chip inside; \"מתחרה היום\"; #following next-up chips", async () => {
@@ -2276,9 +2390,9 @@ test("home today: 8 sessions show 6, followed first, each row links its #c-, the
   assert.strictEqual(rows.length, 6);
   assert.ok(rows[0].includes('href="#a-raz-hershko"') && rows[0].includes("במעקב שלך"), "followed first");
   for (const r of rows) assert.ok(r.includes('<small><a href="#c-issf-wch-doha-2026">אליפות העולם בקליעה</a></small>') && !r.includes("#sport-"), r);
-  assert.ok(sec.includes('<a href="#today">ועוד 2 סשנים היום</a>') && sec.includes('<h2 id="todayH"><a class="hlink" href="#today">היום, יום ג׳, 3 בנוב׳</a></h2>'));
+  assert.ok(sec.includes('<a href="#today">ועוד 2 הופעות היום</a>') && sec.includes('<h2 id="todayH"><a class="hlink" href="#today">היום, יום ג׳, 3 בנוב׳</a></h2>'));
   const seven = await boot({data: only(list.slice(1)), quotas: SITE_QUOTAS, now: "2026-11-03T00:30:00Z"});
-  assert.ok(todayOf(seven.view("home")).includes(">ועוד סשן אחד היום</a>"), "one more");
+  assert.ok(todayOf(seven.view("home")).includes(">ועוד הופעה אחת היום</a>"), "one more");
 });
 
 test("home today: Abu Dhabi on 29.10, an empty day with הבא בתור, running competitions without a session", async () => {
@@ -2290,11 +2404,11 @@ test("home today: Abu Dhabi on 29.10, an empty day with הבא בתור, running
   assert.ok(/<h2 id="todayH"><a class="hlink" href="#today">[^<]+<\/a><span class="muted"> · תאריך בלבד<\/span><\/h2>/.test(ad), "on the heading, once");
   const empty = todayOf((await boot({data: judoOn29(), quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"})).view("home"));
   const nextRows = empty.split('<h3>הבא בתור: יום ה׳, 29 באוק׳<span class="muted"> · תאריך בלבד</span></h3>')[1]?.split("</ul>")[0] || "";
-  assert.ok(empty.includes('<p class="muted">אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.</p>')
+  assert.ok(empty.includes('<p class="muted">אין היום הופעות ידועות של ספורטאים או נבחרות מישראל.</p>')
     && (nextRows.match(/<li>/g) || []).length === 3 && nextRows.includes("pill s-before")
-    && empty.includes('<p><a href="#day-2026-10-29">לכל הסשנים ב־29 באוק׳</a></p>'), "empty day: the next day's first 3 rows (PM on #171)");
+    && empty.includes('<p><a href="#day-2026-10-29">לכל ההופעות ב־29 באוק׳</a></p>'), "empty day: the next day's first 3 rows (PM on #171)");
   const doha = todayOf((await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-11-05T08:00:00Z"})).view("home"));
-  assert.ok(/<p class="foot">עוד היום, בלי סשן ידוע של ישראלים: .*<a href="#c-issf-wch-doha-2026">אליפות העולם בקליעה<\/a>/.test(doha), doha);
+  assert.ok(/<p class="foot">עוד היום, בלי הופעה ידועה של ישראלים: .*<a href="#c-issf-wch-doha-2026">אליפות העולם בקליעה<\/a>/.test(doha), doha);
   assert.ok(!doha.split("<h3>")[0].includes('<ul class="rows sess">'), "no rows for today");
 });
 

@@ -407,3 +407,8 @@ div.track{background:none}
 .hlink[aria-current="date"]{border-bottom:3px solid var(--sun)}
 .sess-day{scroll-margin-top:64px}   /* scrolled to on arrival: clear the sticky nav (two rows on mobile) */
 @media (max-width:640px){.sess-day{scroll-margin-top:110px}}
+
+/* athlete game log (athlete-game-log.md): date | competition and one line per result */
+.game-log li{grid-template-columns:110px 1fr}
+.game-log .res{display:block;overflow-wrap:anywhere}
+@media (max-width:640px){.game-log li{grid-template-columns:70px 1fr}.game-log .d{grid-column:auto}}

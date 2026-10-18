@@ -4,6 +4,14 @@
 
 // ---------- constants & helpers ----------
 const STAGES = ["לפני חלון ההעפלה", "בחלון ההעפלה", "מכסה הושגה", "נבחר/ה לנבחרת"];
+// One sentence per stage: under the athlete's track and in About's stage list (UX F2). Phrased as a definition, so it
+// reads right both about one athlete and as a list.
+const STAGE_HELP = [
+  "יש סיכוי ריאלי להעפיל, וחלון ההעפלה בענף עוד לא נפתח.",
+  "חלון ההעפלה בענף פתוח, ותוצאות ודירוגים נספרים להעפלה.",
+  "הושגה מכסה (מקום באולימפיאדה) לפי הודעה רשמית של ההתאחדות הבין־לאומית. ברוב הענפים המכסה שייכת למדינה, לא לספורטאי/ת.",
+  "הוועד האולימפי בישראל הודיע רשמית על הבחירה לנבחרת האולימפית.",
+];
 const OPENING = new Date("2028-07-14T00:00:00-07:00");
 const PARIS_ATHLETES = 88;
 const SITE_NAME = "הדרך ללוס אנג׳לס 28";
@@ -501,6 +509,7 @@ function viewHome(){
     ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
+    <p class="foot"><a href="#about">מה אומרים השלבים?</a></p>
     <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: ישראל שלחה לפריז 2024 ${PARIS_ATHLETES} ספורטאיות וספורטאים. נבחרת נספרת כאן כרשומה אחת.</p>
   </section>
   <div class="grid2">
@@ -596,7 +605,8 @@ function viewAthlete(id){
   const s = stageOf(a), sp = sportById(a.sportId), fav = S.follows.has(id);
   const upd = str(a.updatedAt).slice(0, 10), old = upd && daysSince(a.updatedAt) > 30;
   const comps = upcomingIn(a.sportId).slice(0, 3);
-  const hist = (Array.isArray(a.history) ? a.history : []).filter(h => isDate(h.at)).slice().reverse();
+  // Results the game log shows (gamelog.js) leave the timeline; it keeps the rest, including unsourced results.
+  const hist = (Array.isArray(a.history) ? a.history : []).filter(h => isDate(h.at) && !(typeof inGameLog === "function" && inGameLog(h))).slice().reverse();
   const link = `${SITE_URL}#a-${id}`;
   return `
   <p class="crumb"><a href="#sport-${esc(a.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sp?.he || "ענף")}</a></p>
@@ -610,6 +620,7 @@ function viewAthlete(id){
   <section class="panel">
     <div class="track s${s}" aria-hidden="true">${STAGES.map((_, i) => `<i class="${i <= s ? "on" : ""}"></i>`).join("")}</div>
     <ol class="track-labels">${STAGES.map((x, i) => `<li ${i === s ? `class="cur" aria-current="step"` : ""}>${x}${i === s ? `<span class="sr"> (שלב נוכחי)</span>` : ""}</li>`).join("")}</ol>
+    <p class="muted stage-help">${STAGE_HELP[s]} <a href="#about">מה אומרים השלבים?</a></p>
     <dl class="facts">
       <dt>ענף</dt><dd><a href="#sport-${esc(a.sportId)}">${esc(sp?.he || a.sportId)}</a>${a.event ? ` · ${esc(a.event)}` : ""}</dd>
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}${rowMark(`rank|${id}`, a.rank)}</dd>` : ""}
@@ -623,6 +634,7 @@ function viewAthlete(id){
     </dl>
     ${a.notes ? `<p>${esc(a.notes)}</p>` : ""}
   </section>
+  ${typeof gameLogSection === "function" ? gameLogSection(a) : ""}
   <section class="panel">
     <h2>היסטוריה</h2>
     ${hist.length ? `<ol class="timeline">${hist.map(h => `<li class="k-${esc(h.kind)}"><span class="d">${fmt(h.at)}</span>
@@ -707,12 +719,7 @@ function viewAbout(){
     <h2>על האתר</h2>
     <p>אתר עצמאי ולא רשמי שעוקב אחרי ספורטאיות, ספורטאים ונבחרות מישראל בדרך לאולימפיאדת לוס אנג׳לס 2028. אין לאתר קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של המשחקים או לוועד האולימפי בישראל.</p>
     <h2>ארבעת השלבים</h2>
-    <ol>
-      <li><b>לפני חלון ההעפלה</b>: ספורטאי/ת או נבחרת עם סיכוי ריאלי, בענף שחלון ההעפלה בו עוד לא נפתח.</li>
-      <li><b>בחלון ההעפלה</b>: חלון ההעפלה בענף פתוח, ותוצאות ודירוגים נספרים להעפלה.</li>
-      <li><b>מכסה הושגה</b>: הושגה מכסה אולימפית לפי הודעה רשמית של ההתאחדות הבין־לאומית. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת.</li>
-      <li><b>נבחר/ה לנבחרת</b>: הוועד האולימפי בישראל הודיע רשמית על הבחירה.</li>
-    </ol>
+    <ol>${STAGES.map((x, i) => `<li><b>${x}</b>: ${STAGE_HELP[i]}</li>`).join("")}</ol>
   </section>
   ${trustBlock()}
   ${reportBox("טעות באתר הדרך ללוס אנג׳לס 28", SITE_URL)}`;
