@@ -39,14 +39,14 @@ function homeToday(){
   // PM on #171: an empty day shows the next session day's first rows, so the home still opens on sessions.
   const nextBlock = () => `<h3>הבא בתור: ${homeDayTitle(next)}${dateOnly(nextList) ? DATE_ONLY : ""}</h3>
     ${homeRows(nextList, next)}
-    <p><a href="#day-${next}">לכל הסשנים ב־${fmtShort(next)}</a></p>`;
+    <p><a href="#day-${next}">לכל ההופעות ב־${fmtShort(next)}</a></p>`;
   return `<section class="panel" aria-labelledby="todayH">
     <h2 id="todayH"><a class="hlink" href="#today">היום, ${homeDayTitle(t)}</a>${dateOnly(shown) ? DATE_ONLY : ""}</h2>
-    ${sessions.length ? homeRows(shown, t) : `<p class="muted">אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.</p>`}
+    ${sessions.length ? homeRows(shown, t) : `<p class="muted">אין היום הופעות ידועות של ספורטאים או נבחרות מישראל.</p>`}
     ${todayStakes(sessions, t)}
-    ${more > 0 ? `<p><a href="#today">${more === 1 ? "ועוד סשן אחד היום" : `ועוד ${more} סשנים היום`}</a></p>` : ""}
+    ${more > 0 ? `<p><a href="#today">${more === 1 ? "ועוד הופעה אחת היום" : `ועוד ${more} הופעות היום`}</a></p>` : ""}
     ${next ? nextBlock() : ""}
-    ${running.length ? `<p class="foot">עוד היום, בלי סשן ידוע של ישראלים: ${running.map(compA).join(" · ")}</p>` : ""}
+    ${running.length ? `<p class="foot">עוד היום, בלי הופעה ידועה של ישראלים: ${running.map(compA).join(" · ")}</p>` : ""}
   </section>`;
 }
 
