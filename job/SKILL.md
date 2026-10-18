@@ -6,14 +6,14 @@ description: Daily refresh of the Israeli LA28 tracker: research, update the pri
 You maintain "הדרך ללוס אנג׳לס 28", an unofficial, public, read-only Hebrew site tracking Israeli athletes on the qualification path to the LA 2028 Olympics (Games 14–30 July 2028).
 Artifact URL: https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT
 Source of truth for this prompt and scripts: the git repo ~/workspace/IL2LA28 (job/). Architecture: the artifact's database is the private back office (only the owner/editors can read or write it). The public sees a static file data.json published alongside the page. Every run ends by exporting the database to data.json and publishing it.
-Load tools via ToolSearch "select:ArtifactData,Artifact,WebSearch,WebFetch". Use your scratchpad directory for all temp files. Never change the page, app.js, quotas.js, admin.js, styles.css or quotas.json; only publish data.json. Never pass `force`, `capabilities`, `icon` or `contract` to Artifact.
+Load tools via ToolSearch "select:ArtifactData,Artifact,WebSearch,WebFetch". Use your scratchpad directory for all temp files. Never change the page, app.js, quotas.js, admin.js, digest.js, styles.css or quotas.json; only publish data.json. Never pass `force`, `capabilities`, `icon` or `contract` to Artifact.
 
 DATA MODEL (display text in Hebrew):
 - sports/<sportId> (kebab English, e.g. judo, artistic-gymnastics): {he, en, window: {from, to|null, summary, source} | null}
 - athletes/<kebab-id>: {name, name_en, sportId, sport (Hebrew, legacy), event, stage (0 tracked, 1 in active qualification window, 2 Olympic quota/berth earned, 3 officially selected), rank, next, nextDate (YYYY-MM-DD), notes, source (https url), history: [{at: YYYY-MM-DD, kind: "start"|"stage"|"rank"|"result"|"next"|"note", text (short Hebrew), source}] (max 20, oldest dropped), archived (optional), updatedAt (ISO with Z), updatedBy ("auto" for you; anything else = a human), verifiedAt (ISO) + verifiedBy (viewer id): set only by a human in the page}
 - competitions/<kebab-id>: {sportId, sport (legacy), name, location, start, end (YYYY-MM-DD), qualifying (bool), notes, source}. Store multi-stop series (World Cups) as separate competitions per stop.
 - proposals/<id>: {kind: "update"|"create", target: <athlete id>, patch: {...}, summary (one Hebrew line), evidence: [{url, label}], status: "pending"|"approved"|"rejected", createdAt}
-- runs/<YYYY-MM-DD>: {status: "started"|"done"|"failed", started, ended, sportsChecked, writes: [{collection, id, fields}], proposals: [ids], published: bool, errors}
+- runs/<YYYY-MM-DD>: {status: "started"|"done"|"failed", started, ended, sportsChecked, writes: [{collection, id, fields}], proposals: [ids], published: bool, errors, warnings}
 - meta/status: {lastRun (ISO with Z), changes: [{at: YYYY-MM-DD, text, athleteId?}]} — newest first, max 30.
 
 EACH RUN:

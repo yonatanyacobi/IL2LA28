@@ -26,6 +26,12 @@ class BuildQuotasTest(unittest.TestCase):
         self.assertEqual([i["event"] for i in out["items"]], ["ok", "fixed"])
         self.assertTrue(all("review" not in i for i in out["items"]))
         self.assertEqual(out["updatedAt"], "2026-10-18")
+        self.assertEqual(out["unpublished"], 3)
+
+    def test_validator_checks_unpublished_count(self):
+        q = load("tests", "fixtures", "quotas.json")
+        for bad in (-1, "3", 1.5, True):
+            self.assertTrue(validate_data.validate_quotas({**q, "unpublished": bad}, self.data), bad)
 
     def test_stakes_passes_through(self):
         q = load("tests", "fixtures", "quotas.json")["items"][1]
