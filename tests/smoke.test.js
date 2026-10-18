@@ -531,7 +531,7 @@ test("#admin launch readiness: counts link to where each issue is fixed", async 
   const num = label => { const before = panel.split(label)[0]; return before.slice(before.lastIndexOf('digits">') + 8).split("<")[0]; };
   assert.strictEqual(num("הצעות ממתינות"), "2");
   assert.strictEqual(num("פריטי מכסות שלא פורסמו"), "5");
-  assert.strictEqual(num("בלי אימות ידני"), String(data.athletes.filter(x => !x.verifiedAt).length));
+  assert.strictEqual(num("בלי בדיקה ידנית"), String(data.athletes.filter(x => !x.verifiedAt).length));
   assert.strictEqual(num("תאריך התחרות הבאה עבר"), String(data.athletes.filter(x => /^\d{4}-\d\d-\d\d$/.test(x.nextDate || "") && x.nextDate < "2026-10-18").length));
   for (const href of ["#home", "#admin-nosource", "#admin-noverified", "#admin-pastnext"]) assert.ok(panel.includes(`href="${href}"`), href);
   const list = view("admin-nosource");
@@ -563,13 +563,13 @@ test("#admin result night: picks quota events ending today/yesterday, links the 
   const panel = panelOf(b.view("admin"));
   assert.ok(!panel.includes("אישי גברים"), "a 2027 event of the same sport stays out");
   assert.ok(panel.includes('href="#sport-artistic-gymnastics"') && panel.includes('href="#a-artem-dolgopyat"') && panel.includes('href="#home"'));
-  assert.ok(panel.includes("0/9"));
+  assert.ok(panel.includes("0 מתוך 9 שלבים"));
   const key = JSON.parse(b.run(`JSON.stringify(rnKey(S.quotas.find(q => q.event === "קבוצתי גברים")))`));
   b.fire("change", {checked: true, dataset: {rn: key, step: "0"}});
   b.fire("change", {checked: true, dataset: {rn: key, step: "3"}});
   b.fire("change", {checked: false, dataset: {rn: key, step: "0"}});
   const again = panelOf(b.view("admin"));
-  assert.ok(again.includes("1/9") && /data-step="3" checked/.test(again) && !/data-step="0" checked/.test(again), "ticks persist per browser");
+  assert.ok(again.includes("1 מתוך 9 שלבים") && /data-step="3" checked/.test(again) && !/data-step="0" checked/.test(again), "ticks persist per browser");
 
   const items = [{...QUOTAS.items[1], event: "<img src=x onerror=alert(1)>", nextQuotaEvent: {name: "<b>x</b>", start: "2026-10-20", end: "2026-10-20"}}];
   const hostile = panelOf((await admin("2026-10-20T18:00:00Z", {updatedAt: "2026-10-18", items})).view("admin"));
