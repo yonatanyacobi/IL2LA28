@@ -16,7 +16,7 @@ All times are Israel time (Rotterdam + 1).
 |---|---|---|
 | before 17:00 | Both 19.10 sessions signed in #157, so `#day` shows them | Dana |
 | 18:20 | Sub 7 ends. **Record nothing for Shoshani.** Subs 8–10 can still push her down | – |
-| before 21:10 | Confirm Raz and Shamai in the sub 10 start list (Longines → Women's Qualifications → Start List). If one is missing, nothing is recorded for her tonight; tell the coordinator | Dana |
+| before 21:10 IL | Confirm Raz and Shamai in the sub 10 start list (Longines → Women's Qualifications → Start List). If one is missing, nothing is recorded for her tonight; tell the coordinator | Dana |
 | from ~23:30 | Look for the **Official** PDFs: https://gym.longinestiming.com/2026/Artistic-17247/en-us/Default → Women's Qualifications → "Select file to download" → All-Around Results, Uneven Bars Results (and Balance Beam / Floor Exercise for Raz and Shamai). Check every ~30 min. Ranking pages, news and social media are not a source | Roni |
 | Official + 30 min | Pick the row per athlete below, fill `<N>`/`<R>` from the Q/R marks, send to Tamar | Roni |
 | after Tamar | Steps 1–4 below, **before the 20.10 daily run** | coordinator |
@@ -91,5 +91,5 @@ Only for a qualification or a reserve. The date is in `at`, so the line doesn't 
 
 ## Not covered yet
 
-An all-around reserve, or a beam/floor final for Raz or Shamai, has no wording. Roni is adding it to her plan;
-until it is on `main`, don't write those outcomes.
+An all-around reserve, or a beam/floor final for Raz or Shamai: Roni is aligning #184 to this file's wording (this
+file is the single wording for 19.10). Until #184 merges, don't write those outcomes.
