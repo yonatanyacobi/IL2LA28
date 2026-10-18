@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/day.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // site/quotas.json as published on 18.10. Date and scenario tests use this frozen copy, so a real result
 // (e.g. Rotterdam on 20.10) changing the live file can't break them. Only the "loads and renders" test reads the live file.
@@ -1451,6 +1451,42 @@ test("approving an empty patch only closes the proposal; a real patch still stam
   w = JSON.parse(run("JSON.stringify(writes)"));
   const upd = w.find(x => x.col === "athletes");
   assert.ok(upd && upd.v.rank === "3 בעולם" && upd.v.updatedAt, "non-empty patch still writes updatedAt");
+});
+
+// #today / #day-<date> (site/day.js; copy from Shira on #130).
+test("#day renders the fixture on 24.10, 29.10 and 3.11", async () => {
+  const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
+  const d24 = view("day-2026-10-24"), d29 = view("day-2026-10-29"), d03 = view("day-2026-11-03");
+  for (const [h, out] of [["24", d24], ["29", d29], ["03", d03]]) {
+    assert.ok(!out.includes(NOT_FOUND) && out.includes('<h1 tabindex="-1">'), h);
+    assert.ok(out.includes("→ היום הקודם") && out.includes("היום הבא ←"), `${h}: prev/next when not today`);
+    assert.strictEqual((out.match(/aria-current="date"/g) || []).length, 1, `${h}: one selected chip`);
+    assert.ok(/נכון ל־.*, \d\d:\d\d/.test(out), `${h}: data note`);
+    assert.ok(!/live|חי\b/.test(out));
+  }
+  assert.ok(d24.includes("טונגיונג") && d24.includes('href="#a-shachar-sagiv"') && d24.includes("בהמתנה לתוצאה"), "24.10: past day → awaiting");
+  assert.ok(d29.includes("גרנד סלאם אבו דאבי") && d29.includes("יום 1 מתוך 3") && d29.includes("מתחרה ב־29 באוק׳ 2026"), "29.10: future day");
+  assert.ok(!d29.includes("מתקיימת עכשיו"));
+  assert.ok(d03.includes("#sport-shooting") && /ספורט(אים ונבחרות|אי\/ת או נבחרת אחת) במעקב בענף/.test(d03), "3.11: comps without listed entrants");
+  assert.ok(d29.includes('aria-label="יום חמישי, 29 באוקטובר · יש תחרויות של ישראלים" aria-current="date">ה׳ 29'), "chip label + current");
+});
+
+test("#today: today's copy, home link, result line, empty day, bad dates, escaping", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const raz = data.athletes.find(a => a.id === "raz-hershko");
+  raz.history = [...(raz.history || []), {at: "2026-10-29", kind: "result", text: "<b>ארד</b>"}];
+  raz.updatedAt = "2026-10-29T16:40:00Z";   // 18:40 in Israel (UTC+2 after the 25.10 clock change)
+  const {view, run} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-29T17:00:00Z"});
+  const t = view("today");
+  assert.strictEqual(t, view("day-2026-10-29"), "#today = #day-<today>");
+  assert.ok(t.includes("→ אתמול") && t.includes("מחר ←") && t.includes("מתקיימת עכשיו · יום 1 מתוך 3") && t.includes("מתחרה היום"));
+  assert.ok(t.includes("תוצאה: &lt;b&gt;ארד&lt;/b&gt; · עודכן ב־18:40") && !t.includes("<b>ארד"), "result in Israel time, escaped");
+  assert.ok(view("home").includes('<a href="#today">לכל התחרויות היום</a>'));
+  const quiet = run(`(() => { for (let d = "2026-11-15"; d < "2027-06-01"; d = addDays(d, 1)) if (!dayRows(d).length) return d; })()`);
+  assert.ok(quiet, "the fixture has a day without competitions");
+  const empty = view("day-" + quiet);
+  assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
+  for (const bad of ["day-2026-13-45", "day-nope", "day-<img>"]) assert.ok(view(bad).includes(NOT_FOUND), bad);
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.

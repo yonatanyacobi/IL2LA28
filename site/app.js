@@ -425,6 +425,7 @@ function viewHome(){
   <p class="sr" id="qCount" aria-live="polite"></p>
   <div id="results"></div>
   ${todayStrip(rows)}
+  ${typeof viewDay === "function" ? `<p class="foot"><a href="#today">לכל התחרויות היום</a></p>` : ""}
   ${wonPanel()}
   ${closestPanel(rows)}
   ${reviewPanel()}
@@ -938,6 +939,7 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
+  else if ((h === "today" || h.startsWith("day-")) && typeof viewDay === "function") html = viewDay(h === "today" ? today() : h.slice(4)), nav = "calendar";
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
