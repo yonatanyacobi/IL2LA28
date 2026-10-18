@@ -2019,8 +2019,15 @@ test("#day from sessions: time, status by clock, result stamp, untimed, Israel d
   assert.ok(done.includes('<b>תוצאה:</b> &lt;b&gt;מקום 12&lt;/b&gt; · עודכן ב־<time datetime="2026-11-03T08:40:00.000Z">10:40</time>') && !done.includes("pill s-"), "result with its own time, escaped");
   const unproven = rowOf(await at("2026-11-03T12:00:00Z", [SESS({result: "מקום 12", resultSource: "http://x", resultAt: "2026-11-03T08:40:00Z"})]));
   assert.ok(!unproven.includes("תוצאה:") && unproven.includes("pill s-wait"), "a result without proof isn't shown");
-  const untimed = rowOf(await at("2026-11-02T08:00:00Z", [SESS({startUtc: null})]));   // the day before
-  assert.ok(untimed.includes('<span class="d">השעה תפורסם</span>') && untimed.includes("pill s-before"), "untimed: no time, never a time");
+  // components.md §1: an all-untimed group says "תאריך בלבד" once, in its heading; in a mixed group the untimed row says it.
+  const allUntimed = await at("2026-11-02T08:00:00Z", [SESS({startUtc: null})]);   // the day before
+  assert.ok(allUntimed.includes('<span class="muted"> · תאריך בלבד</span>') && rowOf(allUntimed).includes('<span class="d"></span>')
+    && rowOf(allUntimed).includes("pill s-before"), "all untimed: heading form, no time");
+  const mixed = rowOf(await at("2026-11-02T08:00:00Z", [SESS(), SESS({id: "x-olga", athleteIds: ["olga-tashtchiev"], startUtc: null, phase: "אקדח"})]));
+  assert.ok(mixed.includes("08:15") && mixed.includes('<span class="d">תאריך בלבד</span>'), "mixed: the untimed row says תאריך בלבד");
+  // components.md §1: no promise of an unannounced time, in any output or source.
+  for (const f of fs.readdirSync(path.join(__dirname, "../site")).filter(f => f.endsWith(".js")))
+    assert.ok(!fs.readFileSync(path.join(__dirname, "../site", f), "utf8").includes("השעה תפורסם"), f);
   // Day key is the Israel date of startUtc: 23:30Z on 2.11 is 01:30 on 3.11 in Israel.
   const late = await at("2026-11-01T08:00:00Z", [SESS({date: "2026-11-02", startUtc: "2026-11-02T23:30:00Z"})]);
   assert.ok(rowOf(late).includes("01:30"), "Israel day key");
