@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T11:08:49Z",
+ "updatedAt": "2026-10-18T11:26:27Z",
  "items": [
   {
    "sportId": "judo",
@@ -295,7 +295,8 @@
    "israelNote": "מוקדמות הגברים ברוטרדם ב-18.10.2026; העפלה לגמר הקבוצתי (8 הראשונות, 20.10.2026) טרם אומתה בתוצאות רשמיות של FIG; רק 3 הראשונות בגמר זוכות במכסה",
    "nextQuotaEvent": {
     "name": "אליפות העולם רוטרדם – גמר קבוצתי גברים",
-    "start": "2026-10-20"
+    "start": "2026-10-20",
+    "end": "2026-10-20"
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
@@ -481,8 +482,9 @@
    "israelStatus": "unknown",
    "israelNote": "מקום 6 בקבוצתי טכני, גביע העולם פריז 2026; יוגב דגן בסגל",
    "nextQuotaEvent": {
-    "name": "אליפות העולם באקווטיקה בודפשט",
-    "start": "2027-06-26"
+    "name": "אליפות העולם באקווטיקה בודפשט – שחייה אמנותית",
+    "start": "2027-07-10",
+    "end": "2027-07-17"
    },
    "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf",
    "review": {
@@ -500,8 +502,9 @@
    "israelStatus": "unknown",
    "israelNote": "קטי קונין ואיה מזור – מקום 8 בדואט חופשי, אירופה 2026",
    "nextQuotaEvent": {
-    "name": "אליפות העולם באקווטיקה בודפשט",
-    "start": "2027-06-26"
+    "name": "אליפות העולם באקווטיקה בודפשט – שחייה אמנותית",
+    "start": "2027-07-10",
+    "end": "2027-07-17"
    },
    "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf",
    "review": {
