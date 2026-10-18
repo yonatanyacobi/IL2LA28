@@ -38,13 +38,15 @@ const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.
 // `quotas`: quotas.json payload; undefined → 404, "fail" → that fetch rejects.
 // `now` pins the clock (ISO instant); `follows` seeds localStorage.
 // Start hidden like their markup in index.html, so tests see what the app un-hides.
-const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar", "visitorChip", "visitorMsg"];
+const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar", "visitorChip", "visitorMsg", "updateNote"];
 // `claude` stands in for window.claude (editor tests); `storage` seeds localStorage.
 async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = [], claude, storage = {}} = {}){
   const els = {}, listeners = {};
   const mem = new Map([["la28.follows", JSON.stringify(follows)], ...Object.entries(storage)]);
   const ctx = {
-    console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, setTimeout, clearTimeout,
+    console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, clearTimeout,
+    // Long timers (the 10-minute auto-refresh) mustn't keep Node alive after the tests.
+    setTimeout: (f, ms, ...a) => { const t = setTimeout(f, ms, ...a); if (ms > 1000) t.unref(); return t; },
     setInterval: () => 0, clearInterval(){},
     location: {hash: "", reload(){ ctx.reloads = (ctx.reloads || 0) + 1; }},
     history: {replaceState(){}},
@@ -1602,6 +1604,48 @@ test("approving an empty patch only closes the proposal; a real patch still stam
   assert.ok(upd && upd.v.rank === "3 בעולם" && upd.v.updatedAt, "non-empty patch still writes updatedAt");
 });
 
+// Auto-refresh: re-read data.json, re-render only on change, keep focus and scroll, pause while hidden.
+test("auto-refresh: re-renders on a new export, keeps focus/scroll, skips unchanged, live and hidden", async () => {
+  const b = await boot({quotas: QUOTAS});
+  const {ctx, run, els} = b;
+  let calls = [], next = FIXTURE;
+  ctx.fetch = async url => { calls.push(url); const body = url === "quotas.json" ? QUOTAS : next;
+    return {ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(body))}; };
+  b.view("home");
+
+  await run("checkForUpdate()");
+  assert.deepStrictEqual(calls.sort(), ["data.json", "quotas.json"]);
+  assert.ok(run(`$("updateNote").hidden`), "unchanged export: no update note");
+
+  next = {...FIXTURE, generatedAt: "2099-01-01T00:00:00Z", athletes: FIXTURE.athletes.slice(1)};
+  run(`$("q")`); const q = els.q; let focused = 0, sel = null, scrolled = null;
+  q.focus = () => { focused++; }; q.setSelectionRange = (a) => { sel = a; };
+  ctx.document.activeElement = {id: "q", selectionStart: 3};
+  ctx.scrollY = 640; ctx.scrollTo = o => { scrolled = o.top; };
+  await run("checkForUpdate()");
+  assert.strictEqual(run("S.generatedAt"), "2099-01-01T00:00:00Z");
+  assert.strictEqual(run("S.athletes.length"), FIXTURE.athletes.length - 1);
+  // generatedAt 2099-01-01T00:00Z is 02:00 in Israel (winter time).
+  assert.ok(!run(`$("updateNote").hidden`) && run(`$("updateNote").textContent`) === "הנתונים עודכנו ב־02:00", "visible note with the export's Israel time");
+  assert.ok(focused === 1 && sel === 3 && scrolled === 640, "focus, caret and scroll kept");
+  assert.ok(els.view.innerHTML.includes("נכון ל־"), "freshness says נכון ל־");
+
+  calls = [];
+  run("S.live = true");
+  await run("checkForUpdate()");
+  assert.deepStrictEqual(calls, [], "editors on live data don't poll");
+  run("S.live = false");
+
+  ctx.document.hidden = true;
+  run("lastCheck = 0; scheduleRefresh()");
+  await new Promise(r => setTimeout(r, 20));
+  assert.deepStrictEqual(calls, [], "hidden tab: no check");
+  ctx.document.hidden = false;
+  run("scheduleRefresh()");   // overdue (lastCheck = 0): runs at once when the tab is visible again
+  await new Promise(r => setTimeout(r, 20));
+  assert.ok(calls.includes("data.json"), "visible again: checks immediately");
+});
+
 // #today / #day-<date> (site/day.js; daily-and-following.md §1, UX review on #140).
 test("#day a11y: h1 before the prev/next links in the DOM; the result is inline, not a <p> inside a <span>", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
@@ -1747,6 +1791,34 @@ test("#day: an athlete with a session later in the competition isn't listed on t
   assert.ok(!b.view("day-2026-10-29").includes('href="#a-raz-hershko"'), "not on her nextDate");
   assert.ok(b.view("day-2026-10-29").includes('href="#a-izhak-ashpiz"'), "others without a session keep their nextDate row");
   assert.strictEqual((b.view("day-2026-10-31").match(/href="#a-raz-hershko"/g) || []).length, 1, "once, on the session day");
+});
+
+test("refresh keeps focus without an id (href, data-follow), reopens <details>, polls every 5 minutes (Gil on #152)", async () => {
+  const {ctx, run, els} = await boot();
+  assert.strictEqual(run("REFRESH_MS"), 5 * 60e3);
+  run(`$("view")`);
+  // A tiny stand-in for the rendered #view: elements found by attribute selector, plus <details>.
+  const mk = attrs => ({attrs, focused: 0, open: false, getAttribute: k => k in attrs ? attrs[k] : null, focus(){ this.focused++; }});
+  let nodes = [];
+  const render = () => { nodes = [mk({href: "#a-x"}), mk({href: "#day-2026-10-29"}), mk({href: "#day-2026-10-29"}), mk({"data-follow": "raz-hershko"})];
+    details = [mk({}), mk({})]; };
+  let details = [];
+  render();
+  els.view.querySelectorAll = sel => sel === "details" ? details
+    : nodes.filter(n => Object.entries(n.attrs).some(([k, v]) => sel === `[${k}="${v}"]`));
+  const realRoute = run("route");
+  ctx.route = () => { render(); return realRoute(); };
+  const check = (old, pick, label) => {
+    ctx.document.activeElement = old;
+    run("refresh()");
+    assert.strictEqual(pick().focused, 1, label);
+  };
+  check(nodes[2], () => nodes[2], "second of two equal hrefs (a #day chip)");
+  check(nodes[3], () => nodes[3], "☆ button by data-follow");
+  details[1].open = true;
+  ctx.document.activeElement = null;
+  run("refresh()");
+  assert.ok(details[1].open && !details[0].open, "open <details> reopened by index");
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
