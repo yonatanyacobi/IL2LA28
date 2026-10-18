@@ -1,44 +1,71 @@
-[
- {
-  "id": "amsterdam-marathon-2026-20261018-women",
-  "competitionId": "amsterdam-marathon-2026",
-  "date": "2026-10-18",
-  "timeLocal": "",
-  "tz": "",
-  "athleteIds": ["selamawit-teferi"],
-  "phase": "מרתון אמסטרדם – נשים",
-  "source": "https://worldathletics.org/news/report/amsterdam-marathon-2026-diriba-berhanu",
-  "result": "",
-  "resultSource": "",
-  "resultAt": "",
-  "notes": "NEEDS competition record amsterdam-marathon-2026 first (not in competitions; the export drops sessions with an unknown competitionId). Proposed: sportId athletics, name מרתון אמסטרדם, location אמסטרדם, הולנד, start/end 2026-10-18, qualifying false (World Athletics LA28 system unpublished), source https://worldathletics.org/news/report/amsterdam-marathon-2026-diriba-berhanu. Result, official (WA report, 2026-10-18): Selamawit Teferi 9th, 2:22:58. Proposed result 'מקום 9, 2:22:58', resultSource = the WA report URL, resultAt = the UTC time the editor records it. Start time not on an official page (the organiser site doesn't list it), so timeLocal stays empty."
- },
- {
-  "id": "tri-world-cup-tongyeong-2026-20261024-men",
-  "competitionId": "tri-world-cup-tongyeong-2026",
-  "date": "2026-10-24",
-  "timeLocal": "10:30",
-  "tz": "Asia/Seoul",
-  "athleteIds": ["shachar-sagiv"],
-  "phase": "גביע העולם בטריאתלון – עלית גברים, ספרינט",
-  "source": "https://triathlon.org/events/2026-world-triathlon-cup-tongyeong/start-lists",
-  "result": "",
-  "resultSource": "",
-  "resultAt": "",
-  "notes": "HOLD: apply only once the elite men start list shows Sagiv (sessions contract §5). On 2026-10-18 the page showed the time (Oct 24, 2026, 10:30) but no names. Recheck 2026-10-22. startUtc = 2026-10-24T01:30:00Z (04:30 Israel). Result night: docs/research/result-watch-tongyeong.md."
- },
- {
-  "id": "big-ten-xc-2026-20261030-men",
-  "competitionId": "big-ten-xc-2026",
-  "date": "2026-10-30",
-  "timeLocal": "",
-  "tz": "",
-  "athleteIds": ["matan-ivri"],
-  "phase": "אליפות הביג טן בקרוס קאנטרי – 8 ק״מ גברים",
-  "source": "https://uwbadgers.com/sports/mens-cross-country/roster/matan-ivri/15841",
-  "result": "",
-  "resultSource": "",
-  "resultAt": "",
-  "notes": "HOLD until the meet's entry list shows Ivri (expected a few days before). Today the only official source is Wisconsin's 2026 roster. Once it is out, replace source with the entry list. NEEDS competition record big-ten-xc-2026 first: sportId athletics, name אליפות הביג טן בקרוס קאנטרי (NCAA), location מדיסון, ויסקונסין, ארה״ב, start/end 2026-10-30, qualifying false (no LA28 effect). Time: a search result says men's 8K at 11:45 local, not confirmed on an official page. When confirmed: timeLocal 11:45, tz America/Chicago (= 16:45Z, 18:45 Israel)."
- }
-]
+{
+ "updatedAt": "2026-10-18T15:11:32Z",
+ "sessions": [
+  {
+   "id": "tri-world-cup-tongyeong-2026-20261024-men",
+   "competitionId": "tri-world-cup-tongyeong-2026",
+   "date": "2026-10-24",
+   "timeLocal": "10:30",
+   "tz": "Asia/Seoul",
+   "athleteIds": ["shachar-sagiv"],
+   "phase": "גביע העולם בטריאתלון – עלית גברים, ספרינט",
+   "source": "https://triathlon.org/events/2026-world-triathlon-cup-tongyeong/start-lists",
+   "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
+   "notes": "HOLD (contract §5): sign off only once the elite men start list shows Sagiv. On 2026-10-18 the page showed the time (Oct 24, 2026, 10:30) but no names; recheck 2026-10-22. startUtc 2026-10-24T01:30:00Z (04:30 Israel). Result night: docs/research/result-watch-tongyeong.md."
+  }
+ ],
+ "pendingFinalBlocks": [
+  {
+   "why": "Competition record not in the DB yet; load_sessions.py errors on an unknown competitionId even for unsigned rows. Move into sessions once the record exists and Tamar signs the row.",
+   "competitionRecord": {
+    "id": "amsterdam-marathon-2026",
+    "sportId": "athletics",
+    "name": "מרתון אמסטרדם",
+    "location": "אמסטרדם, הולנד",
+    "start": "2026-10-18",
+    "end": "2026-10-18",
+    "notes": "",
+    "source": "https://worldathletics.org/news/report/amsterdam-marathon-2026-diriba-berhanu",
+    "qualifying": false
+   },
+   "session": {
+    "id": "amsterdam-marathon-2026-20261018-women",
+    "competitionId": "amsterdam-marathon-2026",
+    "date": "2026-10-18",
+    "timeLocal": "",
+    "tz": "",
+    "athleteIds": ["selamawit-teferi"],
+    "phase": "מרתון אמסטרדם – נשים",
+    "source": "https://worldathletics.org/news/report/amsterdam-marathon-2026-diriba-berhanu",
+    "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
+    "notes": "Official result (WA report, 2026-10-18): Selamawit Teferi 9th, 2:22:58. The batch can't carry results (contract §6); the job or an editor writes result 'מקום 9, 2:22:58' with resultSource = the WA report. No official start time found."
+   }
+  },
+  {
+   "why": "Competition record not in the DB yet, and Ivri's entry is not confirmed (only the university roster). Move into sessions once both exist.",
+   "competitionRecord": {
+    "id": "big-ten-xc-2026",
+    "sportId": "athletics",
+    "name": "אליפות הביג טן בקרוס קאנטרי (NCAA)",
+    "location": "מדיסון, ויסקונסין, ארה״ב",
+    "start": "2026-10-30",
+    "end": "2026-10-30",
+    "notes": "",
+    "source": "https://uwbadgers.com/news/2026/7/29/mens-cross-country-wisconsin-announces-2026-cross-country-schedule",
+    "qualifying": false
+   },
+   "session": {
+    "id": "big-ten-xc-2026-20261030-men",
+    "competitionId": "big-ten-xc-2026",
+    "date": "2026-10-30",
+    "timeLocal": "",
+    "tz": "",
+    "athleteIds": ["matan-ivri"],
+    "phase": "אליפות הביג טן בקרוס קאנטרי – 8 ק״מ גברים",
+    "source": "https://uwbadgers.com/sports/mens-cross-country/roster/matan-ivri/15841",
+    "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
+    "notes": "Men's 8K reportedly 11:45 local (search only, not an official page). When confirmed: timeLocal 11:45, tz America/Chicago (16:45Z, 18:45 Israel)."
+   }
+  }
+ ]
+}
