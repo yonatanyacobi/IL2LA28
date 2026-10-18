@@ -50,6 +50,9 @@ A `STOP` item is left out by the build, so it would silently not go live. No out
 For an `earned` item, the athletes' stage-2 proposals have been approved in the page (result-night.md, step 4).
 On the branch, before asking for review, the author runs steps 2 and 4 below and commits `site/quotas.json`.
 
+`check_signoff.py` sees only one `review` per item. For `earned`, the second fact-checker's sign-off and the
+owner's approval go in the PR thread, and the Publisher checks both there before step 1.
+
 ### 1. Merge (lead)
 
 The lead merges with `git merge --no-ff`. Then the Publisher runs, in the main checkout (`~/workspace/IL2LA28`, not
@@ -162,6 +165,31 @@ If anything is wrong, roll back (below). Don't fix forward on the live site.
 3. Give the text to the owner, who posts it. For a single-result night, the owner may post only the relevant
    section plus the last two lines (site link and disclaimer). The Publisher doesn't edit the facts in the text.
    If a fact is wrong, it's wrong on the site too: roll back.
+
+## Rehearsal log
+
+### 2026-10-18: Rotterdam team final, made-up outcome "Israel 2nd" (`earned`)
+
+Run on a local branch (main 8af47d3 + #68 + this branch; nothing pushed or published). `data/quotas` was edited per
+rotterdam-outcomes.md (א), then sign-off was simulated, then the build ran. The export was simulated from the live
+data.json with stage 2 for the five men. After that: validators, `preview_at.js` for 21.10, and the sport page,
+`#quotas`, athlete page and home.
+
+Worked as written: `check_signoff.py` (STOP before sign-off, OK after), the build, the expected `INVALID … stage >= 2`
+before the stage change, both validators after it, `quota_due.py` (nothing due), the home banner, the sport page
+("הושגה ב־20 באוק׳ 2026"), the `#quotas` earned group and its count, and the athlete page stage.
+
+| # | Problem | Status / owner |
+|---|---|---|
+| 1 | (א) had no `earnedAt`, so there was no home banner and no strip line. | Fixed here: added to rotterdam-outcomes.md (א) and result-night.md step 2. |
+| 2 | With `nextQuotaEvent: null` (as (א) says), the strip never matched the earned item, so there was no "✓ מכסה הושגה" line. | Fixed in #68 (cc8cd71): earned items are matched by `earnedAt` and sorted first. **#68 must merge before 20.10.** |
+| 3 | The individual men's item → `outside` kept "אירוע המכסה הבא: 2027" next to "לא רלוונטי". | Fixed here: (א) now also sets its `nextQuotaEvent: null`. |
+| 4 | **Blocker:** `node tests/smoke.test.js` fails after the real result is built. Two tests (date matrix, `#admin` result night) read `site/quotas.json` and expect the pre-final item. Step 4 can't pass on the night. | Open. **Maya, before 20.10:** point those tests at a frozen fixture copy. Until then, if only these two fail and only on the changed item, note it in the PR and go on. |
+| 5 | `review` has one `by`, so `check_signoff.py` can't show the second fact-checker or the owner's approval that `earned` needs. | Workaround in step 0 (PR thread). Schema change: Maya / Dana. |
+| 6 | After approval, the athletes' "התחרות הבאה" still showed the 18.10 qualifiers. | Open. The editor updates `next`/`nextDate` while approving (result-night.md step 4). Itai: an `#admin` hint. |
+| 7 | The athlete page has no "מכסה" line for the team members, because the (א) note names no gymnasts and the matcher looks for names. | Open, UX (round3 §3). A team quota belongs to the NOC, so maybe that's correct. |
+| 8 | Home shows "5 עם מכסה" (athletes at stage ≥ 2) next to "מקצה אחד עם מכסה לישראל". Two counts that read like they disagree. | Open, Shira / UX. |
+| 9 | (א) copy uses "LA28", hyphens and dotted dates (`ב-20.10.2026`), unlike the site's style. Its `stakes` never shows on an earned item. | Open, Dana / Shira (wording). Drop `stakes` for earned items. |
 
 ## Rollback
 

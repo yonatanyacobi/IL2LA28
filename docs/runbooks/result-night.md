@@ -46,7 +46,8 @@ In `data/quotas/quotas.json`, edit only the affected item(s):
 | `israelStatus` | `earned` / `in-contention` / `outside` (step 1) |
 | `israelNote` | Short Hebrew fact with an absolute date and geresh, e.g. `נבחרת הגברים במקום 3 בגמר הקבוצתי ברוטרדם (20.10.2026)` |
 | `source` | The official https URL that proves the status (for `earned`: the allocation/result) |
-| `nextQuotaEvent` | The next event that can change this item, or `null` |
+| `nextQuotaEvent` | The next event that can change this item, or `null` (also for an item that becomes irrelevant, e.g. `outside` because the team qualified) |
+| `earnedAt` | For `earned` only: the date of the deciding result, `YYYY-MM-DD`. Without it the home banner and the today-strip line don't appear. |
 | `review` | `{"status": "unchecked", "by": "<you>", "at": "2026-10-20"}`. The build skips it until signed off |
 
 Also set the top-level `updatedAt` to the value printed by `date` above.
