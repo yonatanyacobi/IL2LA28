@@ -614,6 +614,9 @@ test("#digest: this week's results group ended competitions with their changes",
   assert.ok(!changes.includes("סיימה שישית") && !changes.includes("זכה בכסף"), "no repeat under מה התעדכן");
   assert.ok(changes.includes("ג׳ודו: עדכון שאינו קשור"), "other sports' changes stay put");
 
+  // Sunday 1 Nov: last Sunday's finals (Rotterdam, ended 25 Oct) and their change still count.
+  const sunday = digestSection((await digestOf({data, now: "2026-11-01T09:00:00Z"})).text, "תוצאות השבוע");
+  assert.ok(sunday.includes("אליפות העולם בהתעמלות מכשירים 2026") && sunday.includes("סיימה שישית"), sunday);
   const judo = digestSection((await digestOf({now: "2026-11-01T09:00:00Z"})).text, "תוצאות השבוע");
   assert.ok(judo.includes("גרנד סלאם אבו דאבי (ג׳ודו)\n") && judo.includes("  ישראלים: ") && judo.includes("התוצאות עוד לא עודכנו באתר."), judo);
 });
