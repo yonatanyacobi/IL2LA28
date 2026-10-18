@@ -3,7 +3,7 @@
 Scope:
 - Every record in combat, gymnastics and aquatics whose `source` is a press outlet or Wikipedia, per the published
   data.json (generatedAt 2026-10-18T15:25:51Z).
-- **12 records.**
+- **11 records**, plus one false positive (water polo, last row).
 - Records whose source is already official are not listed: IJF, FIG documents, European Gymnastics, World Aquatics,
   europeanaquatics.org, WT and Longines.
 
