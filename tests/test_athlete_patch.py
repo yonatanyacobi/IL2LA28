@@ -63,6 +63,35 @@ class AthletePatchTest(unittest.TestCase):
         h = ap.build(cur, {"notes": "חדש", "historyEntry": {"at": "2026-10-19"}}, NOW)["history"]
         self.assertEqual((len(h), h[0]["at"], h[-1]["at"]), (20, "2026-01-02", "2026-10-19"))
 
+    def test_results_have_their_own_cap(self):
+        res = lambda d: {"at": d, "kind": "result", "text": f"מקום 1 ({d})", "source": "https://x.org/r"}
+        other = lambda d, k="rank": {"at": d, "kind": k, "text": "x"}
+        # 20 other entries (the cap) with 5 results among them: the history is 25 long.
+        hist = [res("2025-01-01"), other("2025-02-01", "start")] + [other(f"2025-03-{i:02d}") for i in range(1, 17)] \
+            + [res("2025-04-01"), res("2025-05-01")] + [other(f"2025-06-{i:02d}", "stage") for i in range(1, 4)] \
+            + [res("2025-07-01"), res("2025-08-01")]
+        self.assertEqual((len(hist), sum(e["kind"] == "result" for e in hist)), (25, 5))
+        # A new result pushes out nothing: results sit outside the cap of 20.
+        new = {k: v for k, v in res("2026-10-24").items() if k != "kind"}
+        self.assertEqual(ap.build({**CUR, "history": hist}, {"result": new}, NOW)["history"], hist + [res("2026-10-24")])
+        # A new rank entry drops the oldest other entry (the "start"), never a result; order kept.
+        h = ap.build({**CUR, "history": hist}, {"rank": "2 בעולם", "historyEntry": other("2026-10-25")}, NOW)["history"]
+        self.assertEqual(h, [e for e in hist if e["at"] != "2025-02-01"] + [other("2026-10-25")])
+
+    def test_results_cap_is_60(self):
+        res = lambda i: {"at": "2020-01-01", "kind": "result", "text": f"r{i:03d}", "source": "https://x.org"}
+        hist = [res(i) for i in range(60)] + [{"at": "2024-01-01", "kind": "rank", "text": "x"}]
+        new = {"at": "2026-10-24", "text": "חדש", "source": "https://x.org/r"}
+        h = ap.build({**CUR, "history": hist}, {"result": new}, NOW)["history"]
+        results = [e for e in h if e["kind"] == "result"]
+        self.assertEqual((len(results), results[0]["text"], results[-1]["text"]), (60, "r001", "חדש"))
+        self.assertEqual(len(h), 61, "the rank entry stays")
+        mixed = [{"kind": "rank", "n": i} for i in range(25)] + [{"kind": "result", "n": i} for i in range(65)]
+        t = ap.trim_history(mixed)
+        self.assertEqual([e["n"] for e in t if e["kind"] == "rank"], list(range(5, 25)))
+        self.assertEqual([e["n"] for e in t if e["kind"] == "result"], list(range(5, 65)))
+        self.assertEqual((ap.HISTORY_MAX, ap.RESULTS_MAX), (20, 60))
+
     def test_new_value_on_empty_field_is_a_change(self):
         self.assertIn("updatedAt", ap.build({**CUR, "next": ""}, {"next": "גביע העולם"}, NOW))
 

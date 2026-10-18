@@ -19,7 +19,25 @@ VISIBLE = ["rank", "next", "nextDate", "notes", "event", "rankNum"]
 # Written when they differ, but alone they don't move updatedAt: not shown on the page.
 SILENT = ["rankList", "rankAsOf"]
 SOURCE = "source"  # only written alongside a visible change; a new URL for the same facts is not a change
-HISTORY_MAX = 20
+HISTORY_MAX = 20   # non-result entries (start, rank, stage, note, …)
+RESULTS_MAX = 60   # kind "result", capped separately (PM decision on #186)
+
+
+def trim_history(hist, cap=HISTORY_MAX, results_cap=RESULTS_MAX):
+    """Keep the newest `cap` non-result entries and, separately, the newest `results_cap` results, in their original
+    order. Results are the athlete's game log (docs/design/athlete-game-log.md, #186), so other kinds can't push them out."""
+    is_result = lambda h: isinstance(h, dict) and h.get("kind") == "result"
+    keep_res = sum(map(is_result, hist)) - results_cap      # how many old results to drop (if > 0)
+    keep_oth = (len(hist) - sum(map(is_result, hist))) - cap
+    out = []
+    for h in hist:  # oldest first
+        if is_result(h) and keep_res > 0:
+            keep_res -= 1
+        elif not is_result(h) and keep_oth > 0:
+            keep_oth -= 1
+        else:
+            out.append(h)
+    return out
 
 
 def norm(k, v):
@@ -65,7 +83,7 @@ def build(current, proposed, now):
     if proposed.get(SOURCE):
         patch[SOURCE] = proposed[SOURCE]
     if entry:
-        patch["history"] = (hist + [entry])[-HISTORY_MAX:]
+        patch["history"] = trim_history(hist + [entry])
     return patch
 
 
