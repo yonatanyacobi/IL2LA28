@@ -5,11 +5,11 @@ Base: `main` @ c2ce543 · Existing tokens only; new CSS is listed per section. W
 
 | § | Topic | Implementer | State |
 |---|---|---|---|
-| 1 | Awaiting results | Noa | in review (#65) |
-| 2 | Quota earned (`earnedAt`) | — | spec |
-| 3 | Athlete-page quota line | — | spec |
+| 1 | Awaiting results | Noa | **shipped** (#65, 7aedc21) |
+| 2 | Quota earned (`earnedAt`) | Noa, Omer | partly shipped (8cace9b: sport-page lines); `earnedAt` loader, home panel and strip line open (round3-qa QA-1–QA-4) |
+| 3 | Athlete-page quota line | Noa | **shipped** (8cace9b) |
 | 4 | `#admin` past quota events (`checkedAt`) | Itai | spec; next after the result-night checklist |
-| 5 | Home: next quota chances + "הבא בתור" | Itai | spec; after §4 |
+| 5 | Home: next quota chances + "הבא בתור" | Itai | **shipped** (00088a0) |
 | 6 | Verification status for visitors | — | spec |
 
 Shared helpers across sections: `nxt()`, `quotaEventEnd()`, `awaitingOf()` (§1), `checkedOf()` (§4; once
