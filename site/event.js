@@ -75,15 +75,15 @@ function viewEvent(id){
   const hasToday = series ? flat.some(([, d]) => d === t) : c.start <= t && t <= (c.end || c.start);
   const schedSrc = flat.map(([s]) => s.source).find(Boolean) || c.source;
   const link = `${SITE_URL}#c-${id}`;
-  const dayHead = d => `<h3><a href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span></h3>`;
+  const dayHead = (d, only) => `<h3><a class="hlink" href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span>${only ? DATE_ONLY : ""}</h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
   const schedule = !flat.length
     ? `<p class="muted">${t <= (c.end || c.start) ? "הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי." : "לא תועדו סשנים של ישראלים בתחרות הזו."}</p>`
-    : [...groups].filter(([, list]) => list.length).map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k)}
-        <ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k)).join("")}</ul></div>`).join("")
+    : [...groups].filter(([, list]) => list.length).map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k, dateOnly(list))}
+        <ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list))).join("")}</ul></div>`).join("")
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועים סשנים של ישראלים.</p>` : "")(
         series ? 0 : [...groups].filter(([, list]) => !list.length).length));
-  return `<p class="crumb"><a href="#sport-${esc(c.sportId)}">→ ${esc(sportName(c.sportId))}</a></p>
+  return `<p class="crumb"><a href="#sport-${esc(c.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sportName(c.sportId))}</a></p>
   <div class="event-head" data-event="${esc(id)}">
     <h1 tabindex="-1">${esc(c.name)}</h1>
     ${freshLine(hasToday)}
