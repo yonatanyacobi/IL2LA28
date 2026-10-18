@@ -67,7 +67,7 @@ function viewEvent(id){
   const count = is => flat.reduce((n, [s, d]) => n + s.athletes.filter(a => is(athleteStatus(s, d, a))).length, 0);
   const who = n => plural(n, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות");
   // Label first ("תוצאות: 1"), so one count needs no singular form (Shira on #182).
-  const kpi = [who(athletes.length), ...[[st => st === "competing", "מתחרים היום"], [isResult, "תוצאות"], [isAwait, "בהמתנה לתוצאה"], [st => st === "before", "לפני התחרות"]]
+  const kpi = [who(athletes.length), ...[[st => st === "competing", "מתחרה היום"], [isResult, "תוצאות"], [isAwait, "בהמתנה לתוצאה"], [st => st === "before", "לפני התחרות"]]
     .map(([is, label]) => (n => n ? `${label}: ${n}` : "")(count(is)))].filter(Boolean).join(" · ");
   const stakes = eventStakes(c);
   const tracked = athletesOf(c.sportId).length;
