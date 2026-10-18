@@ -4,17 +4,18 @@ Usage: python3 session_gaps.py <db_dump_dir> [--today YYYY-MM-DD] [--days N]
 <db_dump_dir>: the step-1 ArtifactData dump (athletes/, competitions/, sessions/). Read-only. It prints one warning
 line per gap, for run.json "warnings" (and so for #admin):
   חסר סשן: <athlete> · <competition> · <date>
-For each active (non-archived) athlete whose nextDate is in [today, today+N], it looks at their competition (same sport,
-containing nextDate, at most 31 days, as on the page). There's a gap unless a fact-checked session (review ok/fixed,
-the export's gate) for that competition and date lists the athlete. A session for teammates doesn't cover them. When
-only an unchecked session exists, the line ends with "(ממתין לבדיקה)". With no competition in the DB the athlete's
-own `next` text names it, marked "(לא במאגר)".
+Same rule as #admin-nosession (site/admin.js, #294), so the job's warnings and that list agree: an active
+(non-archived) athlete whose nextDate is in [today, today+N] has a gap unless a fact-checked session (review ok/fixed,
+the export's gate) on that Israel day lists them, in any competition. The day is the Israel date of the session's start
+when it has a time, else its date, as on the page. A session for teammates doesn't cover them. When only an unchecked
+session exists, the line ends with "(ממתין לבדיקה)". The competition named is the athlete's on nextDate (same sport,
+containing the day, at most 31 days); with none in the DB their own `next` text names it, marked "(לא במאגר)".
 """
 import json, os, sys
 from datetime import date as Date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from export_data import SIGNED_OFF, date, load
+from export_data import SIGNED_OFF, date, load, start_utc
 from quota_due import SERIES_DAYS, israel_today
 
 
@@ -31,6 +32,17 @@ def competition_of(athlete, comps):
     return min(hits)[1] if hits else None
 
 
+def israel_day(s):
+    """The session's day as the page keys it: the Israel date of its start when timed, else its date."""
+    when = start_utc(s.get("date"), s.get("timeLocal"), s.get("tz")) if s.get("timeLocal") else None
+    if not when:
+        return date(s.get("date"))
+    from zoneinfo import ZoneInfo
+    from datetime import datetime, timezone
+    t = datetime.strptime(when, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    return t.astimezone(ZoneInfo("Asia/Jerusalem")).strftime("%Y-%m-%d")
+
+
 def gaps(athletes, comps, sessions, today, days=14):
     last = (Date.fromisoformat(today) + timedelta(days=days)).isoformat()
     lines = []
@@ -40,8 +52,7 @@ def gaps(athletes, comps, sessions, today, days=14):
             continue
         a = {**a, "nextDate": day}
         cid = competition_of(a, comps)
-        mine = [s for s in sessions.values() if cid and s.get("competitionId") == cid and s.get("date") == day
-                and aid in (s.get("athleteIds") or [])]
+        mine = [s for s in sessions.values() if aid in (s.get("athleteIds") or []) and israel_day(s) == day]
         if any((s.get("review") or {}).get("status") in SIGNED_OFF for s in mine if isinstance(s.get("review"), dict)):
             continue
         name = (a.get("name") or aid).strip()
