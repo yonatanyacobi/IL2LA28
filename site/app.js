@@ -209,15 +209,12 @@ function quotaSection(id){
 }
 
 // Entry points to the competition page (event-page.md §3): the name links to #c-<id> when event.js is loaded.
-const compLink = (c, text) => c?.id && typeof viewEvent === "function" ? `<a href="#c-${esc(c.id)}">${text}</a>` : text;
+// Shared with day.js and quotas.js; `cls` is optional (e.g. "hlink" for heading links, components.md).
+const compLink = (c, text, cls = "") => c?.id && typeof viewEvent === "function" ? `<a href="#c-${esc(c.id)}"${cls ? ` class="${cls}"` : ""}>${text}</a>` : text;
 
-// The athlete's "next" is free text and the competition is inferred from her nextDate, so the link shows the
-// competition's own name (link text = target), with her text beside it unless they are the same.
+// Her own "next" text links to the competition running on her nextDate (UX on #188), without repeating its name.
 function nextCompFact(a){
-  const c = isDate(a.nextDate) && typeof compOn === "function" ? compOn(a.sportId, a.nextDate) : null;
-  const link = compLink(c, esc(c?.name));
-  if (!c || link === esc(c.name)) return esc(a.next);
-  return str(a.next).trim() === c.name ? link : `${esc(a.next)} · ${link}`;
+  return compLink(isDate(a.nextDate) && typeof compOn === "function" ? compOn(a.sportId, a.nextDate) : null, esc(a.next));
 }
 
 function compRow(c, withSport){
