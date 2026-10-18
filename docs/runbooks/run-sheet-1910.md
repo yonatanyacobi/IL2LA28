@@ -38,10 +38,11 @@ Longines Official results: https://gym.longinestiming.com/2026/Artistic-17247/en
 |---|---|---|---|---|
 | Q | yes | yes | yes | move the final from `pendingFinalBlocks` to a session (AA 23.10; bars/vault 24.10; beam/floor 25.10); Dana signs |
 | Reserve (R1–R3) | yes | yes | yes | none until the start list confirms her |
-| Not qualified | yes | yes | no | – |
+| Not qualified | yes | yes | yes, the neutral line (result-night-1910.md drafts) | – |
 | Apparatus, not qualified | no (the all-around entry covers the day) | – | – | – |
 
-Sub 10 is one session for both: `result` = `ליהיא רז: <text> · רוני שמאי: <text>`. Never change `stage`,
+Every athlete gets one "מה התעדכן" line tonight, qualified or not (coordinator, 18.10): v53 has no results panel on
+home, so this line is how a reader finds the result. Sub 10 is one session for both: `result` = `ליהיא רז: <text> · רוני שמאי: <text>`. Never change `stage`,
 `quotas.json` or `rankNum` tonight.
 
 ## If something goes wrong

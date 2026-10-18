@@ -37,7 +37,7 @@ No Official PDFs by the morning of 20.10: wait. Don't record anything from anoth
 2. **Session** `sessions/<session id>`: `result` = the session text below, `resultSource` = the Official PDF,
    `resultAt` = `date -u +%Y-%m-%dT%H:%M:%SZ`. All three, or the export blanks the result. Sub 10 holds both Raz
    and Shamai, so its `result` is `ליהיא רז: <text> · רוני שמאי: <text>`.
-3. **"מה התעדכן"**, for a Q or a reserve only (not-qualified goes to history only): prepend the athlete's line
+3. **"מה התעדכן"**, for every athlete, qualified or not (coordinator, 18.10): prepend the athlete's line
    from the drafts below to `meta/status` `changes` (`{"at": "2026-10-19", "text": …, "athleteId": …}`, `at` is
    the competition day even after midnight), `if_version` from your read, keep 30.
 4. **After a Q only**: move the matching final from `pendingFinalBlocks` in `data/sessions/roni.json` to
@@ -76,20 +76,24 @@ A later change (a reserve moving up, the per-country limit) is a new entry, not 
 
 ## Drafts for "מה התעדכן" (`meta/status`)
 
-Only for a qualification or a reserve. The date is in `at`, so the line doesn't repeat it. Keep the
+One line per athlete, whatever the outcome. The date is in `at`, so the line doesn't repeat it. Keep the
 `התעמלות מכשירים: ` prefix exactly: the digest matches the sport by it (`changeSport()` in digest.js).
 
 **ליהיא רז** (`lihie-raz`)
 - Q: `התעמלות מכשירים: ליהיא רז עלתה לגמר הקרב־רב באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- Out: `התעמלות מכשירים: ליהיא רז במוקדמות אליפות העולם ברוטרדם: מקום <N> בקרב־רב, לא עלתה לגמר`
 
 **רוני שמאי** (`roni-shamay`)
 - Q: `התעמלות מכשירים: רוני שמאי עלתה לגמר הקרב־רב באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- Out: `התעמלות מכשירים: רוני שמאי במוקדמות אליפות העולם ברוטרדם: מקום <N> בקרב־רב, לא עלתה לגמר`
 
 **יהלי שושני** (`yali-shoshani`)
 - Q: `התעמלות מכשירים: יהלי שושני עלתה לגמר המקבילים באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
 - Reserve: `התעמלות מכשירים: יהלי שושני מחליפה <R> לגמר המקבילים באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- Out: `התעמלות מכשירים: יהלי שושני במוקדמות אליפות העולם ברוטרדם: מקום <N> במקבילים, לא עלתה לגמר`
 
-## Not covered yet
+## All-around reserve and apparatus finals
 
-An all-around reserve, or a beam/floor final for Raz or Shamai: Roni is aligning #184 to this file's wording (this
-file is the single wording for 19.10). Until #184 merges, don't write those outcomes.
+#184 is merged: for an all-around reserve or an apparatus final for Raz or Shamai, use the texts in
+[result-watch-rotterdam-wag.md](../research/result-watch-rotterdam-wag.md). Their "מה התעדכן" line follows the Q or
+Reserve pattern above, with the final's name.
