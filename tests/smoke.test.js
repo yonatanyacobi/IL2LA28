@@ -1926,6 +1926,67 @@ test("home: fresh line in the hero, no live wording for editors either, today's 
   assert.ok(!live.includes("עדכון אוטומטי אחרון"), "editor freshness says נכון ל־ too");
 });
 
+// Standings vs. the quota line (#179, docs/design/standings.md §7). Judo 60 kg, cutoff 17 on the Olympic list.
+const OLY = "IJF Olympic Ranking List";
+const CUT = {rank: 17, list: OLY, url: "https://www.ijf.org/wrl_olympic", final: "2028-06-15", opens: "2026-06-15"};
+const standingsAt = async ({ranks = {}, cutoff = CUT, now = "2026-10-18T08:00:00Z", follows = []} = {}) => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const ashpiz = data.athletes.find(a => a.id === "izhak-ashpiz");
+  for (const [id, name] of [["j-second", "ג׳ודוקא שני"], ["j-third", "ג׳ודוקא שלישי"]])
+    data.athletes.push({...JSON.parse(JSON.stringify(ashpiz)), id, name, name_en: "", history: []});
+  for (const [id, r] of Object.entries(ranks)) Object.assign(data.athletes.find(a => a.id === id), r);
+  const q = JSON.parse(JSON.stringify(SITE_QUOTAS));
+  if (cutoff) q.items.find(i => i.sportId === "judo" && i.event === "60- ק״ג גברים").cutoff = cutoff;
+  const b = await boot({data, quotas: q, now, follows});
+  const page = b.view("sport-judo");
+  return {b, page, block: page.split('aria-labelledby="standH"')[1]?.split("</section>")[0] || ""};
+};
+const rank = (n, asOf = "2026-10-03", list = OLY) => ({rankNum: n, rankList: list, rankAsOf: asOf});
+const NEVER = /עולה|בפנים|הבטיח|מכסה בדרך|מעפיל|בטוח|כמעט/;
+
+test("standings: judo 60 kg — 5, the line, 41; unranked listed; links; sr status; no verdict words", async () => {
+  const {block, page} = await standingsAt({ranks: {"izhak-ashpiz": rank(5), "j-second": rank(41)}, follows: ["izhak-ashpiz"]});
+  assert.ok(page.indexOf('id="standH"') > page.indexOf("שיטת ההעפלה") && page.indexOf('id="standH"') < page.indexOf("תחרויות קרובות בענף"), "position");
+  assert.ok(block.includes("<h3><bdi>60- ק״ג גברים</bdi></h3>") && (block.match(/<h3>/g) || []).length === 1, "only items with a cutoff");
+  assert.ok(block.includes('<a href="https://www.ijf.org/wrl_olympic" target="_blank" rel="noopener">IJF Olympic Ranking List<span class="sr"> (נפתח בחלון חדש)</span></a>'), "list → cutoff.url");
+  assert.ok(block.includes('rel="noopener">שיטת ההעפלה<span class="sr">') && block.includes('href="https://www.ausjudo.com.au/'), "system → q.source");
+  const ol = block.split('<ol class="rows standings">')[1].split("</ol>")[0];
+  const order = ['<span class="d">5</span>', 'class="cutline"', '<span class="d">41</span>'].map(x => ol.indexOf(x));
+  assert.ok(order[0] >= 0 && order[0] < order[1] && order[1] < order[2], "5, line, 41: " + order);
+  assert.ok(ol.includes('<li class="cutline" aria-hidden="true">קו המכסה: מקום 17</li>'));
+  assert.ok(ol.includes('<span class="sr">, מעל קו המכסה</span>') && ol.includes('<span class="sr">, מתחת לקו המכסה</span>'));
+  assert.ok(ol.includes("במעקב שלך") && ol.includes("3 באוק׳ 2026"), "★ and rankAsOf");
+  assert.ok(block.includes('ללא דירוג: <a href="#a-j-third">ג׳ודוקא שלישי</a>'), "Gil: unranked listed");
+  assert.ok(block.includes("הקו הוא מקום ברשימה, לא תחזית.") && block.includes("הדירוג הסופי נקבע ב־15 ביוני 2028."), "caveat");
+  assert.ok(!NEVER.test(visibleText(block)), "no verdict words");
+});
+
+test("standings: the line is last when all are above, first when all are below", async () => {
+  const ol = async ranks => (await standingsAt({ranks})).block.split('<ol class="rows standings">')[1].split("</ol>")[0];
+  const above = await ol({"izhak-ashpiz": rank(5), "j-second": rank(9), "j-third": rank(17)});
+  assert.ok(above.lastIndexOf("<li") === above.indexOf('<li class="cutline"'), "last");
+  const below = await ol({"izhak-ashpiz": rank(18), "j-second": rank(40)});
+  assert.ok(below.indexOf("<li") === below.indexOf('<li class="cutline"') && !below.includes("מעל קו המכסה"), "first");
+});
+
+test("standings: a 75-day-old rank keeps its place with a neutral pill; another list is never placed against the line", async () => {
+  const {block} = await standingsAt({ranks: {"izhak-ashpiz": rank(5, "2026-08-04"), "j-second": rank(3, "2026-10-03", "IJF World Ranking List")}});
+  const ol = block.split('<ol class="rows standings">')[1].split("</ol>")[0];
+  assert.ok(ol.includes('<span class="pill ended">דירוג מ־4 באוג׳ 2026</span>') && !ol.includes("s-wait"), "stale flagged, not hidden");
+  assert.ok(!ol.includes("j-second") && block.includes('בדירוג אחר: <a href="#a-j-second">ג׳ודוקא שני</a>, מקום 3 ב־<bdi>IJF World Ranking List</bdi>'), "other list");
+});
+
+test("standings: period not open, no cutoff, an invalid cutoff; athlete page fact", async () => {
+  const early = await standingsAt({ranks: {"izhak-ashpiz": rank(5)}, cutoff: {...CUT, opens: "2026-11-01"}});
+  assert.ok(early.block.includes("<p class=\"muted\">תקופת הדירוג להעפלה נפתחת ב־1 בנוב׳ 2026.</p>") && !early.block.includes("<ol"), "not open");
+  assert.ok(!(await standingsAt({cutoff: null})).page.includes("standH"), "no cutoff, no block");
+  assert.ok(!(await standingsAt({cutoff: {...CUT, url: "http://x"}})).page.includes("standH"), "invalid cutoff dropped");
+  const {b} = await standingsAt({ranks: {"izhak-ashpiz": rank(5), "j-second": rank(3, "2026-10-03", "IJF World Ranking List")}});
+  const fact = b.view("a-izhak-ashpiz").split("<dt>מול קו המכסה</dt>")[1]?.split("</dd>")[0] || "";
+  assert.ok(fact.includes('<a href="#sport-judo">מקום 5 · הקו: מקום 17</a> · <bdi>IJF Olympic Ranking List</bdi>, 3 באוק׳ 2026'), fact);
+  assert.ok(!b.view("a-j-second").includes("מול קו המכסה"), "no fact when the lists differ");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {
