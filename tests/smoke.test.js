@@ -371,7 +371,7 @@ test("quota earned: home panel for the last 14 days, strip line replaces stakes,
   const item = (event, extra) => ({...base, event, israelNote: `הערה <b>${event}</b>`, stakes: `stake ${event}`,
     nextQuotaEvent: {name: "גרנד סלאם", start: "2026-10-29"}, ...extra});
   const quotas = {updatedAt: "2026-10-30", items: [
-    item("52- ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-29"}),
+    item("52- ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-29", nextQuotaEvent: null}),   // cleared once earned: matched by earnedAt
     item("57- ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-01"}),   // 29 days ago: not new
     item("63- ק״ג נשים", {israelStatus: "earned"}),                              // no earnedAt
     item("78+ ק״ג נשים", {israelStatus: "earned", earnedAt: "bad"}),             // invalid → treated as missing
@@ -388,6 +388,15 @@ test("quota earned: home panel for the last 14 days, strip line replaces stakes,
   const row = rowsOf(stripOf(home)).find(r => r.includes("גרנד סלאם אבו דאבי"));
   assert.ok(row.includes('<small class="stakes won-line"><b>✓ מכסה הושגה:</b> <bdi>52- ק״ג נשים</bdi></small>'), row);
   assert.ok(!row.includes("stake 52") && !row.includes("63- ק״ג") && !row.includes("stake 63"), "earned: no stakes; no earnedAt: nothing");
+
+  // Earned first, even after more stakes lines than fit (Gil, P2).
+  const busy = {updatedAt: "2026-10-30", items: [
+    ...["60- ק״ג גברים", "73- ק״ג גברים", "63- ק״ג נשים"].map(e => item(e, {israelStatus: "in-contention"})),
+    item("78+ ק״ג נשים", {israelStatus: "earned", earnedAt: "2026-10-30", nextQuotaEvent: null})]};
+  const busyRow = rowsOf(stripOf((await boot({quotas: busy, now: "2026-10-30T08:00:00Z"})).view("home")))
+    .find(r => r.includes("גרנד סלאם אבו דאבי"));
+  assert.ok(busyRow.indexOf("won-line") > 0 && busyRow.indexOf("won-line") < busyRow.indexOf("מה זה אומר"), busyRow);
+  assert.ok(busyRow.includes("ועוד 2 מקצים"), "the cap still applies");
 
   const two = {updatedAt: "2026-10-30", items: [quotas.items[0], {...quotas.items[0], event: "x", earnedAt: "2026-10-20"}]};
   assert.ok((await boot({quotas: two, now: "2026-10-30T08:00:00Z"})).view("home").includes('<h2 id="wonH">מכסות חדשות לישראל</h2>'));

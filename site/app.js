@@ -298,9 +298,11 @@ function todayStrip(rows){
     // own event already ended inside this still-running competition (a team final in a 9-day Worlds) shows
     // "awaiting" instead of its stale stakes.
     const won = q => q.israelStatus === "earned";
-    const stakes = quotasOf(sportId).filter(q => (won(q) ? q.earnedAt : q.stakes && nxt(q) || awaitingOf(q))
-        && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
-      .sort((x, y) => rank(x) - rank(y) || (best(x) - best(y) || 0));   // || 0: Infinity - Infinity is NaN
+    // An earned item is matched by earnedAt: once earned, its nextQuotaEvent is usually cleared to null.
+    const inComp = d => isDate(d) && c.start <= d && d <= (c.end || c.start);
+    const stakes = quotasOf(sportId).filter(q => won(q) ? inComp(q.earnedAt)
+        : (q.stakes && nxt(q) || awaitingOf(q)) && inComp(q.nextQuotaEvent?.start))
+      .sort((x, y) => won(y) - won(x) || rank(x) - rank(y) || (best(x) - best(y) || 0));   // earned first; || 0: Infinity - Infinity is NaN
     const onLine = stakes.slice(0, STAKES_MAX).map(q => won(q)
       ? `<small class="stakes won-line"><b>✓ מכסה הושגה:</b> <bdi>${esc(q.event)}</bdi></small>`
       : awaitingOf(q)
