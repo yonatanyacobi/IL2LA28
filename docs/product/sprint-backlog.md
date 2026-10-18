@@ -46,14 +46,14 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 
 ## P1: launch (Thu 22.10, go/no-go 12:00; gates in PR #43)
 
-### L1. Launch PR (lead + owner, S)
+### L1. Launch PR (lead + coordinator, S)
 - G1–G8 green. The contact-address decision (the lead's memo) is recorded. The digest text is used as the launch message.
 
 ### L2. "מה קרה" result line on athlete pages (Noa, M)
 - The latest `history` item of kind `result` shows at the top of the athlete page with its date and source, so Abu Dhabi
   results are visible without scrolling. Hidden when there is none or it's more than 30 days old.
 
-### L3. Weekly digest ritual (owner + PM, S, every Sunday from 25.10)
+### L3. Weekly digest ritual (Omer as publisher + PM, S, every Sunday from 25.10)
 - Copy `#digest`, check it against the calendar above, then share it. Log the shares and error reports for the metrics.
 
 ## Post-launch 22.10–5.11
@@ -64,7 +64,7 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 | 2–9.11 | Lacrosse sixes Europeans, women (Salou) | Continental route | Women's team | Roni, 30.10 |
 | 3.11 / 4.11 | Doha: 10 m air rifle M and W / mixed team | **3 quotas each in ARM and ARW, max 1 per NOC** | Richter; Tashtchiev (D5) | Yael + Tamar, 31.10 |
 | 3–7.11 | BMX freestyle Worlds | Quota event | Entrants unknown | Yael, 1.11 |
-| 6–15.11 | ISA World Surfing Games (Peru) | 1 place per gender, by team ranking | Not confirmed (Lelior?) | Yael, 4.11 |
+| 6–15.11 | ISA World Surfing Games (Peru) | 1 place per gender, by team ranking | Not confirmed (Lelior?) | Ofir, 4.11 |
 
 ### First: clear the review queue (lead + PM, daily from 22.10)
 There are about 30 open PRs. New work waits until they're merged or closed in this order:
