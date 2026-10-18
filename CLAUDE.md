@@ -34,4 +34,6 @@ Published as a claude.ai Artifact: https://claude.ai/artifact/RyYBeRXq6pYwKdXujv
 - A PR description lives in the last commit body: what, why, how tested.
 - Run before opening a PR: `node --check site/app.js`, `python3 -m py_compile job/export_data.py`, and the
   tests under `tests/` once they exist.
+- After merging a change to `job/`: copy it to the live task folder, then `python3 job/check_live_sync.py`
+  (from `main`) must print OK.
 - The team lead merges with `git merge --no-ff` and may request changes instead.

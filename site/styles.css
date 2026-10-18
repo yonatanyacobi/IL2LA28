@@ -286,6 +286,8 @@ div.track{background:none}
 .stakes{font-size:14px;color:var(--ink);border-inline-start:3px solid var(--sun);padding-inline-start:8px;overflow-wrap:anywhere}
 .stakes b{color:var(--sun-ink)}
 .rows .t small.stakes{color:var(--ink);margin-top:4px}
+.pill.q-awaiting{background:var(--blue-soft);color:var(--blue)}
+.stakes.awaiting{border-inline-start-color:var(--blue)} .stakes.awaiting b{color:var(--blue)}
 
 /* weekly digest (#digest); the stakes-line rules of the same spec come with §1 */
 .digest textarea{width:100%;min-height:22em;resize:vertical;border:1px solid var(--line-ui,var(--stage0));border-radius:8px;
@@ -293,3 +295,21 @@ div.track{background:none}
 .adm-todo{background:var(--sun-soft);border:1px solid var(--sun);border-radius:10px;padding:10px 14px;display:grid;gap:6px}
 .adm-todo h3{font-family:var(--f-body);font-size:16px;font-weight:700;color:var(--sun-ink)}
 .adm-todo ul{margin:0;padding-inline-start:18px;overflow-wrap:anywhere}
+/* #admin result night */
+.adm-rn{border-color:var(--sun);border-width:2px}
+.rn-item{border-top:1px solid var(--line);padding-top:8px}
+.rn-item summary{cursor:pointer;font-weight:700;padding-block:6px;overflow-wrap:anywhere}
+.rn-item summary small{display:block;font-weight:400}
+.rn-steps{margin:0;padding-inline-start:20px;display:grid;gap:6px;font-size:14.5px}
+.rn-steps .chk{align-items:flex-start;font-weight:400;overflow-wrap:anywhere}
+.rn-steps .chk input{margin-top:4px;flex:none}
+.rn-steps code{font-size:12.5px;overflow-wrap:anywhere}
+/* home: "הבא בתור" (round3 §5b) */
+.next-up{margin-top:8px;font-size:15px;overflow-wrap:anywhere}
+.next-up b{color:var(--sun-ink)}
+/* editors' "view as visitor" preview */
+.visitor-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:center;background:var(--blue-soft);color:var(--ink);border-bottom:1px solid var(--line);padding:6px 16px;font-size:14px}
+
+/* quota earned (round3.md §2) */
+.won{border-inline-start:4px solid var(--ok)}
+.stakes.won-line{border-inline-start-color:var(--ok)} .stakes.won-line b{color:var(--ok-ink)}

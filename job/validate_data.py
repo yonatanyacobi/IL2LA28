@@ -17,7 +17,7 @@ HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}
-QUOTA_OPTIONAL = {"stakes"}
+QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt"}
 STAKES_MAX = 140
 
 # key -> (kind, required); kinds: str, date ("" or YYYY-MM-DD), url ("" or https://), iso ("" or ISO datetime with timezone, as export_data.iso())
@@ -28,7 +28,10 @@ ATHLETE = {
     "event": ("str", True), "stage": ("stage", True), "rank": ("str", True), "next": ("str", True),
     "nextDate": ("date", True), "notes": ("str", True), "source": ("url", True), "updatedAt": ("iso", True),
     "history": ("history", True), "verifiedAt": ("iso", False),
+    # Sortable world rank (docs/product/spec-rank-tiebreak.md); a set rankNum needs both companions (checked below).
+    "rankNum": ("rankNum", False), "rankList": ("rankList", False), "rankAsOf": ("date", False),
 }
+RANK_LIST_MAX = 80
 HISTORY = {"at": ("date!", True), "kind": ("kind", True), "text": ("str!", True), "source": ("url", True)}
 COMP = {
     "id": ("id", True), "sportId": ("sport", True), "name": ("str", True), "location": ("str", True),
@@ -116,6 +119,8 @@ def validate(data):
                 "iso": lambda: v == "" or is_iso(v),
                 "url": lambda: v == "" or (isinstance(v, str) and v.startswith("https://") and len(v) > 8),
                 "stage": lambda: type(v) is int and 0 <= v <= 3,
+                "rankNum": lambda: v is None or (type(v) is int and v >= 1),
+                "rankList": lambda: isinstance(v, str) and "\n" not in v and len(v) <= RANK_LIST_MAX,
                 "kind": lambda: v in HISTORY_KINDS,
                 "sport": lambda: isinstance(v, str) and v in sport_ids,
                 "athlete": lambda: isinstance(v, str) and v in athlete_ids,
@@ -140,6 +145,11 @@ def validate(data):
         for i, row in enumerate(data[coll]):
             path = f"{coll}[{i}]" + (f"({row.get('id')})" if isinstance(row, dict) and "id" in row else "")
             check(row, spec, path)
+            if coll == "athletes" and isinstance(row, dict) and type(row.get("rankNum")) is int:
+                if not (isinstance(row.get("rankList"), str) and row["rankList"].strip()):
+                    err(f"{path}.rankList: required when rankNum is set")
+                if not is_date(row.get("rankAsOf")):
+                    err(f"{path}.rankAsOf: YYYY-MM-DD required when rankNum is set")
             if "id" in spec and isinstance(row, dict):
                 rid = row.get("id")
                 if isinstance(rid, str) and rid in seen:
@@ -193,10 +203,14 @@ def validate_quotas(q, data):
             err(f"{path}.israelStatus: expected one of {sorted(QUOTA_STATUSES)}, got {status!r}")
         elif status == "earned" and it.get("sportId") not in staged:
             err(f"{path}.israelStatus: \"earned\" but no athlete in {it.get('sportId')!r} has stage >= 2 in data.json")
+        if "checkedAt" in it and not is_date(it["checkedAt"]):
+            err(f"{path}.checkedAt: expected YYYY-MM-DD, got {it['checkedAt']!r}")
         if "stakes" in it:
             v = it["stakes"]
             if not (isinstance(v, str) and v.strip() and "\n" not in v and len(v) <= STAKES_MAX):
                 err(f"{path}.stakes: expected one non-empty line of at most {STAKES_MAX} chars, got {v!r}")
+        if "earnedAt" in it and not (is_date(it["earnedAt"]) and status == "earned"):
+            err(f"{path}.earnedAt: expected YYYY-MM-DD on an \"earned\" item, got {it['earnedAt']!r}")
         src = it.get("source")
         if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
             err(f"{path}.source: expected an https:// URL, got {src!r}")

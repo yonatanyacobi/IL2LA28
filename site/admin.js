@@ -70,6 +70,14 @@ function runPanel(){
 
 // quotas.json is hand-curated (data/quotas → job/build_quotas.py); nothing refreshes it, so editors get reminders here.
 const QUOTA_MAX_AGE_D = 14, QUOTA_SOON_D = 3;
+// Event over and the item not reviewed since its last day. Re-checked items that still name the past event are
+// left alone: the reviewer kept them on purpose.
+const uncheckedEnd = (q, t = today()) => { const end = quotaEventEnd(q); return q.nextQuotaEvent && end && end < t && checkedOf(q) <= end ? end : ""; };
+const daysAgo = (end, t = today()) => dayNo(end, t) - 1;
+function recheckCounts(t = today()){
+  const ends = S.quotas.map(q => uncheckedEnd(q, t)).filter(Boolean);
+  return {overdue: ends.filter(e => daysAgo(e, t) > AWAIT_DAYS).length, awaiting: ends.filter(e => daysAgo(e, t) <= AWAIT_DAYS).length};
+}
 function quotaHealthPanel(){
   const h = `<h2>בריאות נתוני המכסות</h2>`;
   if (!S.quotasLoaded) return `<section class="panel">${h}<p class="muted">טוען…</p></section>`;
@@ -78,8 +86,15 @@ function quotaHealthPanel(){
   const t = today(), soon = addDays(t, QUOTA_SOON_D), start = q => q.nextQuotaEvent?.start || "";
   const age = daysSince(S.quotasUpdatedAt);
   const evt = q => `${esc(q.nextQuotaEvent.name)} · ${fmt(start(q))}`;
+  const ago = q => { const n = daysAgo(quotaEventEnd(q), t); return n === 1 ? "אתמול" : `לפני ${n} ימים`; };
+  const recheck = q => `<bdi>${esc(q.nextQuotaEvent.name)}</bdi> (${fmtRange(start(q), quotaEventEnd(q))}) · ${ago(q)} · בדיקה ידנית אחרונה: ${fmt(checkedOf(q))}`;
+  const recheckFoot = `לעדכן את <span dir="ltr">data/quotas/quotas.json</span> (סטטוס, אירוע מכסה הבא, review.at) ולהריץ את <span dir="ltr">build_quotas.py</span>.`;
+  const unchecked = S.quotas.filter(q => uncheckedEnd(q, t));
   const flags = [
-    {key: "past", alert: true, label: "אירוע המכסה הבא כבר עבר", items: S.quotas.filter(q => start(q) && quotaEventEnd(q) < t), why: evt},
+    {key: "overdue", alert: true, label: `אירוע מכסה עבר לפני יותר מ־${AWAIT_DAYS} יום ולא נבדק מחדש`, pill: true, foot: recheckFoot, byEnd: true,
+      items: unchecked.filter(q => daysAgo(quotaEventEnd(q), t) > AWAIT_DAYS), why: recheck},
+    {key: "awaiting", alert: false, label: "בהמתנה לבדיקה אחרי אירוע מכסה", pill: true, foot: recheckFoot, byEnd: true,
+      items: unchecked.filter(q => daysAgo(quotaEventEnd(q), t) <= AWAIT_DAYS), why: recheck},
     {key: "earned", alert: true, label: "„מכסה הושגה” בלי ספורטאי/ת בשלב מכסה ומעלה בענף",
       items: S.quotas.filter(q => q.israelStatus === "earned" && !athletesOf(q.sportId).some(a => stageOf(a) >= 2)), why: () => "לבדוק את הפריט או את שלב הספורטאי/ת"},
     {key: "soon", alert: false, label: `אירוע מכסה ב־${QUOTA_SOON_D} הימים הקרובים: לעדכן אחרי התחרות`,
@@ -87,13 +102,15 @@ function quotaHealthPanel(){
   ].filter(f => f.items.length);
   const stale = !(age <= QUOTA_MAX_AGE_D);
   const alert = stale || flags.some(f => f.alert);
-  const sorted = list => list.slice().sort((a, b) => start(a).localeCompare(start(b)) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
+  const key = (f, q) => f.byEnd ? quotaEventEnd(q) : start(q);   // recheck flags: oldest event end first
+  const sorted = (f, list) => list.slice().sort((a, b) => key(f, a).localeCompare(key(f, b)) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
   return `<section class="panel ${alert ? "adm-alert" : ""}" id="quotaHealth">
     <div class="sec-head">${h}<span class="pill ${alert ? "bad" : flags.length ? "soon" : "open"}">${alert ? "דורש בדיקה" : flags.length ? "תזכורת" : "תקין"}</span></div>
     <p class="${stale ? "adm-bad" : "muted"}">${S.quotas.length} פריטים · quotas.json עודכן ${isDate(str(S.quotasUpdatedAt).slice(0, 10)) ? `ב־${fmt(str(S.quotasUpdatedAt).slice(0, 10))}` : "בתאריך לא ידוע"}${stale ? ` · ישן מ־${QUOTA_MAX_AGE_D} ימים` : ""}</p>
     ${flags.map(f => `<div class="stack" data-flag="${f.key}"><h3 class="${f.alert ? "adm-bad" : ""}">${esc(f.label)} (${f.items.length})</h3>
-      <ul class="rows">${sorted(f.items).map(q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
-        <span class="t">${esc(q.event)}<small>${f.why(q)}</small></span><span></span></li>`).join("")}</ul></div>`).join("")}
+      <ul class="rows">${sorted(f, f.items).map(q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
+        <span class="t"><bdi>${esc(q.event)}</bdi><small>${f.why(q)}</small></span><span>${f.pill ? quotaStatusPill(q.israelStatus) : ""}</span></li>`).join("")}</ul>
+      ${f.foot ? `<p class="foot">${f.foot}</p>` : ""}</div>`).join("")}
   </section>`;
 }
 
@@ -134,21 +151,73 @@ function admList(key, sportId){
     : `<p class="muted">אין רשומות כאלה.</p>`}</section>`;
 }
 
+// ---------- result night (docs/runbooks/result-night.md) ----------
+const RUNBOOK_URL = "https://github.com/yonatanyacobi/IL2LA28/blob/main/docs/runbooks/result-night.md";
+// Step text mirrors the runbook's numbered sections; ticks are a per-browser convenience only.
+const RN_STEPS = [
+  q => `אימות התוצאה הרשמית של ההתאחדות והחלטה: מכסה הושגה / זמני / לא הושגה · ${linkOut(q.source, "שיטת ההעפלה")}`,
+  () => `עריכת המאסטר בלבד: <span dir="ltr">data/quotas/quotas.json</span> (status, note, source, nextQuotaEvent, review: unchecked, updatedAt)`,
+  () => "בדיקת עובדות וחתימה (דנה): review ok / fixed",
+  q => `רק אם הושגה: שינוי שלב ל־2 לספורטאים · ${rnAthletes(q.sportId)} · <a href="#home">לתור האישורים</a>`,
+  () => `בנייה: <code dir="ltr">python3 job/build_quotas.py data/quotas/quotas.json site/quotas.json</code>`,
+  () => `בדיקה: <code dir="ltr">validate_data.py --quotas</code> מול data.json המפורסם, ואז הבדיקות`,
+  () => "PR לראש הצוות, מיזוג",
+  () => "פרסום quotas.json לארטיפקט (אחרי המיזוג)",
+  q => `בדיקה באתר: <a href="#sport-${esc(q.sportId)}">דף הענף</a> · <a href="#quotas">תמונת המכסות</a> · <a href="#home">ראשי</a>`,
+];
+const rnAthletes = sid => {
+  const list = athletesOf(sid).filter(a => stageOf(a) < 2).sort((a, b) => heCmp(a.name, b.name));
+  const props = S.proposals.filter(p => p.status === "pending" && "stage" in (p.patch || {}) && S.athletes.some(a => a.id === p.target && a.sportId === sid)).length;
+  return (list.length ? list.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ") : "אין ספורטאים בשלב נמוך מ־2")
+    + (props ? ` · <b>${props} הצעות שלב ממתינות</b>` : "");
+};
+const rnKey = q => `la28.rn.${q.sportId}|${q.event}|${q.nextQuotaEvent.start}`;
+
+// Quota events whose last day was yesterday or is today: the window in which results need handling.
+function resultNightPanel(){
+  const t = today(), y = addDays(t, -1);
+  const items = S.quotas.filter(q => q.nextQuotaEvent && [y, t].includes(quotaEventEnd(q)))
+    .sort((a, b) => quotaEventEnd(a).localeCompare(quotaEventEnd(b)) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
+  const runbook = linkOut(RUNBOOK_URL, "ראנבוק ליל תוצאות");
+  if (!items.length) return `<section class="panel" id="resultNight"><div class="sec-head"><h2>ליל תוצאות</h2>${runbook}</div>
+    <p class="muted">אין אירועי מכסה שמסתיימים היום או אתמול.</p></section>`;
+  return `<section class="panel adm-rn" id="resultNight">
+    <div class="sec-head"><h2>ליל תוצאות (${items.length})</h2>${runbook}</div>
+    <p class="foot">אין מכסה פומבית בלי מקור רשמי. "הושגה" עולה רק אחרי ששלב הספורטאים פורסם (שלב 4 לפני 6).</p>
+    ${items.map(q => { const done = store.get(rnKey(q), []); return `<details class="rn-item" ${done.length < RN_STEPS.length ? "open" : ""}>
+      <summary>${esc(sportName(q.sportId))} · ${esc(q.event)} ${quotaStatusPill(q.israelStatus)}
+        <small class="muted">${esc(q.nextQuotaEvent.name)} · ${quotaEventEnd(q) === t ? "מסתיים היום" : "הסתיים אתמול"} · ${done.length}/${RN_STEPS.length}</small></summary>
+      <ol class="rn-steps">${RN_STEPS.map((f, i) => `<li><label class="chk"><input type="checkbox" data-rn="${esc(rnKey(q))}" data-step="${i}" ${done.includes(i) ? "checked" : ""}>
+        <span>${f(q)}</span></label></li>`).join("")}</ol>
+    </details>`; }).join("")}
+  </section>`;
+}
+
+document.addEventListener("change", e => {
+  const box = e.target;
+  if (!box?.dataset?.rn) return;
+  const i = Number(box.dataset.step), done = new Set(store.get(box.dataset.rn, []));
+  box.checked ? done.add(i) : done.delete(i);
+  store.set(box.dataset.rn, [...done].sort((a, b) => a - b));
+});
+
 function viewAdmin(sub){
   subscribeRuns();
   if (sub) { const [key, ...rest] = sub.split("-"); return admList(key, rest.join("-")); }
   const pend = S.proposals.filter(p => p.status === "pending").length;
   const n = k => S.athletes.filter(CHECKS[k].test).length;
-  const tile = (href, num, label) => `<a class="adm-tile ${num ? "hot" : ""}" href="${href}"><b class="digits">${num}</b><span>${esc(label)}</span></a>`;
+  const tile = (href, num, label, hot = num > 0) => `<a class="adm-tile ${hot ? "hot" : ""}" href="${href}"><b class="digits">${num}</b><span>${esc(label)}</span></a>`;
   const cell = (k, sid, list) => { const v = list.filter(CHECKS[k].test).length; return `<td>${v ? `<a href="#admin-${k}-${esc(sid)}">${v}</a>` : "0"}</td>`; };
   const sports = S.sports.filter(s => athletesOf(s.id).length).sort((a, b) => heCmp(a.he, b.he));
   return `<h1 tabindex="-1">בקרת נתונים</h1>
   <p class="muted">לעורכים בלבד. ${S.athletes.length} רשומות פעילות במאגר החי.</p>
+  ${resultNightPanel()}
   ${runPanel()}
   ${launchPanel()}
   ${quotaHealthPanel()}
   <div class="adm-tiles">
     ${tile("#home", pend, "הצעות ממתינות לאישור")}
+    ${(r => tile("#admin", r.overdue + r.awaiting, "אירועי מכסה שלא נבדקו מחדש", r.overdue > 0))(recheckCounts())}
     ${Object.keys(CHECKS).map(k => tile(`#admin-${k}`, n(k), CHECKS[k].label)).join("")}
   </div>
   <section class="panel">

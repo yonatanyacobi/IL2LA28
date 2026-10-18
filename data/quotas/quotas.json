@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T11:51:09Z",
+ "updatedAt": "2026-10-18T12:25:05Z",
  "items": [
   {
    "sportId": "judo",
@@ -9,15 +9,16 @@
    "allocation": "17 הראשונים בדירוג האולימפי של IJF עולים ישירות (צבירת נקודות 15.6.2026–12.6.2028, פרסום הדירוג הסופי עד 15.6.2028); בנוסף 104 מכסות יבשתיות לפי דירוג יבשתי (13 לגברים ו-13 לנשים באירופה).",
    "israelStatus": "in-contention",
    "israelNote": "יצחק אשפיז מדורג 5 בעולם (IJF, אוק׳ 2026); אין עדיין מכסות – צבירת הנקודות נמשכת עד 12.6.2028 והדירוג הסופי יפורסם עד 15.6.2028",
-   "stakes": "גרנד סלאם אבו דאבי (מ־29 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; אשפיז (5 בעולם) צריך להישאר בטופ 17 עד סוף הצבירה ב־12 ביוני 2028",
+   "stakes": "גרנד סלאם אבו דאבי (29–31 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; אשפיז (5 בעולם) רשום, מדורג 2 בתחרות; היעד: טופ 17 ב־12 ביוני 2028",
    "nextQuotaEvent": {
     "name": "גרנד סלאם אבו דאבי",
-    "start": "2026-10-29"
+    "start": "2026-10-29",
+    "end": "2026-10-31"
    },
    "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -29,10 +30,11 @@
    "allocation": "17 הראשונים בדירוג האולימפי של IJF עולים ישירות; מכסה יבשתית למדורגים הבאים (ספורטאי/ת אחד/ת לכל מדינה במסלול היבשתי).",
    "israelStatus": "in-contention",
    "israelNote": "יהונתן אלבז מדורג 26 בעולם (IJF, אוק׳ 2026) – מחוץ ל-17, במרחק מהמסלול היבשתי",
-   "stakes": "גרנד סלאם אבו דאבי (מ־29 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; אלבז (26 בעולם) צריך נקודות כדי להתקרב לטופ 17",
+   "stakes": "גרנד סלאם אבו דאבי (29–31 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; אלבז (26 בעולם) רשום, מדורג 8 בתחרות",
    "nextQuotaEvent": {
     "name": "גרנד סלאם אבו דאבי",
-    "start": "2026-10-29"
+    "start": "2026-10-29",
+    "end": "2026-10-31"
    },
    "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
    "review": {
@@ -49,15 +51,16 @@
    "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; מכסות יבשתיות לפי דירוג יבשתי.",
    "israelStatus": "in-contention",
    "israelNote": "גפן פרימו מדורגת 11 בעולם (IJF, אוק׳ 2026)",
-   "stakes": "גרנד סלאם אבו דאבי (מ־29 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; גפן פרימו (11 בעולם) יכולה לבסס מקום בטופ 17",
+   "stakes": "גרנד סלאם אבו דאבי (29–31 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; גפן פרימו (11 בעולם) רשומה, מדורגת 3 בתחרות",
    "nextQuotaEvent": {
     "name": "גרנד סלאם אבו דאבי",
-    "start": "2026-10-29"
+    "start": "2026-10-29",
+    "end": "2026-10-31"
    },
    "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -69,15 +72,16 @@
    "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; אם לנבחרת יותר ממדורגת אחת ב-17, הוועד האולימפי בוחר מי תקבל את המכסה.",
    "israelStatus": "in-contention",
    "israelNote": "תמנע נלסון לוי 6 בעולם, ענבל שמש 35 (IJF, אוק׳ 2026); רק אחת יכולה לייצג",
-   "stakes": "גרנד סלאם אבו דאבי (מ־29 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; נלסון לוי (6) ושמש (35) – רק אחת תייצג את ישראל",
+   "stakes": "גרנד סלאם אבו דאבי (29–31 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; נלסון לוי רשומה, מדורגת 1 בתחרות; שמש לא. רק אחת תייצג את ישראל",
    "nextQuotaEvent": {
     "name": "גרנד סלאם אבו דאבי",
-    "start": "2026-10-29"
+    "start": "2026-10-29",
+    "end": "2026-10-31"
    },
    "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -89,15 +93,16 @@
    "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; מכסות יבשתיות לפי דירוג יבשתי.",
    "israelStatus": "in-contention",
    "israelNote": "כרם פרימו מדורגת 13 בעולם (IJF, אוק׳ 2026)",
-   "stakes": "גרנד סלאם אבו דאבי (מ־29 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; כרם פרימו (13 בעולם) צריכה לשמור על טופ 17",
+   "stakes": "גרנד סלאם אבו דאבי (29–31 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; כרם פרימו לא ברשימת הרשומים של IJF נכון ל־18 באוק׳ 2026",
    "nextQuotaEvent": {
     "name": "גרנד סלאם אבו דאבי",
-    "start": "2026-10-29"
+    "start": "2026-10-29",
+    "end": "2026-10-31"
    },
    "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -109,15 +114,16 @@
    "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; מכסות יבשתיות לפי דירוג יבשתי.",
    "israelStatus": "in-contention",
    "israelNote": "ענבר לניר מדורגת 22 בעולם (IJF, אוק׳ 2026) – מחוץ ל-17",
-   "stakes": "גרנד סלאם אבו דאבי (מ־29 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; לניר (22 בעולם) אחרי ניתוח בכתף ואינה רשומה לתחרות",
+   "stakes": "גרנד סלאם אבו דאבי (29–31 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; לניר אחרי ניתוח בכתף ולא ברשימת הרשומים של IJF נכון ל־18 באוק׳ 2026",
    "nextQuotaEvent": {
     "name": "גרנד סלאם אבו דאבי",
-    "start": "2026-10-29"
+    "start": "2026-10-29",
+    "end": "2026-10-31"
    },
    "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -129,15 +135,16 @@
    "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; אם לנבחרת יותר ממדורגת אחת ב-17, הוועד האולימפי בוחר מי תקבל את המכסה.",
    "israelStatus": "in-contention",
    "israelNote": "רז הרשקו מדורגת 1 בעולם, יולי עלמה מישינר 13 (IJF, אוק׳ 2026); רק אחת יכולה לייצג",
-   "stakes": "גרנד סלאם אבו דאבי (מ־29 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; הרשקו (1) ומישינר (13) – רק אחת תייצג את ישראל",
+   "stakes": "גרנד סלאם אבו דאבי (29–31 באוק׳ 2026): נקודות לדירוג IJF, לא מכסה ישירה; הרשקו רשומה, מדורגת 1 בתחרות; מישינר לא. רק אחת תייצג את ישראל",
    "nextQuotaEvent": {
     "name": "גרנד סלאם אבו דאבי",
-    "start": "2026-10-29"
+    "start": "2026-10-29",
+    "end": "2026-10-31"
    },
    "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -255,7 +262,7 @@
    "event": "כל המשקלים",
    "totalQuotas": 288,
    "maxPerNOC": 18,
-   "allocation": "מדליסטים באליפות העולם 2027, 3 הראשונים בדירוג UWW, ואז 2 לכל משקל בטורנירי מוקדמות יבשתיים ב-2028; אחד/ת לכל משקל למדינה.",
+   "allocation": "מדליסטים באליפות העולם 2027, 3 הראשונים בדירוג UWW, 2 לכל משקל בכל אחד מ-4 טורנירים יבשתיים ו-1 בטורניר עולמי ב-2028; אחד/ת לכל משקל למדינה.",
    "israelStatus": "unknown",
    "israelNote": "אין מתאבק/ת ישראלי/ת במעקב",
    "nextQuotaEvent": {
@@ -264,8 +271,8 @@
    },
    "source": "https://cdn.uww.org/2026-08/260825_wre_la28_qualification-system.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -309,9 +316,9 @@
   {
    "sportId": "artistic-gymnastics",
    "event": "אישי גברים (קרב-רב ומכשירים)",
-   "totalQuotas": null,
+   "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "למדינות בלי נבחרת: 8 בקרב-רב באליפות העולם 2027, מדליסט מוביל בכל מכשיר ב-2027, ו-12 דרך גביעי העולם במכשירים 2028.",
+   "allocation": "למדינות בלי נבחרת: 3 לנבחרות הבאות במוקדמות 2027, 8 בקרב-רב ו-6 במכשירים באליפות העולם 2027, 12 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארח ואוניברסלי.",
    "israelStatus": "in-contention",
    "israelNote": "ארטיום דולגופיאט (זהב בקרקע, אירופה 2026); זמין רק אם הנבחרת לא תעפיל",
    "nextQuotaEvent": {
@@ -320,17 +327,17 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
   {
    "sportId": "artistic-gymnastics",
    "event": "אישי נשים (קרב-רב ומכשירים)",
-   "totalQuotas": null,
+   "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "14 בקרב-רב באליפות העולם 2027 (אחת לכל מדינה), מדליסטית מובילה בכל מכשיר ב-2027, ו-8 דרך גביעי העולם במכשירים 2028.",
+   "allocation": "3 לנבחרות הבאות במוקדמות 2027, 14 בקרב-רב ו-4 במכשירים באליפות העולם 2027 (אחת לכל מדינה בקרב-רב), 8 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארחת ואוניברסלית.",
    "israelStatus": "unknown",
    "israelNote": "ליהיא רז, רוני שמאי ויהלי שושני; אין נבחרת נשים ישראלית ברוטרדם",
    "nextQuotaEvent": {
@@ -339,8 +346,8 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -479,7 +486,7 @@
    "event": "קבוצתי",
    "totalQuotas": 10,
    "maxPerNOC": 1,
-   "allocation": "3 הנבחרות המובילות באליפות העולם בודפשט 2027, המארחת, ועד 4 באליפויות יבשתיות 2027 (אירופה – רק אם אף נבחרת אירופית לא בשלוש הראשונות).",
+   "allocation": "3 באליפות העולם בודפשט 2027, המארחת, עד 4 באליפויות יבשתיות 2027 (אירופה – רק אם אין אירופית בשלוש הראשונות), והשאר בגמר העל של גביע העולם 2028.",
    "israelStatus": "unknown",
    "israelNote": "מקום 6 בקבוצתי טכני, גביע העולם פריז 2026; יוגב דגן בסגל",
    "nextQuotaEvent": {
@@ -490,7 +497,7 @@
    "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf",
    "review": {
     "status": "ok",
-    "by": "dana",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -1058,6 +1065,62 @@
    "review": {
     "status": "ok",
     "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "rowing",
+   "event": "סקיף יחיד (1x) גברים ונשים",
+   "totalQuotas": 33,
+   "maxPerNOC": 1,
+   "allocation": "לכל מגדר: 10 באליפות העולם 2027 בלוצרן, 15 במקצי קליטה יבשתיים (3 מהם באירופה), 2 במקצה הקליטה האחרון, ועוד מקום מארחת ו-2 אוניברסליות.",
+   "israelStatus": "unknown",
+   "israelNote": "אין חותר/ת ישראלי/ת אולימפי/ת במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בחתירה, לוצרן",
+    "start": "2027-08-23",
+    "end": "2027-08-29"
+   },
+   "source": "https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf",
+   "review": {
+    "status": "fixed",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "canoe",
+   "event": "קאנו ספרינט – גברים ונשים",
+   "totalQuotas": 117,
+   "maxPerNOC": 8,
+   "allocation": "לכל מגדר: רוב המקומות לפי דירוג הקליטה האולימפי ב-31.12.2027 (תוצאות מ-20.4.2026), והיתר באירועי קליטה יבשתיים ב-2028; עד 2 סירות למדינה בכל מקצה.",
+   "israelStatus": "unknown",
+   "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו ספרינט במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
+   "nextQuotaEvent": null,
+   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
+   "review": {
+    "status": "fixed",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "canoe",
+   "event": "קאנו סלאלום – גברים ונשים",
+   "totalQuotas": 41,
+   "maxPerNOC": 3,
+   "allocation": "לכל מגדר 19 מקומות לפי הדירוג ב-3.10.2027 (6 K-1, 3 X-1, 10 C-1; תוצאות מ-20.7.2026), והיתר בתחרויות יבשתיות ועולמית ב-2028; אחד למדינה בכל מקצה.",
+   "israelStatus": "unknown",
+   "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו סלאלום במעקב",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בקאנו סלאלום, לה סאו",
+    "start": "2027-09-07",
+    "end": "2027-09-12"
+   },
+   "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
+   "review": {
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   }
