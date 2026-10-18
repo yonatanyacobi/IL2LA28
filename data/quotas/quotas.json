@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:48:05Z",
+ "updatedAt": "2026-10-18T12:49:47Z",
  "items": [
   {
    "sportId": "judo",
@@ -848,7 +848,8 @@
    "stakes": "אליפות העולם בדוחא (רובה אוויר גברים, 3 בנוב׳ 2026): 3 מכסות, אחת לכל היותר למדינה; נדרשת תוצאה של 613.0 לפחות",
    "nextQuotaEvent": {
     "name": "אליפות העולם בקליעה, דוחא",
-    "start": "2026-11-03"
+    "start": "2026-11-03",
+    "end": "2026-11-03"
    },
    "source": "https://www.asia-shooting.org/wp-content/uploads/2026/07/Qualification-System-01Jul26-ISSF.pdf",
    "review": {
@@ -868,7 +869,8 @@
    "stakes": "אליפות העולם בדוחא (רובה אוויר נשים, 3 בנוב׳ 2026): 3 מכסות, אחת לכל היותר למדינה; נדרשת תוצאה של 613.0 לפחות",
    "nextQuotaEvent": {
     "name": "אליפות העולם בקליעה, דוחא",
-    "start": "2026-11-03"
+    "start": "2026-11-03",
+    "end": "2026-11-03"
    },
    "source": "https://www.asia-shooting.org/wp-content/uploads/2026/07/Qualification-System-01Jul26-ISSF.pdf",
    "review": {
