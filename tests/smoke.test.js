@@ -928,6 +928,32 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   assert.ok(s.includes("08:30") && s.includes('href="#a-sergey-richter"') && s.includes("לפני התחרות"), "timed session (Israel time)");
 });
 
+test("entry points link to #c-<id>: calendar rows, today strip, #day heading, athlete's next competition", async () => {
+  const AD_LINK = '<a href="#c-judo-gs-abu-dhabi-2026">גרנד סלאם אבו דאבי</a>';
+  const {view} = await boot({now: "2026-10-29T08:00:00Z"});
+  const cal = view("calendar");
+  assert.ok(cal.includes(`<a href="#sport-judo">ג׳ודו</a> · ${AD_LINK}`), "calendar: sport link kept, name links to the page");
+  assert.ok(stripOf(view("home")).includes(AD_LINK), "today strip");
+  assert.ok(view("day-2026-10-29").includes('<h3><a href="#c-judo-gs-abu-dhabi-2026" class="hlink">גרנד סלאם אבו דאבי</a></h3>'), "#day heading, hlink");
+  const q = (await boot({now: "2026-10-20T08:00:00Z", quotas: REAL_QUOTAS})).view("quotas").split('id="qNextH"')[1].split("</section>")[0];
+  assert.ok(q.includes('<a href="#c-judo-gs-abu-dhabi-2026">'), "#quotas upcoming quota event links to its competition");
+  const raz = view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
+  assert.ok(raz.startsWith(`<dd>${AD_LINK}`) && raz.split("גרנד סלאם").length === 2, "athlete: same text as the competition: one link, no repeat");
+  const differ = JSON.parse(JSON.stringify(FIXTURE));
+  differ.athletes.find(a => a.id === "raz-hershko").next = "GS <Abu Dhabi>";
+  const d = (await boot({data: differ, now: "2026-10-29T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
+  assert.ok(d.startsWith(`<dd>GS &lt;Abu Dhabi&gt; · ${AD_LINK}`), "text names something else: her text plain, the competition's name is the link");
+  // Her text names the competition (with more words): her text is the link, the name isn't repeated.
+  const longer = JSON.parse(JSON.stringify(FIXTURE));
+  longer.athletes.find(a => a.id === "raz-hershko").next = "גרנד סלאם אבו דאבי (מעל 78)";
+  const l = (await boot({data: longer, now: "2026-10-29T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
+  assert.ok(l.startsWith('<dd><a href="#c-judo-gs-abu-dhabi-2026">גרנד סלאם אבו דאבי (מעל 78)</a>') && l.split("גרנד סלאם").length === 2, "matching text is the link");
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  Object.assign(data.athletes.find(a => a.id === "raz-hershko"), {next: "אימון", nextDate: "2026-09-01"});
+  const none = (await boot({data, now: "2026-08-01T08:00:00Z"})).view("a-raz-hershko").split("<dt>התחרות הבאה</dt>")[1].split("</dd>")[0];
+  assert.ok(!none.includes('href="#c-'), "no matching competition: no link");
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   const out = view("home");
@@ -1772,7 +1798,7 @@ test("#day renders the fixture on 24.10, 29.10 and 3.11 with Israelis' sessions 
     noLiveClaims(out, h);
   }
   assert.ok(d24.includes('href="#a-shachar-sagiv"') && d24.includes("<b>תוצאה:</b> מקום 12") && !d24.includes("עודכן ב־"), "24.10: result from history, no stamp");
-  assert.ok(d29.includes("<h3>גרנד סלאם אבו דאבי</h3>") && d29.includes("pill s-before") && d29.includes('id="ds-judo"'), "29.10: sport h2, comp h3, before chips");
+  assert.ok(d29.includes('<h3><a href="#c-judo-gs-abu-dhabi-2026" class="hlink">גרנד סלאם אבו דאבי</a></h3>') && d29.includes("pill s-before") && d29.includes('id="ds-judo"'), "29.10: sport h2, comp h3, before chips");
   assert.ok(!d29.includes("#sport-weightlifting"), "no competitions without Israelis' sessions");
   assert.ok(d29.includes('aria-current="date">ה׳ 29<span class="sr"> · יום חמישי, 29 באוקטובר · יש תחרויות של ישראלים</span>'), "chip: visible text in the name + current");
   const strip = d29.split('aria-label="בחירת יום"')[1].split("</nav>")[0];
