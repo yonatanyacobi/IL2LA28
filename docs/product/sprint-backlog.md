@@ -23,7 +23,7 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 ### E1. Rotterdam result night, 20.10 (Roni + Omer as publisher + Dana and Tamar, S)
 - Before 20.10: Roni confirms the official FIG men's qualification result. If Israel isn't in the final, apply outcome (ב) from
   the runbook on 19.10, which covers "not in the final", and drop the "final 20.10" wording everywhere.
-- On 20.10: the publisher applies outcome (א) or (ב) from `docs/runbooks/rotterdam-outcomes.md`. Who approves `earned` is pending owner decision D4. Stage proposals for the 5 gymnasts
+- On 20.10: the publisher applies outcome (א) or (ב) from `docs/runbooks/rotterdam-outcomes.md`. `earned` is approved by Dana + Tamar (D4). Stage proposals for the 5 gymnasts
   are approved **before** the quota item flips to `earned`. Published the same night, or the next morning at the latest.
 - Done when `#sport-artistic-gymnastics`, `#quotas` and the home strip agree, with an official FIG source.
 
@@ -44,10 +44,12 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 ### E5. Event-day check, each event's day 1 (Gil, S per event)
 - Fake today = 20.10, 24.10, 27.10, 29.10, 1.11. The strip, stakes, digest and `#admin` stay consistent. 400px, both themes.
 
-## P1: launch (Thu 22.10, go/no-go 12:00; gates in PR #43)
+## P1: launch readiness (check on Thu 22.10 12:00; gates in PR #43; launch date set by the owner, D1)
 
-### L1. Launch PR (lead + coordinator, S)
-- G1–G8 green. The contact-address decision (the lead's memo) is recorded. The digest text is used as the launch message.
+### L1. Readiness check + launch PR (PM + lead, S)
+- 22.10: the gate report goes to the owner (template in PR #88).
+- On the owner's date: the launch PR sets `LAUNCH_AT` and swaps `{REPORT_EMAIL}` for the owner's dedicated address (D2).
+  No announcement (D6).
 
 ### L2. "מה קרה" result line on athlete pages (Noa, M)
 - The latest `history` item of kind `result` shows at the top of the athlete page with its date and source, so Abu Dhabi
@@ -56,13 +58,13 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 ### L3. Weekly digest ritual (Omer as publisher + PM, S, every Sunday from 25.10)
 - Copy `#digest`, check it against the calendar above, then share it. Log the shares and error reports for the metrics.
 
-## Post-launch 22.10–5.11
+## 22.10–5.11 (before and after launch; the owner sets the date)
 
 ### Calendar additions
 | Dates | Event | At stake | Israelis | Prep owner, due |
 |---|---|---|---|---|
 | 2–9.11 | Lacrosse sixes Europeans, women (Salou) | Continental route | Women's team | Roni, 30.10 |
-| 3.11 / 4.11 | Doha: 10 m air rifle M and W / mixed team | **3 quotas each in ARM and ARW, max 1 per NOC** | Richter; Tashtchiev (D5) | Yael + Tamar, 31.10 |
+| 3.11 / 4.11 | Doha: 10 m air rifle M and W / mixed team | **3 quotas each in ARM and ARW, max 1 per NOC** | Richter; Tashtchiev (D5 decided) | Yael + Tamar, 31.10 |
 | 3–7.11 | BMX freestyle Worlds | Quota event | Entrants unknown | Yael, 1.11 |
 | 6–15.11 | ISA World Surfing Games (Peru) | 1 place per gender, by team ranking | Not confirmed (Lelior?) | Ofir, 4.11 |
 
@@ -77,13 +79,13 @@ There are about 30 open PRs. New work waits until they're merged or closed in th
 ### Stories
 | # | Story | Who | Size | Due | Done when |
 |---|---|---|---|---|---|
-| PL1 | **Corrections log** (#89): `corrections` collection, editor form, export with `LAUNCH_AT`, `#corrections` page | Maya (data/export), Noa (page + form) | M + M | 24.10 | First real correction appears; smoke tests for `{speed}` and empty state |
+| PL1 | **Corrections log** (#89): `corrections` collection, editor form, export with `LAUNCH_AT` (set in the launch PR), `#corrections` page | Maya (data/export), Noa (page + form) | M + M | 24.10 | First real correction appears; smoke tests for `{speed}` and empty state |
 | PL2 | **"View as visitor" toggle** for editors | Itai | S | 22.10 (in progress) | An editor sees exactly the signed-out page |
 | PL3 | **Quota proposal kind** (D-R2, #76 P1) + `#admin` shows `runs.warnings` and quota proposals | Maya, Itai | M + S | 1.11, if D-R2 is approved by 25.10 | The job files a quota proposal from a saved Abu Dhabi or Rotterdam page in a test |
 | PL4 | **Rank tie-break** (#73) in the strip and digest | Noa | S | 28.10 | On fake 29.10, Hershko's item shows first |
-| PL5 | **Doha readiness:** Tashtchiev record (if D5) + women's air rifle quota item, Richter `next` 3.11, both verified | Yael, Tamar | S | 31.10 | The strip on fake 3.11 shows both shooters with stakes |
+| PL5 | **Doha readiness:** Tashtchiev record (D5: a fact-checker signs off, the coordinator writes it; Hebrew name marked as a transliteration) + women's air rifle quota item, Richter `next` 3.11, both verified | Yael, Tamar | S | 31.10 | The strip on fake 3.11 shows both shooters with stakes |
 | PL6 | **Verification drive 2:** the remaining ~69 records, 7 a day, alternating Dana and Tamar | Dana, Tamar | L (split into days) | 1.11 for 80% (stretch), 8.11 for 90% | M2 in the weekly log |
-| PL7 | **Report triage in week 1:** the launch-day runbook flow, then a review on 25.10 of report count, P0/P1 split and fix time | Dana/Tamar, PM | S | 25.10 | Decide whether the 48 h target holds |
+| PL7 | **Report triage in launch week:** the launch-day runbook flow, then a review 3 days after launch of report count, P0/P1 split and fix time | Dana/Tamar, PM | S | launch + 3 days | Decide whether the 48 h target holds |
 | PL8 | **Weekly digest + metrics log**, Sunday 25.10 and 1.11 | Omer (publisher), PM | S | Sundays | Digest shared; W43/W44 logs on main |
 | PL9 | **New-sport onboarding** design (tennis, using #74's research) | UX | M | 30.10 | Spec covers the sport record, quota item, empty sport page and first athletes |
 
