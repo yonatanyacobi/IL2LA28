@@ -298,8 +298,25 @@ class ExportTest(unittest.TestCase):
     def sess(self, **kw):
         base = {"competitionId": "gs", "date": "2026-10-29", "timeLocal": "09:30", "tz": "Asia/Dubai",
                 "athleteIds": ["a"], "phase": "מוקדמות 57- ק״ג", "source": "https://www.ijf.org/schedule",
-                "result": "", "resultSource": "", "resultAt": ""}
+                "result": "", "resultSource": "", "resultAt": "",
+                "review": {"status": "ok", "by": "tamar", "at": "2026-10-19"}}
         return {**base, **kw}
+
+    def test_sessions_need_fact_check_sign_off(self):
+        unchecked = {"status": "unchecked", "by": "roni", "at": "2026-10-18"}
+        data, log = self.sessions_export({
+            "ok": self.sess(), "fixed": self.sess(review={"status": "fixed", "by": "dana", "at": "2026-10-19"}),
+            "unchecked": self.sess(review=unchecked), "hold": self.sess(review={**unchecked, "status": "HOLD"}),
+            "partial": self.sess(review={**unchecked, "status": "partial"}),
+            "no-review": {k: v for k, v in self.sess().items() if k != "review"}, "bad-review": self.sess(review="ok"),
+        })
+        self.assertEqual(sorted(s["id"] for s in data["sessions"]), ["fixed", "ok"])
+        for held in ("unchecked", "hold", "partial", "no-review", "bad-review"):
+            self.assertIn(repr(held), log)
+        self.assertNotIn("review", data["sessions"][0], "the review itself is never exported")
+        sys.path.insert(0, os.path.join(HERE, "..", "job"))
+        import build_quotas
+        self.assertEqual(ex.SIGNED_OFF, build_quotas.PUBLISH)
 
     def sessions_export(self, sessions, **kw):
         comps = {"gs": comp(start="2026-10-29", end="2026-10-31"),
