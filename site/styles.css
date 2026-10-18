@@ -347,3 +347,16 @@ div.track{background:none}
 .stakes.won-line{border-inline-start-color:var(--ok)} .stakes.won-line b{color:var(--ok-ink)}
 /* About trust block: chips stack above their explanation on phones */
 @media (max-width:640px){.trust-legend{grid-template-columns:1fr}}
+/* daily view (#today, #day-<date>) */
+.day-nav{display:flex;justify-content:space-between;gap:12px;font-size:15px;font-weight:600}
+.day-nav a{min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
+.day-strip{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto}
+.day-strip a{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0 8px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:var(--ink);font-size:14px;white-space:nowrap;background:var(--surface)}
+.day-strip a[aria-current="date"]{border-color:var(--sun);font-weight:700}
+.day-strip .dot{position:absolute;bottom:4px;inset-inline-start:50%;width:6px;height:6px;border-radius:50%;background:var(--sun)}
+.day-ath{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:15px;overflow-wrap:anywhere}
+.day-res{color:var(--ok-ink);font-size:14px}
+.day-wait{color:var(--muted);font-size:14px}
+.day-comp h2{font-size:18px;overflow-wrap:anywhere}
+.day-now{color:var(--ok-ink);font-size:14px;font-weight:700}
+.day-before{color:var(--muted);font-size:14px}
