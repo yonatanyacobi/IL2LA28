@@ -64,6 +64,25 @@ has an owner and an ETA. Pre-filled values are as of 18.10 ~16:30; **re-check ev
 | L 13:00–23:00 | Watch: inbox triage at least hourly, the today strip at the day's events | Dana/Tamar, Omer |
 | L+1 09:00 | **Day-1 review:** reports received/fixed, corrections, anything rolled back. One line in the weekly metrics log | PM |
 
+### Sharing settings (owner)
+The artifact is private today, so a signed-out visitor can't open it at all. Only the owner can change this. Before
+the signed-out checks, the artifact's sharing must give:
+1. **A link anyone can open while signed out, as a viewer:** not "people in the organization" and not signed-in
+   accounts only. If no such option is offered for this artifact, stop: the site can't launch publicly. Tell the
+   coordinator.
+2. **View only for that link:** no edit or admin access. Editors keep their own edit access. `#admin`, the review
+   queue and the live DB depend on it, and visitors never get the `db` capability.
+3. **The same URL as today**, https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT. Every shared link and `SITE_URL`
+   point to it.
+
+**Check, in a private window, signed out:** the page loads and shows data, not "האתר לא זמין עבורך כרגע" (the site
+shows this when `data.json` answers 401/403, a sign-in page or JSON that isn't the export) and not a skeleton. `#home`,
+`#calendar`, `#quotas` and an athlete page all render.
+
+**Timing:** the 10:00 and 12:30 checks above are signed out, so they need the link open first. Either the owner
+opens it at L 09:45 with no announcement (D6 still holds until 13:00), or Gil runs those checks signed in through
+"צפייה כגולש/ת" and repeats the signed-out check right after 13:00. The PM picks one before L.
+
 Don't launch on a result night, or during the daily job's publish step. When L is set, re-check every date-based line:
 the `#digest` text, `LAUNCH_AT` and this timeline.
 

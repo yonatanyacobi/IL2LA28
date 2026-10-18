@@ -49,8 +49,8 @@ const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.
 // `now` pins the clock (ISO instant); `follows` seeds localStorage.
 // Start hidden like their markup in index.html, so tests see what the app un-hides.
 const HIDDEN_IN_HTML = ["adminChip", "adminLink", "visitorBtn", "visitorBar", "visitorChip", "visitorMsg", "updateNote"];
-// `claude` stands in for window.claude (editor tests); `storage` seeds localStorage.
-async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = [], claude, storage = {}} = {}){
+// `claude` stands in for window.claude (editor tests); `storage` seeds localStorage; `fetchImpl` replaces fetch.
+async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = [], claude, storage = {}, fetchImpl} = {}){
   const els = {}, listeners = {};
   const mem = new Map([["la28.follows", JSON.stringify(follows)], ...Object.entries(storage)]);
   const ctx = {
@@ -74,7 +74,7 @@ async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = 
       querySelectorAll: () => [],
       addEventListener: (type, fn) => (listeners[type] ??= []).push(fn), activeElement: null,
     },
-    fetch: async url => {
+    fetch: fetchImpl || (async url => {
       if (fetchFails) throw new Error("network down");
       let body = data;
       if (url === "quotas.json") {
@@ -83,7 +83,7 @@ async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = 
         body = quotas;
       }
       return {ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(body))};
-    },
+    }),
   };
   ctx.window = ctx;
   if (claude) ctx.claude = claude;
@@ -1203,6 +1203,57 @@ test("fetch failure shows the retry view", async () => {
   const out = view("home");
   assert.ok(out.includes("data-retry"));
   assert.ok(out.includes('role="alert"') && out.includes("<h1 tabindex=\"-1\">לא הצלחנו לטעון את הנתונים</h1>"), "announced, with a heading");
+});
+
+// Gil's launch blocker: a visitor the artifact isn't open to, or a host that never answers, gets a clear message.
+test("data.json not available: access, timeout and error each end in a Hebrew message with a retry, never the skeleton", async () => {
+  const h1 = out => (out.match(/<h1 tabindex="-1">([^<]*)<\/h1>/) || [])[1];
+  for (const [label, impl] of [
+    ["403", async () => ({ok: false, status: 403, json: async () => ({})})],
+    ["401", async () => ({ok: false, status: 401, json: async () => ({})})],
+    ["a sign-in page where JSON should be", async () => ({ok: true, status: 200, json: async () => { throw new SyntaxError("Unexpected token <"); }})],
+    ["JSON that isn't the export", async () => ({ok: true, status: 200, json: async () => ({error: "forbidden"})})],
+  ]) {
+    const out = (await boot({fetchImpl: impl})).view("home");
+    assert.strictEqual(h1(out), "האתר לא זמין עבורך כרגע", label);
+    assert.ok(!out.includes("תקלה זמנית"), `${label}: not worded as a temporary fault`);
+    assert.ok(out.includes('role="alert"') && out.includes("data-retry") && out.includes('<span dir="ltr">il2la28.site@gmail.com</span>')
+      && !out.includes("skeleton"), `${label}: alert, retry, contact address`);
+  }
+  assert.strictEqual(h1((await boot({fetchImpl: async () => ({ok: false, status: 500, json: async () => ({})})})).view("home")), "לא הצלחנו לטעון את הנתונים");
+  // A host that never answers: the skeleton until the deadline, then the timeout message. The deadline is made instant
+  // for the retry, so the test doesn't wait 15 s.
+  const hang = await boot({fetchImpl: () => new Promise(() => {})});
+  assert.ok(hang.view("home").includes('class="skeleton"'), "still loading before the deadline");
+  const ms = hang.run("LOAD_TIMEOUT_MS"), real = hang.ctx.setTimeout;
+  hang.ctx.setTimeout = (f, t, ...a) => t === ms ? real(f, 0, ...a) : real(f, t, ...a);
+  hang.run("S.failed = false; loadPublic()");
+  await new Promise(r => setTimeout(r, 20));
+  assert.strictEqual(h1(hang.view("home")), "הטעינה נמשכת יותר מדי");
+  // Quotas that never answer don't hold the page: it renders and quota panels end in their error state.
+  const slowQ = await boot({fetchImpl: async url => url === "quotas.json" ? new Promise(() => {}) : ({ok: true, status: 200, json: async () => clone()})});
+  assert.ok(slowQ.view("home").includes('id="todayH"'), "the page renders without quotas.json");
+});
+
+test("auto-refresh ignores JSON that isn't the export: the site stays as it was", async () => {
+  const {ctx, run, view} = await boot({now: "2026-10-29T08:00:00Z"});
+  const before = view("home");
+  for (const body of [{error: "forbidden"}, {athletes: []}, {generatedAt: "2099-01-01T00:00:00Z"}]) {
+    ctx.fetch = async url => ({ok: true, status: 200, json: async () => url === "quotas.json" ? {items: []} : body});
+    await run("checkForUpdate()");
+    assert.strictEqual(run("S.athletes.length"), FIXTURE.athletes.length, JSON.stringify(body));
+  }
+  assert.ok(view("home").includes('id="todayH"') && before.length > 0);
+});
+
+test("no db or user capability: an editor's failed setup leaves the public site, never a skeleton", async () => {
+  const fails = {use: async () => { throw new Error("capability not granted"); }};
+  const noDb = {use: async cap => cap === "user" ? {canEdit: async () => true, id: async () => "u1"} : (() => { throw new Error("no db"); })()};
+  for (const claude of [fails, noDb, {}]) {
+    const b = await boot({claude});
+    const out = b.view("home");
+    assert.ok(out.includes('id="todayH"') && !out.includes("skeleton") && b.run("S.isAdmin") === false && b.run("S.live") === false);
+  }
 });
 
 test("#admin last-run panel shows the newest run's warnings, escaped", async () => {
