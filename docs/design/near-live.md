@@ -33,7 +33,7 @@ The order of evaluation matters: a result wins, then the clock. The window and t
 |---|---|---|---|
 | **result** | `result` (with `resultSource` + `resultAt`, enforced by the loader) | none | `<b>תוצאה:</b> {result} · עודכן ב־{when(resultAt)} · <a>מקור: {host(resultSource)}</a>` |
 | **result, date only** (fallback from history) | result without `resultAt` | none | `<b>תוצאה:</b> {text} · <a>מקור: {host}</a>`, with no time |
-| **before** | `now < startUtc`, or an untimed future day | `לפני התחרות` | the time column shows `HH:MM`, or `השעה תפורסם` / `תאריך בלבד` |
+| **before** | `now < startUtc`, or an untimed future day | `לפני התחרות` | the time column shows `HH:MM`, or `תאריך בלבד` |
 | **competing** | inside `[startUtc, +3h)`, or untimed today | `מתחרה היום` | none |
 | **awaiting, fresh** | past the window, and the check time is **before** the window end | `◷ בהמתנה לתוצאה` | `התוצאה תתעדכן {NEXT_CHECK}` |
 | **awaiting, checked** | past the window, and the check time is **after** the window end | `◷ בהמתנה לתוצאה` | `נבדק לאחרונה ב־{when(check)} · התוצאה עוד לא פורסמה במקור הרשמי` |
@@ -108,7 +108,7 @@ freshLine(rowsToday)      // §3 line, stale-aware
   - the detail line is `--muted`, except `<b>תוצאה:</b>`, which is `--ink`;
   - the source link uses the normal link colour.
   - No new colours: contrast is as in phase 1 (`--muted` on `--surface` is 5.6:1 light, 6.6:1 dark).
-- **Time column:** `HH:MM` fits the 70px column. `השעה תפורסם` wraps onto two lines, which is fine.
+- **Time column:** `HH:MM` fits the 70px column. `תאריך בלבד` fits it too.
 
 ## 7. Copy table (for Shira's review)
 | Key | Hebrew |

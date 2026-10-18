@@ -31,7 +31,7 @@ function exportedSessions(){
     const proven = str(s.result).trim() && safeUrl(s.resultSource) && isUtc(s.resultAt);
     return comp && athletes.length ? {comp, athletes, sportId: comp.sportId, phase: str(s.phase).slice(0, 120),
       source: safeUrl(s.source), checkedAt: isUtc(s.checkedAt) ? s.checkedAt : "",
-      startUtc: isUtc(s.startUtc) ? s.startUtc : null, day: isUtc(s.startUtc) ? ilDate(s.startUtc) : s.date, timed: true,
+      startUtc: isUtc(s.startUtc) ? s.startUtc : null, day: isUtc(s.startUtc) ? ilDate(s.startUtc) : s.date,
       result: proven ? str(s.result).slice(0, 120) : "", resultSource: proven ? s.resultSource : "", resultAt: proven ? s.resultAt : ""} : null;
   }).filter(Boolean);
 }
@@ -45,7 +45,7 @@ function fallbackSessions(d){
   const out = new Map();
   for (const a of S.athletes) {
     const res = historyResult(a, d);
-    const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null, timed: false};
+    const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null};
     if (res) out.set(a.id, {...base, result: str(res.text).slice(0, 120), resultSource: res.source, resultAt: ""});
     else if (a.nextDate === d) out.set(a.id, {...base, result: ""});
   }
@@ -135,7 +135,8 @@ function freshLine(hasToday){
 function sessionRow(s, d){
   const names = s.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   const state = sessionState(s, d);
-  const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : s.timed ? "השעה תפורסם" : "תאריך בלבד";
+  // Untimed is always "תאריך בלבד": we never promise a time that hasn't been announced (components.md §1).
+  const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : "תאריך בלבד";
   // Keyed by day, competition and athletes, so the same session on #day and #c- is one row. The signature leaves out
   // what changes with the clock or a run without news (the status chip, checkedAt).
   const mark = rowMark(`sess|${d}|${s.comp?.id || ""}|${s.athletes.map(a => a.id).join(",")}|${s.phase}`,
