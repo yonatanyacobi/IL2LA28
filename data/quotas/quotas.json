@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:20:12Z",
+ "updatedAt": "2026-10-18T18:00:00Z",
  "items": [
   {
    "sportId": "judo",
@@ -708,7 +708,7 @@
    "event": "קייט פויל (Formula Kite) נשים",
    "totalQuotas": 20,
    "maxPerNOC": 1,
-   "allocation": "8 מדינות באליפות העולם 2027, אחת באירוע יבשתי אירופי, 5 בתחרות ההזדמנות האחרונה 2028.",
+   "allocation": "8 מדינות באליפות העולם 2027, 6 באירועים יבשתיים (אחת לאירופה), 5 בתחרות ההזדמנות האחרונה 2028, ומקום מארחת.",
    "israelStatus": "in-contention",
    "israelNote": "מיה אשכנזי מקום 14 וגל צוקרמן מקום 17 באליפות העולם 2026 (לא חולקו בה מכסות)",
    "nextQuotaEvent": {
@@ -717,8 +717,8 @@
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "ofir",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
@@ -727,7 +727,7 @@
    "event": "קייט פויל (Formula Kite) גברים",
    "totalQuotas": 20,
    "maxPerNOC": 1,
-   "allocation": "8 מדינות באליפות העולם 2027, אחת באירוע יבשתי אירופי, 5 בתחרות ההזדמנות האחרונה 2028.",
+   "allocation": "8 מדינות באליפות העולם 2027, 6 באירועים יבשתיים (אחת לאירופה), 5 בתחרות ההזדמנות האחרונה 2028, ומקום מארחת.",
    "israelStatus": "unknown",
    "israelNote": "זוהר חרובי מקום 25 באליפות העולם 2026 (לא חולקו בה מכסות)",
    "nextQuotaEvent": {
@@ -736,8 +736,8 @@
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "ofir",
+    "status": "fixed",
+    "by": "tamar",
     "at": "2026-10-18"
    }
   },
