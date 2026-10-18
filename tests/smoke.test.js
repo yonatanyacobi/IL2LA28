@@ -125,7 +125,7 @@ test("search finds an athlete by Hebrew name", async () => {
   view("home");
   run(`S.q = "הרשקו"; renderResults()`);
   assert.ok(els.results.innerHTML.includes("רז הרשקו"));
-  assert.match(els.qCount.textContent, /נמצאו [1-9]/);
+  assert.strictEqual(els.qCount.textContent, "נמצאו ספורטאי/ת או נבחרת אחת ו־0 ענפים", "singular for one hit");
 });
 
 test("search by sport English name or id finds that sport's athletes", async () => {
@@ -134,7 +134,7 @@ test("search by sport English name or id finds that sport's athletes", async () 
   const judo = FIXTURE.athletes.filter(a => a.sportId === "judo").length;
   for (const q of ["judo", "JUDO", "artistic-gymnastics"]) {
     run(`S.q = ${JSON.stringify(q)}; renderResults()`);
-    assert.match(els.qCount.textContent, /נמצאו [1-9]/, q);
+    assert.match(els.qCount.textContent, /נמצאו (?:[1-9]|ספורטאי\/ת או נבחרת אחת )/, q);
   }
   run(`S.q = "judo"; renderResults()`);
   assert.ok(els.qCount.textContent.startsWith(`נמצאו ${judo} `), els.qCount.textContent);
@@ -166,9 +166,9 @@ test("search ignores apostrophe/geresh, quote/gershayim, niqqud, spacing and Lat
   view("home");
   const count = q => { run(`S.q = ${JSON.stringify(q)}; renderResults()`); return els.qCount.textContent; };
   const judo = count("ג׳ודו");
-  assert.match(judo, /נמצאו [1-9]/);
+  assert.match(judo, /נמצאו (?:[1-9]|ספורטאי\/ת או נבחרת אחת )/);
   for (const q of ["ג'ודו", "ג`ודו", "ג’ודו", "  גּ׳וּדוֹ  "]) assert.strictEqual(count(q), judo, q);
-  for (const q of ["ק״מ אחד", "ק\"מ   אחד", "RAZ hershko"]) assert.match(count(q), /נמצאו [1-9]/, q);
+  for (const q of ["ק״מ אחד", "ק\"מ   אחד", "RAZ hershko"]) assert.match(count(q), /נמצאו (?:[1-9]|ספורטאי\/ת או נבחרת אחת )/, q);
 });
 
 test("not-found has an h1, is announced and clears the nav", async () => {
@@ -219,6 +219,13 @@ const stripOf = html => html.split('class="panel today"')[1]?.split("</section>"
 const rowsOf = strip => strip.split("<li>").slice(1);
 const count = (s, needle) => s.split(needle).length - 1;
 const busyOf = html => html.split("ב־14 הימים הקרובים")[1]?.split("</section>")[0] || "";
+
+test("home KPI uses the singular for one athlete and one verified record", async () => {
+  const one = {...FIXTURE.athletes[0], verifiedAt: "2026-10-01", updatedAt: "2026-09-01"};
+  const kpi = (await boot({data: {...FIXTURE, athletes: [one]}})).view("home").match(/<p class="kpi">.*?<\/p>/)[0];
+  assert.ok(kpi.includes("ספורטאי/ת או נבחרת אחת במעקב") && !kpi.includes("ספורטאים ונבחרות"), kpi);
+  assert.ok(kpi.includes("נבדק/ה ידנית"), kpi);
+});
 
 test("today strip: one row per running competition, athletes listed once", async () => {
   // 21:30 UTC on 19 Oct is already 20 Oct in Israel; gymnastics Worlds run 17–25 Oct.
