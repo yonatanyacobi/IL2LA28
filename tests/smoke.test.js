@@ -1594,6 +1594,36 @@ test("#day: today's states, a result on another day, #day alone, impossible date
   assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
 });
 
+// #day on data.json.sessions (docs/design/sessions-contract.md); the fallback stays for empty sessions.
+const SESS = (over = {}) => ({id: "issf-wch-doha-2026-20261103-arm-q1", competitionId: "issf-wch-doha-2026", date: "2026-11-03",
+  startUtc: "2026-11-03T06:15:00Z", athleteIds: ["sergey-richter"], phase: "רובה אוויר 10 מ׳ גברים – מוקדמות, מקצה 1",
+  source: "https://www.issf-sports.org/x", result: "", resultSource: "", resultAt: "", ...over});
+const withSessions = list => ({...JSON.parse(JSON.stringify(FIXTURE)), sessions: list});
+
+test("#day from sessions: time, status by clock, result stamp, untimed, Israel day key, defense in depth", async () => {
+  const rowOf = html => html.split('<ul class="rows sess">')[1]?.split("</ul>")[0] || "";
+  const at = async (now, sessions) => (await boot({data: withSessions(sessions), quotas: SITE_QUOTAS, now})).view("day-2026-11-03");
+  // 06:15Z is 08:15 in Israel (UTC+2 after 25.10).
+  const before = rowOf(await at("2026-11-03T05:00:00Z", [SESS()]));
+  assert.ok(before.includes('<span class="d">08:15</span>') && before.includes("pill s-before") && before.includes("<bdi>רובה אוויר 10 מ׳ גברים"), "before");
+  assert.ok(rowOf(await at("2026-11-03T07:00:00Z", [SESS()])).includes("pill s-live"), "inside the 3h window");
+  assert.ok(rowOf(await at("2026-11-03T09:30:00Z", [SESS()])).includes("pill s-wait"), "after the window");
+  const done = rowOf(await at("2026-11-03T12:00:00Z", [SESS({result: "<b>מקום 12</b>", resultSource: "https://www.issf-sports.org/r", resultAt: "2026-11-03T08:40:00Z"})]));
+  assert.ok(done.includes("<b>תוצאה:</b> &lt;b&gt;מקום 12&lt;/b&gt; · עודכן ב־10:40") && !done.includes("pill s-"), "result with its own time, escaped");
+  const unproven = rowOf(await at("2026-11-03T12:00:00Z", [SESS({result: "מקום 12", resultSource: "http://x", resultAt: "2026-11-03T08:40:00Z"})]));
+  assert.ok(!unproven.includes("תוצאה:") && unproven.includes("pill s-wait"), "a result without proof isn't shown");
+  const untimed = rowOf(await at("2026-11-02T08:00:00Z", [SESS({startUtc: null})]));   // the day before
+  assert.ok(untimed.includes('<span class="d">השעה תפורסם</span>') && untimed.includes("pill s-before"), "untimed: no time, never a time");
+  // Day key is the Israel date of startUtc: 23:30Z on 2.11 is 01:30 on 3.11 in Israel.
+  const late = await at("2026-11-01T08:00:00Z", [SESS({date: "2026-11-02", startUtc: "2026-11-02T23:30:00Z"})]);
+  assert.ok(rowOf(late).includes("01:30"), "Israel day key");
+  const junk = await at("2026-11-01T08:00:00Z", [SESS({competitionId: "nope"}), SESS({id: "x2", athleteIds: ["nobody"]})]);
+  assert.ok(!junk.includes('<ul class="rows sess">'), "unknown competition / athletes dropped");
+  // With sessions present, the nextDate fallback is off: Abu Dhabi judo (fallback only) isn't on 29.10.
+  const j = (await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"})).view("day-2026-10-29");
+  assert.ok(!j.includes('id="ds-judo"') && j.includes("אין תחרויות ידועות"), "sessions replace the fallback");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {
