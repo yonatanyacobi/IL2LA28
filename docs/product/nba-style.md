@@ -44,7 +44,7 @@ spot-check results the same day, and a wrong result goes to the corrections log.
 | **In-site:** a `#following` feed: followed athletes and sports, and what changed since the last visit. A badge with the count on the nav. Followed-first ordering everywhere. Already half-built: follows and "עודכנו מאז הביקור הקודם" exist | Yes. It's per browser (localStorage), so there's no cross-device sync | M | **Phase 1** |
 | **Weekly digest** (exists): the publisher shares it by copy and paste | Yes | Exists | Keep it |
 | **Atom/RSS feed file** (`feed.xml`) published next to `data.json`, so feed readers can poll it | Maybe. It depends on whether the artifact file URL is readable by feed readers, signed out. Spike S | S–M | **Phase 2**, after the spike |
-| **Telegram or WhatsApp channel:** the publisher posts results on event days (manual, from the job's summary) | Yes; it's outside the site | Ongoing publisher time, ~10 min per event day | **Phase 2 pilot**, with owner OK (OD3) |
+| **Telegram or WhatsApp channel:** Omer prepares copy-ready result texts, and the owner posts them (agents have no access) | Yes; it's outside the site | ~5 min per event day for the owner, ~10 min for Omer | **Phase 2 pilot**, with owner OK (OD3) |
 | **Web push or email alerts** | No. Needs separate hosting, a backend, a push service or mailer, a signup with consent, unsubscribe and a privacy policy (emails are personal data) | L–XL to build, plus ongoing hosting and maintenance | **Phase 3**, only if phase 2 shows demand |
 | **A separate native app** | Different platform entirely | XL | **No** |
 
@@ -69,7 +69,7 @@ The status chip is computed in the page from the session's date and time and whe
 **Waiting for the owner (not in phase 1)**
 - **Event-day job (OD2):** a second scheduled task every 2 hours, on session days only (strategy target: from 29.10,
   results ≤ 2 h). Maya, M. It reuses 1.7's result writing, so it can start as soon as OD2 is approved. Omer monitors the runs.
-- **Telegram channel pilot (OD3):** Omer as publisher, 4 weeks, phase 2.
+- **Channel pilot (OD3):** 4 weeks from launch day. Omer prepares the texts; the owner posts (`telegram-pilot.md`).
 
 **Phase 2: sprints 5–6**
 - Competition pages (`#e-<id>`): days, sessions, the Israelis' results. Noa, M.
@@ -121,7 +121,7 @@ Run against `main` with the real fixture: signed out, 400px and 1280px, light an
 |---|---|---|---|
 | OD1 | Accept "near-live" (results within 2 hours of the official posting on event days, labelled with the time) instead of real time | **Yes.** True real time needs a server and live feeds we don't have | We build phase 1 with daily updates only |
 | OD2 | Run the extra event-day job (every 2 hours, only on days with Israelis competing) and accept its running cost | **Yes**, capped to session days, and reviewed after Doha | Results stay at the daily run, so a ≤ 24 h delay |
-| OD3 | A messaging-channel pilot (WhatsApp recommended, or Telegram), posted manually by the publisher from launch day; one-pager: `telegram-pilot.md` | **Yes, as a 4-week pilot.** It's the only real "alert" without a new platform | Updates stay in-site only |
+| OD3 | A messaging-channel pilot (WhatsApp recommended, or Telegram), posted by the owner from texts Omer prepares, from launch day; one-pager: `telegram-pilot.md` | **Yes, as a 4-week pilot.** It's the only real "alert" without a new platform | Updates stay in-site only |
 
 Phase 3 (another platform) is not a decision now.
 
