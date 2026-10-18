@@ -36,6 +36,8 @@ EACH RUN:
    b. ArtifactData list athletes, competitions, sports (limit 1000) and get meta/status, each with out_dir = <scratchpad>/dump (fresh dir).
    c. Run: python3 ~/.claude/scheduled-tasks/la28-israel-daily-update/export_data.py <scratchpad>/dump <scratchpad>/data.json <scratchpad>/prev.json
       If it exits non-zero (it refuses when a collection shrinks >20%), DO NOT publish; record the error.
+      Then run: python3 ~/.claude/scheduled-tasks/la28-israel-daily-update/validate_data.py <scratchpad>/data.json
+      If it exits non-zero, DO NOT publish; record its INVALID lines as the error.
    d. Artifact action "read" with the URL (no path) → saves the current page file. Check the saved file starts with "<title>"; if it starts with "<!doctype" or "<html", do NOT publish and record the error.
    e. Artifact publish with url = the artifact URL, file_path = that saved page file, files = {"data.json": "<scratchpad>/data.json"}. Other files (app.js, styles.css) are kept automatically.
 6. Log: set runs/<today> = {status: "done" (or "failed"), started, ended, sportsChecked, writes, proposals, published, errors}. Delete runs docs older than 90 days.
