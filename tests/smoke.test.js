@@ -227,6 +227,31 @@ test("missing, failing or malformed quotas.json leaves the site unchanged", asyn
   }
 });
 
+const SPORT_QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas-sport.json"), "utf8"));
+
+test("sport page quota section: order, counts, escaping", async () => {
+  const {view} = await boot({quotas: SPORT_QUOTAS});
+  const out = view("sport-judo");
+  assert.ok(out.includes("מכסות לישראל") && out.includes("4 מקצים"));
+  assert.ok(out.indexOf("שיטת ההעפלה") < out.indexOf("מכסות לישראל") && out.indexOf("מכסות לישראל") < out.indexOf("ספורטאים ונבחרות"));
+  const order = ["עד 57", "עד 78", "קבוצה מעורבת", "עד 100"].map(e => out.indexOf(e));
+  assert.deepStrictEqual([...order].sort((x, y) => x - y), order, "earned → in-contention → outside → unknown");
+  for (const l of ["✓ מכסה הושגה", "◐ במרוץ למכסה", "○ מחוץ למכסות כרגע", "? אין מידע עדיין"]) assert.ok(out.includes(l), l);
+  assert.ok(out.includes("18 מכסות בעולם · עד מכסה אחת למדינה"));
+  assert.ok(out.includes("0 מכסות בעולם · עד 2 מכסות למדינה"), "a real 0 is shown, not dropped");
+  assert.ok(out.includes("גרנד סלאם אבו דאבי") && !out.includes("תחרות שעברה"), "past quota event hidden");
+  assert.ok(out.includes("ijf.org") && out.includes("נתוני מכסות עודכנו"));
+  assert.ok(!/<img/i.test(out) && out.includes("&lt;img"), "israelNote escaped");
+  assert.ok(out.includes('aria-label="מכסה הושגה: 1, במרוץ למכסה: 1, מחוץ למכסות כרגע: 1, אין מידע עדיין: 1"'));
+});
+
+test("quota section: all-unknown note; hidden without items", async () => {
+  const {view} = await boot({quotas: SPORT_QUOTAS});
+  const shooting = view("sport-shooting");
+  assert.ok(shooting.includes("מקצה אחד") && shooting.includes("עוד אין מידע על מצב ישראל"));
+  assert.ok(!view("sport-surfing").includes("מכסות לישראל"));
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));

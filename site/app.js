@@ -25,6 +25,7 @@ const addDays = (d, n) => new Date(new Date(d + "T12:00:00").getTime() + n * 864
 const daysSince = iso => (Date.now() - new Date(str(iso))) / 864e5;
 const stageOf = a => Math.min(3, Math.max(0, Number(a.stage) | 0));
 const heCmp = (a, b) => str(a).localeCompare(str(b), "he");
+const plural = (n, one, many) => n === 1 ? one : `${n} ${many}`;
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };
 const linkOut = (u, label = "מקור") => safeUrl(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}<span class="sr"> (נפתח בחלון חדש)</span></a>` : "";
@@ -108,6 +109,35 @@ function stageBar(list, thin){
 function trustChip(a){
   const t = trustOf(a), d = fmt(str(a.verifiedAt).slice(0, 10));
   return `<span class="trust ${t}">${t === "auto" ? "◌ איסוף אוטומטי" : t === "ok" ? `✓ נבדק ידנית ${d}` : `✓ נבדק ${d} · עודכן מאז`}</span>`;
+}
+
+// Past quota events are hidden here; the loader keeps them for #admin checks.
+function quotaSection(id){
+  const items = quotasOf(id);
+  if (!items.length) return "";
+  const nxt = q => q.nextQuotaEvent?.name && q.nextQuotaEvent.start >= today() ? q.nextQuotaEvent : null;
+  items.sort((a, b) => QUOTA_STATUSES.indexOf(qStatus(a.israelStatus)) - QUOTA_STATUSES.indexOf(qStatus(b.israelStatus))
+    || (nxt(a)?.start || "9999").localeCompare(nxt(b)?.start || "9999") || heCmp(a.event, b.event));
+  const n = quotaCounts(items);
+  return `<section class="panel" aria-labelledby="qH">
+    <div class="sec-head"><h2 id="qH">מכסות לישראל</h2><span class="foot">${plural(items.length, "מקצה אחד", "מקצים")}</span></div>
+    <div class="bar4 qbar" role="img" aria-label="${QUOTA_STATUSES.map(k => `${Q_LABEL[k][1]}: ${n[k]}`).join(", ")}">${
+      QUOTA_STATUSES.map(k => n[k] ? `<i class="q-${k}" style="width:${(n[k] / items.length * 100).toFixed(2)}%"></i>` : "").join("")}</div>
+    <ul class="legend">${QUOTA_STATUSES.map(k => n[k] ? `<li><i class="q-${k}"></i>${Q_LABEL[k][1]} <b>${n[k]}</b></li>` : "").join("")}</ul>
+    ${n.unknown === items.length ? `<p class="muted">עוד אין מידע על מצב ישראל במקצים האלה.</p>` : ""}
+    <ul class="qlist">${items.map(q => {
+      const tot = q.totalQuotas, max = q.maxPerNOC, e = nxt(q), src = linkOut(q.source, host(q.source));
+      const meta = [tot != null && `${plural(tot, "מכסה אחת", "מכסות")} בעולם`, max != null && `עד ${plural(max, "מכסה אחת", "מכסות")} למדינה`].filter(Boolean).join(" · ");
+      return `<li>
+        <div class="q-top"><b>${esc(q.event)}</b>${quotaStatusPill(q.israelStatus)}</div>
+        ${meta ? `<p class="q-meta">${meta}</p>` : ""}
+        ${q.israelNote ? `<p>${esc(q.israelNote)}</p>` : ""}
+        ${e ? `<p class="q-meta">אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}</p>` : ""}
+        <details><summary>איך מחולקות המכסות</summary>${q.allocation ? `<p>${esc(q.allocation)}</p>` : ""}<p class="foot">${src}</p></details>
+      </li>`;
+    }).join("")}</ul>
+    <p class="foot">ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת; הוועד האולימפי בישראל בוחר בהמשך מי ישתמש בה.${isDate(S.quotasUpdatedAt.slice(0, 10)) ? ` נתוני מכסות עודכנו: ${fmt(S.quotasUpdatedAt.slice(0, 10))}.` : ""}</p>
+  </section>`;
 }
 
 function compRow(c, withSport){
@@ -292,6 +322,7 @@ function viewSport(id){
       ${w.summary ? `<p>${esc(w.summary)}</p>` : ""}${w.source ? `<p class="foot">${linkOut(w.source, "מערכת ההעפלה הרשמית")}</p>` : ""}`
       : `<p class="muted">עוד לא נאספו פרטים על שיטת ההעפלה בענף הזה.</p>`}
   </section>
+  ${quotaSection(id)}
   <section class="stack">
     <h2>${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
     ${list.length ? `<div class="cards">${list.map(athleteCard).join("")}</div>` : `<div class="empty">אין כרגע ספורטאים ישראלים במעקב בענף הזה.</div>`}
