@@ -33,7 +33,7 @@ After "שיטת ההעפלה", before "תחרויות קרובות בענף": `<
 │ ┄┄ קו המכסה: מקום 17 ┄┄┄┄┄┄┄┄┄┄┄┄┄┄  │  ← li.cutline
 │ 41  {name} · 12 ביולי 2026 [דירוג מ־12 ביולי 2026] │
 │ ללא דירוג: {name}, {name}             │
-│ הקו הוא מקום ברשימה, לא תחזית: …      │  ← the caveat line
+│ הדירוג הסופי נקבע ב־15 ביוני 2028.    │  ← per block: the final date only
 └──────────────────────────────────────┘
 ```
 - **Rows** (`<ol class="rows">`): ranked athletes on `cutoff.list`, by `rankNum` (ties by name). The cut line is an
@@ -41,6 +41,11 @@ After "שיטת ההעפלה", before "תחרויות קרובות בענף": `<
 - **Other list:** an athlete whose `rankList` differs is never placed against the line. They go under it as
   `בדירוג אחר: {name}, מקום {n} ב־<bdi>{rankList}</bdi>`.
 - **Unranked:** one line, `ללא דירוג: {names}` (Gil's acceptance).
+- **No row on the list:** no cut line either (a lone line reads as "nobody above it"); only the other-list and
+  unranked lines.
+- **Caveat:** once, at the end of the panel. Each block ends with `הדירוג הסופי נקבע ב־{fmt(final)}.` only.
+- **400px:** the rank number stays on the row (`.rows.standings li{grid-template-columns:3.5ch 1fr auto}`, also at
+  ≤ 640px; components.md §8).
 - **Period not open** (`today < opens`): no rows, only `תקופת הדירוג להעפלה נפתחת ב־{fmt(opens)}.`
 - **Status text, not colour:** each row's `.t` ends with `<span class="sr">, מעל קו המכסה</span>` or
   `<span class="sr">, מתחת לקו המכסה</span>`; the visible cut line carries the same meaning for sighted readers.
@@ -63,7 +68,8 @@ In `.facts`, for an athlete in a block: `<dt>מול קו המכסה</dt><dd>מק
 | unranked | `ללא דירוג: {names}` |
 | not open | `תקופת הדירוג להעפלה נפתחת ב־{date}.` |
 | stale pill | `דירוג מ־{date}` |
-| caveat (`.foot`) | `הקו הוא מקום ברשימה, לא תחזית. ברוב השיטות כל מדינה יכולה לקבל לכל היותר מכסה אחת במקצה, ויש גם מסלולים יבשתיים. הדירוג הסופי נקבע ב־{fmt(final)}.` |
+| caveat (`.foot`, once per panel) | `הקו הוא מקום ברשימה, לא תחזית. ברוב השיטות כל מדינה יכולה לקבל לכל היותר מכסה אחת במקצה, ויש גם מסלולים יבשתיים.` |
+| final date (`.foot`, per block) | `הדירוג הסופי נקבע ב־{fmt(final)}.` |
 | sr above / below | `מעל קו המכסה` / `מתחת לקו המכסה` |
 
 Never: "עולה", "בפנים", "הבטיח/ה", "מכסה בדרך", "מעפיל", "בטוח", "כמעט", or any word that turns a position into a verdict.
