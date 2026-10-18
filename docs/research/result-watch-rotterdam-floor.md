@@ -23,15 +23,15 @@ Each athlete gets a write through `job/athlete_patch.py`:
 - `"result": {"at": "2026-10-24", "text": …, "source": <Official PDF>}`
 - `at` is the competition day.
 
-The texts were built with `tri_results.he_date()` and the competition name from data.json, and pass
-`athlete_patch.result_entry()` unchanged.
+The texts are the output of `gym_results.result_text("final", …)` (#219), the one wording the job uses too. They
+pass `athlete_patch.result_entry()` unchanged.
 
 | Outcome | `result.text` | session `result` | other fields in the same write |
 |---|---|---|---|
-| Gold | `זהב בגמר הקרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `זהב` | `rank` → `זהב בקרקע, אליפות העולם 2026 (מיקום, לא דירוג)` |
-| Silver | `כסף בגמר הקרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `כסף` | `rank` → `כסף בקרקע, אליפות העולם 2026 (מיקום, לא דירוג)` |
-| Bronze | `ארד בגמר הקרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `ארד` | `rank` → `ארד בקרקע, אליפות העולם 2026 (מיקום, לא דירוג)` |
-| 4–8 | `מקום <N> בגמר הקרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `מקום <N>` | `rank` is unchanged (a world final placing is weaker than the European gold) |
+| Gold | `זהב בגמר קרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `זהב` | `rank` → `זהב בקרקע, אליפות העולם 2026 (מיקום, לא דירוג)` |
+| Silver | `כסף בגמר קרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `כסף` | `rank` → `כסף בקרקע, אליפות העולם 2026 (מיקום, לא דירוג)` |
+| Bronze | `ארד בגמר קרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `ארד` | `rank` → `ארד בקרקע, אליפות העולם 2026 (מיקום, לא דירוג)` |
+| 4–8 | `מקום <N> בגמר קרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)` | `מקום <N>` | `rank` is unchanged (a world final placing is weaker than the European gold) |
 | Withdrew or DNS | no entry | session without that athlete | – |
 
 - **In every case:**
