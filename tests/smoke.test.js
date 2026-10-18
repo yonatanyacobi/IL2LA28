@@ -250,7 +250,7 @@ test("today strip: followed first, solo rows, escaping, 14-day list starts after
   assert.ok(rows[0].includes("גרנד סלאם אבו דאבי") && rows[0].includes('aria-label="במעקב שלך">★</span> <a href="#a-raz-hershko"'), "followed row first, starred");
   assert.ok(rows[1].includes("adva-cohen") && rows[1].includes(">היום<"), "solo row for athlete without a competition");
   assert.ok(!/<img/i.test(rows[1]) && rows[1].includes("&lt;img"), "next must be escaped");
-  assert.ok(rows[2].includes("ישראלי/ת אחד/ת במעקב בענף") && !rows[2].includes('href="#a-'), "running comp, nobody listed (singular)");
+  assert.ok(rows[2].includes("ספורטאי/ת או נבחרת אחת במעקב בענף") && !rows[2].includes('href="#a-'), "running comp, nobody listed (singular)");
   assert.ok(!stripOf(home).includes("סדרת גביעי העולם בהתעמלות אמנותית"), "season-long series excluded");
   assert.ok(!busyOf(home).includes("raz-hershko") && !busyOf(home).includes("adva-cohen"), "no repeat in 14-day list");
   const before = await boot({now: "2026-10-26T08:00:00Z"});
@@ -267,7 +267,7 @@ test("today strip: competitions without listed athletes, capped at 6", async () 
   assert.ok(strip.includes('<h2 id="todayH">היום בענפים שבמעקב</h2>'), "heading when nobody is listed");
   assert.strictEqual(rowsOf(strip).length, 6);
   assert.ok(strip.includes('<a href="#calendar">ועוד 2 בלוח התחרויות</a>'));
-  assert.ok(strip.includes("ישראלים במעקב בענף") && !strip.includes('href="#a-'));
+  assert.ok(strip.includes("ספורטאים ונבחרות במעקב בענף") && !strip.includes('href="#a-'));
 });
 
 test("today strip: hidden on a day with no competitions", async () => {
@@ -361,7 +361,7 @@ test("quota stakes in the today strip: matched by sport + date, at most 2", asyn
   const row = rowsOf(strip).find(r => r.includes("גרנד סלאם אבו דאבי"));
   assert.ok(row.includes('<small class="stakes"><b>מה זה אומר:</b> ') && row.includes("stake 0 &lt;b&gt;") && row.includes("stake 1"), "started yesterday still shows");
   assert.ok(!row.includes("stake 3"), "next quota event outside the competition");
-  assert.ok(row.includes('ועוד 1 מקצים — <a href="#sport-judo">בדף הענף</a>') && !row.includes("stake 2"), "capped at 2");
+  assert.ok(row.includes('ועוד מקצה אחד — <a href="#sport-judo">בדף הענף</a>') && !row.includes("stake 2"), "capped at 2");
   const none = stripOf((await boot({now: "2026-10-30T08:00:00Z"})).view("home"));
   assert.ok(none.length && !none.includes("מה זה אומר"), "no quotas file, no stakes line");
 });
@@ -477,7 +477,7 @@ test("sport page earned rows (round3 §2): earned date, stage note once when no 
 });
 
 test("athlete page quota line (round3 §3): per status, awaiting, max 3, no line without a match", async () => {
-  const factsOf = html => unhide(html.split("<dt>מכסה</dt>")[1]?.split("</dd>")[0] || "");
+  const factsOf = html => unhide(html.split(/<dt>מכס(?:ה|ות)<\/dt>/)[1]?.split("</dd>")[0] || "");
   const {view, run} = await boot({quotas: SPORT_QUOTAS});
   run(`S.quotas.find(q => q.israelStatus === "earned").earnedAt = "2026-10-15"`);
   const lanir = factsOf(view("a-inbar-lanir"));   // "עד 78 ק״ג (נשים)": linked by weight class
@@ -486,7 +486,7 @@ test("athlete page quota line (round3 §3): per status, awaiting, max 3, no line
   assert.ok(lanir.includes('<a href="#sport-judo">לכל המכסות בענף</a>'));
   const shemesh = factsOf(view("a-inbal-shemesh"));
   assert.ok(shemesh.includes("✓ מכסה הושגה") && shemesh.includes("המכסה שייכת למדינה, לא לספורטאי/ת. היא הושגה ב־"), "earned line");
-  assert.ok(!view("a-yonatan-elbaz").includes("<dt>מכסה</dt>"), "no matching item, no line");
+  assert.ok(!/<dt>מכס(?:ה|ות)<\/dt>/.test(view("a-yonatan-elbaz")), "no matching item, no line");
 
   const base = QUOTAS.items[0];
   const item = (event, israelStatus, nextQuotaEvent = null) => ({...base, sportId: "judo", event, israelStatus, israelNote: "רז הרשקו", stakes: "stake", nextQuotaEvent});
@@ -494,6 +494,7 @@ test("athlete page quota line (round3 §3): per status, awaiting, max 3, no line
     item("ג", "in-contention", {name: "גמר<i>", start: "2026-10-20", end: "2026-10-20"}), item("ד", "unknown")]};
   const raz = factsOf((await boot({quotas, now: "2026-10-21T08:00:00Z"})).view("a-raz-hershko"));
   assert.strictEqual((raz.match(/class="pill q-(?!awaiting)/g) || []).length, 3, "max 3 items");
+  assert.ok((await boot({quotas, now: "2026-10-21T08:00:00Z"})).view("a-raz-hershko").includes("<dt>מכסות</dt>"), "plural label for 2+ items");
   assert.ok(raz.indexOf("◐") < raz.indexOf("○") && raz.indexOf("○") < raz.indexOf("? אין"), "status order");
   assert.ok(raz.includes("q-awaiting") && raz.includes("גמר&lt;i&gt; (") && !raz.includes("stake"), "awaiting replaces next event and stakes");
   assert.ok(raz.includes("לפי המצב הנוכחי, ישראל מחוץ למקומות המכסה.") && raz.includes("עוד אין מידע על מצב ישראל במקצה הזה."));
@@ -541,6 +542,54 @@ test("site/quotas.json: all items load and render", async () => {
   }
 });
 
+// docs/product/spec-rank-tiebreak.md: IJF ranks from the real items' notes, as of mid-October.
+const JUDO_RANKS = {"raz-hershko": 1, "izhak-ashpiz": 5, "timna-nelson-levy": 6, "gefen-primo": 11, "kerem-primo": 13,
+  "yuli-alma-mishiner": 13, "inbar-lanir": 22, "yonatan-elbaz": 26, "inbal-shemesh": 35};
+const rankedData = asOf => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  for (const a of data.athletes) if (a.id in JUDO_RANKS) Object.assign(a, {rankNum: JUDO_RANKS[a.id], rankList: "IJF World Ranking List", rankAsOf: asOf});
+  return data;
+};
+const abuDhabiStakes = async data => {
+  const row = rowsOf(stripOf((await boot({data, quotas: REAL_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home"))).find(r => r.includes("גרנד סלאם אבו דאבי")) || "";
+  return [...row.matchAll(/<small class="stakes"><b>מה זה אומר:<\/b> (?:<bdi>)?([^<:]+?)(?:<\/bdi>)?:/g)].map(m => m[1]);
+};
+
+test("rank tie-break: Abu Dhabi strip shows the best-ranked judo items; stale or missing ranks keep file order", async () => {
+  assert.deepStrictEqual(await abuDhabiStakes(rankedData("2026-10-15")), ["78+ ק״ג נשים", "60- ק״ג גברים"], "world #1 and #5 first");
+  const fileOrder = await abuDhabiStakes(FIXTURE);
+  assert.deepStrictEqual(fileOrder, ["60- ק״ג גברים", "73- ק״ג גברים"], "no rankNum: unchanged");
+  assert.deepStrictEqual(await abuDhabiStakes(rankedData("2026-08-01")), fileOrder, "rank older than 60 days is ignored");
+});
+
+test("rank tie-break: every real judo quota item resolves to its athlete", async () => {
+  const {run} = await boot({quotas: REAL_QUOTAS});
+  const resolved = JSON.parse(run(`JSON.stringify(quotasOf("judo").map(q => [q.event, quotaAthletes(q).map(a => a.id).sort()]))`));
+  const want = {"60- ק״ג גברים": ["izhak-ashpiz"], "73- ק״ג גברים": ["yonatan-elbaz"], "52- ק״ג נשים": ["gefen-primo"],
+    "57- ק״ג נשים": ["inbal-shemesh", "timna-nelson-levy"], "63- ק״ג נשים": ["kerem-primo"], "78- ק״ג נשים": ["inbar-lanir"],
+    "78+ ק״ג נשים": ["raz-hershko", "yuli-alma-mishiner"]};
+  assert.deepStrictEqual(Object.fromEntries(resolved), want);
+});
+
+test("rank tie-break: digest lists ranked athletes first within a quota event", async () => {
+  const b = await boot({data: rankedData("2026-10-15"), now: DIGEST_NOW, quotas: REAL_QUOTAS});
+  const line = b.run("digestText()").split("\n").find(l => l.startsWith("  ישראלים: ") && l.includes("רז הרשקו")) || "";
+  assert.ok(line.indexOf("רז הרשקו") < line.indexOf("יצחק אשפיז") && line.indexOf("יצחק אשפיז") < line.indexOf("גפן פרימו"), line);
+});
+
+test("edit dialog: rank number needs its list and date", async () => {
+  const {run, els} = await boot();
+  run(`var __w = []; S.db = {collection: () => ({doc: () => ({update: async p => { __w.push(p); }})})}; openForm(S.athletes.find(a => a.id === "raz-hershko"))`);
+  els.fRankNum.value = "1";
+  await run("saveForm({preventDefault(){}})");
+  assert.ok(!els.frmErr.hidden && els.frmErr.textContent.includes("שם הרשימה ותאריך"), "rejected without list/date");
+  els.fRankList.value = "IJF World Ranking List"; els.fRankAsOf.value = "2026-10-15";
+  await run("saveForm({preventDefault(){}})");
+  const saved = JSON.parse(run("JSON.stringify(__w)"));
+  assert.strictEqual(saved.length, 1);
+  assert.deepStrictEqual([saved[0].rankNum, saved[0].rankList, saved[0].rankAsOf], [1, "IJF World Ranking List", "2026-10-15"]);
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));
@@ -579,7 +628,7 @@ test("#admin launch readiness: counts link to where each issue is fixed", async 
   const num = label => { const before = panel.split(label)[0]; return before.slice(before.lastIndexOf('digits">') + 8).split("<")[0]; };
   assert.strictEqual(num("הצעות ממתינות"), "2");
   assert.strictEqual(num("פריטי מכסות שלא פורסמו"), "5");
-  assert.strictEqual(num("בלי אימות ידני"), String(data.athletes.filter(x => !x.verifiedAt).length));
+  assert.strictEqual(num("בלי בדיקה ידנית"), String(data.athletes.filter(x => !x.verifiedAt).length));
   assert.strictEqual(num("תאריך התחרות הבאה עבר"), String(data.athletes.filter(x => /^\d{4}-\d\d-\d\d$/.test(x.nextDate || "") && x.nextDate < "2026-10-18").length));
   for (const href of ["#home", "#admin-nosource", "#admin-noverified", "#admin-pastnext"]) assert.ok(panel.includes(`href="${href}"`), href);
   const list = view("admin-nosource");
@@ -611,13 +660,13 @@ test("#admin result night: picks quota events ending today/yesterday, links the 
   const panel = panelOf(b.view("admin"));
   assert.ok(!panel.includes("אישי גברים"), "a 2027 event of the same sport stays out");
   assert.ok(panel.includes('href="#sport-artistic-gymnastics"') && panel.includes('href="#a-artem-dolgopyat"') && panel.includes('href="#home"'));
-  assert.ok(panel.includes("0/9"));
+  assert.ok(panel.includes("0 מתוך 9 שלבים"));
   const key = JSON.parse(b.run(`JSON.stringify(rnKey(S.quotas.find(q => q.event === "קבוצתי גברים")))`));
   b.fire("change", {checked: true, dataset: {rn: key, step: "0"}});
   b.fire("change", {checked: true, dataset: {rn: key, step: "3"}});
   b.fire("change", {checked: false, dataset: {rn: key, step: "0"}});
   const again = panelOf(b.view("admin"));
-  assert.ok(again.includes("1/9") && /data-step="3" checked/.test(again) && !/data-step="0" checked/.test(again), "ticks persist per browser");
+  assert.ok(again.includes("1 מתוך 9 שלבים") && /data-step="3" checked/.test(again) && !/data-step="0" checked/.test(again), "ticks persist per browser");
 
   const items = [{...QUOTAS.items[1], event: "<img src=x onerror=alert(1)>", nextQuotaEvent: {name: "<b>x</b>", start: "2026-10-20", end: "2026-10-20"}}];
   const hostile = panelOf((await admin("2026-10-20T18:00:00Z", {updatedAt: "2026-10-18", items})).view("admin"));
