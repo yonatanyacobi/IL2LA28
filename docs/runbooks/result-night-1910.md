@@ -46,7 +46,7 @@ No Official PDFs by the morning of 20.10: wait. Don't record anything from anoth
 
 5. **Publish the same night** (coordinator's decision): right after the last write, export and publish as in
    step 5 (PUBLISH) of `job/SKILL.md`; don't wait for the 07:13 run. Mechanical part about 2 s in the dry run (#173).
-   This path sends only `data.json`; the page and its JS files (now including `sessions.js`) are kept as published.
+   This path sends only `data.json`; the page and its JS files (`sessions.js` and `home.js` included) are kept as published.
 
 **Don't change:** `stage`, `quotas.json` (the 2026 Worlds give no individual quotas), `rankNum`.
 

@@ -57,7 +57,9 @@ function digestText(t = today()){
       const fromJob = resChanges.filter(x => !used.has(x) && changeSport(x) === c.sportId && day(x) >= c.start);
       fromJob.forEach(x => used.add(x));
       // An editor's change about an athlete whose result is already logged above would repeat it.
-      const about = fromJob.filter(x => !loggedBy.some(a => a.id === x.athleteId));
+      // The near-live status "…מתקיימת עכשיו" from before the event is stale under its results (Gil's rehearsal). Only
+      // that phrase: any other text, a result included, stays. Dropped notes stay used, so they don't resurface below.
+      const about = fromJob.filter(x => !loggedBy.some(a => a.id === x.athleteId) && !/מתקיימ(ת|ים|ות) עכשיו/.test(str(x.text)));
       const lines = [...logged, ...about.map(x => waCut(`  – ${waText(x.text)}`))];
       return [waCut(`• ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))})`),
         ...(who.length ? waList("  ישראלים: ", names(who)) : []),
@@ -120,7 +122,7 @@ function digestText(t = today()){
 
 function viewDigest(){
   const t = today(), text = digestText(t);
-  return `<p class="crumb"><a href="#updates">→ עדכונים</a></p>
+  return `<p class="crumb"><a href="#updates"><span aria-hidden="true">→</span>&nbsp;עדכונים</a></p>
   <h1 tabindex="-1">תקציר שבועי</h1>
   <p class="muted">טקסט מוכן להדבקה בוואטסאפ או בכל מקום אחר. ${fmtRange(addDays(t, -6), t)}.</p>
   <section class="panel digest" aria-labelledby="dgH">

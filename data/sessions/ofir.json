@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T15:11:32Z",
+ "updatedAt": "2026-10-18T17:40:00Z",
  "sessions": [
   {
    "id": "tri-world-cup-tongyeong-2026-20261024-men",
@@ -12,6 +12,30 @@
    "source": "https://triathlon.org/events/2026-world-triathlon-cup-tongyeong/start-lists",
    "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
    "notes": "HOLD (contract §5): sign off only once the elite men start list shows Sagiv. On 2026-10-18 the page showed the time (Oct 24, 2026, 10:30) but no names; recheck 2026-10-22. startUtc 2026-10-24T01:30:00Z (04:30 Israel). Result night: docs/research/result-watch-tongyeong.md."
+  },
+  {
+   "id": "frankfurt-marathon-2026-20261025-men",
+   "competitionId": "frankfurt-marathon-2026",
+   "date": "2026-10-25",
+   "timeLocal": "10:00",
+   "tz": "Europe/Berlin",
+   "athleteIds": ["haimro-alame"],
+   "phase": "מרתון פרנקפורט – גברים",
+   "source": "https://www.frankfurt-marathon.com/en/runners/marathon/",
+   "review": {"status": "ok", "by": "dana", "at": "2026-10-18"},
+   "notes": "The organiser lists one start (10:00); no separate elite time. Germany leaves summer time that night, so this is 09:00Z = 11:00 Israel. Entry: organiser's field announcement, 7.10.2026. No bib or elite list published as of 18.10."
+  },
+  {
+   "id": "wtcs-abu-dhabi-2026-20261113-men",
+   "competitionId": "wtcs-abu-dhabi-2026",
+   "date": "2026-11-13",
+   "timeLocal": "16:00",
+   "tz": "Asia/Dubai",
+   "athleteIds": ["shachar-sagiv"],
+   "phase": "סבב האליפות העולמית בטריאתלון – עלית גברים, ספרינט",
+   "source": "https://triathlon.org/events/2026-wtcs-abu-dhabi/race-info",
+   "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
+   "notes": "HOLD: sign off only once the elite men start list (https://triathlon.org/events/2026-wtcs-abu-dhabi/start-lists; names load in a browser only) shows Sagiv. Today only his profile lists it. 16:00 Abu Dhabi = 12:00Z = 14:00 Israel. Mixed relay (14.11) omitted: no tracked Israeli relay."
   }
  ],
  "pendingFinalBlocks": [

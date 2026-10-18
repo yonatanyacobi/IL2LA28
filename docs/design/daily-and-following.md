@@ -96,7 +96,7 @@ Dedupe by athlete + day. The page states "תאריך בלבד" for times (see th
 │ └────────────────────────────────────┘ │
 │ ┌ הרמת משקולות ─────────────────────┐ │
 │ │ אליפות העולם · יום 3 מתוך 13       │ │
-│ │ השעה תפורסם · {שם} · עד 64 ק״ג     │ │
+│ │ תאריך בלבד · {שם} · עד 64 ק״ג      │ │
 │ │ [לפני התחרות]                       │ │
 │ └────────────────────────────────────┘ │
 └──────────────────────────────────────┘
@@ -111,7 +111,7 @@ Dedupe by athlete + day. The page states "תאריך בלבד" for times (see th
 - **Only sessions with Israelis are listed.** A running competition without a session that day isn't shown here
   (the home strip still covers it).
 - **Session row** is `<li>` in `<ul class="rows sess">`:
-  - `.d`: the time (`HH:MM` in Israel time) or `השעה תפורסם` (fallback: `תאריך בלבד`);
+  - `.d`: the time (`HH:MM` in Israel time) or `תאריך בלבד` (components.md §1);
   - `.t`: athlete links (★ for followed, `aria-label="במעקב שלך"`) · `phase`;
   - then the status chip or the result line.
 - **Stakes line:** reuse `stakesLine()`. It shows when a quota item in that sport has
@@ -248,7 +248,7 @@ The strip dot is decorative; the aria-label carries "יש תחרויות".
 | live header | `מתקיימת עכשיו · יום {n} מתוך {total}` |
 | awaiting | `◷ בהמתנה לתוצאה` (replaces the gendered "ממתינים לתוצאה") |
 | result | `תוצאה: {text} · עודכן ב־{HH:MM}`; past day `עודכן ב־{d}, {HH:MM}` |
-| no time | `השעה תפורסם`; fallback data `תאריך בלבד` |
+| no time | `תאריך בלבד` (components.md §1) |
 | data note | `נכון ל־{date}, {HH:MM} · ` + `CADENCE` |
 | empty day | `אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.` + `לתחרות הבאה: {date}` |
 | home link | `לכל התחרויות היום` |
@@ -268,7 +268,7 @@ these final strings instead.
 - **#3:**
   - With a fake session and pinned clocks before / inside / after the window / with a result, the chip is
     לפני התחרות / מתחרה היום / בהמתנה לתוצאה / the result line.
-  - With no `startUtc`, it shows "השעה תפורסם" and never a time.
+  - With no `startUtc`, it shows "תאריך בלבד" and never a time.
 - **#4:** an empty day shows the copy and links to the next day with sessions.
 - **#5:**
   - The stakes line appears for an in-contention item whose event covers the day.
