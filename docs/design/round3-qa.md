@@ -47,7 +47,7 @@ consistency, giving "מקצה אחד במרוץ למכסה". Size: XS.
 `weightKey()` and by name can list several athletes. With 3 items that makes a long `<small>` at 400px.
 Fix: at most 2 names per item, then `+{n}`. Size: XS.
 
-**QA-7 · P3 · Athlete quota line: the awaiting pill touches the event name** (app.js:229, `</bdi>${AWAIT_PILL}`).
+**QA-7 · P3 · Athlete quota line: the awaiting pill touches the event name** (app.js:231, `</bdi>${AWAIT_PILL}`).
 There's no space, so the pills don't wrap as a group. Fix: wrap both pills in `<span class="actions">` as on the
 sport page, or add a space. Size: XS.
 
