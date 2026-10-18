@@ -12,18 +12,24 @@ from datetime import datetime, timezone
 
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 # Timezone required: the page compares verifiedAt with updatedAt as instants.
-ISO = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$")
+ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})", re.ASCII)
 ATHLETE_FIELDS = ["name", "name_en", "sportId", "event", "rank", "next", "nextDate", "notes", "source", "updatedAt"]
 COMP_FIELDS = ["sportId", "name", "location", "start", "end", "notes", "source"]
 HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
 HISTORY_PUBLIC = 10
 
 
-def load(dump, coll):
+def load(dump, coll, dropped):
     out = {}
     for f in glob.glob(os.path.join(dump, coll, "*.json")):
-        d = json.load(open(f, encoding="utf-8"))
-        out[os.path.basename(f)[:-5]] = d.get("data", d) if isinstance(d, dict) and "data" in d and "id" in d else d
+        with open(f, encoding="utf-8") as fh:
+            d = json.load(fh)
+        doc_id = os.path.basename(f)[:-5]
+        d = d.get("data", d) if isinstance(d, dict) and "data" in d and "id" in d else d
+        if isinstance(d, dict):
+            out[doc_id] = d
+        else:
+            dropped.append(doc_id)
     return out
 
 
@@ -44,7 +50,7 @@ def date(v):
 
 
 def iso(v):
-    return v if isinstance(v, str) and ISO.match(v) else ""
+    return v if isinstance(v, str) and ISO.fullmatch(v) and date(v[:10]) else ""
 
 
 def stage(v):
@@ -66,11 +72,12 @@ def history(items):
 
 
 def main(dump, out_file, prev_file=None):
-    sports = load(dump, "sports")
-    athletes = load(dump, "athletes")
-    comps = load(dump, "competitions")
-    meta = json.load(open(os.path.join(dump, "meta", "status.json"), encoding="utf-8"))
-    meta = meta.get("data", meta)
+    dropped = []
+    sports, athletes, comps = (load(dump, c, dropped) for c in ("sports", "athletes", "competitions"))
+    with open(os.path.join(dump, "meta", "status.json"), encoding="utf-8") as fh:
+        meta = json.load(fh)
+    meta = meta.get("data", meta) if isinstance(meta, dict) else {}
+    meta = meta if isinstance(meta, dict) else {}
 
     s_out = []
     for sid, s in sorted(sports.items()):
@@ -82,7 +89,7 @@ def main(dump, out_file, prev_file=None):
         s_out.append({"id": sid, "he": text(s.get("he"), 60) or sid, "en": text(s.get("en"), 60), "window": w})
     known = {s["id"] for s in s_out}
 
-    a_out, dropped = [], []
+    a_out = []
     for aid, a in sorted(athletes.items()):
         if a.get("archived"):
             continue
@@ -91,7 +98,7 @@ def main(dump, out_file, prev_file=None):
             continue
         row = {"id": aid, **{k: text(a.get(k)) for k in ATHLETE_FIELDS}}
         row.update(stage=stage(a.get("stage")), source=https(a.get("source")), nextDate=date(a.get("nextDate")),
-                   verifiedAt=iso(a.get("verifiedAt")), history=history(a.get("history")))
+                   updatedAt=iso(a.get("updatedAt")), verifiedAt=iso(a.get("verifiedAt")), history=history(a.get("history")))
         a_out.append(row)
 
     c_out = []
@@ -125,7 +132,7 @@ def main(dump, out_file, prev_file=None):
     data = {
         "schemaVersion": 3,
         "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "lastRun": text(meta.get("lastRun")),
+        "lastRun": iso(meta.get("lastRun")),
         "sports": s_out, "athletes": a_out, "competitions": c_out, "changes": changes,
     }
     with open(out_file, "w", encoding="utf-8") as f:

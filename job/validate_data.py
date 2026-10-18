@@ -1,4 +1,4 @@
-"""Validate a public data.json produced by job/export_data.py.
+"""Validate a public data.json produced by export_data.py (shipped next to it).
 
 Usage: python3 validate_data.py <data.json>  -> exit 0 if valid, 1 with one error per line otherwise.
 Checks the contract the exporter guarantees; unknown keys are errors so a private field can't leak silently.
@@ -9,10 +9,11 @@ from datetime import datetime
 SCHEMA_VERSION = 3
 PRIVATE_KEYS = {"updatedBy", "verifiedBy"}
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
+ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})", re.ASCII)
 STAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", re.ASCII)
 HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
 
-# key -> (kind, required); kinds: str, date ("" or YYYY-MM-DD), url ("" or https://), iso ("" or ISO datetime/date)
+# key -> (kind, required); kinds: str, date ("" or YYYY-MM-DD), url ("" or https://), iso ("" or ISO datetime with timezone, as export_data.iso())
 SPORT = {"id": ("id", True), "he": ("str", True), "en": ("str", True), "window": ("window", True)}
 WINDOW = {"from": ("date!", True), "to": ("date?", True), "summary": ("str", True), "source": ("url", True)}
 ATHLETE = {
@@ -38,7 +39,7 @@ def is_date(v):
 
 
 def is_iso(v):
-    if not isinstance(v, str) or not DATE.match(v):
+    if not isinstance(v, str) or not ISO.fullmatch(v):
         return False
     try:
         datetime.fromisoformat(v[:-1] + "+00:00" if v.endswith("Z") else v)
@@ -69,7 +70,7 @@ def validate(data):
     if not (isinstance(data.get("generatedAt"), str) and STAMP.fullmatch(data["generatedAt"])):
         err(f"generatedAt: expected YYYY-MM-DDTHH:MM:SSZ, got {data.get('generatedAt')!r}")
     if not is_iso(data.get("lastRun")) and data.get("lastRun") != "":
-        err(f"lastRun: expected ISO datetime or \"\", got {data.get('lastRun')!r}")
+        err(f"lastRun: expected ISO datetime with timezone or \"\", got {data.get('lastRun')!r}")
     data = dict(data)
     for k in ("sports", "athletes", "competitions", "changes"):
         if not isinstance(data.get(k), list):

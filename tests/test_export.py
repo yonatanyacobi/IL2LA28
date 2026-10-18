@@ -5,7 +5,7 @@ SCRIPT = os.path.join(HERE, "..", "job", "export_data.py")
 spec = importlib.util.spec_from_file_location("export_data", SCRIPT)
 ex = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ex)
-sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(HERE, "..", "job"))
 import validate_data  # noqa: E402
 
 
@@ -38,8 +38,9 @@ class Dump:
                     json.dump(body, f, ensure_ascii=False)
 
     def run(self, prev=None):
-        with contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.redirect_stdout(io.StringIO()) as log:
             ex.main(self.dir, self.out, prev)
+        self.log = log.getvalue()
         with open(self.out, encoding="utf-8") as f:
             return json.load(f)
 
@@ -109,9 +110,33 @@ class ExportTest(unittest.TestCase):
         hist = [{"at": "2026-01-01", "kind": "rank", "text": "t", "updatedBy": "u", "verifiedBy": "v"}]
         with Dump(athletes={"a": athlete(history=hist)}, comps={"c": comp()}) as d:
             d.run()
-            raw = open(d.out, encoding="utf-8").read()
+            with open(d.out, encoding="utf-8") as f:
+                raw = f.read()
         for key in ("updatedBy", "verifiedBy", "user-123", "user-456"):
             self.assertNotIn(key, raw)
+
+    def test_bad_timestamps_blanked_not_fatal(self):
+        data = self.export(
+            athletes={"a": athlete(updatedAt="yesterday", verifiedAt="2026-10-18"),
+                      "b": athlete(verifiedAt="2026-10-18T14:00:00+03:00"),
+                      "c": athlete(updatedAt="2026-10-18T14:00:00Z\n")},
+            meta={"lastRun": "today", "changes": [{"at": "soon", "text": "x"}, {"at": None, "text": "y"}]})
+        a, b, c = data["athletes"]
+        self.assertEqual((a["updatedAt"], a["verifiedAt"]), ("", ""))
+        self.assertEqual(b["verifiedAt"], "2026-10-18T14:00:00+03:00")
+        self.assertEqual(c["updatedAt"], "")
+        self.assertEqual(data["lastRun"], "")
+        self.assertEqual([ch["at"] for ch in data["changes"]], ["", ""])
+
+    def test_non_object_documents_dropped(self):
+        with Dump(athletes={"a": athlete(), "list": [1], "str": "x", "null": None},
+                  sports={"judo": {"he": "ג׳ודו"}, "bad": 5}, meta=["not", "a", "dict"]) as d:
+            data = d.run()
+        self.assertEqual(validate_data.validate(data), [])
+        self.assertEqual([a["id"] for a in data["athletes"]], ["a"])
+        self.assertEqual([s["id"] for s in data["sports"]], ["judo"])
+        for doc_id in ("list", "str", "null", "bad"):
+            self.assertIn(repr(doc_id), d.log)
 
     def test_shrink_guard(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -126,7 +151,8 @@ class ExportTest(unittest.TestCase):
             with Dump(athletes={f"a{i}": athlete() for i in range(9)}) as d:
                 r = d.cli(prev)
                 self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-                self.assertEqual(len(json.load(open(d.out))["athletes"]), 9)
+                with open(d.out, encoding="utf-8") as f:
+                    self.assertEqual(len(json.load(f)["athletes"]), 9)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import copy, json, os, subprocess, sys, tempfile, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(HERE, "..", "job"))
 import validate_data  # noqa: E402
 
 FIXTURE = os.path.join(HERE, "fixtures", "data.json")
@@ -22,12 +22,12 @@ class ValidateTest(unittest.TestCase):
         self.assertEqual(validate_data.validate(self.good), [])
 
     def test_cli(self):
-        ok = subprocess.run([sys.executable, os.path.join(HERE, "validate_data.py"), FIXTURE], capture_output=True)
+        ok = subprocess.run([sys.executable, os.path.join(HERE, "..", "job", "validate_data.py"), FIXTURE], capture_output=True)
         self.assertEqual(ok.returncode, 0)
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
             json.dump({"schemaVersion": 2}, f)
         try:
-            bad = subprocess.run([sys.executable, os.path.join(HERE, "validate_data.py"), f.name],
+            bad = subprocess.run([sys.executable, os.path.join(HERE, "..", "job", "validate_data.py"), f.name],
                                  capture_output=True, text=True)
         finally:
             os.unlink(f.name)
@@ -38,7 +38,8 @@ class ValidateTest(unittest.TestCase):
         def setv(v):
             return lambda d: d["athletes"][0].__setitem__("verifiedAt", v)
         self.assertEqual(self.broken(setv("2026-10-18T14:00:00Z")), [])
-        self.assertEqual(self.broken(setv("2026-10-18")), [])
+        self.assertEqual(self.broken(setv("")), [])
+        self.assertTrue(self.broken(setv("2026-10-18")))  # no time/timezone: page compares instants
         self.assertTrue(self.broken(setv("yesterday")))
 
     def test_broken_variants(self):
