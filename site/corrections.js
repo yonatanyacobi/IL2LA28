@@ -2,7 +2,7 @@
 // Loaded after app.js; uses its helpers and S.corrections (validated, newest first, see correctionsFrom()).
 "use strict";
 
-const FIX_BY = {reader: "דיווח של קורא/ת", audit: "בדיקת עובדות", job: "נמצא בעדכון האוטומטי"};
+const FIX_BY = {reader: "דיווח של קורא/ת", audit: "בדיקה ידנית", job: "נמצא בעדכון האוטומטי"};
 const FIX_STAT_MIN = 5;   // below this, a share "within 48 hours" would mislead
 // Pre-launch source audit (PM decision on #89); fixed history, not entries, so it's not derived from data.
 const PRE_LAUNCH_FIXES = 25;
@@ -14,6 +14,7 @@ const fixSpeed = c => { const h = fixHours(c); return isNaN(h) ? "" : h < 24 ? "
 function fixValue(field, v){
   if (field === "stage") return STAGES[stageOf({stage: v})];
   if (field === "sportId") return esc(sportName(v));
+  if (field === "nextDate" && isDate(v)) return fmt(v);
   return esc(v);
 }
 
@@ -45,7 +46,7 @@ function viewCorrections(id = ""){
   list.forEach(c => (months[c.at.slice(0, 7)] ??= []).push(c));
   const mail = `<span dir="ltr">${esc(REPORT_EMAIL)}</span>`;
   const body = list.length ? Object.keys(months).sort().reverse().map(m => `<section class="month" aria-labelledby="m-${m}">
-      <h2 id="m-${m}">${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})} <span>${months[m].length}</span></h2>
+      <h2 id="m-${m}">${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})} <span>${months[m].length}<span class="sr"> תיקונים</span></span></h2>
       ${months[m].map(fixEntry).join("")}</section>`).join("")
     : id ? `<div class="empty"><p>אין תיקונים מתועדים לרשומה הזאת.</p><p><a href="#corrections">לכל התיקונים</a></p></div>`
     : `<div class="empty"><p>עוד אין תיקונים מאז ההשקה.</p>
@@ -54,7 +55,7 @@ function viewCorrections(id = ""){
   <p class="crumb"><a href="#about">→ אודות</a></p>
   <h1 tabindex="-1">יומן התיקונים</h1>
   <p class="muted">כל טעות שתוקנה באתר מאז ההשקה${S.launchAt ? ` ב־${fmt(S.launchAt.slice(0, 10))}` : ""}: מה היה כתוב, מה נכון, ומאיזה מקור.
-    לפני ההשקה בדקנו את כל הרשומות מול המקורות ותיקנו ${PRE_LAUNCH_FIXES} מהן.${V ? ` ${V} מהן כבר נבדקו ידנית.` : ""}</p>
+    בבדיקה מול המקורות לפני ההשקה תיקנו ${PRE_LAUNCH_FIXES} רשומות.${V ? ` ${V === 1 ? "רשומה אחת כבר נבדקה" : `${V} רשומות כבר נבדקו`} ידנית מול המקור.` : ""}</p>
   <section class="panel" aria-labelledby="howH">
     <h2 id="howH">מטעות לתיקון</h2>
     <ol class="steps" role="list">
@@ -63,7 +64,7 @@ function viewCorrections(id = ""){
       <li><b>מתקנים ומתעדים</b><span>התיקון עולה לאתר ונרשם כאן.</span></li>
     </ol>
     <p>היעד: תיקון תוך 48 שעות מקבלת דיווח עם מקור.${stat}</p>
-    <p><a href="#about">איך אנחנו בודקים</a> · דיווח: ${mail}</p>
+    <p><a href="#about-trust">איך אנחנו בודקים</a> · דיווח: ${mail}</p>
   </section>
   ${id ? `<p>מוצגים התיקונים של <b>${esc(name || id)}</b> · <a href="#corrections">לכל התיקונים</a></p>` : ""}
   ${body}`;

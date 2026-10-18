@@ -590,6 +590,16 @@ test("#corrections: months newest first, diffs, labels, speed, escaping, invalid
   assert.ok(out.includes("היה: <del>אתלטיקה</del>") && out.includes('<a href="#sport-judo">ג׳ודו</a>'), "sportId shown by name, sport target linked");
   assert.ok(!fixes.join("").includes("@"), "no email in any entry");
   assert.ok(!out.includes("בוצעו תוך 48 שעות"), "stat hidden below 5 timed entries");
+  // #112 review: audit label, month count read out, check link, date values formatted, intro count.
+  assert.ok(out.includes('<span class="pill by-audit">בדיקה ידנית</span>'));
+  assert.ok(out.includes('<span class="sr"> תיקונים</span>') && out.includes('<a href="#about-trust">איך אנחנו בודקים</a>'));
+  assert.ok(out.includes("בבדיקה מול המקורות לפני ההשקה תיקנו 25 רשומות."));
+  const dated = (await bootFixes([fix({at: "2026-10-24T09:10:00Z"}, [{field: "nextDate", wrong: "2026-10-29", right: "2026-10-30"}])])).view("corrections");
+  assert.ok(dated.includes("<del>29 באוק׳ 2026</del>") && !dated.includes("2026-10-29"), "nextDate through fmt()");
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  for (const id of ["raz-hershko", "inbar-lanir"]) Object.assign(data.athletes.find(a => a.id === id), {verifiedAt: "2026-10-20T10:00:00Z", updatedAt: "2026-10-19T10:00:00Z"});
+  const counted = (await boot({data: {...data, corrections: CORRECTIONS, launchAt: LAUNCH}})).view("corrections");
+  assert.ok(counted.includes(" 2 רשומות כבר נבדקו ידנית מול המקור."), "computed manual-check count");
 });
 
 test("#corrections: 48-hour stat from 5 timed entries", async () => {
