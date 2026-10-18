@@ -5,10 +5,8 @@ published, covering 31 of 33 sports. Canoe and rowing have none.
 
 ## 1. Mission and audience
 We are the trustworthy Hebrew answer to "who from Israel is on the way to LA28, and what's at stake this week".
-The audience is:
-- Israeli fans who follow a few athletes or sports;
-- journalists and federation people who need a sourced overview;
-- families and communities who share news on WhatsApp.
+Audience: fans following a few athletes, journalists and federation people needing a sourced overview, and
+families who share news on WhatsApp.
 
 Until the Games (14–30.7.2028) we compete on trust and timeliness, not volume. Every claim has an official source
 and a fact-check, and results go up within a day.
@@ -23,7 +21,7 @@ There are no analytics, so we measure what we control:
 
 | Horizon | Targets |
 |---|---|
-| Launch (to 1.11.2026) | 0 open ✏️ audit fixes. At most 10 ❓ athletes, or the rest hidden. 33/33 sports have quota items. A stakes line is up 48 hours before every quota event. Results are live within 24 hours. |
+| Launch (to 1.11.2026) | 0 open ✏️ audit fixes. At most 10 ❓ athletes, or the rest hidden. 33/33 sports have quota items. Results are live within 24 hours. |
 | Season (to 30.6.2027) | About 60 qualifying events, peaking at about 3 a week. Results are live within 24 hours. Sign-off takes ≤4 hours on event days and ≤24 hours otherwise. A weekly audit runs. Fewer than 2 public corrections a month. A digest every Sunday. |
 | Games (Jun–Jul 2028) | Every qualified Israeli has a schedule and stakes. Same-day results. Zero unsourced "earned" or "selected" claims. |
 
@@ -39,8 +37,8 @@ There are no analytics, so we measure what we control:
   - A public *corrections log*.
 - **Games:** a Games-mode home (today's Israelis and results), and a frozen *archive* of each athlete's path.
 - **We will NOT:**
-  - build an English version (it doubles the fact-check load for a Hebrew audience);
-  - cover the Paralympics before mid-2027 (a separate system with no owner; we revisit then);
+  - build an English version (doubles fact-checking);
+  - cover the Paralympics before mid-2027;
   - run live scores or scraping;
   - add comments or accounts;
   - publish predictions;
@@ -56,7 +54,6 @@ Workload over the next 2 months, which hold about 14 qualifying events:
 - **Owner: a hidden single point of failure.** The result-night runbook has the owner edit, build and publish.
 - **Five developers and UX: more capacity than work** after launch. The recurring work is results tooling and
   regression, not features.
-- **Gil: fits.**
 
 **Hires, in this order:**
 1. **Second fact-checker.**
@@ -72,7 +69,6 @@ Workload over the next 2 months, which hold about 14 qualifying events:
 3. **Publisher: convert Omer, don't hire.**
    - Standing duty: result-night edit, build, PR, publish and live check, plus the Sunday digest.
    - The owner keeps only verification and approval of `earned` status.
-   - What breaks without: the owner's evenings become the bottleneck.
 
 **Not hiring:**
 - a translator (no English version);
@@ -86,8 +82,7 @@ Workload over the next 2 months, which hold about 14 qualifying events:
    validator's stage cross-check, a weekly audit and a corrections log.
 2. **Single points of failure** (Dana, the owner, the team lead). Mitigations: the second fact-checker; the
    publisher role; Noa as backup reviewer for doc-only PRs.
-3. **Platform limits** (no fetch, no push, no analytics, host changes). Mitigations: keep `site/` static and
-   portable with data in the repo; the digest serves as push.
+3. **Platform limits** (no fetch, no push, no analytics, host changes). Mitigation: keep `site/` static and portable.
 4. **Owner bandwidth.** Mitigations: at most one batched ask a week, each with a recommendation; the publisher role.
 5. **Legal and brand.** Risks: unofficial status, athlete names, a personal email shown publicly. Mitigations: an
    "unofficial" tag, no logos, a dedicated contact address, and a corrections and removal policy on `#about`.
