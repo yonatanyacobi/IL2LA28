@@ -7,7 +7,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 
 function fakeEl(id){
@@ -130,6 +130,35 @@ test("empty data renders empty states", async () => {
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));
+});
+
+// The quotas.json loader is a separate story; these tests set S.quotas directly.
+const QUOTAS = [
+  {sportId: "judo", event: "עד 57 ק״ג", israelStatus: "earned", israelNote: "<img src=x onerror=alert(1)>", nextQuotaEvent: null, source: "javascript:alert(1)"},
+  {sportId: "judo", event: "עד 78 ק״ג", israelStatus: "in-contention", nextQuotaEvent: {name: "אירוע עבר", start: "2000-01-01"}},
+  ...[1, 2, 3, 4, 5, 6].map(i => ({sportId: "judo", event: `מקצה ${i}`, israelStatus: "outside", nextQuotaEvent: {name: `אירוע ${i}`, start: `2099-0${i}-01`}})),
+  {sportId: "judo", event: "סטטוס זר", israelStatus: "bogus", nextQuotaEvent: null},
+];
+
+test("#quotas groups by status, lists the next 5 future events and escapes", async () => {
+  const {run, view} = await boot();
+  assert.ok(view("quotas").includes("טוען נתוני מכסות"), "not-loaded state");
+  assert.ok(!view("home").includes("href=\"#quotas\""), "no quota link without items");
+  run(`S.quotas = ${JSON.stringify(QUOTAS)}; S.quotasLoaded = true; S.quotasAt = "2026-10-18"`);
+  const out = view("quotas");
+  assert.ok(!out.includes(NOT_FOUND));
+  const pos = ["qH-earned", "qH-in-contention", "qH-outside", "qH-unknown"].map(id => out.indexOf(`id="${id}"`));
+  assert.ok(pos.every((p, i) => p > 0 && (i === 0 || p > pos[i - 1])), "status group order: " + pos);
+  assert.ok(out.includes("<b>1</b> מכסה הושגה") && out.includes("<b>1</b> אין מידע עדיין"), "summary counts (bogus → unknown)");
+  const upcoming = out.slice(out.indexOf("qNextH"), out.indexOf("qH-earned"));
+  assert.deepStrictEqual([...upcoming.matchAll(/אירוע (\d|עבר)/g)].map(m => m[1]), ["1", "2", "3", "4", "5"]);
+  assert.ok(!/<img/i.test(out) && out.includes("&lt;img"), "israelNote escaped");
+  assert.ok(out.includes('href="#sport-judo"'));
+  assert.ok(view("home").includes("href=\"#quotas\"") && view("home").includes("מקצים עם מכסה לישראל"));
+  const sports = view("sports");
+  assert.ok(sports.includes("href=\"#quotas\"") && sports.includes("✓ 1 הושגה") && sports.includes("◐ 1 במרוץ"));
+  run(`S.quotasFailed = true`);
+  assert.ok(view("quotas").includes("לא נטענו") && !view("home").includes("data-retry"));
 });
 
 (async () => {
