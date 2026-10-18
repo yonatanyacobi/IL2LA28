@@ -880,6 +880,7 @@ test("#c- Abu Dhabi (fallback data): header, 3 days, athletes once each, quota i
   assert.ok(stakes.includes("<bdi>78+ ק״ג נשים</bdi>") && stakes.includes('<a href="#sport-judo">לכל המכסות בענף</a>'), "judo quota items");
   assert.ok(out.includes(`value="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT#c-${AD}"`) && out.includes('data-copy-msg="evShareMsg"'), "share box");
   assert.ok(b.run(`viewEvent("nope")`).includes(NOT_FOUND));
+  assert.ok(b.view(`c-${AD}`).includes("גרנד סלאם אבו דאבי") && b.view("c-nope").includes(NOT_FOUND), "#c- route and unknown id");
 });
 
 test("#c- status by date, escaped results, earned items, series, Doha with no known Israelis and with a session", async () => {
