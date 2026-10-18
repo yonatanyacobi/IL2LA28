@@ -1,0 +1,24 @@
+[
+ {
+  "id": "fiba-ebw-2027-q-nov-2026",
+  "sportId": "basketball",
+  "name": "מוקדמות יורובאסקט נשים 2027 – חלון נובמבר (סיבוב שני)",
+  "location": "ריגה, לטביה; בר, מונטנגרו",
+  "start": "2026-11-11",
+  "end": "2026-11-17",
+  "notes": "בית I עם פולין, טורקיה ומונטנגרו; שתי הראשונות בבית עולות ליורובאסקט 2027, ממנו 6 הראשונות לטורנירי OQT ב-2028",
+  "source": "https://www.fiba.basketball/en/events/fiba-womens-eurobasket-2027-qualifiers/news/venues-and-tip-off-times-set-for-november-window-of-fiba-womens-eurobasket-2027-qualifiers",
+  "qualifying": false
+ },
+ {
+  "id": "fiba-wc-2027-eq-w5",
+  "sportId": "basketball",
+  "name": "מוקדמות מונדיאל 2027 – חלון 5 (סיבוב שני)",
+  "location": "האג, הולנד; ריגה, לטביה",
+  "start": "2026-11-27",
+  "end": "2026-11-30",
+  "notes": "בית K; שלוש הראשונות בכל בית עולות למונדיאל 2027 בקטאר, שתוצאותיו קובעות את המסלול לטורנירי OQT ב-2028",
+  "source": "https://www.fiba.basketball/en/events/fiba-basketball-world-cup-2027-european-qualifiers/news/tip-off-times-locations-set-for-window-5-of-european-qualifiers",
+  "qualifying": false
+ }
+]
