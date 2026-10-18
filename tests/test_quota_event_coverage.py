@@ -6,8 +6,8 @@ from datetime import date, timedelta
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WINDOW_DAYS = 14
-# Remove an entry once its competition is in the DB and the fixture is refreshed.
-KNOWN_MISSING = {("triathlon", "גביע העולם בטריאתלון, טונגיונג")}
+# A gap we can't fix yet, as (sportId, nextQuotaEvent.name); remove it once the competition is in the fixture.
+KNOWN_MISSING = set()
 
 
 def load(*parts):
@@ -39,7 +39,6 @@ class QuotaEventCoverageTest(unittest.TestCase):
     def test_no_new_gaps(self):
         self.assertEqual(self.missing - KNOWN_MISSING, set())
 
-    @unittest.expectedFailure  # Tongyeong (24.10) is not in data.json yet; becomes an error once it is
     def test_every_upcoming_quota_event_has_a_competition(self):
         self.assertEqual(self.missing, set())
 
