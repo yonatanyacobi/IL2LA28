@@ -1603,6 +1603,16 @@ test("approving an empty patch only closes the proposal; a real patch still stam
 });
 
 // #today / #day-<date> (site/day.js; daily-and-following.md §1, UX review on #140).
+test("#day a11y: h1 before the prev/next links in the DOM; the result is inline, not a <p> inside a <span>", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const sagiv = data.athletes.find(a => a.id === "shachar-sagiv");
+  sagiv.history = [...(sagiv.history || []), {at: "2026-10-24", kind: "result", text: "מקום 12", source: "https://triathlon.org/x"}];
+  const out = (await boot({data, now: "2026-10-26T08:00:00Z"})).view("day-2026-10-24");
+  const nav = out.split('<div class="day-nav">')[1].split("</div>")[0];
+  assert.ok(nav.indexOf("<h1") < nav.indexOf('class="day-prev"') && nav.indexOf('class="day-prev"') < nav.indexOf('href="#day-2026-10-25"'), nav);
+  assert.ok(out.includes('<span class="res"><b>תוצאה:</b> מקום 12') && !out.includes('<p class="res"'));
+});
+
 test("#day renders the fixture on 24.10, 29.10 and 3.11 with Israelis' sessions only", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
   // A past day keeps its athletes through history results even after nextDate has moved on.
