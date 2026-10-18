@@ -1652,6 +1652,55 @@ test("#day: today's states, a result on another day, #day alone, impossible date
   assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
 });
 
+// #day on data.json.sessions (docs/design/sessions-contract.md); the fallback stays for empty sessions.
+const SESS = (over = {}) => ({id: "issf-wch-doha-2026-20261103-arm-q1", competitionId: "issf-wch-doha-2026", date: "2026-11-03",
+  startUtc: "2026-11-03T06:15:00Z", athleteIds: ["sergey-richter"], phase: "רובה אוויר 10 מ׳ גברים – מוקדמות, מקצה 1",
+  source: "https://www.issf-sports.org/x", result: "", resultSource: "", resultAt: "", ...over});
+const withSessions = list => ({...JSON.parse(JSON.stringify(FIXTURE)), sessions: list});
+
+test("#day from sessions: time, status by clock, result stamp, untimed, Israel day key, defense in depth", async () => {
+  const rowOf = html => html.split('<ul class="rows sess">')[1]?.split("</ul>")[0] || "";
+  const at = async (now, sessions) => (await boot({data: withSessions(sessions), quotas: SITE_QUOTAS, now})).view("day-2026-11-03");
+  // 06:15Z is 08:15 in Israel (UTC+2 after 25.10).
+  const before = rowOf(await at("2026-11-03T05:00:00Z", [SESS()]));
+  assert.ok(before.includes('<span class="d">08:15</span>') && before.includes("pill s-before") && before.includes("<bdi>רובה אוויר 10 מ׳ גברים"), "before");
+  assert.ok(rowOf(await at("2026-11-03T07:00:00Z", [SESS()])).includes("pill s-live"), "inside the 3h window");
+  assert.ok(rowOf(await at("2026-11-03T09:30:00Z", [SESS()])).includes("pill s-wait"), "after the window");
+  const done = rowOf(await at("2026-11-03T12:00:00Z", [SESS({result: "<b>מקום 12</b>", resultSource: "https://www.issf-sports.org/r", resultAt: "2026-11-03T08:40:00Z"})]));
+  assert.ok(done.includes("<b>תוצאה:</b> &lt;b&gt;מקום 12&lt;/b&gt; · עודכן ב־10:40") && !done.includes("pill s-"), "result with its own time, escaped");
+  const unproven = rowOf(await at("2026-11-03T12:00:00Z", [SESS({result: "מקום 12", resultSource: "http://x", resultAt: "2026-11-03T08:40:00Z"})]));
+  assert.ok(!unproven.includes("תוצאה:") && unproven.includes("pill s-wait"), "a result without proof isn't shown");
+  const untimed = rowOf(await at("2026-11-02T08:00:00Z", [SESS({startUtc: null})]));   // the day before
+  assert.ok(untimed.includes('<span class="d">השעה תפורסם</span>') && untimed.includes("pill s-before"), "untimed: no time, never a time");
+  // Day key is the Israel date of startUtc: 23:30Z on 2.11 is 01:30 on 3.11 in Israel.
+  const late = await at("2026-11-01T08:00:00Z", [SESS({date: "2026-11-02", startUtc: "2026-11-02T23:30:00Z"})]);
+  assert.ok(rowOf(late).includes("01:30"), "Israel day key");
+  const junk = await at("2026-11-01T08:00:00Z", [SESS({competitionId: "nope"}), SESS({id: "x2", athleteIds: ["nobody"]})]);
+  assert.ok(!junk.includes('<ul class="rows sess">'), "unknown competition / athletes dropped");
+});
+
+test("#day merges sessions with the fallback per athlete (lead review on #151, MEDIUM)", async () => {
+  // Richter has a session on 3.11; Abu Dhabi judo athletes (29.10) have none and keep their nextDate rows.
+  const b = await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
+  const j = b.view("day-2026-10-29");
+  assert.ok(j.includes('id="ds-judo"') && j.includes('href="#a-raz-hershko"') && j.includes('<span class="d">תאריך בלבד</span>'), "athletes without a session stay");
+  const sh = b.view("day-2026-11-03");
+  assert.strictEqual((sh.match(/href="#a-sergey-richter"/g) || []).length, 1, "an athlete with a session isn't repeated from the fallback");
+  assert.ok(sh.includes('<span class="d">08:15</span>'));
+});
+
+test("#day: a session without its own result shows the athlete's history result for that day (lead review on #151, HIGH)", async () => {
+  const data = withSessions([SESS()]);
+  data.athletes.find(a => a.id === "sergey-richter").history.push({at: "2026-11-03", kind: "result", text: "מקום 30 <i>במוקדמות</i>", source: "https://www.issf-sports.org/r"});
+  const out = (await boot({data, quotas: SITE_QUOTAS, now: "2026-11-03T12:00:00Z"})).view("day-2026-11-03");
+  const row = out.split('<ul class="rows sess">')[1].split("</ul>")[0];
+  assert.ok(row.includes("<b>תוצאה:</b> מקום 30 &lt;i&gt;במוקדמות&lt;/i&gt;") && !row.includes("בהמתנה לתוצאה"), "history result fills the session");
+  assert.ok(!row.includes("עודכן ב־") && row.includes('href="https://www.issf-sports.org/r"'), "date-only result: no stamp, its source linked");
+  const other = withSessions([SESS()]);
+  other.athletes.find(a => a.id === "sergey-richter").history.push({at: "2026-11-02", kind: "result", text: "יום אחר", source: "https://x.org"});
+  assert.ok(!(await boot({data: other, quotas: SITE_QUOTAS, now: "2026-11-03T12:00:00Z"})).view("day-2026-11-03").includes("יום אחר"), "only the same day");
+});
+
 test("#day (Gil D4, D6, D8): 'תאריך בלבד', no stakes for earned items, followed sports first", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
   // 29.10: judo (Abu Dhabi) and a weightlifter moved onto the same day, so two sports are listed.
@@ -1667,6 +1716,27 @@ test("#day (Gil D4, D6, D8): 'תאריך בלבד', no stakes for earned items, 
   assert.ok(judo.length && !judo.some(i => judoBlock.includes(i.stakes.slice(0, 20))), "D6: earned items don't show pre-event stakes");
   assert.ok(out.indexOf('id="ds-weightlifting"') < out.indexOf('id="ds-judo"'), "D8: followed sport first");
   assert.ok(out.split('id="ds-weightlifting"')[1].split("</h2>")[0].includes("במעקב שלך"), "D8: followed sport marked");
+});
+
+test("#day sessions sort by time with untimed last (Gil P1 on #151)", async () => {
+  const data = withSessions([
+    SESS({id: "a", startUtc: null, athleteIds: ["sergey-richter"], phase: "ללא שעה"}),
+    SESS({id: "b", startUtc: "2026-11-03T08:00:00Z", phase: "שנייה"}),
+    SESS({id: "c", startUtc: "2026-11-03T06:00:00Z", phase: "ראשונה"}),
+  ]);
+  const out = (await boot({data, quotas: SITE_QUOTAS, now: "2026-11-01T08:00:00Z"})).view("day-2026-11-03");
+  const order = ["ראשונה", "שנייה", "ללא שעה"].map(t => out.indexOf(t));
+  assert.ok(order.every(i => i > 0) && order[0] < order[1] && order[1] < order[2], "08:00, 10:00, then untimed: " + order);
+});
+
+test("#day: an athlete with a session later in the competition isn't listed on their nextDate too (Gil P1 on #151)", async () => {
+  // Hershko's nextDate is day 1 of Abu Dhabi (29.10); her session is on day 3 (31.10).
+  const data = withSessions([SESS({id: "j1", competitionId: "judo-gs-abu-dhabi-2026", date: "2026-10-31", startUtc: "2026-10-31T07:00:00Z",
+    athleteIds: ["raz-hershko"], phase: "מעל 78 ק״ג"})]);
+  const b = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
+  assert.ok(!b.view("day-2026-10-29").includes('href="#a-raz-hershko"'), "not on her nextDate");
+  assert.ok(b.view("day-2026-10-29").includes('href="#a-izhak-ashpiz"'), "others without a session keep their nextDate row");
+  assert.strictEqual((b.view("day-2026-10-31").match(/href="#a-raz-hershko"/g) || []).length, 1, "once, on the session day");
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
