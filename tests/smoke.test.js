@@ -7,7 +7,9 @@ const vm = require("vm");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const SCRIPTS = ["site/app.js", "site/admin.js", "site/quotas.js", "site/digest.js", "site/corrections.js", "site/sessions.js", "site/day.js", "site/event.js", "site/home.js", "site/following.js"].map(p => path.join(ROOT, p)).filter(fs.existsSync);
+// The page's own script order (as tests/bench.js), so a new site/*.js can't be left out; a missing file throws.
+const SCRIPTS = [...fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8").matchAll(/<script src="([\w.-]+\.js)">/g)]
+  .map(m => path.join(ROOT, "site", m[1]));
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 // The fixture is a real export and gets refreshed (tests/README.md). A test that needs a precondition the real data
 // may lose (no ranks, a given nextDate…) sets it on its own copy instead of relying on the snapshot.
