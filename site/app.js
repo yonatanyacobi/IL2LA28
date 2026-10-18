@@ -39,6 +39,18 @@ const daysSince = iso => (Date.now() - new Date(str(iso))) / 864e5;
 const stageOf = a => Math.min(3, Math.max(0, Number(a.stage) | 0));
 const heCmp = (a, b) => str(a).localeCompare(str(b), "he");
 const plural = (n, one, many) => n === 1 ? one : `${n} ${many}`;
+// A section's empty line (UX S5, components §9): what is known, plus at most one way on. `text` is trusted copy.
+// Whole pages keep div.empty.
+const emptyLine = (text, href, label) =>
+  `<p class="muted">${text}${href && label ? ` <a href="${esc(href)}">${esc(label)}</a>` : ""}</p>`;
+// The next day after `from` with Israelis on #day (day.js, loaded later), or "" when there is none or no day.js.
+function nextIsraeliDay(from){
+  if (typeof hasIsraelis !== "function") return "";
+  for (let i = 1; i <= DAY_LOOKAHEAD; i++) if (hasIsraelis(addDays(from, i))) return addDays(from, i);
+  return "";
+}
+const nextDayEmpty = (text, from) => (d => emptyLine(text, d && `#day-${d}`, d && `ליום התחרויות הבא: ${fmt(d)}`))(nextIsraeliDay(from));
+const calEmpty = (text, sid) => emptyLine(text, sid ? `#calendar-${sid}` : "#calendar", "לוח התחרויות");
 // "השתנה ב־HH:MM" (docs/design/changed-rows.md): a row whose signature differs from the previous render of the same
 // page, compared only on an auto-refresh render, stays marked until the next navigation. Rows that are new count too.
 // The time is the export's (as in #updateNote), kept from the refresh that first marked the row.
@@ -481,17 +493,18 @@ function viewHome(){
       <h2>ישראלים בפעולה ב־14 הימים הקרובים</h2>
       ${busy.length ? `<ul class="rows">${busy.map(a => `<li><span class="d">${fmtShort(a.nextDate)}</span>
         <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))} · ${nextCompFact(a)}</small></span><span></span></li>`).join("")}</ul>`
-        : `<p class="muted">אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.</p>`}
+        : nextDayEmpty(inToday.size ? "כל מי שמתחרה ב־14 הימים הקרובים כבר מופיע למעלה."
+          : "אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.", t)}
     </section>
     <section class="panel">
       <div class="sec-head"><h2>מה התעדכן</h2><span class="actions">${typeof viewDigest === "function" ? `<a href="#digest">תקציר שבועי לשיתוף</a>` : ""}<a href="#updates">כל העדכונים</a></span></div>
-      ${S.changes.length ? `<ul class="rows">${S.changes.slice(0, 5).map(changeRow).join("")}</ul>` : `<p class="muted">עוד אין עדכונים.</p>`}
+      ${S.changes.length ? `<ul class="rows">${S.changes.slice(0, 5).map(changeRow).join("")}</ul>` : calEmpty("עוד אין עדכונים.")}
     </section>
   </div>
   ${S.seenBefore && !mine.length && !mineSports.length ? `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>` : ""}
   <section class="panel">
     <div class="sec-head"><h2>תחרויות קרובות</h2><a href="#calendar">ללוח התחרויות</a></div>
-    <div class="stack">${upcoming().slice(0, 6).map(c => compRow(c, true)).join("") || `<p class="muted">אין תחרויות קרובות במאגר.</p>`}</div>
+    <div class="stack">${upcoming().slice(0, 6).map(c => compRow(c, true)).join("") || calEmpty("אין תחרויות קרובות ידועות.")}</div>
   </section>`;
 }
 
@@ -508,7 +521,7 @@ function renderResults(){
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
     ${hits.length ? `<div class="cards">${hits.slice(0, SEARCH_MAX).map(athleteCard).join("")}</div>
-    ${hits.length > SEARCH_MAX ? `<p class="muted">מציג ${SEARCH_MAX} מתוך ${hits.length}. אפשר לצמצם את החיפוש.</p>` : ""}` : `<p class="muted">לא נמצאו ספורטאים או נבחרות שמתאימים לחיפוש.</p>`}
+    ${hits.length > SEARCH_MAX ? `<p class="muted">מציג ${SEARCH_MAX} מתוך ${hits.length}. אפשר לצמצם את החיפוש.</p>` : ""}` : emptyLine("לא נמצאו ספורטאים או נבחרות שמתאימים לחיפוש.", "#sports", "כל הענפים")}
   </section>`;
 }
 
@@ -554,11 +567,11 @@ function viewSport(id){
   ${quotaSection(id)}
   <section class="stack">
     <h2>${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
-    ${list.length ? `<div class="cards">${list.map(athleteCard).join("")}</div>` : `<div class="empty">אין כרגע ספורטאים או נבחרות מישראל במעקב בענף הזה.</div>`}
+    ${list.length ? `<div class="cards">${list.map(athleteCard).join("")}</div>` : calEmpty("אין כרגע ספורטאים או נבחרות מישראל במעקב בענף הזה.", id)}
   </section>
   <section class="stack">
     <div class="sec-head"><h2>תחרויות קרובות בענף</h2>${comps.length > 5 ? `<a href="#calendar-${esc(id)}">כל ${comps.length} התחרויות</a>` : ""}</div>
-    ${comps.slice(0, 5).map(c => compRow(c, false)).join("") || `<p class="muted">אין תחרויות קרובות במאגר.</p>`}
+    ${comps.slice(0, 5).map(c => compRow(c, false)).join("") || calEmpty("אין תחרויות קרובות ידועות בענף.", id)}
   </section>`;
 }
 
@@ -599,11 +612,11 @@ function viewAthlete(id){
     <h2>היסטוריה</h2>
     ${hist.length ? `<ol class="timeline">${hist.map(h => `<li class="k-${esc(h.kind)}"><span class="d">${fmt(h.at)}</span>
       <span>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}${(k => rowMark(k, k))(`hist|${id}|${h.at}|${h.kind}|${h.text}`)}</span></li>`).join("")}</ol>`
-      : `<p class="muted">עוד אין אירועים מתועדים.</p>`}
+      : emptyLine("עוד אין אירועים מתועדים.")}
   </section>
   <section class="stack">
     <h2>תחרויות קרובות בענף</h2>
-    ${comps.map(c => compRow(c, false)).join("") || `<p class="muted">אין תחרויות קרובות במאגר.</p>`}
+    ${comps.map(c => compRow(c, false)).join("") || calEmpty("אין תחרויות קרובות ידועות בענף.", a.sportId)}
   </section>
   <section class="panel">
     <h2>שיתוף</h2>
@@ -637,7 +650,7 @@ function calendarResults(){
   return rows.length ? Object.keys(months).sort().map(m => `<section class="month">
       <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}<span class="sr"> ${months[m].length === 1 ? "תחרות" : "תחרויות"}</span></span></h2>
       ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
-    : `<div class="empty">אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה.</div>`;
+    : emptyLine("אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה.");
 }
 
 function viewCalendar(sportFilter = ""){
@@ -669,7 +682,7 @@ function viewCalendar(sportFilter = ""){
 function viewUpdates(){
   return `<h1 tabindex="-1">מה התעדכן</h1>
   ${typeof viewDigest === "function" ? `<p><a href="#digest">תקציר שבועי לשיתוף</a></p>` : ""}
-  <section class="panel">${S.changes.length ? `<ul class="rows">${S.changes.map(changeRow).join("")}</ul>` : `<p class="muted">עוד אין עדכונים.</p>`}</section>
+  <section class="panel">${S.changes.length ? `<ul class="rows">${S.changes.map(changeRow).join("")}</ul>` : calEmpty("עוד אין עדכונים.")}</section>
   <p class="foot">העדכונים נאספים פעם ביום ממקורות רשמיים ומכלי תקשורת. שינוי שלב (מכסה או בחירה לנבחרת) מתפרסם רק אחרי בדיקה ידנית.</p>`;
 }
 
