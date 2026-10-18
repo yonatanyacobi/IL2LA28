@@ -733,7 +733,9 @@ test("date matrix: strip, #quotas and sport page follow the event calendar; no s
   }
 });
 
-(async () => {
+// tests/preview_at.js reuses boot() to render real data on a chosen date.
+module.exports = {boot};
+if (require.main === module) (async () => {
   let failed = 0;
   for (const {name, fn} of tests) {
     try { await fn(); console.log(`ok   ${name}`); }

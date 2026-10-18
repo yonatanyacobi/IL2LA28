@@ -25,11 +25,11 @@ https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT.
 Copy this list into the PR thread and tick the items as you go.
 
 ```
-[ ] 0. Sign-off: review.status "ok"/"fixed" by dana on every changed item; stage approved (earned only)
+[ ] 0. Sign-off: check_signoff.py shows no STOP; stage approved (earned only)
 [ ] 1. Merged by the lead; local main == origin/main; tree clean
 [ ] 2. build_quotas on main: no diff in site/quotas.json
 [ ] 3. Export: data.json published by the daily task, copied to /tmp/la28-data.json, stage visible
-[ ] 4. Validators: data, quotas, quota_due, unit, smoke, node --check, all green
+[ ] 4. Validators: data, quotas, quota_due, node --check, unit, smoke, preview_at (today + next event day)
 [ ] 5. Republish: call prepared, coordinator published, main SHA noted in the PR
 [ ] 6. Live check at 400px, light and dark, signed out
 [ ] 7. Digest text copied from #digest, checked, handed to the owner
@@ -37,24 +37,28 @@ Copy this list into the PR thread and tick the items as you go.
 
 ### 0. Sign-off (before merge)
 
-On the PR branch, every item that changed in `data/quotas/quotas.json` has
-`"review": {"status": "ok" | "fixed", "by": "dana", …}`:
+On the PR branch, every item that changed in `data/quotas/quotas.json` has `review.status` `"ok"` or `"fixed"`
+(`review` is multi-line JSON, so a `grep` of the diff doesn't show it):
 
 ```sh
-git diff origin/main -- data/quotas/quotas.json | grep '"review"'
+git fetch origin
+python3 job/check_signoff.py          # one line per changed item; exit 1 if any line says STOP
 ```
+
+A `STOP` item is left out by the build, so it would silently not go live. No output means no quota item changed.
 
 For an `earned` item, the athletes' stage-2 proposals have been approved in the page (result-night.md, step 4).
 On the branch, before asking for review, the author runs steps 2 and 4 below and commits `site/quotas.json`.
 
 ### 1. Merge (lead)
 
-The lead merges with `git merge --no-ff`. Then the Publisher runs:
+The lead merges with `git merge --no-ff`. Then the Publisher runs, in the main checkout (`~/workspace/IL2LA28`, not
+a worktree: git refuses to check out `main` in a second worktree):
 
 ```sh
 git checkout main && git pull --ff-only
-git status --short          # must print nothing
-git log --oneline -1        # note this SHA: it is what goes live
+git status --short --untracked-files=no   # must print nothing; untracked files are never published
+git log --oneline -1                      # note this SHA: it is what goes live
 ```
 
 ### 2. Build quotas on main
@@ -89,15 +93,24 @@ instead of a hand export, so that the export has a single code path.
 python3 job/validate_data.py /tmp/la28-data.json
 python3 job/validate_data.py --quotas site/quotas.json /tmp/la28-data.json
 python3 job/quota_due.py /tmp/la28-data.json site/quotas.json --days 4
-for f in site/*.js; do node --check "$f"; done
+for f in site/*.js; do node --check "$f" || echo "SYNTAX ERROR: $f"; done
 python3 -m unittest discover -s tests
 node tests/smoke.test.js
+node tests/preview_at.js /tmp/la28-data.json site/quotas.json $(TZ=Asia/Jerusalem date +%F)
+node tests/preview_at.js /tmp/la28-data.json site/quotas.json <next event day, YYYY-MM-DD>
 ```
 
-- The two `validate_data.py` runs must exit 0. `INVALID: … "earned" but no athlete … has stage >= 2` means step 3
-  isn't done yet.
-- `quota_due.py` is informational. Every `לעדכן quotas.json: …` line it prints should be explained by this
-  release, or already be on someone's list. Paste the output into the PR thread.
+- The two `validate_data.py` runs print `OK: …` and must exit 0. `INVALID: … "earned" but no athlete … has
+  stage >= 2` means step 3 isn't done yet.
+- `quota_due.py` is informational, and it prints nothing when nothing is due. Every `לעדכן quotas.json: …` line it
+  prints should be explained by this release, or already be on someone's list. Paste the output into the PR thread.
+- The `node --check` loop prints nothing when all files parse. Its exit status only reflects the last file, so read
+  the output.
+- The unit tests end with `OK`, and the smoke tests end with `N/N passed`.
+- `preview_at.js` renders every route with the real data and quotas as on that Israel date. It prints the today
+  strip, the new-quota panel and the full digest text, and exits 1 on a crash, a not-found sport or athlete, or a
+  digest over 3,500 characters. Read the strip and the digest for stale wording (for example, "מה זה אומר" about an
+  event that has already happened).
 
 ### 5. Republish (coordinator presses publish)
 
@@ -155,12 +168,14 @@ If anything is wrong, roll back (below). Don't fix forward on the live site.
 Republish the previous build. Don't hand-edit published files.
 
 ```sh
-git show <previous published SHA>:site/quotas.json > /tmp/quotas-prev.json
+rm -rf .rollback && mkdir .rollback
+git archive <previous published SHA> site | tar -x -C .rollback     # → .rollback/site/…
 ```
 
-Give the coordinator the step 5 call with `files = {"quotas.json": "/tmp/quotas-prev.json"}` (add the code files from
-the same SHA if code changed). A wrong stage is reverted by an editor in the page and reaches the public with the
-next export (step 3). Then fix it on a branch and run this checklist again.
+Give the coordinator the step 5 call with every `site/` path replaced by `.rollback/site/` (page and files). The
+publish tool only takes files under the repo or Claude's scratchpad, so don't use `/tmp`. Run `rm -rf .rollback`
+afterwards. A wrong stage is reverted by an editor in the page and reaches the public with the next export (step 3).
+Then fix it on a branch and run this checklist again.
 
 ## Sunday digest
 
