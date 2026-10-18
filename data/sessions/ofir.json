@@ -1,0 +1,16 @@
+[
+ {
+  "id": "tri-world-cup-tongyeong-2026-20261024-men",
+  "competitionId": "tri-world-cup-tongyeong-2026",
+  "date": "2026-10-24",
+  "timeLocal": "10:30",
+  "tz": "Asia/Seoul",
+  "athleteIds": ["shachar-sagiv"],
+  "phase": "גביע העולם בטריאתלון – עלית גברים, ספרינט",
+  "source": "https://triathlon.org/events/2026-world-triathlon-cup-tongyeong/start-lists",
+  "result": "",
+  "resultSource": "",
+  "resultAt": "",
+  "notes": "HOLD: apply only once the elite men start list shows Sagiv (sessions contract §5). On 2026-10-18 the page showed the time (Oct 24, 2026, 10:30) but no names. Recheck 2026-10-22. startUtc = 2026-10-24T01:30:00Z (04:30 Israel). Result night: docs/research/result-watch-tongyeong.md."
+ }
+]
