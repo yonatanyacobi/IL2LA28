@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:51:28Z",
+ "updatedAt": "2026-10-18T13:25:07Z",
  "items": [
   {
    "sportId": "judo",
@@ -592,6 +592,21 @@
    "checkedAt": "2026-10-18"
   },
   {
+   "sportId": "sailing",
+   "event": "470 מעורב",
+   "totalQuotas": 19,
+   "maxPerNOC": 1,
+   "allocation": "8 מדינות באליפות העולם 2027 בגדיניה, 6 באירועים יבשתיים (אחת לאירופה), 4 בתחרות ההזדמנות האחרונה 2028, ומקום מארחת.",
+   "israelStatus": "unknown",
+   "israelNote": "לוי/גל מקום 14 וחסון/טיאנו מקום 16 מתוך 74 באליפות העולם 2026 באנושימה (לא חולקו בה מכסות)",
+   "nextQuotaEvent": {
+    "name": "אליפות העולם בשייט – מקצי זוגות, גדיניה",
+    "start": "2027-07-22"
+   },
+   "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
    "sportId": "surfing",
    "event": "שורטבורד נשים",
    "totalQuotas": 24,
@@ -864,5 +879,5 @@
    "checkedAt": "2026-10-18"
   }
  ],
- "unpublished": 3
+ "unpublished": 2
 }
