@@ -2103,6 +2103,56 @@ test("changed rows: marked after auto-refresh on #a- and #day, one announcement,
   assert.ok(/\.pill\.chg\{[^}]*position:absolute/.test(css) && /\.rows li,\.facts dd\{position:relative\}/.test(css), "pill is out of the flow");
 });
 
+// The 25.10 morning (docs/qa/live-qa-2510.md §5–§6), automated: the tab is open on home through the 24.10 result night.
+const SAGIV_RESULT = {at: "2026-10-24", kind: "result", text: "מקום 12", source: "https://triathlon.org/events/2026-world-triathlon-cup-tongyeong"};
+const exportAt = (gen, edit = () => {}) => { const d = JSON.parse(JSON.stringify(FIXTURE)); d.generatedAt = gen; d.lastRun = gen; edit(d); return d; };
+async function openTab(now, data = FIXTURE){
+  const b = await boot({data, quotas: QUOTAS_SNAPSHOT, now});
+  let next = data;
+  b.ctx.fetch = async url => ({ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(url === "quotas.json" ? QUOTAS_SNAPSHOT : next))});
+  b.ctx.location.hash = "#home"; b.run("navigate()");
+  return {...b, publish: async d => { next = d; await b.run("checkForUpdate()"); return b.els.view.innerHTML; }};
+}
+const panelOf = (html, id) => html.includes(`id="${id}"`) ? html.split(`id="${id}"`)[1].split("</section>")[0] : "";
+const chgMarks = html => (html.match(/class="pill chg"/g) || []).length;
+
+test("25.10 morning: a result landing by auto-refresh leaves 'אתמול', shows under recent results with one mark", async () => {
+  // Israel is on winter time (UTC+2) from 25.10: 04:30Z is 06:30, and the 05:00Z export reads 07:00.
+  const b = await openTab("2026-10-25T04:30:00Z");
+  const before = b.els.view.innerHTML;
+  assert.ok(/אתמול[\s\S]*?3 הופעות ממתינות לתוצאה/.test(panelOf(before, "weekH")), "precondition: 3 awaited on 24.10");
+  assert.strictEqual(chgMarks(before), 0);
+
+  const html = await b.publish(exportAt("2026-10-25T05:00:00Z", d => {
+    const a = d.athletes.find(x => x.id === "shachar-sagiv"); a.history = [...(a.history || []), SAGIV_RESULT]; }));
+  const week = panelOf(html, "weekH"), res = panelOf(html, "homeResH");
+  assert.ok(/2 הופעות ממתינות לתוצאה/.test(week), "the awaited count drops to 2");
+  assert.ok(res.includes("שחר שגיב") && res.includes("מקום 12") && res.includes("triathlon.org"), "the result with its source");
+  assert.strictEqual(chgMarks(res), 1, "the new result row is marked");
+  assert.strictEqual(chgMarks(week), 0, "week rows carry no marks (no per-session state there)");
+  assert.strictEqual(chgMarks(html), 1, "nothing else on the page is marked");
+  assert.strictEqual(b.run(`$("updateNote").textContent`), "הנתונים עודכנו ב־07:00 · פריט אחד השתנה בדף הזה");
+
+  // The floor final lands too: nothing is awaited, so the "אתמול" row goes.
+  const all = await b.publish(exportAt("2026-10-25T09:00:00Z", d => {
+    for (const [id, text] of [["shachar-sagiv", "מקום 12"], ["artem-dolgopyat", "מקום 4 בגמר הקרקע"], ["noam-berkovich", "מקום 7 בגמר הקרקע"]]) {
+      const a = d.athletes.find(x => x.id === id); a.history = [...(a.history || []), {...SAGIV_RESULT, text, source: "https://www.gymnastics.sport/r.pdf"}]; } }));
+  assert.ok(!panelOf(all, "weekH").includes("אתמול"), "no awaited session left: no 'אתמול' row");
+  assert.strictEqual(chgMarks(panelOf(all, "homeResH")), 3, "Sagiv's mark stays until navigation; both floor results are new");
+  b.ctx.location.hash = "#today"; b.run("navigate()"); b.ctx.location.hash = "#home"; b.run("navigate()");
+  assert.strictEqual(chgMarks(b.els.view.innerHTML), 0, "navigation clears the marks");
+});
+
+test("stale line turns fresh after an auto-refresh on an event day (home and #day)", async () => {
+  // 29.10, 12:00 in Israel (winter time): judo sessions today, export from 18.10.
+  const b = await openTab("2026-10-29T10:00:00Z");
+  assert.ok(b.els.view.innerHTML.includes('class="fresh stale"') && b.els.view.innerHTML.includes("הנתונים לא עודכנו מאז"), "precondition: stale");
+  const html = await b.publish(exportAt("2026-10-29T09:30:00Z"));
+  assert.ok(!html.includes('class="fresh stale"') && /<p class="fresh">[\s\S]*?נכון ל־<time datetime="2026-10-29T09:30:00.000Z">11:30<\/time>/.test(html), "fresh, with the export's Israel time");
+  b.ctx.location.hash = "#day-2026-10-29"; b.run("navigate()");
+  assert.ok(!b.els.view.innerHTML.includes('class="fresh stale"'), "#day agrees");
+});
+
 // #today / #day-<date> (site/day.js; daily-and-following.md §1, UX review on #140).
 test("#day a11y: h1 before the prev/next links in the DOM; the result is inline, not a <p> inside a <span>", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
