@@ -35,7 +35,7 @@ const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas.
 // `quotas`: quotas.json payload; undefined → 404, "fail" → that fetch rejects.
 // `now` pins the clock (ISO instant); `follows` seeds localStorage.
 async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = []} = {}){
-  const els = {};
+  const els = {}, listeners = {};
   const mem = new Map([["la28.follows", JSON.stringify(follows)]]);
   const ctx = {
     console, URL, Intl, Date: now ? fixedDate(now) : Date, Math, JSON, Promise, setTimeout, clearTimeout,
@@ -49,7 +49,7 @@ async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = 
     document: {
       getElementById: id => els[id] ??= fakeEl(id),
       querySelector: () => null, querySelectorAll: () => [],
-      addEventListener(){}, activeElement: null,
+      addEventListener: (type, fn) => (listeners[type] ??= []).push(fn), activeElement: null,
     },
     fetch: async url => {
       if (fetchFails) throw new Error("network down");
@@ -68,7 +68,8 @@ async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = 
   await new Promise(r => setTimeout(r, 20));   // let loadPublic()'s fetch settle
   const run = expr => vm.runInContext(expr, ctx);
   const view = hash => { ctx.location.hash = "#" + hash; run("route()"); return els.view.innerHTML; };
-  return {ctx, els, run, view};
+  const fire = (type, target) => (listeners[type] || []).forEach(fn => fn({type, target}));
+  return {ctx, els, run, view, fire};
 }
 
 const tests = [];
@@ -175,7 +176,7 @@ test("today strip: followed first, solo rows, escaping, 14-day list starts after
   assert.ok(rows[0].includes("גרנד סלאם אבו דאבי") && rows[0].includes('aria-label="במעקב שלך">★</span> <a href="#a-raz-hershko"'), "followed row first, starred");
   assert.ok(rows[1].includes("adva-cohen") && rows[1].includes(">היום<"), "solo row for athlete without a competition");
   assert.ok(!/<img/i.test(rows[1]) && rows[1].includes("&lt;img"), "next must be escaped");
-  assert.ok(rows[2].includes("ישראלים במעקב בענף") && !rows[2].includes('href="#a-'), "running comp, nobody listed");
+  assert.ok(rows[2].includes("ישראלי/ת אחד/ת במעקב בענף") && !rows[2].includes('href="#a-'), "running comp, nobody listed (singular)");
   assert.ok(!stripOf(home).includes("סדרת גביעי העולם בהתעמלות אמנותית"), "season-long series excluded");
   assert.ok(!busyOf(home).includes("raz-hershko") && !busyOf(home).includes("adva-cohen"), "no repeat in 14-day list");
   const before = await boot({now: "2026-10-26T08:00:00Z"});
@@ -260,14 +261,25 @@ test("#quotas: upcoming list keeps the next 5 future events and escapes item tex
   assert.ok(!/<img|<b>x/i.test(out) && out.includes("&lt;img"), "escaped");
 });
 
-test("#quotas: missing file shows the failure note; site keeps working", async () => {
-  for (const quotas of [undefined, "fail", {items: "nope"}]) {
+test("#quotas: a 404 or empty file reads as not collected yet; a broken file as not loaded", async () => {
+  for (const [quotas, text] of [[undefined, "עוד לא נאספו נתוני מכסות"], [{updatedAt: "2026-10-18", items: []}, "עוד לא נאספו נתוני מכסות"],
+      ["fail", "לא נטענו"], [{items: "nope"}, "לא נטענו"]]) {
     const {view, run} = await boot({quotas});
-    assert.ok(run("S.quotasLoaded") && view("quotas").includes("לא נטענו"), JSON.stringify(quotas));
+    assert.ok(run("S.quotasLoaded") && view("quotas").includes(text), JSON.stringify(quotas));
     assert.ok(!view("home").includes('href="#quotas"') && !run("S.failed"));
   }
-  const {view} = await boot({quotas: {updatedAt: "2026-10-18", items: []}});
-  assert.ok(view("quotas").includes("עוד לא נאספו נתוני מכסות"));
+});
+
+test("calendar filters update only the results list, so focus and scroll survive", async () => {
+  const {view, els, fire, run} = await boot({now: "2026-10-18T08:00:00Z"});
+  const page = view("calendar");
+  run(`$("calResults").innerHTML = ""`);
+  fire("input", {id: "cQual", checked: true});
+  assert.strictEqual(els.view.innerHTML, page, "whole view must not re-render");
+  assert.ok(els.calResults.innerHTML.includes('class="month"'), "results re-rendered");
+  assert.ok(!els.calResults.innerHTML.includes("<h1"), "toolbar/heading stay outside the results");
+  fire("input", {id: "cSport", value: "nope-sport"});
+  assert.ok(els.calResults.innerHTML.includes("אין תחרויות שמתאימות לסינון"));
 });
 
 (async () => {

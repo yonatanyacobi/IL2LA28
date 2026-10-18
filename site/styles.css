@@ -236,3 +236,4 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .pill.q-unknown{background:transparent;border:1px dashed var(--line-ui,var(--stage0));color:var(--muted)}
 .qsum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
 h2 .pill{font-family:var(--f-body);font-size:15px;vertical-align:middle}
+.cal-results{display:grid;gap:22px}
