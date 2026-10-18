@@ -210,7 +210,7 @@ string (`tri_results.result_text()`), so the 25.10 run sees it as already record
     the published file
 [ ] 24.10 (Ofir → Tamar → coordinator): enter the result per result-night-2410.md; on a podium also the job's
     notes string, so no "<id>-20261024-result" proposal is opened
-[ ] 25.10 after the 23:45 run: runs/2026-10-25 has no "תוצאות טריאתלון" warning and no second Tongyeong entry
+[ ] 25.10 after the 07:13 run: runs/2026-10-25 has no "תוצאות טריאתלון" warning and no second Tongyeong entry
     (a second one: delete the manual entry, the job's text is the API's, and tell Omer)
 [ ] Ofir: next/nextDate → WTCS Abu Dhabi 13.11 (if on the start list), and the quota item's israelNote,
     stakes and nextQuotaEvent per his plan, through result-night.md + steps 0–7
