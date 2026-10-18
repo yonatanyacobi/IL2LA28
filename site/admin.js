@@ -6,7 +6,8 @@ const RUN_MAX_AGE_H = 36;
 const ADM = {runs: [], runsState: "idle"};   // idle | loading | ready | error
 
 const CHECKS = {
-  unverified: {label: "לא אומתו ידנית", test: a => !a.verifiedAt, why: a => "ללא אימות ידני"},
+  unverified: {label: "לא אומתו ידנית (או עודכנו מאז)", test: a => trustOf(a) !== "ok",
+    why: a => trustOf(a) === "stale" ? "עודכן מאז הבדיקה הידנית" : "ללא אימות ידני"},
   stale: {label: "לא עודכנו מעל 30 יום", test: a => !isDate(str(a.updatedAt).slice(0, 10)) || daysSince(a.updatedAt) > 30,
     why: a => isDate(str(a.updatedAt).slice(0, 10)) ? "עודכן " + fmt(str(a.updatedAt).slice(0, 10)) : "אין תאריך עדכון"},
   norank: {label: "חסר דירוג", test: a => !str(a.rank).trim(), why: () => "אין דירוג או הישג"},
@@ -38,7 +39,7 @@ function runPanel(){
   if (ADM.runsState !== "ready") return `<section class="panel"><h2>הריצה היומית</h2><p class="muted">טוען…</p></section>`;
   const r = ADM.runs[0];
   if (!r) return `<section class="panel adm-alert"><h2>הריצה היומית</h2><p>אין ריצות מתועדות.</p></section>`;
-  const hours = daysSince(r.ended || r.started) * 24;
+  const hours = daysSince(r.started) * 24;
   const warns = [
     !(hours <= RUN_MAX_AGE_H) && `הריצה האחרונה התחילה לפני יותר מ־${RUN_MAX_AGE_H} שעות.`,
     r.status !== "done" && `סטטוס הריצה האחרונה: ${esc(RUN_STATUS[r.status] || r.status || "לא ידוע")}.`,

@@ -10,10 +10,7 @@ const SITE_URL = "https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
 const CONTACT_EMAIL = "yacobiyonatan@gmail.com";
 const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "next", "nextDate", "notes", "source"];
 const HISTORY_MAX = 20;
-// Quota status per event; symbol + word so status never relies on colour.
-const Q_ORDER = ["earned", "in-contention", "outside", "unknown"];
-const Q_LABEL = {earned: ["✓", "מכסה הושגה"], "in-contention": ["◐", "במרוץ למכסה"],
-                 outside: ["○", "מחוץ למכסות כרגע"], unknown: ["?", "אין מידע עדיין"]};
+const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
 
 const $ = id => document.getElementById(id);
 const str = v => typeof v === "string" ? v : (v == null ? "" : String(v));
@@ -43,6 +40,7 @@ const store = {
 const S = {
   loaded: false, live: false, failed: false, liveLost: false, generatedAt: "", lastRun: "",
   sports: [], athletes: [], comps: [], changes: [], proposals: [],
+  quotas: [], quotasUpdatedAt: "", quotasLoaded: false, quotasError: false,   // empty when quotas.json is missing or bad: quota UI must not render
   db: null, uid: null, isAdmin: false,
   cal: {sport: "", qual: false, past: false},
   q: "",
@@ -55,11 +53,39 @@ store.set("la28.seen", new Date().toISOString());
 const sportById = id => S.sports.find(s => s.id === id);
 const sportName = id => sportById(id)?.he || id;
 const athletesOf = sid => S.athletes.filter(a => a.sportId === sid);
+const quotasOf = sid => S.quotas.filter(q => q.sportId === sid);
 const upcoming = () => S.comps.filter(c => (c.end || c.start) >= today()).sort((a, b) => a.start.localeCompare(b.start));
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
 // Compared as instants: the job and the page write ISO strings with different precision.
 const trustOf = a => { const v = Date.parse(str(a.verifiedAt)), u = Date.parse(str(a.updatedAt)); return isNaN(v) ? "auto" : isNaN(u) || v >= u ? "ok" : "stale"; };
+
+// ---------- quotas (shared by #quotas, the sport page, #sports cards and home) ----------
+// Statuses render in QUOTA_STATUSES order; S.quotas holds only validated items (see applyQuotas).
+const Q_LABEL = {earned: ["✓", "מכסה הושגה"], "in-contention": ["◐", "במרוץ למכסה"],
+                 outside: ["○", "מחוץ למכסות כרגע"], unknown: ["?", "אין מידע עדיין"]};
+const qStatus = s => Q_LABEL[s] ? s : "unknown";
+const quotaCounts = list => Object.fromEntries(QUOTA_STATUSES.map(k => [k, list.filter(q => qStatus(q.israelStatus) === k).length]));
+// Symbol + text so status never depends on colour; `text` overrides the label (e.g. "1 הושגה").
+const quotaStatusPill = (status, text) => { const k = qStatus(status); return `<span class="pill q-${k}">${Q_LABEL[k][0]} ${esc(text ?? Q_LABEL[k][1])}</span>`; };
+
+function quotaCardSummary(sid){
+  const list = quotasOf(sid);
+  if (!list.length) return "";
+  const n = quotaCounts(list), short = {earned: "הושגה", "in-contention": "במרוץ", outside: "מחוץ"};
+  const shown = QUOTA_STATUSES.filter(k => k !== "unknown" && n[k]);
+  return shown.length ? `<span class="qsum"><span class="sr">מכסות: </span>${shown.map(k => quotaStatusPill(k, `${n[k]} ${short[k]}`)).join("")}</span>`
+    : `<span class="qsum">מכסות: אין מידע עדיין</span>`;
+}
+
+function quotaKpi(){
+  const list = S.quotas;
+  if (!list.length) return "";
+  const n = quotaCounts(list), k = new Set(list.filter(q => ["earned", "in-contention"].includes(qStatus(q.israelStatus))).map(q => q.sportId)).size;
+  const link = `<a href="#quotas">תמונת המכסות</a>`;
+  return `<p class="kpi">${n.earned ? `<b>${n.earned}</b> מקצים עם מכסה לישראל · <b>${n["in-contention"]}</b> במרוץ למכסה · ב־${k} ענפים`
+    : `טרם הושגו מכסות לישראל · <b>${n["in-contention"]}</b> מקצים במרוץ למכסה ב־${k} ענפים`} · ${link}</p>`;
+}
 
 function winStatus(w){
   if (!w || !isDate(w.from)) return null;
@@ -85,34 +111,32 @@ function trustChip(a){
   return `<span class="trust ${t}">${t === "auto" ? "◌ איסוף אוטומטי" : t === "ok" ? `✓ נבדק ידנית ${d}` : `✓ נבדק ${d} · עודכן מאז`}</span>`;
 }
 
-// S.quotas comes from the quotas loader; re-checked here so a bad item can't break the page.
+// Past quota events are hidden here; the loader keeps them for #admin checks.
 function quotaSection(id){
-  const items = (Array.isArray(S.quotas) ? S.quotas : []).filter(q => q?.sportId === id);
+  const items = quotasOf(id);
   if (!items.length) return "";
-  const st = q => Q_LABEL[q.israelStatus] ? q.israelStatus : "unknown";
-  const cnt = n => Number.isInteger(n) && n > 0 ? n : null;
-  const nxt = q => { const e = q.nextQuotaEvent; return e && str(e.name) && isDate(e.start) && e.start >= today() ? e : null; };
-  items.sort((a, b) => Q_ORDER.indexOf(st(a)) - Q_ORDER.indexOf(st(b))
+  const nxt = q => q.nextQuotaEvent?.name && q.nextQuotaEvent.start >= today() ? q.nextQuotaEvent : null;
+  items.sort((a, b) => QUOTA_STATUSES.indexOf(qStatus(a.israelStatus)) - QUOTA_STATUSES.indexOf(qStatus(b.israelStatus))
     || (nxt(a)?.start || "9999").localeCompare(nxt(b)?.start || "9999") || heCmp(a.event, b.event));
-  const counts = Q_ORDER.map(k => items.filter(q => st(q) === k).length);
+  const n = quotaCounts(items);
   return `<section class="panel" aria-labelledby="qH">
     <div class="sec-head"><h2 id="qH">מכסות לישראל</h2><span class="foot">${plural(items.length, "מקצה אחד", "מקצים")}</span></div>
-    <div class="bar4 qbar" role="img" aria-label="${Q_ORDER.map((k, i) => `${Q_LABEL[k][1]}: ${counts[i]}`).join(", ")}">${
-      Q_ORDER.map((k, i) => counts[i] ? `<i class="q-${k}" style="width:${(counts[i] / items.length * 100).toFixed(2)}%"></i>` : "").join("")}</div>
-    <ul class="legend">${Q_ORDER.map((k, i) => counts[i] ? `<li><i class="q-${k}"></i>${Q_LABEL[k][1]} <b>${counts[i]}</b></li>` : "").join("")}</ul>
-    ${counts[3] === items.length ? `<p class="muted">עוד אין מידע על מצב ישראל במקצים האלה.</p>` : ""}
+    <div class="bar4 qbar" role="img" aria-label="${QUOTA_STATUSES.map(k => `${Q_LABEL[k][1]}: ${n[k]}`).join(", ")}">${
+      QUOTA_STATUSES.map(k => n[k] ? `<i class="q-${k}" style="width:${(n[k] / items.length * 100).toFixed(2)}%"></i>` : "").join("")}</div>
+    <ul class="legend">${QUOTA_STATUSES.map(k => n[k] ? `<li><i class="q-${k}"></i>${Q_LABEL[k][1]} <b>${n[k]}</b></li>` : "").join("")}</ul>
+    ${n.unknown === items.length ? `<p class="muted">עוד אין מידע על מצב ישראל במקצים האלה.</p>` : ""}
     <ul class="qlist">${items.map(q => {
-      const tot = cnt(q.totalQuotas), max = cnt(q.maxPerNOC), e = nxt(q), src = linkOut(q.source, host(q.source));
-      const meta = [tot && `${plural(tot, "מכסה אחת", "מכסות")} בעולם`, max && `עד ${plural(max, "מכסה אחת", "מכסות")} למדינה`].filter(Boolean).join(" · ");
+      const tot = q.totalQuotas, max = q.maxPerNOC, e = nxt(q), src = linkOut(q.source, host(q.source));
+      const meta = [tot != null && `${plural(tot, "מכסה אחת", "מכסות")} בעולם`, max != null && `עד ${plural(max, "מכסה אחת", "מכסות")} למדינה`].filter(Boolean).join(" · ");
       return `<li>
-        <div class="q-top"><b>${esc(q.event)}</b><span class="pill q-${st(q)}">${Q_LABEL[st(q)].join(" ")}</span></div>
+        <div class="q-top"><b>${esc(q.event)}</b>${quotaStatusPill(q.israelStatus)}</div>
         ${meta ? `<p class="q-meta">${meta}</p>` : ""}
-        ${str(q.israelNote) ? `<p>${esc(q.israelNote)}</p>` : ""}
+        ${q.israelNote ? `<p>${esc(q.israelNote)}</p>` : ""}
         ${e ? `<p class="q-meta">אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}</p>` : ""}
-        ${str(q.allocation) || src ? `<details><summary>איך מחולקות המכסות</summary>${str(q.allocation) ? `<p>${esc(q.allocation)}</p>` : ""}${src ? `<p class="foot">${src}</p>` : ""}</details>` : ""}
+        <details><summary>איך מחולקות המכסות</summary>${q.allocation ? `<p>${esc(q.allocation)}</p>` : ""}<p class="foot">${src}</p></details>
       </li>`;
     }).join("")}</ul>
-    <p class="foot">ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת; הוועד האולימפי בישראל בוחר בהמשך מי ישתמש בה.${S.quotasAt ? ` נתוני מכסות עודכנו: ${fmt(str(S.quotasAt).slice(0, 10))}.` : ""}</p>
+    <p class="foot">ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת; הוועד האולימפי בישראל בוחר בהמשך מי ישתמש בה.${isDate(S.quotasUpdatedAt) ? ` נתוני מכסות עודכנו: ${fmt(S.quotasUpdatedAt)}.` : ""}</p>
   </section>`;
 }
 
@@ -143,12 +167,63 @@ function changeRow(c){
   return `<li><span class="d">${fmt(str(c.at).slice(0, 10))}</span><span class="t">${body}</span><span></span></li>`;
 }
 
+const TODAY_MAX = 6, SERIES_DAYS = 31;
+const dayNo = (from, to) => Math.round((new Date(to + "T12:00:00") - new Date(from + "T12:00:00")) / 864e5) + 1;
+
+// From the schedule, not live results. One row per running competition in a tracked sport, listing the
+// athletes whose nextDate falls inside it (or is today); athletes due today with no such competition get
+// their own row. Each athlete appears at most once.
+function todayRows(){
+  const t = today(), end = c => c.end || c.start;
+  // Season-long series (e.g. a 16-month World Cup) would otherwise fill the strip every day.
+  const running = S.comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS && athletesOf(c.sportId).length);
+  const rows = new Map(running.map(c => [c, {comp: c, sportId: c.sportId, athletes: []}]));
+  for (const a of S.athletes) {
+    if (!isDate(a.nextDate)) continue;
+    const mine = running.filter(c => c.sportId === a.sportId);
+    const c = mine.find(c => c.start <= a.nextDate && a.nextDate <= end(c)) || (a.nextDate === t ? mine[0] : null);
+    if (c) rows.get(c).athletes.push(a);
+    else if (a.nextDate === t) rows.set(a, {comp: null, sportId: a.sportId, athletes: [a]});
+  }
+  const fav = r => r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1;
+  return [...rows.values()].sort((x, y) => fav(x) - fav(y) || heCmp(sportName(x.sportId), sportName(y.sportId))
+    || heCmp(x.comp?.name || x.athletes[0].name, y.comp?.name || y.athletes[0].name));
+}
+
+function todayStrip(rows){
+  if (!rows.length) return "";
+  const t = today();
+  const star = a => S.follows.has(a.id) ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : "";
+  const who = a => `${star(a)}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`;
+  const row = ({comp: c, sportId, athletes}) => {
+    if (!c) { const a = athletes[0]; return `<li><span class="d">היום</span>
+      <span class="t">${who(a)}<small>${[sportName(sportId), a.next].filter(Boolean).map(esc).join(" · ")}</small></span><span></span></li>`; }
+    const total = dayNo(c.start, c.end || c.start);
+    const small = [athletes.length ? athletes.sort((a, b) => heCmp(a.name, b.name)).map(who).join(", ") : "",
+      esc(c.location), athletes.length ? "" : `${athletesOf(sportId).length} ישראלים במעקב בענף`, linkOut(c.source)].filter(Boolean).join(" · ");
+    return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
+      <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small></span>
+      <span class="now">מתקיימת עכשיו</span></li>`;
+  };
+  const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
+  const when = ts ? new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
+  const more = rows.length - TODAY_MAX;
+  return `<section class="panel today" aria-labelledby="todayH">
+    <h2 id="todayH">${rows.some(r => r.athletes.length) ? "ישראלים מתחרים היום" : "היום בענפים שבמעקב"}</h2>
+    <ul class="rows">${rows.slice(0, TODAY_MAX).map(row).join("")}</ul>
+    ${more > 0 ? `<p><a href="#calendar">ועוד ${more} בלוח התחרויות</a></p>` : ""}
+    <p class="foot">${when ? `לפי הנתונים מ־${when}` : "לפי לוח התחרויות"}, תוצאות יתעדכנו בעדכון היומי</p>
+  </section>`;
+}
+
 // ---------- views ----------
 function viewHome(){
   const {counts, html: bar} = stageBar(S.athletes);
   const quota = counts[2] + counts[3];
-  const t = today(), soon = addDays(t, 14);
-  const busy = S.athletes.filter(a => isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= soon)
+  const t = today(), soon = addDays(t, 14), rows = todayRows();
+  // Athletes in the strip (all of today's, plus later days of a running competition) aren't repeated below.
+  const inStrip = new Set(rows.flatMap(r => r.athletes.map(a => a.id)));
+  const busy = S.athletes.filter(a => isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= soon && !inStrip.has(a.id))
     .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name));
   const mine = S.athletes.filter(a => S.follows.has(a.id)).sort((a, b) => heCmp(a.name, b.name));
   const mineNew = mine.filter(isNew).length;
@@ -163,6 +238,7 @@ function viewHome(){
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
+  ${todayStrip(rows)}
   ${reviewPanel()}
   <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
   <p class="sr" id="qCount" aria-live="polite"></p>
@@ -173,6 +249,7 @@ function viewHome(){
     : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת כדי לעקוב, והם יופיעו כאן. המעקב נשמר רק בדפדפן הזה.</p>`}
   <section class="panel" aria-label="התקדמות">
     <p class="kpi"><b>${S.athletes.length}</b> ספורטאים ונבחרות במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה · <b>${verified}</b> מתוך ${S.athletes.length} נבדקו ידנית</p>
+    ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
     <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: לפריז 2024 ישראל שלחה ${PARIS_ATHLETES} ספורטאים. נבחרת נספרת כאן כרשומה אחת.</p>
@@ -216,12 +293,13 @@ function viewSports(){
   withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
-  <p class="muted">${withA.length} ענפים עם ספורטאים ישראלים במעקב, לפי התחרות הקרובה.</p>
+  <p class="muted">${withA.length} ענפים עם ספורטאים ישראלים במעקב, לפי התחרות הקרובה.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
   <ul class="sports">${withA.map(s => {
     const list = athletesOf(s.id), ws = winStatus(s.window), nc = upcomingIn(s.id)[0], fresh = list.filter(isNew).length;
     return `<li><a class="sport" href="#sport-${esc(s.id)}">
       <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון ${ws[1]}</span>` : ""}</span>
       ${stageBar(list, true).html}
+      ${quotaCardSummary(s.id)}
       <span class="meta">${list.length} במעקב${fresh ? ` · <span class="new">${fresh} חדש</span>` : ""}${nc ? ` · התחרות הבאה: ${esc(nc.name)} (${fmtShort(nc.start)})` : ""}</span>
     </a></li>`;
   }).join("")}</ul>
@@ -551,8 +629,10 @@ function currentRoute(){
   try { return decodeURIComponent(location.hash.slice(1)) || "home"; } catch { return "home"; }
 }
 
+let renderedDay = "";
 function route(){
   const h = currentRoute();
+  renderedDay = today();
   let html, nav;
   if (S.failed && !S.loaded) html = `<div class="empty">לא הצלחנו לטעון את הנתונים. <button class="btn small" data-retry>נסו שוב</button></div>`, nav = "";
   else if (!S.loaded) html = `<div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div>`, nav = "home";
@@ -564,6 +644,7 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about") html = viewAbout(), nav = "about";
+  else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound(), nav = "";
   $("view").innerHTML = banner() + html;
@@ -619,7 +700,8 @@ document.addEventListener("click", e => {
 $("frm").addEventListener("submit", saveForm);
 $("archBtn").addEventListener("click", archive);
 $("cancelBtn").addEventListener("click", () => $("dlg").close());
-setInterval(() => { const d = $("days"); if (d) d.textContent = daysLeft(); }, 60e3);
+// Past Israel midnight the today strip and "live"/"past" labels are stale.
+setInterval(() => { if (today() !== renderedDay) return refresh(); const d = $("days"); if (d) d.textContent = daysLeft(); }, 60e3);
 
 // ---------- data ----------
 function applySnapshot(d){
@@ -629,10 +711,34 @@ function applySnapshot(d){
   S.comps = (Array.isArray(d.competitions) ? d.competitions : []).filter(c => isDate(c.start));
   S.changes = Array.isArray(d.changes) ? d.changes : [];
   S.loaded = true;
+  applyQuotas();
+}
+
+// quotas.json is hand-curated and optional: a bad item is dropped, a bad file only hides the quota UI.
+// Re-applied whenever sports change, since an item needs a known sportId.
+let quotaFile = null;
+const quotaCount = v => v == null || (Number.isInteger(v) && v >= 0);
+function applyQuotas(){
+  const items = Array.isArray(quotaFile?.items) ? quotaFile.items : [];
+  S.quotas = items.filter(q => q && typeof q === "object" && sportById(q.sportId) && QUOTA_STATUSES.includes(q.israelStatus)
+      && safeUrl(q.source) && quotaCount(q.totalQuotas) && quotaCount(q.maxPerNOC)
+      && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
+    .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
+      allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source,
+      nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start} : null}));
+  S.quotasUpdatedAt = S.quotas.length ? str(quotaFile.updatedAt) : "";
+}
+
+async function loadQuotas(){
+  try {
+    const r = await fetch("quotas.json", {cache: "no-cache"});
+    quotaFile = r.ok ? await r.json() : null;
+  } catch { quotaFile = null; }
 }
 
 let publicSnapshot = null;
 async function loadPublic(){
+  const quotas = loadQuotas();   // in parallel; never delays or fails the data.json render
   try {
     const r = await fetch("data.json", {cache: "no-cache"});
     if (!r.ok) throw new Error(r.status);
@@ -641,6 +747,10 @@ async function loadPublic(){
   } catch {
     if (!S.loaded) { S.failed = true; route(); }
   }
+  await quotas;
+  applyQuotas();
+  S.quotasLoaded = true; S.quotasError = !Array.isArray(quotaFile?.items);
+  if (S.loaded) refresh();
 }
 
 // A dead live subscription must not keep showing stale data labelled "live".
@@ -671,6 +781,7 @@ async function goLive(){
     }, dropLive);
     db.collection("sports").onSnapshot(snap => {
       S.sports = snap.docs.map(d => ({id: d.id, ...d.data()}));
+      applyQuotas();
       ready.sports = true; go();
     }, dropLive);
     db.doc("meta/status").onSnapshot(s => {

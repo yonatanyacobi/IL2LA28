@@ -225,15 +225,19 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .trust.ok{background:var(--ok-soft);color:var(--ok-ink)}
 .trust.stale{background:var(--sun-soft);color:var(--sun-ink)}
 .trust.auto{border:1px solid var(--line);color:var(--muted)}
+.today{border-inline-start:4px solid var(--sun)}
 
-/* quota tracker (--ok on --ok-soft fails AA at 12px, hence --ok-ink) */
+/* quota status (shared: #quotas, sport page, #sports cards, home) */
 .q-earned{background:var(--ok)} .q-in-contention{background:var(--sun)} .q-outside{background:var(--stage0)}
 .q-unknown{background:repeating-linear-gradient(135deg,var(--stage0) 0 2px,var(--surface) 2px 6px)}
-.qbar i+i{border-inline-start:2px solid var(--surface)}
 .pill.q-earned{background:var(--ok-soft);color:var(--ok-ink)}
 .pill.q-in-contention{background:var(--sun-soft);color:var(--sun-ink)}
 .pill.q-outside{background:transparent;border:1px solid var(--line-ui,var(--stage0));color:var(--muted)}
 .pill.q-unknown{background:transparent;border:1px dashed var(--line-ui,var(--stage0));color:var(--muted)}
+.qsum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
+h2 .pill{font-family:var(--f-body);font-size:15px;vertical-align:middle}
+/* sport page quota section */
+.qbar i+i{border-inline-start:2px solid var(--surface)}
 .qlist{list-style:none;margin:0;padding:0;display:grid}
 .qlist>li{display:grid;gap:4px;padding-block:10px;border-top:1px solid var(--line);min-width:0;overflow-wrap:anywhere}
 .qlist>li:first-child{border-top:0}
