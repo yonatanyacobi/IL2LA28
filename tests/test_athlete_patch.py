@@ -15,7 +15,7 @@ CUR = {"name": "רז הרשקו", "rank": "1 בעולם (IJF, אוק׳ 2026)", "
 
 class AthletePatchTest(unittest.TestCase):
     def test_unchanged_rewrite_is_empty(self):
-        same = {k: CUR[k] for k in ap.VISIBLE + ap.SILENT}
+        same = {k: CUR.get(k) for k in ap.VISIBLE + ap.SILENT}
         self.assertEqual(ap.build(CUR, {**same, "source": "https://other.example/new-url"}, NOW), {})
 
     def test_cosmetic_differences_are_not_changes(self):

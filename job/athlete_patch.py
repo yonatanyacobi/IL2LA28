@@ -15,15 +15,15 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from export_data import date, https, text  # same normalisation and checks the public file gets
 
-VISIBLE = ["rank", "next", "nextDate", "notes", "event", "rankNum"]
+VISIBLE = ["rank", "next", "nextDate", "notes", "event", "rankNum", "olympicRankNum"]
 # Written when they differ, but alone they don't move updatedAt: not shown on the page.
-SILENT = ["rankList", "rankAsOf"]
+SILENT = ["rankList", "rankAsOf", "olympicRankList", "olympicRankAsOf"]
 SOURCE = "source"  # only written alongside a visible change; a new URL for the same facts is not a change
 HISTORY_MAX = 20
 
 
 def norm(k, v):
-    if k == "rankNum":
+    if k in ("rankNum", "olympicRankNum"):
         if isinstance(v, str) and v.strip().isdigit():
             return int(v)
         return v if type(v) is int else None

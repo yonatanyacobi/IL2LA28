@@ -11,7 +11,9 @@ Usage: python3 job/apply_rankings.py <db_dump_dir> data/quotas/quotas.json data/
   cutoffs    the quotas master patch: {sportId, event, cutoff, was}; set item.cutoff, then run build_quotas.py
   cutoffsUnchanged  "sportId|event" whose cutoff already matches
   changes    athlete updates {doc_id, fields}, built by athlete_patch (so updatedAt moves only on a visible
-             change). Read the doc and "update" with its if_version.
+             change). Read the doc and "update" with its if_version. Routed by the row's list (PM on #218):
+             an Olympic qualification list goes to olympicRankNum/olympicRankList/olympicRankAsOf, any other
+             list to rankNum/rankList/rankAsOf (the world rank the page's "rank" text names).
   unchanged  athlete ids whose rankNum/rankList/rankAsOf already match
 """
 import json, os, sys
@@ -26,6 +28,12 @@ FILE_KEYS, FILE_OPTIONAL = {"athletes"}, {"updatedAt", "cutoffs"}
 ATHLETE_KEYS, CUTOFF_ROW_KEYS, ROW_OPTIONAL = ({"athleteId", "rankNum", "rankList", "rankAsOf", "source", "review"},
                                                {"sportId", "event", "cutoff", "source", "review"}, {"notes"})
 RANK_FIELDS = ["rankNum", "rankList", "rankAsOf"]
+OLYMPIC_FIELDS = ["olympicRankNum", "olympicRankList", "olympicRankAsOf"]
+
+
+def fields_for(rank_list):
+    """By name: today's Olympic qualification lists all say so ("IJF Olympic Ranking List")."""
+    return OLYMPIC_FIELDS if "olympic" in rank_list.lower() else RANK_FIELDS
 RANK_LIST_MAX = 80  # as validate_data / export_data
 
 
@@ -115,16 +123,21 @@ def plan(files, quota_items, athletes, now):
                     errs.append(f"{path}.athleteId: not an athlete in the DB")
                 elif athletes[aid].get("archived"):
                     errs.append(f"{path}.athleteId: archived")
-                if aid in seen_a:  # one rankList per athlete: two rows would overwrite each other
-                    errs.append(f"{path}: duplicate of {seen_a[aid]}")
-                seen_a.setdefault(aid, path)
+                # One row per athlete and field set: two would overwrite each other. A null row has no list,
+                # so it can't be routed; it counts against both.
+                keys = [(aid, "world"), (aid, "olympic")] if r["rankNum"] is None else [
+                    (aid, "olympic" if fields_for(str(r["rankList"])) is OLYMPIC_FIELDS else "world")]
+                for k in keys:
+                    if k in seen_a:
+                        errs.append(f"{path}: duplicate of {seen_a[k]}")
+                    seen_a.setdefault(k, path)
                 if r["rankNum"] is None:
                     if r["rankList"] or r["rankAsOf"]:
                         errs.append(f"{path}: rankNum null needs empty rankList and rankAsOf")
                     if not errs:
                         cur = athletes[aid]
-                        out["unranked"].append({"athleteId": aid, "file": name,
-                                                "current": {k: cur.get(k) for k in RANK_FIELDS} if cur.get("rankNum") else None})
+                        out["unranked"].append({"athleteId": aid, "file": name, "current": {
+                            k: cur.get(k) for k in RANK_FIELDS + OLYMPIC_FIELDS if cur.get(k) not in (None, "")} or None})
                     out["errors"] += errs
                     continue
                 if not (type(r["rankNum"]) is int and r["rankNum"] >= 1):
@@ -139,12 +152,14 @@ def plan(files, quota_items, athletes, now):
             if errs:
                 out["errors"] += errs
                 continue
-            patch = build(athletes[aid], {k: r[k] for k in RANK_FIELDS} | {"source": r["source"]}, now)
-            # athlete_patch writes source only with a visible change; it's the athlete's source, so keep it out.
-            patch.pop("source", None)
-            if patch:
+            target = fields_for(r["rankList"])
+            patch = build(athletes[aid], {t: r[k] for t, k in zip(target, RANK_FIELDS)}, now)
+            prior = next((c for c in out["changes"] if c["doc_id"] == aid), None)   # its world + Olympic rows
+            if patch and prior:
+                prior["fields"] = {**prior["fields"], **patch, "loadedFrom": name}
+            elif patch:
                 out["changes"].append({"doc_id": aid, "fields": {**patch, "loadedFrom": name}})
-            else:
+            elif aid not in out["unchanged"]:
                 out["unchanged"].append(aid)
     return out
 
