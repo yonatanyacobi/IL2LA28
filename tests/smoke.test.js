@@ -1048,6 +1048,27 @@ test("#today (today-route.md): same page as today's #day with \"היום, \"; ot
   assert.ok((await boot({now: "2026-10-29T22:01:00Z"})).view("day-2026-10-29").includes("29 באוק׳"), "#day-<date> stays on its date");
 });
 
+// UX S3: on home and #following, every competition mention that compOn() resolves links to #c-<id>.
+test("S3: every resolvable competition on home and #following renders as a[href^=\"#c-\"]", async () => {
+  for (const now of ["2026-10-18T08:00:00Z", "2026-10-26T08:00:00Z"]) {
+    const follows = FIXTURE.athletes.filter(a => a.nextDate).slice(0, 6).map(a => a.id);
+    const b = await boot({now, quotas: SITE_QUOTAS, follows, storage: {"la28.followSports": '["judo","sailing"]', "la28.followingSeen": '"2026-10-01T00:00:00Z"'}});
+    const home = b.view("home"), following = b.view("following");
+    const ids = expr => JSON.parse(b.run(`JSON.stringify([...new Set((${expr}).filter(Boolean).map(c => c.id))])`));
+    // The "14 הימים" list, the closest-chances groups, and #following's next-up rows (athletes and followed sports).
+    const t = b.run("today()"), soon = b.run("addDays(today(), 14)");
+    const homeIds = ids(`S.athletes.filter(a => a.next && isDate(a.nextDate) && a.nextDate >= "${t}" && a.nextDate <= "${soon}").map(a => compOn(a.sportId, a.nextDate))
+      .concat(closestGroups(todayRows(), today()).map(g => compOn(g.sportId, g.start)))`);
+    // The rows #following actually shows: a competition row, or an athlete row whose nextDate falls in one.
+    const followIds = ids(`followUpcoming().map(x => x.k.startsWith("up|c|") ? S.comps.find(c => c.id === x.k.slice(5))
+      : (a => a.next && compOn(a.sportId, a.nextDate))(S.athletes.find(a => a.id === x.k.slice(5))))`);
+    assert.ok(homeIds.length && followIds.length, `${now}: the check has something to check`);
+    for (const id of homeIds) assert.ok(home.includes(`href="#c-${id}"`), `${now}: home links ${id}`);
+    const nextUp = following.split('id="nextH"')[1]?.split("</section>")[0] || "";
+    for (const id of followIds) assert.ok(nextUp.includes(`href="#c-${id}"`), `${now}: #following links ${id}`);
+  }
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   const out = view("home");

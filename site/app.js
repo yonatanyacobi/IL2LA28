@@ -225,14 +225,16 @@ function quotaSection(id){
 // Shared with day.js and quotas.js; `cls` is optional (e.g. "hlink" for heading links, components.md).
 const compLink = (c, text, cls = "") => c?.id && typeof viewEvent === "function" ? `<a href="#c-${esc(c.id)}"${cls ? ` class="${cls}"` : ""}>${text}</a>` : text;
 
-// The competition is inferred from her nextDate. Her own "next" text is the link only when it names that competition
-// (so the link text describes the target); otherwise her text stays plain and the competition's name is the link.
+// A free-text competition mention (an athlete's "next", a quota event's name), linked to the competition running in
+// that sport on that date. The text is the link only when it names that competition, so the link text describes the
+// target; otherwise the text stays plain and the competition's own name is the link beside it.
 const sameName = (x, y) => { const n = s => str(s).toLowerCase().replace(/\s+/g, " ").trim(); return !!n(x) && !!n(y) && (n(x).includes(n(y)) || n(y).includes(n(x))); };
-function nextCompFact(a){
-  const c = isDate(a.nextDate) && typeof compOn === "function" ? compOn(a.sportId, a.nextDate) : null;
-  if (!c || compLink(c, "") === "") return esc(a.next);
-  return sameName(a.next, c.name) ? compLink(c, esc(a.next)) : `${esc(a.next)} · ${compLink(c, esc(c.name))}`;
+function compMention(text, sportId, date){
+  const c = isDate(date) && typeof compOn === "function" ? compOn(sportId, date) : null;
+  if (!c || compLink(c, "") === "") return esc(text);
+  return sameName(text, c.name) ? compLink(c, esc(text)) : `${esc(text)} · ${compLink(c, esc(c.name))}`;
 }
+const nextCompFact = a => compMention(a.next, a.sportId, a.nextDate);
 
 function compRow(c, withSport){
   const t = today(), end = c.end || c.start, live = c.start <= t && end >= t, past = end < t;
@@ -418,7 +420,7 @@ function closestPanel(rows){
   const row = g => {
     const more = g.items.length - CLOSE_EVENTS;
     return `<li><span class="d">${fmtShort(g.start)}</span>
-      <span class="t"><a href="#sport-${esc(g.sportId)}">${esc(sportName(g.sportId))}</a> · ${esc(g.name)}
+      <span class="t"><a href="#sport-${esc(g.sportId)}">${esc(sportName(g.sportId))}</a> · ${compMention(g.name, g.sportId, g.start)}
         <small>${g.items.slice(0, CLOSE_EVENTS).map(item).join(" · ")}${more > 0 ? ` · ועוד ${plural(more, "מקצה אחד", "מקצים")}` : ""}</small>
         ${g.items.length === 1 ? stakesLine(g.items[0].q, "stakes", "small") : ""}</span>
       <span class="muted">${when(g.start)}</span></li>`;
@@ -493,7 +495,7 @@ function viewHome(){
     <section class="panel">
       <h2>ישראלים בפעולה ב־14 הימים הקרובים</h2>
       ${busy.length ? `<ul class="rows">${busy.map(a => `<li><span class="d">${fmtShort(a.nextDate)}</span>
-        <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))} · ${esc(a.next)}</small></span><span></span></li>`).join("")}</ul>`
+        <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))} · ${nextCompFact(a)}</small></span><span></span></li>`).join("")}</ul>`
         : `<p class="muted">אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.</p>`}
     </section>
     <section class="panel">
