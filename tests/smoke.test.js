@@ -2746,6 +2746,60 @@ test("standings (Noa on #266): the athlete page flags a stale rank like the spor
   assert.ok(future.includes('<span class="pill ended">דירוג מ־30 בנוב׳ 2026</span>'), "future date flagged: " + future);
 });
 
+// Fencing (#179, sprint 7 item 4): the individual line on FIE's AOR (an Olympic list) and the team line on the
+// team ranking, where the ranked unit is the national team (standings.md §1). Period opens 1.4.2027.
+const FENCING_Q = () => {
+  const q = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+  assert.strictEqual(q.items.filter(i => i.sportId === "fencing" && i.cutoff).length, 2, "fencing cutoffs live");
+  return q;
+};
+const AOR = "FIE Senior Individual Adjusted Official Ranking (AOR)";
+const fencingAt = async ({now = "2027-05-10T08:00:00Z", freilich = {}, teamRank} = {}) => {
+  const data = JSON.parse(JSON.stringify(FIXTURE)), q = FENCING_Q();
+  Object.assign(data.athletes.find(a => a.id === "yuval-freilich"), freilich);
+  if (teamRank !== undefined) q.items.find(i => i.sportId === "fencing" && /קבוצתי/.test(i.event)).teamRank = teamRank;
+  const b = await boot({data, quotas: q, now});
+  const page = b.view("sport-fencing");
+  const blocks = (page.split('aria-labelledby="standH"')[1] || "").split("</section>")[0].split("<h3>").slice(1);
+  return {b, page, team: blocks.find(x => x.includes("קבוצתי")) || "", solo: blocks.find(x => x.includes("אישי")) || ""};
+};
+
+test("fencing standings: not open before 1.4.2027; then the AOR line for the individual event", async () => {
+  const now = await fencingAt({now: "2026-10-20T08:00:00Z"});
+  for (const blk of [now.team, now.solo]) assert.ok(blk.includes("תקופת הדירוג להעפלה נפתחת ב־1 באפר׳ 2027.") && !blk.includes("<ol"), blk);
+  const above = await fencingAt({freilich: {olympicRankNum: 2, olympicRankList: AOR, olympicRankAsOf: "2027-05-01"}});
+  const ol = above.solo.split('<ol class="rows standings">')[1].split("</ol>")[0];
+  assert.ok(ol.indexOf('<span class="d">2</span>') < ol.indexOf("cutline") && ol.includes("קו המכסה: מקום 2") && ol.includes("1 במאי 2027"), ol);
+  assert.ok(!above.solo.includes("בדירוג אחר"), "the world rank isn't listed when the AOR one is placed");
+  const below = await fencingAt({freilich: {olympicRankNum: 5, olympicRankList: AOR, olympicRankAsOf: "2027-01-20"}});
+  const ol2 = below.solo.split('<ol class="rows standings">')[1].split("</ol>")[0];
+  assert.ok(ol2.indexOf("cutline") < ol2.indexOf('<span class="d">5</span>') && ol2.includes('<span class="pill ended">דירוג מ־20 בינו׳ 2027</span>'), "below the line, stale flagged");
+  const world = await fencingAt({freilich: {rankNum: 262, rankList: "FIE Senior Individual Ranking", rankAsOf: "2027-05-01", olympicRankNum: null}});
+  assert.ok(world.solo.includes("בדירוג אחר: ") && world.solo.includes("מקום 262 ב־<bdi>FIE Senior Individual Ranking</bdi>"), "world only: other list");
+  const none = await fencingAt({freilich: {rankNum: null, olympicRankNum: null}});
+  assert.ok(none.solo.includes('ללא דירוג: <a href="#a-yuval-freilich">'), "unranked");
+});
+
+test("fencing standings: the team event ranks the national team, never its fencers", async () => {
+  const src = "https://fie.org/athletes";
+  const above = (await fencingAt({teamRank: {num: 3, asOf: "2027-05-01", source: src}})).team;
+  const ol = above.split('<ol class="rows standings">')[1].split("</ol>")[0];
+  assert.ok(ol.indexOf("נבחרת ישראל") < ol.indexOf("cutline") && ol.includes('<span class="d">3</span>') && ol.includes("קו המכסה: מקום 4")
+    && ol.includes('<span class="sr">, מעל קו המכסה</span>') && ol.includes(`href="${src}"`), ol);
+  const below = await fencingAt({teamRank: {num: 9, asOf: "2027-01-20", source: src}});
+  const ol2 = below.team.split('<ol class="rows standings">')[1].split("</ol>")[0];
+  assert.ok(ol2.indexOf("cutline") < ol2.indexOf("נבחרת ישראל") && ol2.includes('<span class="pill ended">דירוג מ־20 בינו׳ 2027</span>'), "below, stale flagged");
+  const unranked = await fencingAt({teamRank: null});
+  assert.ok(unranked.team.includes("ללא דירוג: נבחרת ישראל") && !unranked.team.includes('href="#a-'), "no team rank: the team, unranked");
+  // A team fencer's own rank never stands for the team, on the sport page or the athlete page.
+  const fencer = FIXTURE.athletes.find(a => a.sportId === "fencing" && /קבוצתי/.test(a.event));
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  Object.assign(data.athletes.find(a => a.id === fencer.id), {rankNum: 1, rankList: "FIE Senior Team Ranking", rankAsOf: "2027-05-01"});
+  const b = await boot({data, quotas: FENCING_Q(), now: "2027-05-10T08:00:00Z"});
+  assert.ok(!b.view(`a-${fencer.id}`).includes("מול קו המכסה"), "no team standing on a fencer's page");
+  assert.ok(b.run(`teamRankOf({num: 0, asOf: "2027-05-01", source: "${src}"})`) === null && b.run(`teamRankOf({num: 2, asOf: "x", source: "${src}"})`) === null, "invalid teamRank dropped");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {

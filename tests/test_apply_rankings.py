@@ -49,6 +49,12 @@ class ApplyRankingsTest(unittest.TestCase):
             "loadedFrom": "roni"}}])
         self.assertEqual(out["unchanged"], ["raz-hershko"])
 
+    def test_fie_aor_is_an_olympic_list(self):
+        """FIE's Adjusted Official Ranking exists only for Olympic qualification (fencing standings, #179)."""
+        self.assertIs(ar.fields_for("FIE Senior Individual Adjusted Official Ranking (AOR)"), ar.OLYMPIC_FIELDS)
+        self.assertIs(ar.fields_for("FIE Senior Individual Ranking"), ar.RANK_FIELDS)
+        self.assertIs(ar.fields_for("WT Olympic Ranking"), ar.OLYMPIC_FIELDS)
+
     @needs_231
     def test_rows_route_by_list_world_rank_untouched_by_olympic_rows(self):
         """PM on #218: rank/rankNum stay the world ranking; Olympic-list rows go to olympicRank*."""

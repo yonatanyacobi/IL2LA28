@@ -18,7 +18,8 @@ HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}
-QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt", "cutoff"}
+QUOTA_OPTIONAL = {"stakes", "earnedAt", "checkedAt", "cutoff", "teamRank"}
+TEAM_RANK_KEYS = {"num", "asOf", "source"}   # a team event's own rank on its cutoff list (standings.md §1)
 CUTOFF_KEYS, CUTOFF_OPTIONAL = {"rank", "list", "url", "final"}, {"opens"}   # docs/design/standings.md §1 (#194)
 STAKES_MAX = 140
 # Stakes style (site date format, maqaf). A year-less date needs a 2-digit month so decimals like 9.58 pass.
@@ -406,6 +407,13 @@ def validate_quotas(q, data):
             err(f"{path}.earnedAt: expected YYYY-MM-DD on an \"earned\" item, got {it['earnedAt']!r}")
         if "cutoff" in it:
             errors.extend(check_cutoff(it["cutoff"], f"{path}.cutoff"))
+        if "teamRank" in it:
+            t = it["teamRank"]
+            if not (isinstance(t, dict) and set(t) == TEAM_RANK_KEYS and type(t["num"]) is int and t["num"] >= 1
+                    and is_date(t["asOf"]) and isinstance(t["source"], str) and t["source"].startswith("https://")):
+                err(f"{path}.teamRank: expected {{num: int >= 1, asOf: YYYY-MM-DD, source: https URL}}, got {t!r}")
+            elif "cutoff" not in it:
+                err(f"{path}.teamRank: only with a cutoff (it's a rank on the cutoff's list)")
         src = it.get("source")
         if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
             err(f"{path}.source: expected an https:// URL, got {src!r}")
