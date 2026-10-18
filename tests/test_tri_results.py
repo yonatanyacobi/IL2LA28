@@ -147,6 +147,38 @@ class TriResultsTest(unittest.TestCase):
         self.assertEqual(out["proposals"][0]["doc"]["patch"]["notes"],
                          "הערה חדשה מהמאגר. מקום 3 בגביע העולם בטריאתלון טונגיונג 2026")
 
+    def write_dump(self, root, athletes, comps):
+        for coll, docs in (("athletes", athletes), ("competitions", comps)):
+            os.makedirs(os.path.join(root, coll), exist_ok=True)
+            for i, (doc_id, doc) in enumerate(docs.items()):
+                body = {"id": doc_id, "data": doc} if i % 2 else doc   # ArtifactData out_dir writes both shapes
+                with open(os.path.join(root, coll, doc_id + ".json"), "w", encoding="utf-8") as f:
+                    json.dump(body, f, ensure_ascii=False)
+
+    def test_db_dump_sees_what_the_published_file_doesnt(self):
+        published = {"athletes": [SAGIV], "competitions": []}       # Tongyeong added to the DB after the last export
+        self.assertEqual(run(FakeApi([row(5)]), data=published)["updates"], [])
+        strip = lambda d: {k: v for k, v in d.items() if k != "id"}
+        with tempfile.TemporaryDirectory() as tmp:
+            self.write_dump(tmp, {"shachar-sagiv": strip(SAGIV)}, {"tri-world-cup-tongyeong-2026": strip(TONGYEONG)})
+            data = tr.db_data(tmp)
+            out = tr.plan(data, FakeApi([row(5)]), date(2026, 10, 25))
+            self.assertEqual([u["athleteId"] for u in out["updates"]], ["shachar-sagiv"])
+            logged = {**strip(SAGIV), "history": [{"at": "2026-10-24", "kind": "result", "text": out["updates"][0]["result"]["text"]}]}
+            self.write_dump(tmp, {"shachar-sagiv": logged}, {})       # logged in the DB, not yet published
+            again = tr.plan(tr.db_data(tmp), FakeApi([row(5)]), date(2026, 10, 25))
+        self.assertEqual(again["updates"], [], "the 'already logged' check reads the DB history")
+
+    def test_cli_accepts_the_db_dump_dir(self):
+        strip = lambda d: {k: v for k, v in d.items() if k != "id"}
+        with tempfile.TemporaryDirectory() as tmp:
+            db = os.path.join(tmp, "db")
+            self.write_dump(db, {"shachar-sagiv": strip(SAGIV)}, {"tri-world-cup-tongyeong-2026": strip(TONGYEONG)})
+            r = subprocess.run([sys.executable, os.path.join(JOB, "tri_results.py"), db, "--today", "2026-10-25"],
+                               capture_output=True, text=True, env={**os.environ, "HOME": tmp})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("ה־API לא זמין", json.loads(r.stdout)["warnings"][0])  # reached the API step: dump was read
+
     def test_cli_without_key_file_warns_and_never_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
             dp = os.path.join(tmp, "data.json")

@@ -1,8 +1,9 @@
 """Triathlon results-assist (G-5): plan the daily job's writes after a triathlon competition with Israeli entrants.
 
-Usage: python3 tri_results.py <data.json> [--db <dump_dir>] [--today YYYY-MM-DD] [--days N]
-<data.json> supplies competitions. --db is an ArtifactData athletes dump (out_dir); the athletes come from there,
-so dedupe and notes use the live records. Without --db no notes proposal is made.
+Usage: python3 tri_results.py <db_dump_dir | data.json> [--db <dump_dir>] [--today YYYY-MM-DD] [--days N]
+The job passes the step-1 DB dump (ArtifactData out_dir with athletes/ and competitions/), so competitions, entrants,
+the "already logged" check and notes all use the DB as it is now, not the last published file. A data.json file
+also works (manual runs); there --db overrides its athletes, and without --db no notes proposal is made.
 Reads the World Triathlon API through triathlon_api.py (key file only; see that module) and prints a JSON plan:
   {"warnings": [...], "updates": [{"athleteId", "result": {at, text, source}}], "proposals": [{"id", "doc"}]}
 The job sends each update's {"result": …} through athlete_patch.py, and creates each proposal only if it doesn't
@@ -22,7 +23,9 @@ HE_MONTHS = ["בינו׳", "בפבר׳", "במרץ", "באפר׳", "במאי", "
 def he_date(iso_day):
     d = date.fromisoformat(iso_day)
     return f"{d.day} {HE_MONTHS[d.month - 1]} {d.year}"
-PROFILE = re.compile(r"triathlon\.org/athletes/profile/(\d+)")
+
+
+PROFILE =re.compile(r"triathlon\.org/athletes/profile/(\d+)")
 SLUG = re.compile(r"triathlon\.org/events/([a-z0-9-]+)")
 
 
@@ -135,6 +138,13 @@ def db_athletes(dump_dir):
     return [{**a, "id": aid} for aid, a in sorted(load(dump_dir, "athletes", []).items()) if not a.get("archived")]
 
 
+def db_data(dump_dir):
+    """Athletes and competitions as the DB has them now: a competition or result added after the last publish counts."""
+    from export_data import load
+    comps = [{**c, "id": cid} for cid, c in sorted(load(dump_dir, "competitions", []).items())]
+    return {"athletes": db_athletes(dump_dir), "competitions": comps}
+
+
 def main(argv):
     args, opts = [], {"--today": None, "--days": "4", "--db": None}
     it = iter(argv[1:])
@@ -146,16 +156,22 @@ def main(argv):
     from quota_due import israel_today
     today = as_date(opts["--today"]) if opts["--today"] else israel_today()
     if len(args) != 1 or not today or not str(opts["--days"]).isdigit():
-        print("usage: python3 tri_results.py <data.json> [--db <dump_dir>] [--today YYYY-MM-DD] [--days N]", file=sys.stderr)
+        print("usage: python3 tri_results.py <db_dump_dir | data.json> [--db <dump_dir>] [--today YYYY-MM-DD] [--days N]",
+              file=sys.stderr)
         return 1
+    import os
     import triathlon_api as api
-    with open(args[0], encoding="utf-8") as f:
-        data = json.load(f)
-    if opts["--db"]:
-        data["athletes"] = db_athletes(opts["--db"])
+    if os.path.isdir(args[0]):  # the job's way: the step-1 DB dump (athletes and competitions)
+        data, from_db = db_data(args[0]), True
+    else:  # a data.json file (manual runs); --db still overrides its athletes
+        with open(args[0], encoding="utf-8") as f:
+            data = json.load(f)
+        if opts["--db"]:
+            data["athletes"] = db_athletes(opts["--db"])
+        from_db = bool(opts["--db"])
     try:
-        result = plan(data, api.get, today, int(opts["--days"]), propose=bool(opts["--db"]))
-        if not opts["--db"] and result["updates"]:
+        result = plan(data, api.get, today, int(opts["--days"]), propose=from_db)
+        if not from_db and result["updates"]:
             result["warnings"].append("תוצאות טריאתלון: הורץ בלי --db, ולכן לא נבנו הצעות להערות")
     except (api.ApiKeyError, api.ApiError) as e:  # messages carry no key (triathlon_api)
         result = {"warnings": [f"תוצאות טריאתלון: ה־API לא זמין ({e}); לבדוק ידנית"], "updates": [], "proposals": []}
