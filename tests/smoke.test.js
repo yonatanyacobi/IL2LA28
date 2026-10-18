@@ -1602,40 +1602,71 @@ test("approving an empty patch only closes the proposal; a real patch still stam
   assert.ok(upd && upd.v.rank === "3 בעולם" && upd.v.updatedAt, "non-empty patch still writes updatedAt");
 });
 
-// #today / #day-<date> (site/day.js; copy from Shira on #130).
-test("#day renders the fixture on 24.10, 29.10 and 3.11", async () => {
-  const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
+// #today / #day-<date> (site/day.js; daily-and-following.md §1, UX review on #140).
+test("#day renders the fixture on 24.10, 29.10 and 3.11 with Israelis' sessions only", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  // A past day keeps its athletes through history results even after nextDate has moved on.
+  const sagiv = data.athletes.find(a => a.id === "shachar-sagiv");
+  sagiv.nextDate = "2026-12-01";
+  sagiv.history = [...(sagiv.history || []), {at: "2026-10-24", kind: "result", text: "מקום 12", source: "https://triathlon.org/x"}];
+  const {view} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
   const d24 = view("day-2026-10-24"), d29 = view("day-2026-10-29"), d03 = view("day-2026-11-03");
   for (const [h, out] of [["24", d24], ["29", d29], ["03", d03]]) {
     assert.ok(!out.includes(NOT_FOUND) && out.includes('<h1 tabindex="-1">'), h);
-    assert.ok(out.includes("→ היום הקודם") && out.includes("היום הבא ←"), `${h}: prev/next when not today`);
+    assert.ok(out.includes('<span aria-hidden="true">→</span> היום הקודם') && out.includes('<span aria-hidden="true">←</span>') && out.includes("היום הבא<span class=\"sr\">") && out.includes('<a href="#today">היום</a>'), `${h}: prev/next + today link`);
+    assert.strictEqual((out.split('aria-label="בחירת יום"')[1].split("</nav>")[0].match(/href="#day-/g) || []).length, 7, `${h}: 7 chips`);
     assert.strictEqual((out.match(/aria-current="date"/g) || []).length, 1, `${h}: one selected chip`);
-    assert.ok(/נכון ל־.*, \d\d:\d\d/.test(out), `${h}: data note`);
-    assert.ok(!/live|חי\b/.test(out));
+    assert.ok(/נכון ל־.*, \d\d:\d\d · מתעדכן פעם ביום/.test(out), `${h}: data note with cadence`);
+    assert.ok(!/live|בזמן אמת|חי\b/.test(out));
   }
-  assert.ok(d24.includes("טונגיונג") && d24.includes('href="#a-shachar-sagiv"') && d24.includes("בהמתנה לתוצאה"), "24.10: past day → awaiting");
-  assert.ok(d29.includes("גרנד סלאם אבו דאבי") && d29.includes("יום 1 מתוך 3") && d29.includes("מתחרה ב־29 באוק׳ 2026"), "29.10: future day");
-  assert.ok(!d29.includes("מתקיימת עכשיו"));
-  assert.ok(d03.includes("#sport-shooting") && /ספורט(אים ונבחרות|אי\/ת או נבחרת אחת) במעקב בענף/.test(d03), "3.11: comps without listed entrants");
-  assert.ok(d29.includes('aria-label="יום חמישי, 29 באוקטובר · יש תחרויות של ישראלים" aria-current="date">ה׳ 29'), "chip label + current");
+  assert.ok(d24.includes('href="#a-shachar-sagiv"') && d24.includes("<b>תוצאה:</b> מקום 12") && !d24.includes("עודכן ב־"), "24.10: result from history, no stamp");
+  assert.ok(d29.includes("<h3>גרנד סלאם אבו דאבי</h3>") && d29.includes("pill s-before") && d29.includes('id="ds-judo"'), "29.10: sport h2, comp h3, before chips");
+  assert.ok(!d29.includes("#sport-weightlifting"), "no competitions without Israelis' sessions");
+  assert.ok(d29.includes('aria-current="date">ה׳ 29<span class="sr"> · יום חמישי, 29 באוקטובר · יש תחרויות של ישראלים</span>'), "chip: visible text in the name + current");
+  const strip = d29.split('aria-label="בחירת יום"')[1].split("</nav>")[0];
+  assert.ok(!/<a [^>]*aria-label=/.test(strip), "no aria-label overriding the visible chip text");
+  assert.ok(d29.includes('<span aria-hidden="true">→</span> היום הקודם<span class="sr">, יום רביעי, 28 באוקטובר</span>'), "prev: arrow hidden, sr date");
+  assert.ok(!d03.includes("#sport-shooting"), "3.11: running competitions without Israelis are left out");
 });
 
-test("#today: today's copy, home link, result line, empty day, bad dates, escaping", async () => {
+test("#day: today's states, a result on another day, #day alone, impossible dates, empty day, escaping", async () => {
   const data = JSON.parse(JSON.stringify(FIXTURE));
-  const raz = data.athletes.find(a => a.id === "raz-hershko");
+  const raz = data.athletes.find(a => a.id === "raz-hershko"), gefen = data.athletes.find(a => a.id === "gefen-primo");
   raz.history = [...(raz.history || []), {at: "2026-10-29", kind: "result", text: "<b>ארד</b>"}];
-  raz.updatedAt = "2026-10-29T16:40:00Z";   // 18:40 in Israel (UTC+2 after the 25.10 clock change)
-  const {view, run} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-29T17:00:00Z"});
+  raz.nextDate = "2026-10-29";
+  gefen.nextDate = "2026-10-30";
+  const follows = ["gefen-primo"];
+  const {view, run} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-30T08:00:00Z", follows});
   const t = view("today");
-  assert.strictEqual(t, view("day-2026-10-29"), "#today = #day-<today>");
-  assert.ok(t.includes("→ אתמול") && t.includes("מחר ←") && t.includes("מתקיימת עכשיו · יום 1 מתוך 3") && t.includes("מתחרה היום"));
-  assert.ok(t.includes("תוצאה: &lt;b&gt;ארד&lt;/b&gt; · עודכן ב־18:40") && !t.includes("<b>ארד"), "result in Israel time, escaped");
+  assert.ok(t.includes('<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span> <a href="#a-gefen-primo"'), "★ pattern");
+  assert.strictEqual(t, view("day-2026-10-30")); assert.strictEqual(t, view("day"), "#day alone = today");
+  assert.ok(t.includes('<span aria-hidden="true">→</span> אתמול') && t.includes("מחר<span class=\"sr\">") && !t.includes('<a href="#today">היום</a>'));
+  assert.ok(t.includes("מתקיימת עכשיו · יום 2 מתוך 3") && t.includes("pill s-live"), "today: live header and chip");
+  assert.ok(!t.includes('href="#a-raz-hershko"'), "a result on 29.10 isn't shown as awaiting on 30.10");
+  const y = view("day-2026-10-29");
+  assert.ok(y.includes("<b>תוצאה:</b> &lt;b&gt;ארד&lt;/b&gt;") && !y.includes("<b>ארד"), "result escaped");
+  for (const bad of ["day-2026-02-30", "day-2026-13-45", "day-nope", "day-<img>"]) assert.ok(view(bad).includes(NOT_FOUND), bad);
   assert.ok(view("home").includes('<a href="#today">לכל התחרויות היום</a>'));
-  const quiet = run(`(() => { for (let d = "2026-11-15"; d < "2027-06-01"; d = addDays(d, 1)) if (!dayRows(d).length) return d; })()`);
-  assert.ok(quiet, "the fixture has a day without competitions");
+  const quiet = run(`(() => { for (let d = "2026-11-15"; d < "2027-06-01"; d = addDays(d, 1)) if (!daySessions(d).length) return d; })()`);
   const empty = view("day-" + quiet);
   assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
-  for (const bad of ["day-2026-13-45", "day-nope", "day-<img>"]) assert.ok(view(bad).includes(NOT_FOUND), bad);
+});
+
+test("#day (Gil D4, D6, D8): 'תאריך בלבד', no stakes for earned items, followed sports first", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  // 29.10: judo (Abu Dhabi) and a weightlifter moved onto the same day, so two sports are listed.
+  const lifter = data.athletes.find(a => a.sportId === "weightlifting");
+  lifter.nextDate = "2026-10-29";
+  const q = JSON.parse(JSON.stringify(SITE_QUOTAS));
+  const judo = q.items.filter(i => i.sportId === "judo" && i.stakes && i.nextQuotaEvent?.start === "2026-10-29");
+  judo.forEach(i => { i.israelStatus = "earned"; i.earnedAt = "2026-10-29"; });
+  const b = await boot({data, quotas: q, now: "2026-10-26T08:00:00Z", storage: {"la28.followSports": JSON.stringify(["weightlifting"])}});
+  const out = b.view("day-2026-10-29");
+  assert.ok(out.includes('<span class="d">תאריך בלבד</span>'), "D4: fallback rows say תאריך בלבד");
+  const judoBlock = out.split('id="ds-judo"')[1].split("</section>")[0];
+  assert.ok(judo.length && !judo.some(i => judoBlock.includes(i.stakes.slice(0, 20))), "D6: earned items don't show pre-event stakes");
+  assert.ok(out.indexOf('id="ds-weightlifting"') < out.indexOf('id="ds-judo"'), "D8: followed sport first");
+  assert.ok(out.split('id="ds-weightlifting"')[1].split("</h2>")[0].includes("במעקב שלך"), "D8: followed sport marked");
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.

@@ -1,85 +1,101 @@
-// Daily view: #today and #day-YYYY-MM-DD (docs/design/daily-and-following.md §1, phase 1; copy: Shira on #130).
-// Loaded after app.js and uses its helpers. Built from competitions + nextDate only: there are no session times
-// or live results, so the page says when the data is from and never "live".
+// Daily view: #today, #day and #day-YYYY-MM-DD (docs/design/daily-and-following.md §1; copy: Shira).
+// Loaded after app.js and uses its helpers. Until data.json carries `sessions`, a day is built from fallback
+// pseudo-sessions: an athlete's nextDate, and history entries of kind "result". There are no session times and
+// no live results, so the page says when the data is from and never "live".
 "use strict";
 
-const DAY_STRIP = 7;          // chips on each side of the selected date
-const DAY_LOOKAHEAD = 120;    // how far the empty state searches for the next day with Israelis
+const CADENCE = "מתעדכן פעם ביום";   // the one place to change when event-day runs are approved (OD2)
+const DAY_STRIP = 3;                 // chips on each side of the selected date
+const DAY_LOOKAHEAD = 120;           // how far the empty state searches for the next day with Israelis
 
-// Same rule as the home strip's todayRows(), for any date: one row per competition running that day in a tracked
-// sport, with the athletes whose nextDate falls inside it; athletes due that day with no such competition get
-// their own row. TODO: fold into todayRows(t) once app.js can take that change.
-function dayRows(t){
-  const end = c => c.end || c.start;
-  const running = S.comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS && athletesOf(c.sportId).length);
-  const rows = new Map(running.map(c => [c, {comp: c, sportId: c.sportId, athletes: []}]));
+// The ≤ 31-day competition of a sport that contains day d (season-long series don't count).
+const compOn = (sid, d) => S.comps.find(c => c.sportId === sid && c.start <= d && d <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS) || null;
+
+// Fallback pseudo-sessions for day d, one per athlete (deduped by athlete + day; a recorded result wins).
+function daySessions(d){
+  const out = new Map();
   for (const a of S.athletes) {
-    if (!isDate(a.nextDate)) continue;
-    const mine = running.filter(c => c.sportId === a.sportId);
-    const c = mine.find(c => c.start <= a.nextDate && a.nextDate <= end(c)) || (a.nextDate === t ? mine[0] : null);
-    if (c) rows.get(c).athletes.push(a);
-    else if (a.nextDate === t) rows.set(a, {comp: null, sportId: a.sportId, athletes: [a]});
+    const res = (Array.isArray(a.history) ? a.history : []).find(h => h.kind === "result" && h.at === d && str(h.text).trim());
+    const comp = compOn(a.sportId, d);
+    if (res) out.set(a.id, {a, comp, result: str(res.text).slice(0, 120), resultSource: res.source});
+    else if (a.nextDate === d) out.set(a.id, {a, comp});
   }
-  const fav = r => r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1;
-  return [...rows.values()].sort((x, y) => fav(x) - fav(y) || heCmp(sportName(x.sportId), sportName(y.sportId))
-    || heCmp(x.comp?.name || x.athletes[0].name, y.comp?.name || y.athletes[0].name));
+  return [...out.values()];
 }
-const hasIsraelis = t => dayRows(t).some(r => r.athletes.length);
+const hasIsraelis = d => daySessions(d).length > 0;
 
 const asDate = d => new Date(d + "T12:00:00");
-const dayTitle = d => `${asDate(d).toLocaleDateString("he-IL", {weekday: "short"})}, ${fmt(d)}`;            // "יום ה׳, 29 באוק׳ 2026"
-const chipText = d => `${asDate(d).toLocaleDateString("he-IL", {weekday: "narrow"})} ${asDate(d).getDate()}`;  // "ה׳ 30"
-const chipName = d => asDate(d).toLocaleDateString("he-IL", {weekday: "long", day: "numeric", month: "long"}); // "יום חמישי, 30 באוקטובר"
-// Israel time, like today(): the stamps must not shift with the viewer's time zone.
+// "Real" date: rejects 2026-02-30, which JS would roll over to 2 March.
+const realDate = d => isDate(d) && !isNaN(asDate(d)) && addDays(d, 0) === d;
+const dayTitle = d => asDate(d).toLocaleDateString("he-IL", {weekday: "short", day: "numeric", month: "short", year: "numeric"});
+const chipText = d => `${asDate(d).toLocaleDateString("he-IL", {weekday: "narrow"})} ${asDate(d).getDate()}`;
+const chipName = d => asDate(d).toLocaleDateString("he-IL", {weekday: "long", day: "numeric", month: "long"});
 const hhmm = iso => new Date(iso).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
 const ilDate = iso => new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Jerusalem"}).format(new Date(iso));
+const STAR = `<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span>`;
 
-// Per athlete: the result recorded for that day; else where they stand relative to their own competition day.
-function dayAthlete(a, d){
-  const t = today();
-  const star = S.follows.has(a.id) ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : "";
-  const res = (Array.isArray(a.history) ? a.history : []).find(h => h.kind === "result" && h.at === d);
-  const upd = str(a.updatedAt), updOk = !isNaN(Date.parse(upd));
-  const stamp = !updOk ? "" : ` · עודכן ב־${ilDate(upd) === t ? hhmm(upd) : `${fmtShort(ilDate(upd))}, ${hhmm(upd)}`}`;
-  const nd = isDate(a.nextDate) ? a.nextDate : "";
-  const line = res ? `<span class="day-res">תוצאה: ${esc(res.text)}${stamp}${safeUrl(res.source) ? ` · ${linkOut(res.source)}` : ""}</span>`
-    : !nd ? ""
-    : nd < t ? `<span class="day-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`
-    : nd === t ? `<span class="day-now">מתחרה היום</span>`
-    : `<span class="day-before">${nd === addDays(t, 1) ? "מתחרה מחר" : `מתחרה ב־${fmt(nd)}`}</span>`;
-  return `<li>${star}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${a.event ? ` · <bdi>${esc(a.event)}</bdi>` : ""}${line ? `<br>${line}` : ""}</li>`;
+function sessionRow(s, d){
+  const t = today(), a = s.a;
+  const star = S.follows.has(a.id) ? STAR + " " : "";
+  // No "עודכן ב־" without the result's own time (resultAt, from sessions); fallback results have only a date.
+  const res = s.result ? `<p class="res"><b>תוצאה:</b> ${esc(s.result)}${safeUrl(s.resultSource) ? ` · ${linkOut(s.resultSource)}` : ""}</p>` : "";
+  const chip = s.result ? ""
+    : d < t ? `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`
+    : d === t ? `<span class="pill s-live">מתחרה היום</span>`
+    : `<span class="pill s-before">לפני התחרות</span>`;
+  return `<li><span class="d">תאריך בלבד</span>
+    <span class="t">${star}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${a.event ? ` · <bdi>${esc(a.event)}</bdi>` : ""}${res}</span>
+    <span>${chip}</span></li>`;
 }
 
-function dayRow({comp: c, sportId, athletes}, d){
-  const list = `<ul class="day-ath">${athletes.sort((a, b) => heCmp(a.name, b.name)).map(a => dayAthlete(a, d)).join("")}</ul>`;
-  if (!c) return `<section class="panel day-comp"><h2><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a>${athletes[0].next ? ` · ${esc(athletes[0].next)}` : ""}</h2>${list}</section>`;
-  const total = dayNo(c.start, c.end || c.start), n = dayNo(c.start, d), now = d === today();
-  const inComp = s => isDate(s) && c.start <= s && s <= (c.end || c.start);
-  const stakes = quotasOf(sportId).filter(q => q.stakes && inComp(q.nextQuotaEvent?.start) && nxt(q, d)).slice(0, STAKES_MAX);
-  const tracked = athletesOf(sportId).length;
-  const sub = [now ? "מתקיימת עכשיו" : "", total > 1 ? `יום ${n} מתוך ${total}` : ""].filter(Boolean).join(" · ");
-  return `<section class="panel day-comp">
-    <h2><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}</h2>
-    ${sub ? `<p class="${now ? "now" : "muted"}">${sub}</p>` : ""}
-    ${athletes.length ? list : `<p class="muted">${tracked === 1 ? "ספורטאי/ת או נבחרת אחת במעקב בענף" : `${tracked} ספורטאים ונבחרות במעקב בענף`}</p>`}
+function compBlock(comp, sessions, sid, d){
+  const t = today();
+  const followedFirst = (x, y) => (S.follows.has(y.a.id) ? 1 : 0) - (S.follows.has(x.a.id) ? 1 : 0) || heCmp(x.a.name, y.a.name);
+  const list = `<ul class="rows sess">${sessions.sort(followedFirst).map(s => sessionRow(s, d)).join("")}</ul>`;
+  if (!comp) return `<h3>${esc(sessions[0].a.next || sportName(sid))}</h3>${list}`;
+  const total = dayNo(comp.start, comp.end || comp.start);
+  const now = comp.start <= t && t <= (comp.end || comp.start) && d === t;
+  // Stakes: in-contention items whose quota event covers this day (an earned item mustn't show pre-event stakes).
+  const stakes = quotasOf(sid).filter(q => q.israelStatus === "in-contention" && q.stakes && q.nextQuotaEvent
+    && q.nextQuotaEvent.start <= d && d <= quotaEventEnd(q)).slice(0, STAKES_MAX);
+  return `<h3>${esc(comp.name)}</h3>
+    ${now ? `<p class="now">מתקיימת עכשיו${total > 1 ? ` · יום ${dayNo(comp.start, d)} מתוך ${total}` : ""}</p>` : ""}
+    ${list}
     ${stakes.map(q => `<p class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</p>`).join("")}
-    <p class="foot">${[esc(c.location), linkOut(c.source)].filter(Boolean).join(" · ")}</p>
-  </section>`;
+    <p class="foot">${[fmtRange(comp.start, comp.end), esc(comp.location), linkOut(comp.source)].filter(Boolean).join(" · ")}</p>`;
 }
 
 function viewDay(d){
-  if (!isDate(d) || isNaN(asDate(d))) return notFound();
-  const t = today(), prev = addDays(d, -1), next = addDays(d, 1), isToday = d === t;
-  const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
-  const rows = dayRows(d);
+  if (!realDate(d)) return notFound();
+  const t = today(), isToday = d === t, prev = addDays(d, -1), next = addDays(d, 1);
+  const sessions = daySessions(d);
+  // Group: sport → competition. Sports: followed, then with a followed athlete, then by name.
+  const bySport = new Map();
+  for (const s of sessions) {
+    const sid = s.a.sportId, key = s.comp ? s.comp.id || s.comp.name : "";
+    if (!bySport.has(sid)) bySport.set(sid, new Map());
+    const comps = bySport.get(sid);
+    if (!comps.has(key)) comps.set(key, {comp: s.comp, list: []});
+    comps.get(key).list.push(s);
+  }
+  const rank = sid => followsSport(sid) ? 0 : [...bySport.get(sid).values()].some(c => c.list.some(s => S.follows.has(s.a.id))) ? 1 : 2;
+  const sports = [...bySport.keys()].sort((x, y) => rank(x) - rank(y) || heCmp(sportName(x), sportName(y)));
   let after = "";
-  if (!rows.length) for (let i = 1; i <= DAY_LOOKAHEAD && !after; i++) if (hasIsraelis(addDays(d, i))) after = addDays(d, i);
+  if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && !after; i++) if (hasIsraelis(addDays(d, i))) after = addDays(d, i);
+  const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun), tsOk = ts && !isNaN(Date.parse(ts));
-  return `<nav class="day-nav" aria-label="מעבר בין ימים">
-      <a href="#day-${prev}">→ ${isToday ? "אתמול" : "היום הקודם"}</a><a href="#day-${next}">${isToday ? "מחר" : "היום הבא"} ←</a></nav>
-  <h1 tabindex="-1">${dayTitle(d)}</h1>
-  <ul class="day-strip">${chips.map(x => { const has = hasIsraelis(x); return `<li><a href="#day-${x}" aria-label="${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}${has ? `<span class="dot" aria-hidden="true"></span>` : ""}</a></li>`; }).join("")}</ul>
-  ${rows.length ? rows.map(r => dayRow(r, d)).join("")
-    : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.</p>${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}
-  ${tsOk ? `<p class="foot">נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)}</p>` : ""}`;
+  return `<div class="day-nav">
+      <a href="#day-${prev}"><span aria-hidden="true">→</span> ${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
+      <h1 tabindex="-1">${dayTitle(d)}</h1>
+      <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"}<span class="sr">, ${chipName(next)}</span> <span aria-hidden="true">←</span></a>
+    </div>
+  <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = hasIsraelis(x);
+    return `<a href="#day-${x}" class="${has ? "has" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}<span class="sr"> · ${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}</span></a>`; }).join("")}
+    ${isToday ? "" : `<a href="#today">היום</a>`}</nav>
+  <p class="foot">${tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)} · ` : ""}${CADENCE}</p>
+  ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
+      <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
+      ${[...bySport.get(sid).values()].map(c => compBlock(c.comp, c.list, sid, d)).join("")}
+    </section>`).join("")
+    : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.</p>${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
 }
