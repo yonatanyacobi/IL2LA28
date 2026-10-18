@@ -46,12 +46,22 @@ function digestText(t = today()){
   const results = S.comps.filter(c => end(c) >= resFrom && end(c) < t && dayNo(c.start, end(c)) <= SERIES_DAYS && athletesOf(c.sportId).length)
     .sort((a, b) => end(b).localeCompare(end(a)) || heCmp(a.name, b.name))
     .map(c => {
-      const who = S.athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && c.start <= a.nextDate && a.nextDate <= end(c));
-      const about = resChanges.filter(x => !used.has(x) && changeSport(x) === c.sportId && day(x) >= c.start);
-      about.forEach(x => used.add(x));
+      // Results written straight into athlete history (results-assist, e.g. tri_results.py) count too; such an
+      // athlete's nextDate has usually moved on to the next event already, so they are matched by the entry's date.
+      const inComp = d => isDate(d) && c.start <= d && d <= end(c);
+      const resultsOf = a => (Array.isArray(a.history) ? a.history : []).filter(h => h && h.kind === "result" && inComp(h.at));
+      const who = S.athletes.filter(a => a.sportId === c.sportId && (inComp(a.nextDate) || resultsOf(a).length));
+      const loggedBy = who.filter(a => resultsOf(a).length);
+      const logged = loggedBy.flatMap(a => resultsOf(a).map(h => [h.at, waCut(`  – ${waText(a.name)}: ${waText(h.text)}`)]))
+        .sort((x, y) => x[0].localeCompare(y[0]) || heCmp(x[1], y[1])).map(([, line]) => line);
+      const fromJob = resChanges.filter(x => !used.has(x) && changeSport(x) === c.sportId && day(x) >= c.start);
+      fromJob.forEach(x => used.add(x));
+      // An editor's change about an athlete whose result is already logged above would repeat it.
+      const about = fromJob.filter(x => !loggedBy.some(a => a.id === x.athleteId));
+      const lines = [...logged, ...about.map(x => waCut(`  – ${waText(x.text)}`))];
       return [waCut(`• ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))})`),
         ...(who.length ? waList("  ישראלים: ", names(who)) : []),
-        ...(about.length ? about.map(x => waCut(`  – ${waText(x.text)}`)) : ["  התוצאות עוד לא עודכנו באתר."])].join("\n");
+        ...(lines.length ? lines : ["  התוצאות עוד לא עודכנו באתר."])].join("\n");
     });
   const changes = weekChanges.filter(c => !used.has(c))
     .sort((a, b) => day(b).localeCompare(day(a)))
