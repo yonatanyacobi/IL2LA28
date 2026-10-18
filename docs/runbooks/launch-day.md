@@ -1,62 +1,71 @@
-# Runbook: public launch day, Thu 22.10.2026
+# Runbook: readiness check (22.10) and public launch day (date set by the owner)
 
-Artifact: https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT. The gates G1–G8 are in the launch checklist (PR #43).
-The **coordinator** makes the calls; the owner has delegated approvals. The owner keeps only the account actions:
-the sharing setting, the contact inbox and posting in their own channels.
+Artifact: https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT. The gates G1–G8 are in the launch checklist (PR #43); the
+decisions are in PR #57.
+- **No launch date yet:** the owner decides it (D1), and no announcement is planned (D6).
+- **Approvals are delegated:** the coordinator makes the team's calls, and `earned` is approved by Dana + Tamar (D4).
+- **The owner keeps the account actions:** the sharing setting and the dedicated contact inbox (D2).
 
-## Roles
-| Who | Launch-day job |
-|---|---|
-| Coordinator | Runs the 12:00 go/no-go and any rollback call; marks verified records |
-| PM | Gate report at 11:00, day-1 metrics, owns this runbook |
-| Lead | Release freeze, tag, publish, rollback |
-| Omer (publisher) | Data fixes after reports: run the daily task, check the published data.json |
-| Gil | Final QA on the live site, signed out |
-| Dana, Tamar | Error-report triage, on call in shifts (Dana 12:00–18:00, Tamar 18:00–23:00) |
-| Owner | Sharing setting, dedicated inbox (D2), announcement posts (copy: PR #46) |
+## Part 1: readiness check, Thu 22.10
+A report to the owner, not a go/no-go.
 
-## Timeline
 | When | Step | Who |
 |---|---|---|
-| 21.10 18:00 | **Freeze.** Only launch-blocker fixes merge to main. Verification batch B3 logged | Lead, Dana |
-| 21.10 evening | QA regression on main; the lead tags it `launch-rc` | Gil, Lead |
 | 22.10 morning | The daily job has run and published. Check `#admin` last run (G7) and spot-check 3 corrected records in data.json (G1) | Lead, Omer |
-| 09:30 | **Save the rollback copies** (see Rollback) | Lead |
-| 10:00 | Final QA on the **live** artifact, signed out, on a phone and a desktop: home, today strip, `#quotas`, `#digest`, one athlete page, and the error box showing the dedicated address (G5, G6) | Gil |
-| 11:00 | **Gate report:** G1–G8 status table plus M2 (verified/30), posted to the coordinator | PM |
-| **12:00** | **Go/no-go.** GO needs all gates green and G3 at ≥ 27/30 including all of B1. NO-GO → launch moves to Tue 27.10; the PM records the red gates and their owners | Coordinator |
-| 12:15 | If main changed since `launch-rc`, the lead publishes it (as in `result-night.md` step 8, with every changed site file). Tag `launch-2026-10-22` | Lead |
-| 12:30 | Live check again, signed out (2 minutes, same list as at 10:00) | Gil |
-| 13:00 | The owner makes sure the link opens for signed-out visitors (sharing setting), then posts the announcement (PR #46) with the `#digest` text in the D6 channels | Owner |
-| 13:00–23:00 | Watch: inbox triage at least hourly, the today strip at the day's events | Dana/Tamar, Omer |
-| 23.10 09:00 | **Day-1 review:** reports received/fixed, corrections, anything rolled back. One line in the weekly metrics log | PM |
+| 10:00 | QA on the **live** artifact, signed out, on a phone and a desktop: home, today strip, `#quotas`, `#digest`, one athlete page, the error box (G6) | Gil |
+| 11:00 | Fill in the gate report below, with a source per row | PM |
+| 12:00 | Review the report with the coordinator; every red gate gets an owner and an ETA | PM, coordinator |
+| 12:30 | **Send the report to the owner**, with the recommendation: "ready", or "ready once X, Y are done" | Coordinator |
 
-Don't launch while a result night is in progress, or during the daily job's publish step.
+The check is repeated on request, or when a red gate turns green.
 
-**If the launch moves to 27.10:** re-check every date-based line before posting:
-- the announcement copy (PR #46), e.g. a days-to-opening count or "this week" lines;
-- the `#digest` text;
-- `LAUNCH_AT` (`2026-10-27T10:00:00Z`, since Israel is on UTC+2 after 25.10);
-- the dates in this runbook's timeline.
-
-## Gate report, 22.10 11:00 (template)
-The PM fills it in and posts it to the coordinator. One screen only: the status is 🟢/🟡/🔴, every status names
-where it was checked, and anything not green has an owner and an ETA before 12:00.
-Pre-filled values are as of 18.10 ~16:30; **re-check every row on the day**.
+### Gate report (template)
+The PM fills it in; it fits on one screen. Each status is 🟢/🟡/🔴, names where it was checked, and anything not green
+has an owner and an ETA. Pre-filled values are as of 18.10 ~16:30; **re-check every row on the day**.
 
 | Gate | Status | Checked in (source) | Owner | If not green |
 |---|---|---|---|---|
 | G1 audit corrections in the DB | 🟢 (applied 18.10) | Spot-check 3 top-harm records (flag football, Shoshani, basketball men) in the published data.json | Coordinator | – |
 | G2 no ❓ record shown as checked | 🟢 | Drive log `docs/audit/2026-10-verification-drive.md`: every marked record has a ✅ row | Dana, Tamar → coordinator | Unmark it |
-| G3 drive ≥ 27/30, all of B1 | 🔴 **28/30, B1 incomplete**: missing `ilia-liubimov`, `celia-gold` | DB `athletes.verifiedAt` vs the drive list (Tashtchiev not in DB; `israel-basketball-women` counts as the alternate) | Dana → coordinator | Sign off and mark both by 11:30, or NO-GO |
+| G3 drive ≥ 27/30, all of B1 | 🔴 **28/30, B1 incomplete**: missing `ilia-liubimov`, `celia-gold` | DB `athletes.verifiedAt` vs the drive list (Tashtchiev not in DB; `israel-basketball-women` counts as the alternate) | Dana → coordinator | Sign off and mark both; ETA in the report |
 | G4 5 ❓ quota items unpublished | 🟢 (`site/quotas.json`: 55 published, `unpublished`: 5) | `#admin` launch panel / `site/quotas.json` | Roni, Ofir; Dana, Tamar | – |
-| G5 dedicated contact address | 🔴 `CONTACT_EMAIL` is still the personal Gmail; memo #53 open | `site/app.js` on the launch commit, and the error box on the live page | Owner (address) → dev (swap) | NO-GO unless swapped and published by 11:45 |
-| G6 QA regression green | ⬜ | Gil's live check at 10:00 (`docs/qa/`) | Gil | Any P0/P1 → NO-GO |
-| G7 pipeline publishes cleanly | ⬜ (`check_live_sync.py` merged, #91) | `#admin` last 2 runs + `python3 job/check_live_sync.py` | Lead | Run it now; NO-GO only if data.json is invalid |
-| G8 Rotterdam result live | ⬜ | `#sport-artistic-gymnastics`, `#quotas`, home agree; official FIG URL. `earned` per owner decision D4 (pending) | Omer; Dana, Tamar | Not live → NO-GO |
+| G5 dedicated contact address | 🔴 the owner is opening the address (D2); until then new code uses `{REPORT_EMAIL}` | `site/app.js` on main and the error box on the live page | Owner (address) → dev (swap in the launch PR) | Stays red until the address exists |
+| G6 QA regression green | ⬜ | Gil's live check at 10:00 (`docs/qa/`) | Gil | List each P0/P1 with an owner |
+| G7 pipeline publishes cleanly | ⬜ (`check_live_sync.py` merged, #91) | `#admin` last 2 runs + `python3 job/check_live_sync.py` | Lead | Run it now; red only if data.json is invalid |
+| G8 Rotterdam result live | ⬜ | `#sport-artistic-gymnastics`, `#quotas`, home agree; official FIG URL. `earned` approved by Dana + Tamar (D4) | Omer; Dana, Tamar | Red until live |
 | M2 (for the record) | 28/99 verified | DB | PM | – |
 
-**Recommendation:** GO / NO-GO (fallback 27.10), plus one line naming the reason and the reddest gate.
+**Recommendation to the owner:** ready / ready once {gates} are done (ETA {date}), plus one line on the reddest gate.
+
+## Part 2: launch day L (the owner's date)
+
+### Roles
+| Who | Launch-day job |
+|---|---|
+| Coordinator | Final ready call and any rollback call; marks verified records |
+| PM | Morning gate re-check, day-1 metrics, owns this runbook |
+| Lead | Release freeze, launch PR (`LAUNCH_AT`, dedicated address in place of `{REPORT_EMAIL}`), tag, publish, rollback |
+| Omer (publisher) | Data fixes after reports: run the daily task, check the published data.json |
+| Gil | Final QA on the live site, signed out |
+| Dana, Tamar | Error-report triage, on call in shifts (Dana 12:00–18:00, Tamar 18:00–23:00) |
+| Owner | Sharing setting (link opens signed out), dedicated inbox (D2) |
+
+### Timeline
+| When | Step | Who |
+|---|---|---|
+| L−1, 18:00 | **Freeze.** Only launch-blocker fixes merge to main | Lead |
+| L−1 evening | QA regression on main; the lead tags it `launch-rc`. Launch PR ready: `LAUNCH_AT` = L 12:00 Israel time in UTC (`+03:00` until 25.10, `+02:00` after), and the dedicated address | Gil, Lead |
+| L 09:30 | **Save the rollback copies** (see Rollback) | Lead |
+| L 10:00 | Live QA, signed out (as in Part 1) | Gil |
+| L 11:00 | Re-run the gate report; all gates green, or the coordinator holds the launch and tells the owner | PM, coordinator |
+| L 12:00 | Merge and publish the launch PR (`result-night.md` step 8, every changed site file). Tag `launch-<YYYY-MM-DD>` | Lead |
+| L 12:30 | Live check again, signed out (2 minutes) | Gil |
+| L 13:00 | The owner opens the link to signed-out visitors (sharing setting). No announcement (D6) | Owner |
+| L 13:00–23:00 | Watch: inbox triage at least hourly, the today strip at the day's events | Dana/Tamar, Omer |
+| L+1 09:00 | **Day-1 review:** reports received/fixed, corrections, anything rolled back. One line in the weekly metrics log | PM |
+
+Don't launch on a result night, or during the daily job's publish step. When L is set, re-check every date-based line:
+the `#digest` text, `LAUNCH_AT` and this timeline.
 
 ## Rollback
 **Save these at 09:30** (lead, in a Claude Code session at the repo root):
