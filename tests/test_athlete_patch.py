@@ -44,6 +44,20 @@ class AthletePatchTest(unittest.TestCase):
         self.assertEqual(ap.build(logged, {"historyEntry": entry}, NOW), {}, "already logged (padding ignored)")
         self.assertEqual(ap.build(CUR, {"historyEntry": {**entry, "kind": "rank"}}, NOW), {}, "only results count alone")
 
+    def test_result_key_becomes_checked_history_entry(self):
+        r = {"at": "2026-10-24", "text": "מקום 4 בגמר ( 24 באוק׳ 2026)", "source": "https://x.org/results"}
+        patch = ap.build(CUR, {"notes": "חדש", "result": r}, NOW)
+        self.assertEqual(patch["history"][-1], {**r, "kind": "result"})
+        self.assertEqual(patch["notes"], "חדש")
+        for bad in ({**r, "at": "24.10.2026"}, {**r, "text": " "}, {**r, "source": "http://x.org"}, {**r, "source": ""},
+                    {**r, "kind": "rank"}, "מקום 4"):
+            with self.assertRaises(ValueError):
+                ap.build(CUR, {"result": bad}, NOW)
+        with self.assertRaises(ValueError):
+            ap.build(CUR, {"result": r, "historyEntry": {"at": "2026-10-24", "kind": "rank", "text": "x"}}, NOW)
+        with self.assertRaises(ValueError):  # a kind "result" historyEntry gets the same checks
+            ap.build(CUR, {"historyEntry": {"at": "2026-10-24", "kind": "result", "text": "x", "source": ""}}, NOW)
+
     def test_history_capped(self):
         cur = {**CUR, "history": [{"at": f"2026-01-{i:02d}"} for i in range(1, 21)]}
         h = ap.build(cur, {"notes": "חדש", "historyEntry": {"at": "2026-10-19"}}, NOW)["history"]

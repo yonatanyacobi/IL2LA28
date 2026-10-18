@@ -26,14 +26,15 @@ def comp(sport="judo", **kw):
 class Dump:
     """Temp dump dir in ArtifactData out_dir layout; every other file uses the {id, data} wrapper."""
 
-    def __init__(self, athletes=None, comps=None, sports=None, meta=None, corrections=None):
+    def __init__(self, athletes=None, comps=None, sports=None, meta=None, corrections=None, sessions=None):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = os.path.join(self.tmp.name, "dump")
         self.out = os.path.join(self.tmp.name, "data.json")
         sports = sports if sports is not None else {"judo": {"he": "ג׳ודו", "en": "Judo", "window": None}}
         meta = meta if meta is not None else {"lastRun": "2026-10-18T14:00:00Z", "changes": [], "updatedBy": "auto"}
         for coll, docs in (("athletes", athletes or {}), ("competitions", comps or {}), ("sports", sports),
-                           ("meta", {"status": meta}), ("corrections", corrections or {})):
+                           ("meta", {"status": meta}), ("corrections", corrections or {}),
+                           ("sessions", sessions or {})):
             os.makedirs(os.path.join(self.dir, coll))
             for i, (doc_id, doc) in enumerate(docs.items()):
                 body = {"id": doc_id, "data": doc} if i % 2 else doc
@@ -292,6 +293,102 @@ class ExportTest(unittest.TestCase):
             if os.path.exists(p):
                 with open(p, encoding="utf-8") as f:
                     self.assertNotRegex(f.read(), r"\bLAUNCH_AT\s*=", name)
+
+    # ---- sessions (docs/design/sessions-contract.md) ----
+    def sess(self, **kw):
+        base = {"competitionId": "gs", "date": "2026-10-29", "timeLocal": "09:30", "tz": "Asia/Dubai",
+                "athleteIds": ["a"], "phase": "מוקדמות 57- ק״ג", "source": "https://www.ijf.org/schedule",
+                "result": "", "resultSource": "", "resultAt": "",
+                "review": {"status": "ok", "by": "tamar", "at": "2026-10-19"}}
+        return {**base, **kw}
+
+    def test_sessions_need_fact_check_sign_off(self):
+        unchecked = {"status": "unchecked", "by": "roni", "at": "2026-10-18"}
+        data, log = self.sessions_export({
+            "ok": self.sess(), "fixed": self.sess(review={"status": "fixed", "by": "dana", "at": "2026-10-19"}),
+            "unchecked": self.sess(review=unchecked), "hold": self.sess(review={**unchecked, "status": "HOLD"}),
+            "partial": self.sess(review={**unchecked, "status": "partial"}),
+            "no-review": {k: v for k, v in self.sess().items() if k != "review"}, "bad-review": self.sess(review="ok"),
+        })
+        self.assertEqual(sorted(s["id"] for s in data["sessions"]), ["fixed", "ok"])
+        for held in ("unchecked", "hold", "partial", "no-review", "bad-review"):
+            self.assertIn(repr(held), log)
+        self.assertNotIn("review", data["sessions"][0], "the review itself is never exported")
+        sys.path.insert(0, os.path.join(HERE, "..", "job"))
+        import build_quotas
+        self.assertEqual(ex.SIGNED_OFF, build_quotas.PUBLISH)
+
+    def sessions_export(self, sessions, **kw):
+        comps = {"gs": comp(start="2026-10-29", end="2026-10-31"),
+                 "ams": comp(start="2026-10-24", end="2026-10-26")}
+        athletes = {"a": athlete(), "b": athlete(), "gone": athlete(archived=True)}
+        with Dump(athletes=athletes, comps=comps, sessions=sessions, **kw) as d:
+            data = d.run()
+            log = d.log
+        self.assertEqual(validate_data.validate(data), [])
+        return data, log
+
+    def test_sessions_start_utc_from_local_time_and_zone(self):
+        data, _ = self.sessions_export({
+            "dubai": self.sess(),                                                            # UTC+4
+            "ams-cest": self.sess(competitionId="ams", date="2026-10-24", timeLocal="09:00", tz="Europe/Amsterdam"),
+            "ams-cet": self.sess(competitionId="ams", date="2026-10-26", timeLocal="09:00", tz="Europe/Amsterdam"),
+            "untimed": self.sess(timeLocal="", tz=""),
+        })
+        got = {s["id"]: s["startUtc"] for s in data["sessions"]}
+        self.assertEqual(got, {"dubai": "2026-10-29T05:30:00Z", "ams-cest": "2026-10-24T07:00:00Z",
+                               "ams-cet": "2026-10-26T08:00:00Z", "untimed": None})  # DST ended on 25.10
+
+    def test_sessions_whitelist_order_and_athletes(self):
+        data, _ = self.sessions_export({
+            "late": self.sess(timeLocal="15:00", updatedBy="u-1", notes="פנימי", quota=True, israelis=["a"]),
+            "early": self.sess(timeLocal="08:00", athleteIds=["b", "ghost", "gone", "b"]),
+            "notime": self.sess(timeLocal="", tz=""),
+            "next-day": self.sess(date="2026-10-30", timeLocal="06:00"),
+        })
+        ss = data["sessions"]
+        self.assertEqual([s["id"] for s in ss], ["early", "late", "notime", "next-day"])
+        self.assertEqual(set(ss[1]), validate_data.SESSION_KEYS)
+        self.assertEqual(ss[0]["athleteIds"], ["b"])  # unknown, archived and duplicate ids removed
+        self.assertNotIn("פנימי", json.dumps(ss, ensure_ascii=False))
+
+    def test_sessions_dropped_and_held(self):
+        data, log = self.sessions_export({
+            "ok": self.sess(),
+            "unknown-comp": self.sess(competitionId="nope"), "outside": self.sess(date="2026-11-05"),
+            "bad-date": self.sess(date="29.10.2026"), "http": self.sess(source="http://x.org"),
+            "no-phase": self.sess(phase=" "), "no-israeli": self.sess(athleteIds=["ghost", "gone"]),
+            "bad-time": self.sess(timeLocal="9:30"), "bad-tz": self.sess(tz="Mars/Olympus"),
+            "no-tz": self.sess(tz=""),
+            "unproven": self.sess(result="מקום 3", resultSource="", resultAt="2026-10-29T12:00:00Z"),
+            "offset": self.sess(result="מקום 3", resultSource="https://ijf.org/r", resultAt="2026-10-29T15:00:00+03:00"),
+            "proven": self.sess(result="מקום 3", resultSource="https://ijf.org/r", resultAt="2026-10-29T12:00:00Z"),
+        })
+        by_id = {s["id"]: s for s in data["sessions"]}
+        for gone in ("unknown-comp", "outside", "bad-date", "http", "no-phase", "no-israeli"):
+            self.assertNotIn(gone, by_id)
+            self.assertIn(repr(gone), log)
+        for k in ("bad-time", "bad-tz", "no-tz"):
+            self.assertIsNone(by_id[k]["startUtc"], k)
+            self.assertIn(f"{k} (time)", log)
+        for k in ("unproven", "offset"):
+            self.assertEqual((by_id[k]["result"], by_id[k]["resultSource"], by_id[k]["resultAt"]), ("", "", ""), k)
+            self.assertIn(f"{k} (result)", log)
+        self.assertEqual(by_id["proven"]["resultAt"], "2026-10-29T12:00:00Z")
+
+    def test_sessions_shrink_guard(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            prev = os.path.join(tmp, "prev.json")
+            with open(prev, "w") as f:
+                json.dump({"sports": [{}], "athletes": [{}], "competitions": [{}], "sessions": [{}] * 10}, f)
+            comps = {"gs": comp(start="2026-10-29", end="2026-10-31")}
+            for n, code in ((7, 2), (9, 0)):
+                sessions = {f"s{i}": self.sess() for i in range(n)}
+                with Dump(athletes={"a": athlete()}, comps=comps, sessions=sessions) as d:
+                    r = d.cli(prev)
+                    self.assertEqual(r.returncode, code, (n, r.stdout))
+                    if code:
+                        self.assertIn("REFUSED: sessions", r.stdout)
 
     def test_shrink_guard(self):
         with tempfile.TemporaryDirectory() as tmp:

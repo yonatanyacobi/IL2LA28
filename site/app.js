@@ -70,6 +70,8 @@ const quotasOf = sid => S.quotas.filter(q => q.sportId === sid);
 const upcoming = () => S.comps.filter(c => (c.end || c.start) >= today()).sort((a, b) => a.start.localeCompare(b.start));
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
+// Per-viewer follows: athletes in S.follows, sports in S.followSports (following.js; absent before it loads).
+const followsSport = id => !!S.followSports?.has(id);
 // Compared as instants: the job and the page write ISO strings with different precision.
 const trustOf = a => { const v = Date.parse(str(a.verifiedAt)), u = Date.parse(str(a.updatedAt)); return isNaN(v) ? "auto" : isNaN(u) || v >= u ? "ok" : "stale"; };
 
@@ -109,9 +111,18 @@ function winStatus(w){
   return t < w.from ? ["soon", "טרם נפתח"] : isDate(w.to) && t > w.to ? ["done", "נסגר"] : ["open", "פתוח"];
 }
 
+// When the browser blocks storage the follow still holds until the page closes; say so instead of failing
+// silently (QA F1). Uses the same status bar as the visitor toggle.
+function saveFollows(key, list){
+  store.set(key, list);
+  if (JSON.stringify(store.get(key, null)) === JSON.stringify(list)) return;
+  $("visitorMsgText").textContent = "לא הצלחנו לשמור את המעקב: הדפדפן חוסם שמירת נתונים באתר הזה. השינוי יישאר רק עד שתסגרו או תרעננו את הדף.";
+  $("visitorMsg").hidden = false;
+}
+
 function toggleFollow(id){
   S.follows.has(id) ? S.follows.delete(id) : S.follows.add(id);
-  store.set("la28.follows", [...S.follows]);
+  saveFollows("la28.follows", [...S.follows]);
 }
 
 // ---------- shared fragments ----------
@@ -273,7 +284,7 @@ function todayRows(){
     if (c) rows.get(c).athletes.push(a);
     else if (a.nextDate === t) rows.set(a, {comp: null, sportId: a.sportId, athletes: [a]});
   }
-  const fav = r => r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1;
+  const fav = r => r.athletes.some(a => S.follows.has(a.id)) || followsSport(r.sportId) ? 0 : 1;
   return [...rows.values()].sort((x, y) => fav(x) - fav(y) || heCmp(sportName(x.sportId), sportName(y.sportId))
     || heCmp(x.comp?.name || x.athletes[0].name, y.comp?.name || y.athletes[0].name));
 }
@@ -354,10 +365,11 @@ function closestGroups(rows, t = today()){
     if (!groups.has(k)) groups.set(k, {sportId: q.sportId, start: q.nextQuotaEvent.start, name: q.nextQuotaEvent.name, items: []});
     groups.get(k).items.push({q, as: quotaAthletes(q)});
   }
-  const fav = g => g.items.some(i => i.as.some(a => S.follows.has(a.id))) ? 0 : 1;
+  const fav = g => followsSport(g.sportId) || g.items.some(i => i.as.some(a => S.follows.has(a.id))) ? 0 : 1;
   const matched = g => g.items.some(i => i.as.length) ? 0 : 1;
   for (const g of groups.values()) g.items.sort((x, y) => (y.as.length > 0) - (x.as.length > 0) || heCmp(x.q.event, y.q.event));
-  return [...groups.values()].sort((x, y) => x.start.localeCompare(y.start) || fav(x) - fav(y) || matched(x) - matched(y)
+  // Followed first (also so the cap never drops them), then by date.
+  return [...groups.values()].sort((x, y) => fav(x) - fav(y) || x.start.localeCompare(y.start) || matched(x) - matched(y)
     || heCmp(sportName(x.sportId), sportName(y.sportId))).slice(0, CLOSE_MAX);
 }
 
@@ -377,7 +389,7 @@ function closestPanel(rows){
   return `<section class="panel today" aria-labelledby="closeH">
     <h2 id="closeH">ההזדמנויות הקרובות למכסה</h2>
     <ul class="rows closest">${groups.map(row).join("")}</ul>
-    <p class="foot">מקצים שבהם ישראל במרוץ למכסה, ממוינים לפי מועד אירוע המכסה הבא. <a href="#quotas">לתמונת המכסות המלאה${groups.length > 3 ? `<span class="sm-only"> (עוד ${groups.length - 3})</span>` : ""}</a></p>
+    <p class="foot">מקצים שבהם ישראל במרוץ למכסה. מה שבמעקב שלך מופיע ראשון, והשאר לפי מועד אירוע המכסה הבא. <a href="#quotas">לתמונת המכסות המלאה${groups.length > 3 ? `<span class="sm-only"> (עוד ${groups.length - 3})</span>` : ""}</a></p>
   </section>`;
 }
 
@@ -425,6 +437,7 @@ function viewHome(){
   <p class="sr" id="qCount" aria-live="polite"></p>
   <div id="results"></div>
   ${todayStrip(rows)}
+  ${typeof viewDay === "function" ? `<p class="foot"><a href="#today">לכל התחרויות היום</a></p>` : ""}
   ${wonPanel()}
   ${closestPanel(rows)}
   ${reviewPanel()}
@@ -478,7 +491,7 @@ function viewSports(){
   const withA = S.sports.filter(s => athletesOf(s.id).length);
   const without = S.sports.filter(s => !athletesOf(s.id).length).sort((a, b) => heCmp(a.he, b.he));
   const nextStart = s => upcomingIn(s.id)[0]?.start || "9999";
-  withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
+  withA.sort((a, b) => followsSport(b.id) - followsSport(a.id) || nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
   <p class="muted">${withA.length === 1 ? "ענף אחד עם ספורטאים ונבחרות מישראל במעקב." : `${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.`}${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
@@ -697,7 +710,7 @@ function freshness(){
   if (!ts) return "";
   const stale = daysSince(ts) > 1.5;
   const when = new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
-  return `<span class="fresh ${stale ? "stale" : ""}"><i></i><span>${S.live ? "נתונים חיים · עדכון אוטומטי אחרון: " : "הנתונים עודכנו: "}${when}</span></span>`;
+  return `<span class="fresh ${stale ? "stale" : ""}"><i></i><span>${S.live ? "נתונים חיים · עדכון אוטומטי אחרון: " : "נכון ל־"}${when}</span></span>`;
 }
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
 
@@ -938,13 +951,17 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
+  else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") html = viewDay(h === "today" || h === "day" ? today() : h.slice(4)), nav = "calendar";
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
+  else if (/^following(-|$)/.test(h) && typeof viewFollowing === "function") html = viewFollowing(h.slice(10)), nav = "following";
+  else if (h.startsWith("c-") && typeof viewEvent === "function") html = viewEvent(h.slice(2)), nav = "calendar";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (h === "digest" && typeof viewDigest === "function") html = viewDigest(), nav = "updates";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound();
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
+  if (typeof followingDecorate === "function") html = followingDecorate(h, html);
   $("view").innerHTML = banner() + html;
   $("fixLink").innerHTML = fixLogLive() ? ` · <a href="#corrections">יומן התיקונים</a>` : "";
   if (focusTrust && S.loaded) {   // once per arrival, so data refreshes don't steal focus
@@ -979,11 +996,33 @@ function navigate(){
   $("routeStatus").textContent = document.querySelector("#view h1")?.textContent || "";
 }
 // Data refreshes re-render in place without jumping the scroll position or losing search focus.
+// Focus is restored by id (search box, filters, buttons with ids); the scroll position is kept explicitly.
+// Re-rendering replaces #view, so focus is found again by a stable key: the id, else a data-* action attribute,
+// else the link's href (with its index among equal matches). Open <details> are reopened by index.
+const FOCUS_ATTRS = ["data-follow", "data-follow-sport", "data-edit", "data-add", "data-verify", "data-copy", "href"];
+const attrSel = (k, v) => `[${k}="${str(v).replace(/["\\]/g, "\\$&")}"]`;
+function focusKey(el){
+  if (!el || el === document.body) return null;
+  if (el.id) return {id: el.id};
+  const k = FOCUS_ATTRS.find(a => el.getAttribute?.(a) != null);
+  if (!k) return null;
+  const sel = attrSel(k, el.getAttribute(k));
+  return {sel, idx: Math.max(0, [...($("view").querySelectorAll?.(sel) || [])].indexOf(el))};
+}
 function refresh(){
-  const focused = document.activeElement?.id;
-  const pos = focused === "q" ? $("q").selectionStart : null;
+  const el = document.activeElement, key = focusKey(el), y = window.scrollY;
+  const open = [...($("view").querySelectorAll?.("details") || [])].map((d, i) => d.open ? i : -1).filter(i => i >= 0);
+  let pos = null;
+  try { pos = typeof el?.selectionStart === "number" ? el.selectionStart : null; } catch {}
   route();
-  if (focused === "q" && $("q")) { $("q").focus(); $("q").setSelectionRange(pos, pos); }
+  const details = [...($("view").querySelectorAll?.("details") || [])];
+  open.forEach(i => { if (details[i]) details[i].open = true; });
+  const again = !key ? null : key.id ? $(key.id) : (m => m[key.idx] || m[0])([...($("view").querySelectorAll?.(key.sel) || [])]);
+  if (again && again !== el) {
+    again.focus({preventScroll: true});
+    if (pos !== null) try { again.setSelectionRange(pos, pos); } catch {}
+  }
+  if (typeof y === "number") scrollTo({top: y, behavior: "auto"});
 }
 
 // ---------- events ----------
@@ -1154,6 +1193,49 @@ async function goLive(){
   } catch { /* stay on the public snapshot */ }
 }
 
+// ---------- auto-refresh (public data) ----------
+// An open tab re-reads data.json every REFRESH_MS and re-renders only when the export changed. Hidden tabs
+// don't poll; on return the check runs at once if it's due. Editors get live DB snapshots instead.
+const REFRESH_MS = 5 * 60e3;   // acceptance item 11: at most 5 minutes
+let lastCheck = Date.now(), refreshTimer = 0;
+async function checkForUpdate(){
+  lastCheck = Date.now();
+  if (S.live || !S.loaded) return;
+  try {
+    const prevQ = quotaFile, prevJson = JSON.stringify(quotaFile);
+    const [r] = await Promise.all([fetch("data.json", {cache: "no-cache"}), loadQuotas()]);
+    // A failed re-read keeps the quotas already shown; a 404 is an empty list (file removed on purpose), so they go.
+    if (quotaFile === null) quotaFile = prevQ;
+    const quotasChanged = JSON.stringify(quotaFile) !== prevJson;
+    if (quotasChanged) applyQuotas();
+    const d = r.ok ? await r.json() : null;
+    if (S.live || !d || (str(d.generatedAt) === S.generatedAt && str(d.lastRun) === S.lastRun)) { if (quotasChanged) refresh(); return; }
+    publicSnapshot = d;
+    applySnapshot(d);
+    refresh();
+    showUpdateNote();
+  } catch { /* keep what is on screen; freshness() turns stale after 1.5 days */ }
+}
+// A small visible note (also the screen-reader announcement), shown only when the export changed; it hides itself.
+let noteTimer = 0;
+function showUpdateNote(){
+  const n = $("updateNote");
+  if (!n) return;
+  // The export's own time (Israel), not the moment the tab noticed it.
+  const ts = S.generatedAt || S.lastRun, ok = ts && !isNaN(Date.parse(ts));
+  n.textContent = ok ? `הנתונים עודכנו ב־${new Date(ts).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"})}` : "הנתונים עודכנו";
+  n.hidden = false;
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => { n.hidden = true; }, 8000);
+}
+function scheduleRefresh(){
+  clearTimeout(refreshTimer);
+  if (document.hidden) return;
+  refreshTimer = setTimeout(async () => { await checkForUpdate(); scheduleRefresh(); }, Math.max(0, REFRESH_MS - (Date.now() - lastCheck)));
+}
+document.addEventListener("visibilitychange", scheduleRefresh);
+
 navigate();
 loadPublic();
 goLive();
+scheduleRefresh();

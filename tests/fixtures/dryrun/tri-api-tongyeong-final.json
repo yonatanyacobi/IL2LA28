@@ -1,0 +1,11 @@
+{
+ "/events": {"data": [{"event_id": 195162, "event_slug": "2026-world-triathlon-cup-tongyeong",
+                       "event_listing": "https://www.triathlon.org/events/2026-world-triathlon-cup-tongyeong"}]},
+ "/events/195162/programs": {"data": [{"prog_id": 10, "prog_name": "Elite Men", "is_race": true},
+                                       {"prog_id": 11, "prog_name": "Elite Women", "is_race": true}]},
+ "/events/195162/programs/10/results": {"data": {"prog_distance_category": "sprint", "prog_date": "2026-10-24", "results": [
+  {"athlete_id": 1, "athlete_title": "Fake Winner", "athlete_noc": "BEL", "position": 1, "validated": true},
+  {"athlete_id": 41870, "athlete_title": "Shachar Sagiv", "athlete_noc": "ISR", "position": 7, "validated": true}]}},
+ "/events/195162/programs/11/results": {"data": {"prog_distance_category": "sprint", "prog_date": "2026-10-24", "results": [
+  {"athlete_id": 2, "athlete_title": "Fake Winner W", "athlete_noc": "AUS", "position": 1, "validated": true}]}}
+}
