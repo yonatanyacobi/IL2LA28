@@ -868,7 +868,7 @@ const eventAt = async (id, now, opts = {}) => {
 
 test("#c- Abu Dhabi (fallback data): header, 3 days, athletes once each, quota items, unknown id", async () => {
   const {b, out} = await eventAt(AD, "2026-10-29T08:00:00Z");
-  assert.ok(out.includes('<h1 tabindex="-1">גרנד סלאם אבו דאבי</h1>') && out.includes('<a href="#sport-judo">→ ג׳ודו</a>'));
+  assert.ok(out.includes('<h1 tabindex="-1">גרנד סלאם אבו דאבי</h1>') && out.includes('<a href="#sport-judo"><span aria-hidden="true">→</span>&nbsp;ג׳ודו</a>'));
   assert.ok(out.includes("מתקיימת עכשיו · יום 1 מתוך 3") && out.includes('<span class="pill open">העפלה</span>'));
   assert.strictEqual(out.split('class="sess-day"').length - 1, 1, "only the day with sessions");
   assert.ok(out.includes("ב־2 ימים נוספים בתחרות לא ידועים סשנים של ישראלים."), "empty days collapsed into one line");
@@ -1736,7 +1736,7 @@ test("#day renders the fixture on 24.10, 29.10 and 3.11 with Israelis' sessions 
   const d24 = view("day-2026-10-24"), d29 = view("day-2026-10-29"), d03 = view("day-2026-11-03");
   for (const [h, out] of [["24", d24], ["29", d29], ["03", d03]]) {
     assert.ok(!out.includes(NOT_FOUND) && out.includes('<h1 tabindex="-1">'), h);
-    assert.ok(out.includes('<span aria-hidden="true">→</span> היום הקודם') && out.includes('<span aria-hidden="true">←</span>') && out.includes("היום הבא<span class=\"sr\">") && out.includes('<a href="#today">היום</a>'), `${h}: prev/next + today link`);
+    assert.ok(out.includes('<span aria-hidden="true">→</span>&nbsp;היום הקודם') && out.includes('<span aria-hidden="true">←</span>') && out.includes("היום הבא<span class=\"sr\">") && out.includes('<a href="#today">היום</a>'), `${h}: prev/next + today link`);
     assert.strictEqual((out.split('aria-label="בחירת יום"')[1].split("</nav>")[0].match(/href="#day-/g) || []).length, 7, `${h}: 7 chips`);
     assert.strictEqual((out.match(/aria-current="date"/g) || []).length, 1, `${h}: one selected chip`);
     assert.ok(/נכון ל־.*, \d\d:\d\d · מתעדכן פעם ביום/.test(out), `${h}: data note with cadence`);
@@ -1748,7 +1748,7 @@ test("#day renders the fixture on 24.10, 29.10 and 3.11 with Israelis' sessions 
   assert.ok(d29.includes('aria-current="date">ה׳ 29<span class="sr"> · יום חמישי, 29 באוקטובר · יש תחרויות של ישראלים</span>'), "chip: visible text in the name + current");
   const strip = d29.split('aria-label="בחירת יום"')[1].split("</nav>")[0];
   assert.ok(!/<a [^>]*aria-label=/.test(strip), "no aria-label overriding the visible chip text");
-  assert.ok(d29.includes('<span aria-hidden="true">→</span> היום הקודם<span class="sr">, יום רביעי, 28 באוקטובר</span>'), "prev: arrow hidden, sr date");
+  assert.ok(d29.includes('<span aria-hidden="true">→</span>&nbsp;היום הקודם<span class="sr">, יום רביעי, 28 באוקטובר</span>'), "prev: arrow hidden, sr date");
   assert.ok(!d03.includes("#sport-shooting"), "3.11: running competitions without Israelis are left out");
 });
 
@@ -1763,7 +1763,7 @@ test("#day: today's states, a result on another day, #day alone, impossible date
   const t = view("today");
   assert.ok(t.includes('<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span> <a href="#a-gefen-primo"'), "★ pattern");
   assert.strictEqual(t, view("day-2026-10-30")); assert.strictEqual(t, view("day"), "#day alone = today");
-  assert.ok(t.includes('<span aria-hidden="true">→</span> אתמול') && t.includes("מחר<span class=\"sr\">") && !t.includes('<a href="#today">היום</a>'));
+  assert.ok(t.includes('<span aria-hidden="true">→</span>&nbsp;אתמול') && t.includes("מחר<span class=\"sr\">") && !t.includes('<a href="#today">היום</a>'));
   assert.ok(t.includes("מתקיימת עכשיו · יום 2 מתוך 3") && t.includes("pill s-live"), "today: live header and chip");
   assert.ok(!t.includes('href="#a-raz-hershko"'), "a result on 29.10 isn't shown as awaiting on 30.10");
   const y = view("day-2026-10-29");

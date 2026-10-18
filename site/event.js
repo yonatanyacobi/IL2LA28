@@ -75,7 +75,7 @@ function viewEvent(id){
         <ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k)).join("")}</ul></div>`).join("")
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועים סשנים של ישראלים.</p>` : "")(
         series ? 0 : [...groups].filter(([, list]) => !list.length).length));
-  return `<p class="crumb"><a href="#sport-${esc(c.sportId)}">→ ${esc(sportName(c.sportId))}</a></p>
+  return `<p class="crumb"><a href="#sport-${esc(c.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sportName(c.sportId))}</a></p>
   <div class="event-head">
     <h1 tabindex="-1">${esc(c.name)}</h1>
     <p class="muted">${[fmtRange(c.start, c.end), esc(c.location)].filter(Boolean).join(" · ")}</p>

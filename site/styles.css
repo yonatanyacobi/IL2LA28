@@ -355,6 +355,7 @@ div.track{background:none}
 .daystrip a[aria-current="date"].has::after{background:var(--on-blue)}   /* sun on blue is 1.2:1 in dark */
 .day-nav{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .day-nav > a{min-height:44px;display:inline-flex;align-items:center;font-weight:600;text-decoration:none}
+.day-nav h1{order:-2;margin-inline-end:auto}
 .day-nav .day-prev{order:-1}   /* h1 comes first in the DOM (reading/tab order); visually prev stays at the start */
 .rows.sess li{grid-template-columns:70px 1fr auto}
 .res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px}
@@ -377,4 +378,8 @@ div.track{background:none}
 .event-head{display:grid;gap:6px}
 .event-head .pills{display:flex;flex-wrap:wrap;gap:6px}
 .sess-day h3{font-size:16px;font-family:var(--f-body);font-weight:700}
-.sess-day h3 a[aria-current="date"]{color:var(--ink);text-decoration-thickness:3px;text-decoration-color:var(--sun)}
+/* (4) headings that are links: one style. The current day is marked with a box-shadow, not text-decoration, which
+   Safari breaks at word spaces. */
+.link-head a,.sess-day h3 a{color:var(--ink);text-decoration:none}
+.link-head a:hover,.sess-day h3 a:hover{text-decoration:underline}
+.sess-day h3 a[aria-current="date"]{box-shadow:inset 0 -3px 0 var(--sun)}

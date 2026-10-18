@@ -214,7 +214,7 @@ function compRow(c, withSport){
     <span class="when">${fmtRange(c.start, c.end)}</span>
     <span class="what"><b>${withSport ? `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ` : ""}${esc(c.name)}</b>
       <span>${esc(c.location)}${c.notes ? " · " + esc(c.notes) : ""}${safeUrl(c.source) ? " · " + linkOut(c.source) : ""}</span></span>
-    <span>${live ? `<span class="now">מתקיימת עכשיו</span>` : past ? `<span class="pill ended">הסתיימה</span>` : c.qualifying ? `<span class="pill open">העפלה</span>` : ""}</span>
+    <span>${live ? `<span class="pill s-live">מתקיימת עכשיו</span>` : past ? `<span class="pill ended">הסתיימה</span>` : c.qualifying ? `<span class="pill open">העפלה</span>` : ""}</span>
   </div>`;
 }
 
@@ -337,7 +337,7 @@ function todayStrip(rows){
       + (stakes.length > STAKES_MAX ? `<small>ועוד ${plural(stakes.length - STAKES_MAX, "מקצה אחד", "מקצים")} — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
       <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small>${onLine}</span>
-      <span class="now">מתקיימת עכשיו</span></li>`;
+      <span><span class="pill s-live">מתקיימת עכשיו</span></span></li>`;
   };
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
   const when = ts ? new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
@@ -515,7 +515,7 @@ function viewSport(id){
   const ws = winStatus(s.window), w = s.window;
   const comps = upcomingIn(id);
   return `
-  <p class="crumb"><a href="#sports">→ כל הענפים</a></p>
+  <p class="crumb"><a href="#sports"><span aria-hidden="true">→</span>&nbsp;כל הענפים</a></p>
   <div class="sec-head"><h1 tabindex="-1">${esc(s.he)}</h1>${S.isAdmin ? `<button class="btn small" data-add="${esc(id)}">+ הוספת ספורטאי/ת</button>` : ""}</div>
   <section class="panel">
     <div class="sec-head"><h2>שיטת ההעפלה</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</div>
@@ -543,7 +543,7 @@ function viewAthlete(id){
   const hist = (Array.isArray(a.history) ? a.history : []).filter(h => isDate(h.at)).slice().reverse();
   const link = `${SITE_URL}#a-${id}`;
   return `
-  <p class="crumb"><a href="#sport-${esc(a.sportId)}">→ ${esc(sp?.he || "ענף")}</a></p>
+  <p class="crumb"><a href="#sport-${esc(a.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sp?.he || "ענף")}</a></p>
   <div class="sec-head">
     <div><h1 tabindex="-1">${esc(a.name)}</h1>${a.name_en ? `<p class="muted" dir="ltr" style="text-align:right">${esc(a.name_en)}</p>` : ""}</div>
     <div class="actions">
@@ -951,7 +951,7 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
-  else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") html = viewDay(h === "today" || h === "day" ? today() : h.slice(4)), nav = "calendar";
+  else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") html = viewDay(h === "today" || h === "day" ? today() : h.slice(4)), nav = "today";
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
   else if (/^following(-|$)/.test(h) && typeof viewFollowing === "function") html = viewFollowing(h.slice(10)), nav = "following";
