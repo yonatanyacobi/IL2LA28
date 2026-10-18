@@ -325,8 +325,31 @@ test("#quotas renders the fixture grouped by status, with links and the as-of da
   assert.ok(next.indexOf("fixture: worlds") > 0 && next.indexOf("fixture: worlds") < next.indexOf("fixture: meet"), "upcoming sorted by date");
   assert.ok(out.includes("נכון ל־"), "as-of date");
   const home = view("home"), sports = view("sports");
-  assert.ok(home.includes('href="#quotas"') && home.includes("מקצים עם מכסה לישראל"));
+  assert.ok(home.includes('href="#quotas"') && home.includes("מקצה אחד עם מכסה לישראל"));
   assert.ok(sports.includes('href="#quotas"') && sports.includes("✓ 1 הושגה"));
+});
+
+test("home quota line uses singular forms for 1", async () => {
+  const [earned, contention] = QUOTAS.items;
+  const kpi = async items => {
+    const home = (await boot({quotas: {updatedAt: "2026-10-18", items}})).view("home");
+    return /<p class="kpi">[^]*?<\/p>/g.exec(home.slice(home.indexOf("<p class=\"kpi\"") + 1))?.[0] || "";
+  };
+  const one = await kpi([earned, {...contention, sportId: earned.sportId}]);
+  assert.ok(one.includes("מקצה אחד עם מכסה לישראל") && one.includes("בענף אחד") && !/ב־1 |>1<\/b> מקצים/.test(one), one);
+  const none = await kpi([contention]);
+  assert.ok(none.includes("טרם הושגו מכסות לישראל · מקצה אחד במרוץ למכסה בענף אחד"), none);
+  const many = await kpi([earned, {...earned, event: "x"}, contention, {...contention, sportId: "athletics"}]);
+  assert.ok(many.includes("<b>2</b> מקצים עם מכסה לישראל") && many.includes("ב־3 ענפים"), many);
+});
+
+test("quota explanation box: placeholder when allocation is empty, hidden when nothing to show", async () => {
+  const base = QUOTAS.items[1];
+  const {view} = await boot({quotas: {updatedAt: "2026-10-18", items: [
+    {...base, event: "a", allocation: ""}, {...base, event: "b", allocation: "", source: ""}]}});
+  const out = view(`sport-${base.sportId}`);
+  assert.strictEqual(count(out, "<details>"), 1);
+  assert.ok(out.includes("פרטי השיטה טרם נאספו") && out.includes("example.org/sailing"));
 });
 
 test("#quotas: upcoming list keeps the next 5 future events and escapes item text", async () => {

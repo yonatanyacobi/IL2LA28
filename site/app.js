@@ -87,8 +87,10 @@ function quotaKpi(){
   if (!list.length) return "";
   const n = quotaCounts(list), k = new Set(list.filter(q => ["earned", "in-contention"].includes(qStatus(q.israelStatus))).map(q => q.sportId)).size;
   const link = `<a href="#quotas">תמונת המכסות</a>`;
-  return `<p class="kpi">${n.earned ? `<b>${n.earned}</b> מקצים עם מכסה לישראל · <b>${n["in-contention"]}</b> במרוץ למכסה · ב־${k} ענפים`
-    : `טרם הושגו מכסות לישראל · <b>${n["in-contention"]}</b> מקצים במרוץ למכסה ב־${k} ענפים`} · ${link}</p>`;
+  const events = c => c === 1 ? "מקצה אחד" : `<b>${c}</b> מקצים`;
+  const sports = k === 1 ? "בענף אחד" : k ? `ב־${k} ענפים` : "";
+  return `<p class="kpi">${n.earned ? [`${events(n.earned)} עם מכסה לישראל`, `<b>${n["in-contention"]}</b> במרוץ למכסה`, sports].filter(Boolean).join(" · ")
+    : `טרם הושגו מכסות לישראל · ${events(n["in-contention"])} במרוץ למכסה${sports ? " " + sports : ""}`} · ${link}</p>`;
 }
 
 function winStatus(w){
@@ -137,7 +139,7 @@ function quotaSection(id){
         ${meta ? `<p class="q-meta">${meta}</p>` : ""}
         ${q.israelNote ? `<p>${esc(q.israelNote)}</p>` : ""}
         ${e ? `<p class="q-meta">אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}</p>` : ""}
-        <details><summary>איך מחולקות המכסות</summary>${q.allocation ? `<p>${esc(q.allocation)}</p>` : ""}<p class="foot">${src}</p></details>
+        ${q.allocation || src ? `<details><summary>איך מחולקות המכסות</summary><p>${q.allocation ? esc(q.allocation) : `<span class="muted">פרטי השיטה טרם נאספו.</span>`}</p>${src ? `<p class="foot">${src}</p>` : ""}</details>` : ""}
       </li>`;
     }).join("")}</ul>
     <p class="foot">ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת; הוועד האולימפי בישראל בוחר בהמשך מי ישתמש בה.${isDate(S.quotasUpdatedAt.slice(0, 10)) ? ` נתוני מכסות עודכנו: ${fmt(S.quotasUpdatedAt.slice(0, 10))}.` : ""}</p>
@@ -664,6 +666,8 @@ function route(){
   document.title = h1 && h1 !== SITE_NAME ? `${h1} · ${SITE_NAME}` : SITE_NAME;
   $("adminLink").hidden = !(S.isAdmin && S.live);
   document.querySelectorAll(".links a").forEach(a => a.dataset.nav === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  // On mobile the links row scrolls sideways; keep the current tab visible.
+  document.querySelector(".links a[aria-current]")?.scrollIntoView({block: "nearest", inline: "nearest"});
   if (nav === "home") renderResults();
   return h;
 }
