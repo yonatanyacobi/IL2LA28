@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:51:28Z",
+ "updatedAt": "2026-10-18T13:01:53Z",
  "items": [
   {
    "sportId": "judo",
@@ -230,23 +230,6 @@
    "israelNote": "אין מתאגרף/ת ישראלי/ת במעקב",
    "nextQuotaEvent": null,
    "source": "https://worldboxing.org/wp-content/uploads/2026/05/Qualification-System-LA28-Boxing.pdf",
-   "checkedAt": "2026-10-18"
-  },
-  {
-   "sportId": "artistic-gymnastics",
-   "event": "קבוצתי גברים",
-   "totalQuotas": 12,
-   "maxPerNOC": 1,
-   "allocation": "3 הנבחרות המובילות בגמר הקבוצתי של אליפות העולם 2026, ועוד 9 נבחרות במוקדמות אליפות העולם 2027 (5 מתעמלים לנבחרת).",
-   "israelStatus": "in-contention",
-   "israelNote": "ישראל התחרתה במוקדמות ברוטרדם ב-18.10.2026; העלייה לגמר הקבוצתי (8 הראשונות, 20.10.2026) טרם אומתה בתוצאות רשמיות של FIG",
-   "nextQuotaEvent": {
-    "name": "אליפות העולם רוטרדם – גמר קבוצתי גברים",
-    "start": "2026-10-20",
-    "end": "2026-10-20"
-   },
-   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
-   "stakes": "גמר קבוצתי ב־20 באוק׳ 2026: רק 3 הנבחרות הראשונות זוכות במכסת נבחרת (5 מתעמלים) ל־LA28",
    "checkedAt": "2026-10-18"
   },
   {
@@ -864,5 +847,5 @@
    "checkedAt": "2026-10-18"
   }
  ],
- "unpublished": 3
+ "unpublished": 4
 }
