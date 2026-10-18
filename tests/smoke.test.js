@@ -794,6 +794,45 @@ test("date matrix: strip, #quotas and sport page follow the event calendar; no s
   }
 });
 
+// round3.md §6: verification status for visitors.
+test("verification: card badge only when checked, three athlete-page states, #about-trust, KPI", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const [ok, stale, auto, prevYear, bare] = data.athletes;
+  Object.assign(ok, {verifiedAt: "2026-10-10T09:00:00Z", updatedAt: "2026-10-01T00:00:00Z", source: "https://www.ijf.org/x"});
+  Object.assign(stale, {verifiedAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-12T00:00:00Z"});
+  Object.assign(prevYear, {verifiedAt: "2025-12-30T00:00:00Z", updatedAt: "2025-12-01T00:00:00Z"});
+  Object.assign(bare, {source: ""});
+  for (const a of [auto, bare]) delete a.verifiedAt;
+  const {view, run, els} = await boot({data, now: "2026-10-18T08:00:00Z"});
+  const card = a => { const html = run(`athleteCard(S.athletes.find(x => x.id === ${JSON.stringify(a.id)}))`); return html; };
+  assert.ok(card(ok).includes("נבדק 10 באוק׳") && card(ok).includes('class="trust ok"'));
+  const badge = a => card(a).split('class="trust ok">')[1]?.split("</span></span>")[0] || "";
+  assert.ok(badge(ok) && !badge(ok).includes("2026"), "same-year badge has no year");
+  assert.ok(badge(prevYear).includes("2025"), "previous-year badge shows the year");
+  for (const a of [stale, auto]) assert.ok(!card(a).includes('class="trust'), `${a.id}: no chip on the card`);
+
+  const facts = id => view(`a-${id}`).split("<dt>בדיקה</dt>")[1].split("</dd>")[0];
+  const lines = {[ok.id]: "הרשומה הושוותה למקור (ijf.org) ולא השתנתה מאז.", [stale.id]: "הם ייכללו בבדיקה הבאה.",
+    [auto.id]: "נבדקות ידנית בהדרגה."};
+  for (const [id, line] of Object.entries(lines)) {
+    const f = facts(id);
+    assert.ok(f.includes(line) && f.includes('href="#about-trust"'), id);
+    assert.ok(!/איסוף אוטומטי|לא אמין|חשוד|שגוי/.test(view(`a-${id}`)), id);
+  }
+  assert.ok(facts(stale.id).includes("trust stale") && facts(auto.id).includes("טרם נבדק ידנית"));
+  assert.ok(facts(auto.id).includes("בקישור למקור") && !facts(bare.id).includes("בקישור למקור"), "source hint only with a source");
+  assert.ok(facts(ok.id).includes('<span aria-hidden="true">✓</span>'));
+
+  const about = view("about-trust");
+  assert.ok(about.includes("<h1 tabindex=\"-1\">אודות</h1>") && !about.includes(NOT_FOUND));
+  assert.strictEqual(els.view.innerHTML, about);
+
+  assert.ok(view("home").includes("נבדקו ידנית עד כה") && view("home").includes('href="#about-trust"'));
+  const none = JSON.parse(JSON.stringify(FIXTURE));
+  none.athletes.forEach(a => delete a.verifiedAt);
+  assert.ok(!(await boot({data: none})).view("home").includes("נבדקו"), "V = 0: no verified count");
+});
+
 (async () => {
   let failed = 0;
   for (const {name, fn} of tests) {
