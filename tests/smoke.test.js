@@ -1900,6 +1900,21 @@ test("home today: at most 2 'על הכף היום' lines, one per running compet
   assert.ok(older.includes('class="panel won"') && older.indexOf('class="panel won"') > older.indexOf('id="homeResH"'), "older than 7 days: below");
 });
 
+test("home on phones with a new quota: one line above היום, the panel after the results (PM on #171, Gil P2)", async () => {
+  const q = JSON.parse(JSON.stringify(SITE_QUOTAS));
+  const judo = q.items.filter(i => i.sportId === "judo");
+  Object.assign(judo[0], {israelStatus: "earned", earnedAt: "2026-10-27"});
+  const one = (await boot({quotas: q, now: "2026-10-29T08:00:00Z"})).view("home");
+  assert.ok(new RegExp(`<p class="won-compact"><a href="#sport-judo">✓ מכסה חדשה לישראל: ג׳ודו · <bdi>${judo[0].event}</bdi> \\(27 באוק׳\\)</a></p>`).test(one), one.slice(0, 3000));
+  assert.ok(one.indexOf("won-compact") < one.indexOf('<div class="home-top">') && one.indexOf('class="panel won"') < one.indexOf('id="todayH"'), "desktop DOM order: panel on top");
+  Object.assign(judo[1], {israelStatus: "earned", earnedAt: "2026-10-28"});
+  const two = (await boot({quotas: q, now: "2026-10-29T08:00:00Z"})).view("home");
+  assert.ok(two.includes('<p class="won-compact"><a href="#quotas">✓ 2 מכסות חדשות לישראל ב־7 הימים האחרונים</a></p>'));
+  assert.ok(!(await boot({quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home").includes("won-compact"), "nothing new: no line");
+  const css = fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8");
+  assert.ok(/\.won-compact\{display:none/.test(css) && /@media \(max-width:640px\)\{\.won-compact\{display:block\}\.home-top > \.won\{order:1\}\}/.test(css), "phone-only line, panel after the results");
+});
+
 test("home results: 48 h window, date-only history, no source dropped, session and history once", async () => {
   const at = h => new Date(Date.parse("2026-11-05T10:00:00Z") - h * 36e5).toISOString().replace(".000", "");
   const res = (id, h, over = {}) => SESS({id, date: "2026-11-03", result: `תוצאה ${id}`, resultSource: "https://www.issf-sports.org/r", resultAt: at(h), ...over});
