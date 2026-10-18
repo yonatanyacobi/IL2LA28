@@ -23,7 +23,7 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 ### E1. Rotterdam result night, 20.10 (Roni + Omer as publisher + Dana and Tamar, S)
 - Before 20.10: Roni confirms the official FIG men's qualification result. If Israel isn't in the final, apply outcome (ב) from
   the runbook on 19.10, which covers "not in the final", and drop the "final 20.10" wording everywhere.
-- On 20.10: the publisher applies outcome (א) or (ב) from `docs/runbooks/rotterdam-outcomes.md`. `earned` needs both fact-checkers' sign-off. Stage proposals for the 5 gymnasts
+- On 20.10: the publisher applies outcome (א) or (ב) from `docs/runbooks/rotterdam-outcomes.md`. Who approves `earned` is pending owner decision D4. Stage proposals for the 5 gymnasts
   are approved **before** the quota item flips to `earned`. Published the same night, or the next morning at the latest.
 - Done when `#sport-artistic-gymnastics`, `#quotas` and the home strip agree, with an official FIG source.
 
