@@ -1,0 +1,90 @@
+[
+  {
+    "id": "iosif-simin-20261018-create",
+    "kind": "create",
+    "target": "iosif-simin",
+    "patch": {
+      "name": "יוסיף סימין",
+      "name_en": "Iosif Simin",
+      "sportId": "judo",
+      "event": "עד 100 ק״ג (גברים)",
+      "stage": 1,
+      "rank": "7 בדירוג האולימפי של IJF (אוק׳ 2026)",
+      "rankNum": 7,
+      "rankList": "IJF Olympic Ranking List",
+      "rankAsOf": "2026-10-18",
+      "next": "גרנד סלאם אבו דאבי",
+      "nextDate": "2026-10-31",
+      "notes": "מקום 7 בדירוג ההעפלה האולימפי של IJF ב־100- (626 נק׳), בתוך 17 הראשונים; 23 בדירוג העולמי (12.10.2026). מקום 5 בגרנד סלאם הונגריה ובגרנד פרי צ׳ינגדאו 2026; הודח בשמינית הגמר באליפות העולם באקו 2026. רשום לגרנד סלאם אבו דאבי (31.10).",
+      "source": "https://www.ijf.org/judoka/81285"
+    },
+    "summary": "ג׳ודאי חדש למעקב: יוסיף סימין (100-), מקום 7 בדירוג האולימפי של IJF",
+    "evidence": [
+      {
+        "url": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=6&nation=&q_name=&view=simple&limit=100&page=0",
+        "label": "IJF Olympic ranking -100 (place 7, 626 pts)"
+      },
+      {
+        "url": "https://www.ijf.org/judoka/81285",
+        "label": "IJF profile Iosif SIMIN"
+      },
+      {
+        "url": "https://www.ijf.org/competition/3157/judoka_athletes?id_weight=6",
+        "label": "IJF entries Abu Dhabi -100 (WRL 23)"
+      },
+      {
+        "url": "https://sports.walla.co.il/item/3871507",
+        "label": "Walla: שם עברי \"יוסיף סימין\""
+      },
+      {
+        "url": "https://sport1.maariv.co.il/other-industries/article/1451027/",
+        "label": "Maariv 9.1.2025: \"יוסיף סימין\""
+      }
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "maya-goshen-20261018-create",
+    "kind": "create",
+    "target": "maya-goshen",
+    "patch": {
+      "name": "מאיה גושן",
+      "name_en": "Maya Goshen",
+      "sportId": "judo",
+      "event": "עד 70 ק״ג (נשים)",
+      "stage": 1,
+      "rank": "35 בדירוג האולימפי של IJF (אוק׳ 2026)",
+      "rankNum": 35,
+      "rankList": "IJF Olympic Ranking List",
+      "rankAsOf": "2026-10-18",
+      "next": "גרנד סלאם אבו דאבי",
+      "nextDate": "2026-10-30",
+      "notes": "מקום 35 בדירוג ההעפלה האולימפי של IJF ב־70- (148 נק׳); 57 בדירוג העולמי (12.10.2026). מקום 7 בגרנד סלאם אולן בטאר 2026; הודחה מוקדם באליפות העולם באקו 2026. רשומה לגרנד סלאם אבו דאבי (30.10).",
+      "source": "https://www.ijf.org/judoka/26366"
+    },
+    "summary": "ג׳ודאית חדשה למעקב: מאיה גושן (70-), מקום 35 בדירוג האולימפי של IJF",
+    "evidence": [
+      {
+        "url": "https://www.ijf.org/internal_api/wrl_olympic?age=sen&category=12&nation=&q_name=&view=simple&limit=100&page=0",
+        "label": "IJF Olympic ranking -70 (place 35, 148 pts)"
+      },
+      {
+        "url": "https://www.ijf.org/judoka/26366",
+        "label": "IJF profile Maya GOSHEN"
+      },
+      {
+        "url": "https://www.ijf.org/competition/3157/judoka_athletes?id_weight=12",
+        "label": "IJF entries Abu Dhabi -70 (WRL 57)"
+      },
+      {
+        "url": "https://sport1.maariv.co.il/Tags/מאיה-גושן/",
+        "label": "Maariv: שם עברי \"מאיה גושן\""
+      },
+      {
+        "url": "https://www.makorrishon.co.il/news/538291/",
+        "label": "Makor Rishon: \"מאיה גושן\""
+      }
+    ],
+    "status": "pending"
+  }
+]
