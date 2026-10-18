@@ -1,0 +1,44 @@
+[
+ {
+  "id": "issf-wch-doha-2026-20261103-arm-q",
+  "competitionId": "issf-wch-doha-2026",
+  "date": "2026-11-03",
+  "timeLocal": "",
+  "tz": "",
+  "athleteIds": ["sergey-richter"],
+  "phase": "רובה אוויר 10 מ׳ גברים – מוקדמות (מקצה 1 ב-09:15 או מקצה 2 ב-11:15, שעון דוחא)",
+  "source": "https://backoffice.issf-sports.org/getfile.aspx?mod=docf&pane=1&inst=783&iist=365&file=WCH-RPSH-Doha-2026-Final-Competition-Schedule.pdf",
+  "result": "",
+  "resultSource": "",
+  "resultAt": "",
+  "notes": "Relay not yet published. Once the ISSF start list (expected 2.11) shows it, replace with -arm-q1 (timeLocal 09:15) or -arm-q2 (11:15), tz Asia/Qatar. Entry: ISSF entry list by NOC, 3.10.2026."
+ },
+ {
+  "id": "issf-wch-doha-2026-20261103-arw-q",
+  "competitionId": "issf-wch-doha-2026",
+  "date": "2026-11-03",
+  "timeLocal": "",
+  "tz": "",
+  "athleteIds": ["olga-tashtchiev"],
+  "phase": "רובה אוויר 10 מ׳ נשים – מוקדמות (מקצה 1 ב-13:15 או מקצה 2 ב-15:15, שעון דוחא)",
+  "source": "https://backoffice.issf-sports.org/getfile.aspx?mod=docf&pane=1&inst=783&iist=365&file=WCH-RPSH-Doha-2026-Final-Competition-Schedule.pdf",
+  "result": "",
+  "resultSource": "",
+  "resultAt": "",
+  "notes": "Relay not yet published. Once the ISSF start list shows it, replace with -arw-q1 (13:15) or -arw-q2 (15:15), tz Asia/Qatar."
+ },
+ {
+  "id": "issf-wch-doha-2026-20261104-armt-q",
+  "competitionId": "issf-wch-doha-2026",
+  "date": "2026-11-04",
+  "timeLocal": "",
+  "tz": "",
+  "athleteIds": ["sergey-richter", "olga-tashtchiev"],
+  "phase": "רובה אוויר זוגות מעורבים – מוקדמות (מקצה 1 ב-09:15 או מקצה 2 ב-10:45, שעון דוחא)",
+  "source": "https://backoffice.issf-sports.org/getfile.aspx?mod=docf&pane=1&inst=783&iist=365&file=WCH-RPSH-Doha-2026-Final-Competition-Schedule.pdf",
+  "result": "",
+  "resultSource": "",
+  "resultAt": "",
+  "notes": "No quota in the mixed team. Relay not yet published; split into -armt-q1 (09:15) or -armt-q2 (10:45), tz Asia/Qatar, once the start list shows it."
+ }
+]
