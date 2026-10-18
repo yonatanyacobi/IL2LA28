@@ -4,6 +4,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 JOB = os.path.join(HERE, "..", "job")
 sys.path.insert(0, JOB)
 import apply_rankings as ar  # noqa: E402
+import athlete_patch as ap  # noqa: E402
+
+# Olympic-list rows write olympicRank*, which athlete_patch accepts from #231 (Maya) on.
+needs_231 = unittest.skipUnless("olympicRankNum" in ap.VISIBLE + ap.SILENT, "needs #231: athlete_patch olympicRank*")
 
 NOW = "2026-10-18T16:00:00Z"
 SIGNED = {"status": "ok", "by": "dana", "at": "2026-10-18"}
@@ -34,6 +38,7 @@ def run(athletes=(), cutoffs=(), name="roni", **top):
 
 
 class ApplyRankingsTest(unittest.TestCase):
+    @needs_231
     def test_signed_rows_make_a_cutoff_patch_and_athlete_changes(self):
         out = run([athlete(), athlete("raz-hershko", rankNum=1)], [cutoff(), cutoff("78+ ק״ג נשים")])
         self.assertEqual(out["errors"], [])
@@ -44,6 +49,7 @@ class ApplyRankingsTest(unittest.TestCase):
             "loadedFrom": "roni"}}])
         self.assertEqual(out["unchanged"], ["raz-hershko"])
 
+    @needs_231
     def test_rows_route_by_list_world_rank_untouched_by_olympic_rows(self):
         """PM on #218: rank/rankNum stay the world ranking; Olympic-list rows go to olympicRank*."""
         world = athlete(rankNum=13, rankList="IJF World Ranking List", rankAsOf="2026-10-12")
@@ -56,6 +62,7 @@ class ApplyRankingsTest(unittest.TestCase):
         dup = run([athlete(rankNum=2), athlete(rankNum=3)])
         self.assertTrue(any("duplicate of" in e for e in dup["errors"]), dup["errors"])
 
+    @needs_231
     def test_only_list_and_date_change_does_not_move_updated_at(self):
         out = run([athlete("raz-hershko", rankNum=1, rankAsOf="2026-10-17")])
         self.assertEqual(out["changes"], [{"doc_id": "raz-hershko", "fields": {"olympicRankAsOf": "2026-10-17", "loadedFrom": "roni"}}])
@@ -93,6 +100,7 @@ class ApplyRankingsTest(unittest.TestCase):
         self.assertEqual(out["changes"] + out["cutoffs"], [])
         self.assertEqual(run(name="bad", **{"sessions": []})["errors"][0][:4], "bad:")
 
+    @needs_231
     def test_cli_reads_a_dump_and_writes_nothing(self):
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "athletes"))
