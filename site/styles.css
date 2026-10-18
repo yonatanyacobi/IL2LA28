@@ -378,3 +378,8 @@ div.track{background:none}
 .event-head .pills{display:flex;flex-wrap:wrap;gap:6px}
 .sess-day h3{font-size:16px;font-family:var(--f-body);font-weight:700}
 .sess-day h3 a[aria-current="date"]{color:var(--ink);text-decoration-thickness:3px;text-decoration-color:var(--sun)}
+
+/* athlete game log (athlete-game-log.md): date | competition and one line per result */
+.game-log li{grid-template-columns:110px 1fr}
+.game-log .res{display:block;overflow-wrap:anywhere}
+@media (max-width:640px){.game-log li{grid-template-columns:70px 1fr}.game-log .d{grid-column:auto}}

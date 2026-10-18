@@ -928,43 +928,62 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   assert.ok(s.includes("08:30") && s.includes('href="#a-sergey-richter"') && s.includes("לפני התחרות"), "timed session (Israel time)");
 });
 
-// Game log data (#178): gameLog(a) only; the UI comes with the UX spec.
-test("gameLog: none, one, several (newest first), dedupe with sessions, team results, raw text", async () => {
-  const AD = "judo-gs-abu-dhabi-2026", SRC = "https://www.ijf.org/r";
-  const logOf = async (data, id) => JSON.parse((await boot({data})).run(`JSON.stringify(gameLog(S.athletes.find(a => a.id === ${JSON.stringify(id)})).map(r => ({...r, comp: r.comp?.id || null})))`));
-  const base = () => JSON.parse(JSON.stringify(FIXTURE));
-  assert.deepStrictEqual(await logOf(base(), "raz-hershko"), [], "no results");
+// Athlete game log (#178; docs/design/athlete-game-log.md §5).
+const GL_AD = "judo-gs-abu-dhabi-2026", GL_SRC = "https://www.ijf.org/r";
+const glBase = () => JSON.parse(JSON.stringify(FIXTURE));
+const glPanel = html => html.split('id="logH"')[1]?.split("</section>")[0] || "";
+const glRows = html => glPanel(html).split("<li>").slice(1);
+const glSess = (date, startUtc, phase, result, ids = ["raz-hershko"]) => ({competitionId: GL_AD, date, startUtc, athleteIds: ids, phase,
+  result, resultSource: GL_SRC, resultAt: `${date}T18:00:00Z`});
 
-  const one = base();
-  one.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-10-29", kind: "result", text: " <b>ארד</b> ", source: SRC},
-    {at: "2026-10-28", kind: "rank", text: "1 בעולם"}, {at: "bad", kind: "result", text: "x"}, {at: "2026-10-27", kind: "result", text: "  "}];
-  assert.deepStrictEqual(await logOf(one, "raz-hershko"),
-    [{date: "2026-10-29", comp: AD, phase: "", result: "<b>ארד</b>", source: SRC, resultAt: ""}], "one result, matched to Abu Dhabi, raw text");
+test("game log: rows per competition, newest row first, entries oldest first, links, one shared source", async () => {
+  const data = glBase();
+  data.sessions = [glSess("2026-10-29", "2026-10-29T12:00:00Z", "גמר", "ארד"), glSess("2026-10-29", "2026-10-29T06:00:00Z", "מוקדמות", "עלתה")];
+  data.athletes.find(a => a.id === "raz-hershko").history = [
+    {at: "2026-02-06", kind: "result", text: "זהב", source: "https://www.ijf.org/p"},
+    {at: "2026-01-02", kind: "start", text: "נכנסה למעקב"}];
+  const out = (await boot({data, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko");
+  const rows = glRows(out);
+  assert.strictEqual(rows.length, 2, "2 rows");
+  assert.ok(rows[0].includes(`<a href="#c-${GL_AD}">גרנד סלאם אבו דאבי</a>`), "newest row first, linked to #c-");
+  assert.ok(rows[0].indexOf("מוקדמות") < rows[0].indexOf("גמר"), "entries oldest first");
+  assert.strictEqual(rows[0].split("מקור: ijf.org").length - 1, 1, "a shared source is shown once");
+  assert.ok(rows[0].includes('<time datetime="2026-10-29">29 באוק׳</time>'), "date without the current year");
+  assert.ok(glPanel(out).includes("3 תוצאות ב־2 תחרויות") && glPanel(out).includes("כל תוצאה מופיעה עם המקור שלה · מתעדכן פעם ביום"));
+  const hist = out.split("<h2>היסטוריה</h2>")[1].split("</section>")[0];
+  assert.ok(!hist.includes("זהב") && hist.includes("נכנסה למעקב"), "results leave the history timeline");
+});
 
-  const many = base();
-  many.athletes.find(a => a.id === "raz-hershko").history = [
-    {at: "2026-10-29", kind: "result", text: "ארד (מההיסטוריה)", source: SRC},
-    {at: "2026-02-06", kind: "result", text: "זהב", source: "javascript:alert(1)"},
-    {at: "2027-02-20", kind: "result", text: "כסף"}];
-  many.sessions = [
-    {competitionId: AD, date: "2026-10-29", startUtc: "2026-10-29T06:00:00Z", athleteIds: ["raz-hershko"], phase: "מעל 78 ק״ג",
-      result: "ארד", resultSource: "https://www.ijf.org/s", resultAt: "2026-10-29T15:40:00Z"},
-    {competitionId: AD, date: "2026-10-31", athleteIds: ["raz-hershko", "yuli-alma-mishiner"], phase: "קבוצתי", result: "ניצחון",
-      resultSource: "https://www.ijf.org/t", resultAt: "2026-10-31T16:00:00Z"},
-    {competitionId: AD, date: "2026-10-30", athleteIds: ["raz-hershko"], phase: "x", result: "unproven"}];
-  const log = await logOf(many, "raz-hershko");
-  assert.deepStrictEqual(log.map(r => r.date), ["2027-02-20", "2026-10-31", "2026-10-29", "2026-02-06"], "newest first; an unproven session result is not listed");
-  assert.strictEqual(log[1].result, "ניצחון", "a team's official result is each member's");
-  const yuli = await logOf(many, "yuli-alma-mishiner");
-  assert.deepStrictEqual(yuli.map(r => r.result), ["ניצחון"], "the teammate's log has only the team result");
-  assert.deepStrictEqual(log[2], {date: "2026-10-29", comp: AD, phase: "מעל 78 ק״ג", result: "ארד", source: "https://www.ijf.org/s",
-    resultAt: "2026-10-29T15:40:00Z"}, "session and history for the same day and competition are one row; the session wins");
-  assert.strictEqual(log[3].source, "", "non-https source dropped");
-  assert.strictEqual(log[0].comp, "judo-gs-baku-2027", "matched to the competition running that day");
-  const heats = base();
-  heats.sessions = ["רבע גמר", "חצי גמר"].map((phase, i) => ({competitionId: AD, date: "2026-10-29", athleteIds: ["raz-hershko"], phase,
-    result: `ניצחון ${i}`, resultSource: SRC, resultAt: `2026-10-29T1${i}:00:00Z`}));
-  assert.strictEqual((await logOf(heats, "raz-hershko")).length, 2, "two sessions on one day stay two rows");
+test("game log: dedupe, team vs merged text, dropped sources, no competition, escaping, empty", async () => {
+  const data = glBase();
+  data.sessions = [glSess("2026-10-29", null, "57- ק״ג", "ארד (מהסשן)"),
+    glSess("2026-10-30", null, "קבוצתי", "ניצחון קבוצתי", ["raz-hershko", "yuli-alma-mishiner"])];
+  data.athletes.find(a => a.id === "raz-hershko").history = [
+    {at: "2026-10-29", kind: "result", text: "ארד (מההיסטוריה)", source: GL_SRC},
+    {at: "2026-09-12", kind: "result", text: "<b>מקום 7</b>", source: "https://www.ijf.org/z"},
+    {at: "2026-09-01", kind: "result", text: "בלי מקור", source: "http://x.example"}];
+  data.athletes.find(a => a.id === "timna-nelson-levy").history = [{at: "2026-10-29", kind: "result", text: "כסף", source: GL_SRC}];
+  data.athletes.find(a => a.id === "inbal-shemesh").nextDate = "2026-10-29";
+  const b = await boot({data, now: "2026-11-01T08:00:00Z"});
+  const raz = glPanel(b.view("a-raz-hershko"));
+  assert.ok(raz.includes("ארד (מהסשן)") && !raz.includes("ארד (מההיסטוריה)"), "same day: once, the session wins");
+  assert.ok(raz.includes("ניצחון קבוצתי") && glPanel(b.view("a-yuli-alma-mishiner")).includes("ניצחון קבוצתי"), "a team result is each member's");
+  assert.ok(!raz.includes("בלי מקור"), "history result without an https source is dropped");
+  assert.ok(raz.includes('<span class="muted">תחרות שאינה במאגר</span>') && raz.includes("&lt;b&gt;מקום 7&lt;/b&gt;") && !raz.includes("<b>מקום 7"), "no competition; escaped");
+  const inbal = glPanel(b.view("a-inbal-shemesh"));
+  assert.ok(!inbal.includes("כסף") && inbal.includes("עוד לא תועדו תוצאות של ענבל שמש בתחרויות."), "a teammate's result never shows; empty state");
+  for (const h of ["a-raz-hershko", "a-inbal-shemesh"]) assert.ok(!/חי\b|בזמן אמת/.test(glPanel(b.view(h))));
+});
+
+test("game log: 12 rows show 10 and a details with the rest's result count", async () => {
+  const data = glBase();
+  data.athletes.find(a => a.id === "raz-hershko").history = Array.from({length: 12}, (_, i) =>
+    ({at: `2025-${String(i + 1).padStart(2, "0")}-15`, kind: "result", text: `תוצאה ${i}`, source: GL_SRC}));
+  const panel = glPanel((await boot({data, now: "2026-11-01T08:00:00Z"})).view("a-raz-hershko"));
+  const [visible, hidden] = panel.split("<details>");
+  assert.strictEqual(visible.split("<li>").length - 1, 10, "10 rows visible");
+  assert.ok(hidden.includes("<summary>הצגת עוד 2 תוצאות</summary>") && hidden.split("<li>").length - 1 === 2, "2 rows in details");
+  assert.ok(visible.includes('<time datetime="2025-12-15">15 בדצמ׳ 2025</time>'), "the year when it isn't this year");
 });
 
 test("fetch failure shows the retry view", async () => {

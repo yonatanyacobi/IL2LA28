@@ -540,7 +540,8 @@ function viewAthlete(id){
   const s = stageOf(a), sp = sportById(a.sportId), fav = S.follows.has(id);
   const upd = str(a.updatedAt).slice(0, 10), old = upd && daysSince(a.updatedAt) > 30;
   const comps = upcomingIn(a.sportId).slice(0, 3);
-  const hist = (Array.isArray(a.history) ? a.history : []).filter(h => isDate(h.at)).slice().reverse();
+  // Results move to the game log (gamelog.js) when it is loaded; the timeline keeps start, stage, rank and the rest.
+  const hist = (Array.isArray(a.history) ? a.history : []).filter(h => isDate(h.at) && !(h.kind === "result" && typeof gameLogSection === "function")).slice().reverse();
   const link = `${SITE_URL}#a-${id}`;
   return `
   <p class="crumb"><a href="#sport-${esc(a.sportId)}">→ ${esc(sp?.he || "ענף")}</a></p>
@@ -567,6 +568,7 @@ function viewAthlete(id){
     </dl>
     ${a.notes ? `<p>${esc(a.notes)}</p>` : ""}
   </section>
+  ${typeof gameLogSection === "function" ? gameLogSection(a) : ""}
   <section class="panel">
     <h2>היסטוריה</h2>
     ${hist.length ? `<ol class="timeline">${hist.map(h => `<li class="k-${esc(h.kind)}"><span class="d">${fmt(h.at)}</span>
