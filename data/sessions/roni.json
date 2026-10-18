@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T15:26:48Z",
+ "updatedAt": "2026-10-18T19:00:00Z",
  "sessions": [
   {
    "id": "ag-worlds-2026-20261019-wag-q-sub7",
@@ -45,69 +45,346 @@
    }
   },
   {
-   "id": "judo-gs-abu-dhabi-2026-20261029-prelims",
+   "id": "judo-gs-abu-dhabi-2026-20261029-m60-prelims",
    "competitionId": "judo-gs-abu-dhabi-2026",
    "date": "2026-10-29",
    "timeLocal": "",
    "tz": "",
    "athleteIds": [
-    "izhak-ashpiz",
-    "gefen-primo",
-    "timna-nelson-levy"
+    "izhak-ashpiz"
    ],
-   "phase": "מוקדמות, יום 1: גברים 60-, נשים 52- ו־57-",
+   "phase": "מוקדמות, יום 1: גברים עד 60 ק״ג",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
-   "result": "",
-   "resultSource": "",
-   "resultAt": "",
-   "notes": "Outlines סעיף 8: מוקדמות \"TBC\" – שעת ההתחלה תפורסם כשמספר המתחרים סופי; בלוק הגמרים 17:00. משתתפים: רשימת הרשומים של IJF (competition/3157), נבדקה ב־2026-10-18. סשן בלוק הגמרים נרשם רק אחרי שישראלי/ת עולה אליו (חוזה #144).",
+   "notes": "Outlines סעיף 8 (גרסה 04.09.2026): מוקדמות TBC – \"The start time will be confirmed once the final number of athletes is known\"; לכן timeLocal/tz ריקים עד שיתפרסם (אז: tz Asia/Dubai). בלוק הגמרים 17:00 נרשם רק אחרי שישראלי/ת עולה אליו (#144). רישום: https://www.ijf.org/competition/3157/judoka_athletes, נבדק 2026-10-18.",
    "review": {
-    "status": "unchecked",
-    "by": "roni",
+    "status": "ok",
+    "by": "dana",
     "at": "2026-10-18"
    }
   },
   {
-   "id": "judo-gs-abu-dhabi-2026-20261030-prelims",
+   "id": "judo-gs-abu-dhabi-2026-20261029-m66-prelims",
+   "competitionId": "judo-gs-abu-dhabi-2026",
+   "date": "2026-10-29",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "matan-kokolayev"
+   ],
+   "phase": "מוקדמות, יום 1: גברים עד 66 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 04.09.2026): מוקדמות TBC – \"The start time will be confirmed once the final number of athletes is known\"; לכן timeLocal/tz ריקים עד שיתפרסם (אז: tz Asia/Dubai). בלוק הגמרים 17:00 נרשם רק אחרי שישראלי/ת עולה אליו (#144). רישום: https://www.ijf.org/competition/3157/judoka_athletes, נבדק 2026-10-18.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-abu-dhabi-2026-20261029-w52-prelims",
+   "competitionId": "judo-gs-abu-dhabi-2026",
+   "date": "2026-10-29",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "gefen-primo"
+   ],
+   "phase": "מוקדמות, יום 1: נשים עד 52 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 04.09.2026): מוקדמות TBC – \"The start time will be confirmed once the final number of athletes is known\"; לכן timeLocal/tz ריקים עד שיתפרסם (אז: tz Asia/Dubai). בלוק הגמרים 17:00 נרשם רק אחרי שישראלי/ת עולה אליו (#144). רישום: https://www.ijf.org/competition/3157/judoka_athletes, נבדק 2026-10-18.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-abu-dhabi-2026-20261029-w57-prelims",
+   "competitionId": "judo-gs-abu-dhabi-2026",
+   "date": "2026-10-29",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "timna-nelson-levy"
+   ],
+   "phase": "מוקדמות, יום 1: נשים עד 57 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 04.09.2026): מוקדמות TBC – \"The start time will be confirmed once the final number of athletes is known\"; לכן timeLocal/tz ריקים עד שיתפרסם (אז: tz Asia/Dubai). בלוק הגמרים 17:00 נרשם רק אחרי שישראלי/ת עולה אליו (#144). רישום: https://www.ijf.org/competition/3157/judoka_athletes, נבדק 2026-10-18.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-abu-dhabi-2026-20261030-m73-prelims",
    "competitionId": "judo-gs-abu-dhabi-2026",
    "date": "2026-10-30",
    "timeLocal": "",
    "tz": "",
    "athleteIds": [
     "yonatan-elbaz",
-    "maya-goshen"
+    "ohad-moritz"
    ],
-   "phase": "מוקדמות, יום 2: גברים 73-, נשים 70-",
+   "phase": "מוקדמות, יום 2: גברים עד 73 ק״ג",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
-   "result": "",
-   "resultSource": "",
-   "resultAt": "",
-   "notes": "Outlines סעיף 8: מוקדמות \"TBC\" – שעת ההתחלה תפורסם כשמספר המתחרים סופי; בלוק הגמרים 17:00. משתתפים: רשימת הרשומים של IJF (competition/3157), נבדקה ב־2026-10-18. סשן בלוק הגמרים נרשם רק אחרי שישראלי/ת עולה אליו (חוזה #144). maya-goshen נוסף/ה אחרי יצירת הרשומה (#207); רשום/ה ברשימת IJF. השעה תיקבע אחרי ההגרלה ב־28.10.",
+   "notes": "Outlines סעיף 8 (גרסה 04.09.2026): מוקדמות TBC – \"The start time will be confirmed once the final number of athletes is known\"; לכן timeLocal/tz ריקים עד שיתפרסם (אז: tz Asia/Dubai). בלוק הגמרים 17:00 נרשם רק אחרי שישראלי/ת עולה אליו (#144). רישום: https://www.ijf.org/competition/3157/judoka_athletes, נבדק 2026-10-18.",
    "review": {
-    "status": "unchecked",
-    "by": "roni",
+    "status": "ok",
+    "by": "dana",
     "at": "2026-10-18"
    }
   },
   {
-   "id": "judo-gs-abu-dhabi-2026-20261031-prelims",
+   "id": "judo-gs-abu-dhabi-2026-20261030-w70-prelims",
+   "competitionId": "judo-gs-abu-dhabi-2026",
+   "date": "2026-10-30",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "maya-goshen"
+   ],
+   "phase": "מוקדמות, יום 2: נשים עד 70 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 04.09.2026): מוקדמות TBC – \"The start time will be confirmed once the final number of athletes is known\"; לכן timeLocal/tz ריקים עד שיתפרסם (אז: tz Asia/Dubai). בלוק הגמרים 17:00 נרשם רק אחרי שישראלי/ת עולה אליו (#144). רישום: https://www.ijf.org/competition/3157/judoka_athletes, נבדק 2026-10-18.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-abu-dhabi-2026-20261031-m100-prelims",
    "competitionId": "judo-gs-abu-dhabi-2026",
    "date": "2026-10-31",
    "timeLocal": "",
    "tz": "",
    "athleteIds": [
-    "raz-hershko",
     "iosif-simin"
    ],
-   "phase": "מוקדמות, יום 3: נשים 78+, גברים 100-",
+   "phase": "מוקדמות, יום 3: גברים עד 100 ק״ג",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
-   "result": "",
-   "resultSource": "",
-   "resultAt": "",
-   "notes": "Outlines סעיף 8: מוקדמות \"TBC\" – שעת ההתחלה תפורסם כשמספר המתחרים סופי; בלוק הגמרים 17:00. משתתפים: רשימת הרשומים של IJF (competition/3157), נבדקה ב־2026-10-18. סשן בלוק הגמרים נרשם רק אחרי שישראלי/ת עולה אליו (חוזה #144). iosif-simin נוסף/ה אחרי יצירת הרשומה (#207); רשום/ה ברשימת IJF. השעה תיקבע אחרי ההגרלה ב־28.10.",
+   "notes": "Outlines סעיף 8 (גרסה 04.09.2026): מוקדמות TBC – \"The start time will be confirmed once the final number of athletes is known\"; לכן timeLocal/tz ריקים עד שיתפרסם (אז: tz Asia/Dubai). בלוק הגמרים 17:00 נרשם רק אחרי שישראלי/ת עולה אליו (#144). רישום: https://www.ijf.org/competition/3157/judoka_athletes, נבדק 2026-10-18.",
    "review": {
-    "status": "unchecked",
-    "by": "roni",
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-abu-dhabi-2026-20261031-m90-prelims",
+   "competitionId": "judo-gs-abu-dhabi-2026",
+   "date": "2026-10-31",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "roy-sivan"
+   ],
+   "phase": "מוקדמות, יום 3: גברים עד 90 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 04.09.2026): מוקדמות TBC – \"The start time will be confirmed once the final number of athletes is known\"; לכן timeLocal/tz ריקים עד שיתפרסם (אז: tz Asia/Dubai). בלוק הגמרים 17:00 נרשם רק אחרי שישראלי/ת עולה אליו (#144). רישום: https://www.ijf.org/competition/3157/judoka_athletes, נבדק 2026-10-18.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-abu-dhabi-2026-20261031-w78plus-prelims",
+   "competitionId": "judo-gs-abu-dhabi-2026",
+   "date": "2026-10-31",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "raz-hershko"
+   ],
+   "phase": "מוקדמות, יום 3: נשים מעל 78 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 04.09.2026): מוקדמות TBC – \"The start time will be confirmed once the final number of athletes is known\"; לכן timeLocal/tz ריקים עד שיתפרסם (אז: tz Asia/Dubai). בלוק הגמרים 17:00 נרשם רק אחרי שישראלי/ת עולה אליו (#144). רישום: https://www.ijf.org/competition/3157/judoka_athletes, נבדק 2026-10-18.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261205-w52-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-05",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "gefen-primo"
+   ],
+   "phase": "מוקדמות, יום 1: נשים עד 52 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261205-w63-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-05",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "kerem-primo"
+   ],
+   "phase": "מוקדמות, יום 1: נשים עד 63 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261205-m100-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-05",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "iosif-simin"
+   ],
+   "phase": "מוקדמות, יום 1: גברים עד 100 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261205-m90-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-05",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "roy-sivan"
+   ],
+   "phase": "מוקדמות, יום 1: גברים עד 90 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261206-m60-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-06",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "izhak-ashpiz"
+   ],
+   "phase": "מוקדמות, יום 2: גברים עד 60 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261206-m66-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-06",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "matan-kokolayev"
+   ],
+   "phase": "מוקדמות, יום 2: גברים עד 66 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261206-m73-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-06",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "yonatan-elbaz",
+    "ohad-moritz"
+   ],
+   "phase": "מוקדמות, יום 2: גברים עד 73 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261206-w70-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-06",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "maya-goshen"
+   ],
+   "phase": "מוקדמות, יום 2: נשים עד 70 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261206-w78-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-06",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "inbar-lanir"
+   ],
+   "phase": "מוקדמות, יום 2: נשים עד 78 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "judo-gs-tokyo-2026-20261206-w78plus-prelims",
+   "competitionId": "judo-gs-tokyo-2026",
+   "date": "2026-12-06",
+   "timeLocal": "",
+   "tz": "",
+   "athleteIds": [
+    "raz-hershko"
+   ],
+   "phase": "מוקדמות, יום 2: נשים מעל 78 ק״ג",
+   "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "review": {
+    "status": "ok",
+    "by": "dana",
     "at": "2026-10-18"
    }
   }

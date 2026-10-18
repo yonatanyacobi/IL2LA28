@@ -43,7 +43,7 @@ As in phase 1: no live scores and no field results. The cadence string is the sh
 │ │ 09:30 · ★ רז הרשקו · 57- ק״ג       ││
 │ │ תוצאה: ארד · עודכן ב־29 באוק׳, 18:40││
 │ │ יום ו׳, 30 באוק׳  (יום 2)          ││
-│ │ השעה תפורסם · {שם} · 63- ק״ג       ││
+│ │ תאריך בלבד · {שם} · 63- ק״ג        ││
 │ │ [מתחרה היום]                       ││
 │ └────────────────────────────────────┘│
 │ ┌ הישראלים בתחרות (5) ──────────────┐│
@@ -95,7 +95,7 @@ With no sessions and no fallback athletes: `לא ידוע על ספורטאים 
   Each group holds a `<ul class="rows sess">` of the shared `sessionRow(s)`. Followed athletes go first within a
   day, then by time.
 - **No sessions yet, before start:** `הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי.`
-  With the fallback athletes, list them under their `nextDate` day with `השעה תפורסם`.
+  With the fallback athletes, list them under their `nextDate` day with `תאריך בלבד`.
 - **Today's group** gets `aria-current="date"` on its h3 link, and the page scrolls it into view on arrival
   (route hook; respects `prefers-reduced-motion`).
 
