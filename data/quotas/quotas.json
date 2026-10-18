@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T12:25:05Z",
+ "updatedAt": "2026-10-18T12:27:47Z",
  "items": [
   {
    "sportId": "judo",
@@ -670,7 +670,7 @@
    "event": "גלישת רוח iQFoil נשים",
    "totalQuotas": 25,
    "maxPerNOC": 1,
-   "allocation": "10 מדינות באליפות העולם 2027, 2 באירוע יבשתי אירופי, 6+1 בתחרות ההזדמנות האחרונה 2028; סירה אחת למדינה.",
+   "allocation": "10 מדינות באליפות העולם 2027, 7 באירועים יבשתיים (2 מהם באירוע האירופי), 6 בתחרות ההזדמנות האחרונה 2028 ועוד 1 למדינה מתפתחת (Emerging Nations), ומקום למארחת; סירה אחת למדינה.",
    "israelStatus": "in-contention",
    "israelNote": "תמר שטיינברג אלופת העולם 2026; שרון קנטור כסף; המכסות יחולקו באליפות העולם 2027",
    "nextQuotaEvent": {
@@ -679,8 +679,8 @@
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "unchecked",
+    "by": "ofir",
     "at": "2026-10-18"
    }
   },
@@ -689,7 +689,7 @@
    "event": "גלישת רוח iQFoil גברים",
    "totalQuotas": 25,
    "maxPerNOC": 1,
-   "allocation": "10 מדינות באליפות העולם 2027, 2 באירוע יבשתי אירופי, 6+1 בתחרות ההזדמנות האחרונה 2028.",
+   "allocation": "10 מדינות באליפות העולם 2027, 7 באירועים יבשתיים (2 מהם באירוע האירופי), 6 בתחרות ההזדמנות האחרונה 2028 ועוד 1 למדינה מתפתחת (Emerging Nations), ומקום למארחת; סירה אחת למדינה.",
    "israelStatus": "in-contention",
    "israelNote": "תום ראובני אלוף אולימפי ומקום 5 באליפות העולם 2026; יואב עומר מקום 8",
    "nextQuotaEvent": {
@@ -698,8 +698,8 @@
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
+    "status": "unchecked",
+    "by": "ofir",
     "at": "2026-10-18"
    }
   },
@@ -1071,9 +1071,9 @@
   {
    "sportId": "rowing",
    "event": "סקיף יחיד (1x) גברים ונשים",
-   "totalQuotas": 33,
-   "maxPerNOC": 1,
-   "allocation": "לכל מגדר: 10 באליפות העולם 2027 בלוצרן, 15 במקצי קליטה יבשתיים (3 מהם באירופה), 2 במקצה הקליטה האחרון, ועוד מקום מארחת ו-2 אוניברסליות.",
+   "totalQuotas": 66,
+   "maxPerNOC": 2,
+   "allocation": "לכל מגדר: 10 באליפות העולם 2027 בלוצרן, 15 במקצי קליטה יבשתיים (3 מהם באירופה), 2 במקצה הקליטה האחרון, ועוד מקום מארחת ו-2 אוניברסליות (במסמך השיטה יש סתירה: בטבלה B.1 מקום אוניברסליות אחד לכל מגדר, ובסעיף D.7 שניים).",
    "israelStatus": "unknown",
    "israelNote": "אין חותר/ת ישראלי/ת אולימפי/ת במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
    "nextQuotaEvent": {
@@ -1083,32 +1083,32 @@
    },
    "source": "https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf",
    "review": {
-    "status": "fixed",
-    "by": "tamar",
+    "status": "unchecked",
+    "by": "ofir",
     "at": "2026-10-18"
    }
   },
   {
    "sportId": "canoe",
    "event": "קאנו ספרינט – גברים ונשים",
-   "totalQuotas": 117,
-   "maxPerNOC": 8,
+   "totalQuotas": 234,
+   "maxPerNOC": 16,
    "allocation": "לכל מגדר: רוב המקומות לפי דירוג הקליטה האולימפי ב-31.12.2027 (תוצאות מ-20.4.2026), והיתר באירועי קליטה יבשתיים ב-2028; עד 2 סירות למדינה בכל מקצה.",
    "israelStatus": "unknown",
    "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו ספרינט במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
    "nextQuotaEvent": null,
    "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
    "review": {
-    "status": "fixed",
-    "by": "tamar",
+    "status": "unchecked",
+    "by": "ofir",
     "at": "2026-10-18"
    }
   },
   {
    "sportId": "canoe",
    "event": "קאנו סלאלום – גברים ונשים",
-   "totalQuotas": 41,
-   "maxPerNOC": 3,
+   "totalQuotas": 82,
+   "maxPerNOC": 6,
    "allocation": "לכל מגדר 19 מקומות לפי הדירוג ב-3.10.2027 (6 K-1, 3 X-1, 10 C-1; תוצאות מ-20.7.2026), והיתר בתחרויות יבשתיות ועולמית ב-2028; אחד למדינה בכל מקצה.",
    "israelStatus": "unknown",
    "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו סלאלום במעקב",
@@ -1119,8 +1119,8 @@
    },
    "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
    "review": {
-    "status": "fixed",
-    "by": "tamar",
+    "status": "unchecked",
+    "by": "ofir",
     "at": "2026-10-18"
    }
   }
