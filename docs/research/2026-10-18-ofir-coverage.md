@@ -1,8 +1,8 @@
 # Coverage research: athletics, sailing, canoe, rowing (2026-10-18)
 
 Researcher: Ofir. Proposals only: `data/quotas/quotas.json` is untouched (open PRs touch it). Every row needs
-sign-off from Dana or Tamar. Item ids are indexes in `data/quotas/quotas.json` on this branch (57–59 are
-Yael's PR #64 items, which this branch builds on).
+sign-off from Dana or Tamar. Item ids are indexes in `data/quotas/quotas.json` on this branch. Items 57–59 are
+Yael's PR #64 items, including Tamar's sign-off, and this branch builds on them.
 
 Sources used (official, or the IOC-approved qualification-system PDF mirrored by NOC*NSF):
 - [WA-240] World Athletics, 240th Council meeting, 2026-03-18/19, Information and Decisions §2.1.3:
@@ -44,19 +44,22 @@ Flags for the fact-checker, with no change proposed:
 
 ## 2. Canoe and rowing (Yael's PR #64 items 57–59, now mine)
 
-The audit convention (see 31, 45, 52–54) is that an item covering both genders uses the sum for both genders.
-All three of Yael's items use per-gender numbers.
+Tamar's sign-off commit (dd77e24) already fixed several things. The allocations now say "per gender",
+rowing lists the 15 continental places, canoe sprint allows "up to 2 boats", and the slalom Worlds start
+on 2027-09-07. I re-checked those fixes against the QS and they are correct. Below is what remains.
+
+The audit convention (see items 31, 45 and 52–54) is that an item covering both genders uses the sum for
+both genders. All three items still carry per-gender totals.
 
 | item id | current | proposed | source |
 |---|---|---|---|
-| 57 rowing / סקיף יחיד (1x) גברים ונשים | totalQuotas 33, maxPerNOC 1 | totalQuotas **66**, maxPerNOC **2** (1 boat per event per gender). `allocation` text is correct per gender (10 at Lucerne 2027 + 3 Europe CQR + 2 FOQR + 1 host + 2 universality). Make it explicit: "לכל מגדר: …". | [ROW-QS] §B, §D.1–D.7 |
-| 57 | `source`: nocnsf ROW PDF | Keep. Add to `stakes`: "אליפות העולם בלוצרן 2027-08-23–2027-08-29: 10 מקומות לכל מגדר; מקום ומועד מקצה הקליטה האירופי ייקבעו עד 2026-12-31". | [ROW-QS] §D.1, §H |
-| 57 | `nextQuotaEvent` Lucerne 2027-08-23 | Keep (verified). The FOQR date is TBC in the QS. The fixture's 2028-05-05 comes from row2k, which is not official. | [ROW-QS] §H |
-| 58 canoe / קאנו ספרינט – גברים ונשים | totalQuotas 117, maxPerNOC 8 | totalQuotas **234** (+2 universality shared with slalom), maxPerNOC **16** (per gender: 5 kayak + 3 canoe). | [CSP-QS] §B.1–B.2 |
-| 58 | `allocation`: "…סירה אחת למדינה בכל מקצה" | "לכל מגדר: 79 מקומות לפי דירוג הקליטה האולימפי (תוצאות 2026-04-20–2027-12-31, אליפויות עולם ×1.5), 36 באירועי קליטה יבשתיים ב-2028 (באירופה 2 בכל אחד מ-K1, K2, C1, C2), ומקום מארחת בקיאק ובקאנו. עד 2 סירות למדינה במקצה; המכסה למדינה ולא לספורטאי/ת." The current "one boat per NOC per event" claim is **wrong**: §B.4.1 allows up to 2. | [CSP-QS] §B.4, §D.3–D.5, §H |
-| 58 | `nextQuotaEvent` null; `source` olympic.ca | `nextQuotaEvent`: {"אליפות העולם בקאנו ספרינט 2027", "2027-08-25"}. The three 2027 World Cups come first but have no dates in the QS. `source` → [CSP-QS]. | [CSP-QS] §G |
-| 59 canoe / קאנו סלאלום – גברים ונשים | totalQuotas 41, maxPerNOC 3 | totalQuotas **82** (+ shared universality), maxPerNOC **6**. The per-gender split in `allocation` (19 = 6 K1, 3 X1, 10 C1; ranking from 2026-07-20 to 2027-10-03) is **verified**. Add "15 ביבשתיות ו-6 בתחרות עולמית ב-2028, ומקום מארחת". | [CSL-QS] §B, §D, §D.3 |
-| 59 | `nextQuotaEvent` Worlds 2027-09-08; `source` olympic.ca | `nextQuotaEvent`: {"גביע העולם בקאנו סלאלום, פראג", "2027-06-04"} (the first remaining ranking event). The QS dates the Worlds in La Seu as 2027-09-07 to 2027-09-12, not 09-08, so fix fixture competition `icf-slalom-worlds-la-seu-2027` too. `source` → [CSL-QS]. | [CSL-QS] §E timeline |
+| 57 rowing / סקיף יחיד (1x) גברים ונשים | totalQuotas 33, maxPerNOC 1 | totalQuotas **66**, maxPerNOC **2** (1 boat per event per gender). Alternatively, keep the per-gender numbers and add "לכל מגדר" to the event name. That is a team-lead call, but it must match items 31 and 52–54. | [ROW-QS] §B, §D |
+| 57 | no `stakes` | "מקום ומועד מקצה הקליטה האירופי (3 מקומות לכל מגדר) ייקבעו עד 2026-12-31". The FOQR date is TBC in the QS. The fixture's 2028-05-05 comes from row2k, which is not official. | [ROW-QS] §H |
+| 58 canoe / קאנו ספרינט – גברים ונשים | totalQuotas 117, maxPerNOC 8 | totalQuotas **234** (+2 universality shared with slalom), maxPerNOC **16** (per gender: 5 kayak + 3 canoe), or the "לכל מגדר" alternative above. | [CSP-QS] §B.1–B.2 |
+| 58 | `allocation` "רוב המקומות… והיתר…" | Use exact numbers: "לכל מגדר: 79 לפי דירוג הקליטה (2026-04-20–2027-12-31, אליפויות עולם ×1.5), 36 באירועי קליטה יבשתיים ב-2028 (באירופה 2 בכל אחד מ-K1, K2, C1, C2), ומקום מארחת בקיאק ובקאנו; עד 2 סירות למדינה במקצה." | [CSP-QS] §D.3–D.5, §H |
+| 58 | `nextQuotaEvent` null; `source` olympic.ca | `nextQuotaEvent`: {"אליפות העולם בקאנו ספרינט 2027", start "2027-08-25", end "2027-08-29"}. The three 2027 World Cups come first but have no dates in the QS. `source` → [CSP-QS]. olympic.ca is not an official IF or IOC source. | [CSP-QS] §G |
+| 59 canoe / קאנו סלאלום – גברים ונשים | totalQuotas 41, maxPerNOC 3 | totalQuotas **82** (+ shared universality), maxPerNOC **6**, or the "לכל מגדר" alternative. Add to `allocation`: "15 ביבשתיות ו-6 בתחרות עולמית ב-2028, ומקום מארחת". | [CSL-QS] §B, §D |
+| 59 | `nextQuotaEvent` Worlds 2027-09-07; `source` olympic.ca | `nextQuotaEvent`: {"גביע העולם בקאנו סלאלום, פראג", start "2027-06-04", end "2027-06-06"}. That is the first remaining ranking event; World Cups in Augsburg, Lee Valley and Pau also come before the Worlds. `source` → [CSL-QS]. Also fix fixture competition `icf-slalom-worlds-la-seu-2027` (2027-09-08 → 2027-09-07). | [CSL-QS] §E timeline |
 
 **Israelis involved (canoe, rowing): none identified.** The ICF Road-to-LA28 page
 (https://rankings.canoeicf.com/road-to-la28) shows no ranking data yet. I found no ISR entry in any official
