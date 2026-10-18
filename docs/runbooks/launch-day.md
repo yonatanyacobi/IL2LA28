@@ -27,11 +27,17 @@ the sharing setting, the contact inbox and posting in their own channels.
 | **12:00** | **Go/no-go.** GO needs all gates green and G3 at ≥ 27/30 including all of B1. NO-GO → launch moves to Tue 27.10; the PM records the red gates and their owners | Coordinator |
 | 12:15 | If main changed since `launch-rc`, the lead publishes it (as in `result-night.md` step 8, with every changed site file). Tag `launch-2026-10-22` | Lead |
 | 12:30 | Live check again, signed out (2 minutes, same list as at 10:00) | Gil |
-| 13:00 | The owner makes sure the link opens for signed-out visitors (sharing setting), then posts the announcement with the `#digest` text in the D6 channels | Owner |
+| 13:00 | The owner makes sure the link opens for signed-out visitors (sharing setting), then posts the announcement (PR #46) with the `#digest` text in the D6 channels | Owner |
 | 13:00–23:00 | Watch: inbox triage at least hourly, the today strip at the day's events | Dana/Tamar, Omer |
 | 23.10 09:00 | **Day-1 review:** reports received/fixed, corrections, anything rolled back. One line in the weekly metrics log | PM |
 
 Don't launch while a result night is in progress, or during the daily job's publish step.
+
+**If the launch moves to 27.10:** re-check every date-based line before posting:
+- the announcement copy (PR #46), e.g. a days-to-opening count or "this week" lines;
+- the `#digest` text;
+- `LAUNCH_AT` (`2026-10-27T10:00:00Z`, since Israel is on UTC+2 after 25.10);
+- the dates in this runbook's timeline.
 
 ## Rollback
 **Save these at 09:30** (lead, in a Claude Code session at the repo root):
@@ -47,7 +53,7 @@ Decide which case you're in:
 | data.json is broken (validator fails, records missing) | Republish `/tmp/la28-data-prelaunch.json` as `data.json`. Pause the daily task until it's fixed | 15 min |
 | A false `earned`/`selected`, or harmful personal content | Fix the record in the DB (editor) and run the daily task now. If that takes more than 30 min, republish the previous data.json first | 30 min |
 | A single wrong fact | No rollback. Use the error-report flow below | – |
-| Something severe that can't be fixed quickly | **Kill switch:** the owner sets the artifact back to private. The coordinator tells the channels "תחזוקה קצרה" | Immediately |
+| Something severe that can't be fixed quickly | **Kill switch:** the owner sets the artifact back to private. The coordinator posts in the channels: `האתר בתחזוקה קצרה ויחזור בקרוב. תודה על הסבלנות.` | Immediately |
 
 Never hand-edit a published file, and never pass `force`. After any rollback, the fix goes through a normal branch and
 PR, and the lead re-tags.
@@ -55,7 +61,10 @@ PR, and the lead re-tags.
 ## The first error reports
 Reports reach the dedicated inbox from the "מצאתם טעות?" box.
 
-1. **Acknowledge** within 4 h during the day: "תודה, בודקים מול המקור הרשמי ונעדכן."
+1. **Acknowledge** within 4 h during the day:
+   - Hebrew: `תודה על הדיווח. אנחנו בודקים מול המקור הרשמי, והתיקון יופיע באתר וביומן התיקונים.`
+     Until `#corrections` is live, end it at `באתר.`
+   - English, for reports written in English: `Thanks for the report. We're checking it against the official source and will update the site.`
 2. **Classify:**
    - **P0:** a wrong quota, stage or selection, a wrong retirement or injury, or personal details. Take the claim
      down first (editor edit), then verify. Within 2 h.
