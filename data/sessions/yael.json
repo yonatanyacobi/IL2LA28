@@ -1,4 +1,5 @@
 {
+ "updatedAt": "2026-10-18T14:12:46Z",
  "sessions": [
   {
    "id": "issf-wch-doha-2026-20261103-arm-q",
@@ -14,7 +15,12 @@
    "result": "",
    "resultSource": "",
    "resultAt": "",
-   "notes": "Relay not yet published. Once the ISSF start list (expected 2.11) shows it, replace with -arm-q1 (timeLocal 09:15) or -arm-q2 (11:15), tz Asia/Qatar. Entry: ISSF entry list by NOC, 3.10.2026."
+   "notes": "Relay not yet published. Once the ISSF start list (expected 2.11) shows it, replace with -arm-q1 (timeLocal 09:15) or -arm-q2 (11:15), tz Asia/Qatar. Entry: ISSF entry list by NOC, 3.10.2026.",
+   "review": {
+    "status": "unchecked",
+    "by": "yael",
+    "at": "2026-10-18"
+   }
   },
   {
    "id": "issf-wch-doha-2026-20261103-arw-q",
@@ -30,7 +36,12 @@
    "result": "",
    "resultSource": "",
    "resultAt": "",
-   "notes": "Relay not yet published. Once the ISSF start list shows it, replace with -arw-q1 (13:15) or -arw-q2 (15:15), tz Asia/Qatar."
+   "notes": "Relay not yet published. Once the ISSF start list shows it, replace with -arw-q1 (13:15) or -arw-q2 (15:15), tz Asia/Qatar.",
+   "review": {
+    "status": "unchecked",
+    "by": "yael",
+    "at": "2026-10-18"
+   }
   },
   {
    "id": "issf-wch-doha-2026-20261104-armt-q",
@@ -47,7 +58,12 @@
    "result": "",
    "resultSource": "",
    "resultAt": "",
-   "notes": "No quota in the mixed team. Relay not yet published; split into -armt-q1 (09:15) or -armt-q2 (10:45), tz Asia/Qatar, once the start list shows it."
+   "notes": "No quota in the mixed team. Relay not yet published; split into -armt-q1 (09:15) or -armt-q2 (10:45), tz Asia/Qatar, once the start list shows it.",
+   "review": {
+    "status": "unchecked",
+    "by": "yael",
+    "at": "2026-10-18"
+   }
   }
  ]
 }
