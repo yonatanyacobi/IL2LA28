@@ -76,6 +76,32 @@ it goes live. Use only a list marked final. TriathlonLIVE and news stories are n
 If Sagiv does not start (DNS) or is not on the list, only `nextQuotaEvent` / `next` change, and the history
 entry is skipped.
 
+## Start list check (G-5)
+
+On 2026-10-18 the [EVENT] page had no elite men start list yet. It is expected on 2026-10-22 or 2026-10-23.
+When it appears: confirm Sagiv is on it, then record the URL, his bib and the men's start time here. If he is
+missing, use outcome D below.
+
+## Result-night wording, ready to paste
+
+Replace `<N>` with his place from the final list and `<URL>` with the results URL. Dates are absolute. No
+points are stated, because only the winner's 500 is confirmed.
+
+| Outcome | `history[].text` (kind `result`) | item 34 `israelNote` (appended to the current text) | `notes` |
+|---|---|---|---|
+| A. Finished, 4th or lower | "מקום <N> בגביע העולם בטריאתלון טונגיונג (ספרינט, 2026-10-24)" | "; מקום <N> בגביע העולם טונגיונג (2026-10-24)" | no change |
+| B. Podium (1–3) | "מקום <N> בגביע העולם בטריאתלון טונגיונג (ספרינט, 2026-10-24)" | "; מקום <N> בגביע העולם טונגיונג (2026-10-24)" | add "מקום <N> בגביע העולם טונגיונג 2026" |
+| C. DNF / DSQ | "לא סיים את גביע העולם בטריאתלון טונגיונג (2026-10-24)" (for DSQ: "נפסל ב…") | no change | no change |
+| D. DNS / not on the list | no history entry | no change | no change |
+
+In all four cases:
+- `stage` stays 1 and `israelStatus` stays `in-contention`.
+- Item 34 `stakes`: "WTCS אבו דאבי (2026-11-13–2026-11-14): עד 1000 נקודות לדירוג ההעפלה האישי, שב-2028-05-18 יחלק 21 מקומות".
+- Item 34 `nextQuotaEvent`: `{"name": "סבב האליפות העולמית בטריאתלון, אבו דאבי", "start": "2026-11-13", "end": "2026-11-14"}`.
+- Athlete `next` / `nextDate`: "סבב האליפות העולמית (WTCS) אבו דאבי" / "2026-11-13", but only once the Abu Dhabi
+  start list shows him. Until then keep [PROFILE]'s listing as the source and say so in the PR.
+- The rank update (`rank`, `rankNum`, `rankAsOf`) waits for the first OQR list dated after 2026-10-24.
+
 ## Open
 - Sagiv's entry on the Tongyeong and Abu Dhabi start lists (not seen yet).
 - The race start time in Tongyeong.
