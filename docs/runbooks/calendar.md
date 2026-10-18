@@ -26,7 +26,7 @@ Dana; sessions: Dana; `earned`: Dana + Tamar). The coordinator writes to the DB.
 | 11, 14, 17.11 | EuroBasket Women 2027 qualifiers (women's team, 19:40 / 19:40 / 19:00) | Yael | [result-night-basketball-women-nov.md](result-night-basketball-women-nov.md) (#214) | sessions live (v47) |
 | 13.11 | WTCS Abu Dhabi, triathlon, sprint (Sagiv, start list unverified) | Ofir | [result-night-wtcs-abu-dhabi.md](result-night-wtcs-abu-dhabi.md) (#223) | competition record and strings due by 11.11 |
 | 13–15.11 | Judo Grand Prix Zagreb (only if Israelis enter) | Roni | – | check the IJF entry list |
-| 27, 30.11 | World Cup 2027 qualifiers, men's basketball (The Hague 21:00, Riga 19:30) | Yael | – | runbook due by 17.11 |
+| 27, 30.11 | World Cup 2027 qualifiers, men's basketball (The Hague 21:00, Riga 19:30) | Yael | [result-night-basketball-men-nov.md](result-night-basketball-men-nov.md) (#226) | sessions in the DB |
 | 28–29.11 | World Triathlon Cup Jeddah (Sagiv's entry unknown) | Ofir | – | only if entered |
 
 Unconfirmed entries, no night planned: weightlifting Worlds Ningbo (to 8.11, Celia Gold not confirmed), fencing
