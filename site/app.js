@@ -200,7 +200,7 @@ function todayStrip(rows){
       <span class="t">${who(a)}<small>${[sportName(sportId), a.next].filter(Boolean).map(esc).join(" · ")}</small></span><span></span></li>`; }
     const total = dayNo(c.start, c.end || c.start);
     const small = [athletes.length ? athletes.sort((a, b) => heCmp(a.name, b.name)).map(who).join(", ") : "",
-      esc(c.location), athletes.length ? "" : `${athletesOf(sportId).length} ישראלים במעקב בענף`, linkOut(c.source)].filter(Boolean).join(" · ");
+      esc(c.location), athletes.length ? "" : (n => n === 1 ? "ישראלי/ת אחד/ת במעקב בענף" : `${n} ישראלים במעקב בענף`)(athletesOf(sportId).length), linkOut(c.source)].filter(Boolean).join(" · ");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
       <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small></span>
       <span class="now">מתקיימת עכשיו</span></li>`;
@@ -394,13 +394,22 @@ function reportBox(subject, link){
 }
 
 // The hash is the source of truth, so "#calendar" clears a filter left over from "#calendar-<id>".
-function viewCalendar(sportFilter = ""){
-  S.cal.sport = sportFilter;
+// Filters re-render only this list, so the focused control and scroll position survive.
+function calendarResults(){
   const t = today(), {sport, qual, past} = S.cal;
   const rows = S.comps.filter(c => (!sport || c.sportId === sport) && (!qual || c.qualifying) && (past || (c.end || c.start) >= t))
     .sort((a, b) => a.start.localeCompare(b.start));
   const months = {};
   rows.forEach(c => (months[c.start.slice(0, 7)] ??= []).push(c));
+  return rows.length ? Object.keys(months).sort().map(m => `<section class="month">
+      <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}</span></h2>
+      ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
+    : `<div class="empty">אין תחרויות שמתאימות לסינון.</div>`;
+}
+
+function viewCalendar(sportFilter = ""){
+  S.cal.sport = sportFilter;
+  const {sport, qual, past} = S.cal;
   const used = [...new Set(S.comps.map(c => c.sportId))].map(sportById).filter(Boolean).sort((a, b) => heCmp(a.he, b.he));
   const wins = S.sports.filter(s => s.window && isDate(s.window.from)).sort((a, b) => a.window.from.localeCompare(b.window.from));
   return `
@@ -410,10 +419,7 @@ function viewCalendar(sportFilter = ""){
     <label class="chk"><input type="checkbox" id="cQual" ${qual ? "checked" : ""}> רק תחרויות העפלה</label>
     <label class="chk"><input type="checkbox" id="cPast" ${past ? "checked" : ""}> כולל תחרויות שהסתיימו</label>
   </div>
-  ${rows.length ? Object.keys(months).sort().map(m => `<section class="month">
-      <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}</span></h2>
-      ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
-    : `<div class="empty">אין תחרויות שמתאימות לסינון.</div>`}
+  <div id="calResults" class="cal-results">${calendarResults()}</div>
   <section class="panel">
     <h2>חלונות העפלה</h2>
     <div class="tbl"><table>
@@ -677,9 +683,10 @@ function refresh(){
 addEventListener("hashchange", navigate);
 document.addEventListener("input", e => {
   if (e.target.id === "q") { S.q = e.target.value; renderResults(); }
-  if (e.target.id === "cSport") { S.cal.sport = e.target.value; history.replaceState(null, "", S.cal.sport ? "#calendar-" + S.cal.sport : "#calendar"); route(); }
-  if (e.target.id === "cQual") { S.cal.qual = e.target.checked; route(); }
-  if (e.target.id === "cPast") { S.cal.past = e.target.checked; route(); }
+  if (e.target.id === "cSport") { S.cal.sport = e.target.value; history.replaceState(null, "", S.cal.sport ? "#calendar-" + S.cal.sport : "#calendar"); }
+  if (e.target.id === "cQual") S.cal.qual = e.target.checked;
+  if (e.target.id === "cPast") S.cal.past = e.target.checked;
+  if (/^c(Sport|Qual|Past)$/.test(e.target.id) && $("calResults")) $("calResults").innerHTML = calendarResults();
 });
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry]");
@@ -732,7 +739,8 @@ function applyQuotas(){
 async function loadQuotas(){
   try {
     const r = await fetch("quotas.json", {cache: "no-cache"});
-    quotaFile = r.ok ? await r.json() : null;
+    // 404 = not published yet (an empty list); anything else unusable is an error.
+    quotaFile = r.status === 404 ? {items: []} : r.ok ? await r.json() : null;
   } catch { quotaFile = null; }
 }
 

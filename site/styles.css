@@ -244,3 +244,4 @@ h2 .pill{font-family:var(--f-body);font-size:15px;vertical-align:middle}
 .q-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .q-meta{font-size:13.5px;color:var(--muted)}
 .qlist summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--blue);padding-block:10px}
+.cal-results{display:grid;gap:22px}
