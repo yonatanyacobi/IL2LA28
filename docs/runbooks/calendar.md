@@ -10,7 +10,7 @@ Dana; sessions: Dana; `earned`: Dana + Tamar). The coordinator writes to the DB.
 | Date | Event (Israelis) | Owner | Runbook | Status |
 |---|---|---|---|---|
 | 19.10 | Rotterdam Worlds, women's qualification (Shoshani 17:00; Raz, Shamay 22:10) | Roni | [result-night-1910.md](result-night-1910.md) (#173) | ready; reserve/apparatus texts in #184 |
-| 20.10 | Rotterdam, men's team final (Israel not in it) | Roni | [rotterdam-outcomes.md](rotterdam-outcomes.md) | quota item (ב) once the Official qualification list is out (#134) |
+| 20.10 | Rotterdam, men's team final | Roni | [rotterdam-outcomes.md](rotterdam-outcomes.md) (ב) | **לא העפילה** (Israel 20th in qualification, #134); no result night |
 | 22.10 | Rotterdam, men's all-around final, 20:30 | Roni | – | only if #134 shows an Israeli Q; no plan yet |
 | 23.10 | Rotterdam, women's all-around final, 20:30 (Raz, Shamay if Q) | Roni | – | only after a Q on 19.10; no plan yet |
 | 24.10 | Tongyeong World Cup, triathlon (Sagiv 04:30) | Ofir | [result-night-2410.md](result-night-2410.md) (#201) | ready; plan in #160 |
