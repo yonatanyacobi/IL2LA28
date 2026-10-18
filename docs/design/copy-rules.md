@@ -13,6 +13,7 @@ texts. It's one page on purpose; the reasoning lives in the PR threads it cites.
 | Gershayim `״` (U+05F4), never `"` | `ק״ג`, `ארה״ב`, `ק״מ` | `ק"ג` |
 | Quotation marks `„…”` | `„מכסה הושגה”` | `"מכסה הושגה"` |
 | En dash with spaces for ranges in text; `fmtRange()` for dates | `29 באוק׳ – 31 באוק׳ 2026` | `29-31/10` |
+| Scores: a colon, higher score first (an en dash between two numbers flips them in RTL: `78–65` shows as `65–78`) | `ניצחון 78:65 על פולין`, `הפסד 78:65 לפולין` | `ניצחון 78–65` |
 
 The job follows the same rule (`job/SKILL.md`, #85). The export normalises `data.json`, but the DB doesn't.
 
