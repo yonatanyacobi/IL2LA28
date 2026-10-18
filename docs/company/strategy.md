@@ -21,7 +21,7 @@ There are no analytics, so we measure what we control:
 
 | Horizon | Targets |
 |---|---|
-| Launch (to 1.11.2026) | 0 open ✏️ audit fixes. At most 10 ❓ athletes, or the rest hidden. 33/33 sports have quota items. Results are live within 24 hours. |
+| Launch (target 22.10, fallback 27.10; to 1.11.2026) | 0 open ✏️ audit fixes. At most 10 ❓ athletes, or the rest hidden. 33/33 sports have quota items. Results are live within 24 hours. |
 | Season (to 30.6.2027) | About 60 qualifying events, peaking at about 3 a week. Results are live within 24 hours. Sign-off takes ≤4 hours on event days and ≤24 hours otherwise. A weekly audit runs. Fewer than 2 public corrections a month. A digest every Sunday. |
 | Games (Jun–Jul 2028) | Every qualified Israeli has a schedule and stakes. Same-day results. Zero unsourced "earned" or "selected" claims. |
 
@@ -78,7 +78,7 @@ Workload over the next 2 months, which hold about 14 qualifying events:
 **Merge:** after round 3, UX moves to one design a month under the PM. The total becomes 14 workers.
 
 ## 5. Top risks
-1. **A wrong public fact, above all a false "earned".** Mitigations: two-person sign-off on `earned`, the
+1. **A wrong public fact, above all a false "earned".** Mitigations: two-person sign-off on `earned` (proposed in D4), the
    validator's stage cross-check, a weekly audit and a corrections log.
 2. **Single points of failure** (Dana, the owner, the team lead). Mitigations: the second fact-checker; the
    publisher role; Noa as backup reviewer for doc-only PRs.

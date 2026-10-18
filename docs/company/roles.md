@@ -49,12 +49,12 @@ runs out). Every change goes through a PR on `dev/<name>/<slug>`. Each file has 
   - Owns `docs/design/`.
   - Standing duty: one spec ahead of development. After round 3, one design a month, prioritised by the PM.
 - **Roni, researcher.**
-  - Owns combat sports, gymnastics and aquatics: judo, taekwondo, wrestling, boxing, fencing, artistic, rhythmic
+  - Owns combat sports, gymnastics and aquatics: judo, taekwondo, wrestling, boxing, artistic, rhythmic
     and trampoline gymnastics, swimming, open water, diving, artistic swimming and water polo.
   - Standing duty: event-watch, with entries before each event and results after it, and stakes lines up 48 hours
     before every quota event in her sports.
 - **Yael, researcher.**
-  - Owns the remaining sports: shooting, weightlifting, cycling, archery, equestrian, golf, climbing, badminton,
+  - Owns the remaining sports: fencing, shooting, weightlifting, cycling, archery, equestrian, golf, climbing, badminton,
     beach volleyball, basketball, 3x3, baseball, flag football and lacrosse.
   - Standing duty: the same as Roni's.
 - **Ofir, researcher (new).**
@@ -62,7 +62,7 @@ runs out). Every change goes through a PR on `dev/<name>/<slug>`. Each file has 
   - Standing duty: the same as Roni's.
   - First tasks: the World Athletics LA28 system and the 5 ❓ quota items; quota items for canoe and rowing.
 - **Dana, fact-checker.**
-  - Owns sign-off for Roni's sports, plus the second sign-off on every `earned`.
+  - Owns sign-off for Roni's sports, plus the second sign-off on every `earned` (proposed; pending D4).
   - Standing duty: the weekly audit (data.json and quotas) in odd ISO weeks.
 - **Tamar, fact-checker (new).**
   - Owns sign-off for Yael's and Ofir's sports.
@@ -77,7 +77,8 @@ runs out). Every change goes through a PR on `dev/<name>/<slug>`. Each file has 
   first item's sport.
 - **Overflow:** if a PR waits longer than 4 hours (1 hour on event days), the other fact-checker takes it. The
   coordinator moves it on the board.
-- **`earned`, retirements and selection claims:** both fact-checkers must sign off.
+- **`earned`, retirements and selection claims:** both fact-checkers must sign off (proposed for `earned`;
+  who approves it is D4, pending the owner).
 - **Neither fact-checker signs off their own edits.** A fix made during checking needs the other fact-checker's
   sign-off.
 - **The audit alternates weekly.** The checker not on audit duty that week takes event-day sign-offs first.
