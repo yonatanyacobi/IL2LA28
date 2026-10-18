@@ -1876,6 +1876,14 @@ test("near-live: #c- and #day render the same row; #c- line under the h1, schedu
   assert.ok(ad.includes("<p class=\"kpi\">5 ספורטאים ונבחרות · בהמתנה לתוצאה: 5</p>"), "kpi line");
 });
 
+test("session rows at phone width: names get the full width, not the 70px time column (Gil P2 on #182)", () => {
+  const css = fs.readFileSync(path.join(ROOT, "site/styles.css"), "utf8");
+  const base = css.indexOf(".rows.sess li{grid-template-columns:70px 1fr auto}");
+  const phone = [...css.matchAll(/@media \(max-width:640px\)\{([^{}]*\{[^}]*\})*\}/g)]
+    .find(m => m[0].includes(".rows.sess li{grid-template-columns:1fr auto}"));
+  assert.ok(base > 0 && phone && phone.index > base, "phone rule after the base rule, same specificity");
+});
+
 test("#day merges sessions with the fallback per athlete (lead review on #151, MEDIUM)", async () => {
   // Richter has a session on 3.11; Abu Dhabi judo athletes (29.10) have none and keep their nextDate rows.
   const b = await boot({data: withSessions([SESS()]), quotas: SITE_QUOTAS, now: "2026-10-26T08:00:00Z"});
