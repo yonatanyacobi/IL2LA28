@@ -1,5 +1,5 @@
 // Home "now" panels (docs/design/home-today.md §2–3, #176): today's Israeli sessions and the last 48 h of results.
-// Loaded after day.js and event.js; reuses their sessions and near-live labels. viewHome() calls homeNow().
+// Loaded after sessions.js; every row is the shared sessionRow() (components.md §1). viewHome() calls homeNow().
 "use strict";
 
 const HOME_RESULTS_H = 48, HOME_RESULTS_MAX = 5, HOME_STAKES_MAX = 2, HOME_NEXT_ROWS = 3, HOME_NEXT_LOOKAHEAD = 60;
@@ -23,6 +23,10 @@ function todayStakes(sessions, t){
   return picks.map(({q}) => `<p class="stakes"><b>על הכף היום · <bdi>${esc(q.event)}</bdi>:</b> ${esc(q.stakes)}</p>`).join("");
 }
 
+// The competition link under the names; "תאריך בלבד" goes on the group heading when no row has a time (§1).
+const homeRows = (list, d) => `<ul class="rows sess">${list.map(s =>
+  sessionRow(s, d, dateOnly(list), `<small>${s.comp ? compA(s.comp) : sportLink(s.sportId)}</small>`)).join("")}</ul>`;
+
 function homeToday(){
   const t = today(), sessions = daySessions(t).sort(sessionOrder);
   const more = sessions.length - TODAY_MAX;
@@ -31,20 +35,14 @@ function homeToday(){
     && athletesOf(c.sportId).length && !withComp.has(c.id)).sort((x, y) => heCmp(x.name, y.name));
   let next = "";
   if (!sessions.length) for (let i = 1; i <= HOME_NEXT_LOOKAHEAD && !next; i++) if (hasIsraelis(addDays(t, i))) next = addDays(t, i);
-  const where = s => `<small>${s.comp ? compA(s.comp) : sportLink(s.sportId)}</small>`;
-  // "תאריך בלבד" once per run of untimed rows in one competition; the rest keep it for screen readers only.
-  const rows = (list, d) => `<ul class="rows sess">${list.map((s, i) => {
-    const html = sessionRow(s, d, where(s)), prev = list[i - 1];
-    return prev && !s.timed && !prev.timed && prev.comp === s.comp
-      ? html.replace('<span class="d">תאריך בלבד</span>', '<span class="d"><span class="sr">תאריך בלבד</span></span>') : html;
-  }).join("")}</ul>`;
+  const shown = sessions.slice(0, TODAY_MAX), nextList = next ? daySessions(next).sort(sessionOrder).slice(0, HOME_NEXT_ROWS) : [];
   // PM on #171: an empty day shows the next session day's first rows, so the home still opens on sessions.
-  const nextBlock = () => `<h3>הבא בתור: ${homeDayTitle(next)}</h3>
-    ${rows(daySessions(next).sort(sessionOrder).slice(0, HOME_NEXT_ROWS), next)}
+  const nextBlock = () => `<h3>הבא בתור: ${homeDayTitle(next)}${dateOnly(nextList) ? DATE_ONLY : ""}</h3>
+    ${homeRows(nextList, next)}
     <p><a href="#day-${next}">לכל הסשנים ב־${fmtShort(next)}</a></p>`;
   return `<section class="panel" aria-labelledby="todayH">
-    <h2 id="todayH"><a href="#today">היום, ${homeDayTitle(t)}</a></h2>
-    ${sessions.length ? rows(sessions.slice(0, TODAY_MAX), t) : `<p class="muted">אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.</p>`}
+    <h2 id="todayH"><a class="hlink" href="#today">היום, ${homeDayTitle(t)}</a>${dateOnly(shown) ? DATE_ONLY : ""}</h2>
+    ${sessions.length ? homeRows(shown, t) : `<p class="muted">אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.</p>`}
     ${todayStakes(sessions, t)}
     ${more > 0 ? `<p><a href="#today">${more === 1 ? "ועוד סשן אחד היום" : `ועוד ${more} סשנים היום`}</a></p>` : ""}
     ${next ? nextBlock() : ""}
@@ -58,32 +56,35 @@ function recentResults(){
   const t = today(), now = Date.now(), since = now - HOME_RESULTS_H * 36e5;
   const exported = exportedSessions().filter(s => s.result);
   const seen = new Set(exported.flatMap(s => s.athletes.map(a => `${a.id}|${s.day}`)));
-  const rows = exported.filter(s => { const at = Date.parse(s.resultAt); return at >= since && at <= now; })
-    .map(s => ({athletes: s.athletes, comp: s.comp, sportId: s.sportId, result: s.result, source: s.resultSource, resultAt: s.resultAt, key: s.resultAt}));
+  const rows = exported.filter(s => { const at = Date.parse(s.resultAt); return at >= since && at <= now; });
+  // A history result becomes a date-only session (like fallbackSessions), so it renders through sessionRow too.
   for (const d of [t, addDays(t, -1)]) for (const a of S.athletes) {
     const h = historyResult(a, d);
     if (!h || seen.has(`${a.id}|${d}`)) continue;
     seen.add(`${a.id}|${d}`);
-    rows.push({athletes: [a], comp: compOn(a.sportId, d), sportId: a.sportId, result: str(h.text).slice(0, 120), source: h.source, at: d, key: d + "T00:00:00Z"});
+    rows.push({athletes: [a], comp: compOn(a.sportId, d), sportId: a.sportId, phase: "", startUtc: null, day: d,
+      result: str(h.text).slice(0, 120), resultSource: h.source, resultAt: ""});
   }
-  const fav = r => r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1;
-  return rows.sort((x, y) => fav(x) - fav(y) || y.key.localeCompare(x.key) || heCmp(x.athletes[0].name, y.athletes[0].name));
+  const fav = r => r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1, key = r => r.resultAt || r.day + "T00:00:00Z";
+  return rows.sort((x, y) => fav(x) - fav(y) || key(y).localeCompare(key(x)) || heCmp(x.athletes[0].name, y.athletes[0].name));
 }
 
-// No chip or ✓: a result can be an elimination.
+// Grouped by Israel day under an h3, in the given order. sessionRow shows no chip for a result (it can be an elimination).
+function resultGroups(list){
+  const days = new Map();
+  for (const s of list) days.set(s.day, [...(days.get(s.day) || []), s]);
+  return [...days].map(([d, g]) => `<h3>${homeDayTitle(d)}${dateOnly(g) ? DATE_ONLY : ""}</h3>${homeRows(g, d)}`).join("");
+}
+
 function homeResults(){
   const rows = recentResults();
-  const row = r => `<li><span class="d">${r.resultAt ? whenIL(r.resultAt) : fmtShort(r.at)}</span>
-    <span class="t">${r.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")}
-      · ${compA(r.comp) || sportLink(r.sportId)}
-      <span class="res"><b>תוצאה:</b> ${esc(r.result)} · ${hostLink(r.source, "מקור")}</span></span><span></span></li>`;
   const more = rows.length - HOME_RESULTS_MAX;
   // Every result stays on the home; #updates is the change log, never worded as "more results".
   return `<section class="panel" aria-labelledby="homeResH">
     <h2 id="homeResH">תוצאות אחרונות</h2>
-    ${rows.length ? `<ul class="rows">${rows.slice(0, HOME_RESULTS_MAX).map(row).join("")}</ul>` : `<p class="muted">אין תוצאות חדשות ב־48 השעות האחרונות.</p>`}
+    ${rows.length ? resultGroups(rows.slice(0, HOME_RESULTS_MAX)) : `<p class="muted">אין תוצאות חדשות ב־48 השעות האחרונות.</p>`}
     ${more > 0 ? `<details><summary>${more === 1 ? "ועוד תוצאה אחת" : `ועוד ${more} תוצאות`} ב־48 השעות האחרונות</summary>
-      <ul class="rows">${rows.slice(HOME_RESULTS_MAX).map(row).join("")}</ul></details>` : ""}
+      ${resultGroups(rows.slice(HOME_RESULTS_MAX))}</details>` : ""}
     <p class="foot">ב־48 השעות האחרונות · ${CADENCE} · <a href="#updates">לכל העדכונים באתר</a></p>
   </section>`;
 }

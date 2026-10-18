@@ -91,13 +91,16 @@ def stage(v):
         return 0
 
 
-def rank_fields(a):
-    """rankNum only together with its list and date; anything unusable exports as no rank, never a guess."""
-    n, lst, at = a.get("rankNum"), text(a.get("rankList"), RANK_LIST_MAX), date(a.get("rankAsOf"))
+RANK_PREFIXES = ("rank", "olympicRank")  # world rank, and the Olympic qualification list (spec-rank-tiebreak, #218)
+
+
+def rank_fields(a, prefix="rank"):
+    """<prefix>Num only together with its list and date; anything unusable exports as no rank, never a guess."""
+    n, lst, at = a.get(prefix + "Num"), text(a.get(prefix + "List"), RANK_LIST_MAX), date(a.get(prefix + "AsOf"))
     if isinstance(n, str) and n.strip().isdigit():  # edit-form inputs may arrive as strings
         n = int(n)
     ok = type(n) is int and n >= 1 and lst and at
-    return {"rankNum": n if ok else None, "rankList": lst, "rankAsOf": at}
+    return {prefix + "Num": n if ok else None, prefix + "List": lst, prefix + "AsOf": at}
 
 
 def instant(v):
@@ -212,7 +215,7 @@ def main(dump, out_file, prev_file=None):
         row = {"id": aid, **{k: text(a.get(k)) for k in ATHLETE_FIELDS}}
         row.update(stage=stage(a.get("stage")), source=https(a.get("source")), nextDate=date(a.get("nextDate")),
                    updatedAt=iso(a.get("updatedAt")), verifiedAt=iso(a.get("verifiedAt")), history=history(a.get("history")),
-                   **rank_fields(a))
+                   **rank_fields(a), **rank_fields(a, "olympicRank"))
         a_out.append(row)
 
     c_out = []

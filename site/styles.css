@@ -99,7 +99,6 @@ main{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;
 .pill.st0{background:var(--line);color:var(--ink)}
 .pill.st2{background:var(--sun-soft);color:var(--sun-ink)}
 .pill.st3{background:var(--ok-soft);color:var(--ok)}
-.now{color:var(--ok);font-weight:700;font-size:13px}
 
 /* search */
 .search{background:var(--surface);border:1px solid var(--line-ui);border-radius:10px;padding:10px 12px;width:100%}
@@ -119,9 +118,12 @@ main{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;
 .sport .meta{font-size:14px;color:var(--muted)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips a{font-size:15px;border:1px solid var(--line-ui);border-radius:99px;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)}
+.chips a[aria-current="page"]{background:var(--blue);border-color:var(--blue);color:var(--on-blue);font-weight:700}   /* #following tabs */
 
 /* athlete cards */
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.chips + .cards{margin-top:2px}   /* + the panel's 10px gap = 12px */
+.chips-lbl{align-self:center;color:var(--muted);font-size:14px}
 .card{display:grid;gap:6px;align-content:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-decoration:none;color:inherit;min-width:0}
 .card:hover{border-color:var(--blue)}
 .card .nm{font-weight:700;font-size:17px}
@@ -353,8 +355,9 @@ div.track{background:none}
 .daystrip a.has::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--sun)}
 .daystrip a[aria-current="date"]{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
 .daystrip a[aria-current="date"].has::after{background:var(--on-blue)}   /* sun on blue is 1.2:1 in dark */
-.day-nav{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.day-nav{display:flex;justify-content:flex-start;align-items:baseline;gap:8px 16px;flex-wrap:wrap}
 .day-nav > a{min-height:44px;display:inline-flex;align-items:center;font-weight:600;text-decoration:none}
+.day-nav h1{order:-2}   /* start of the line; prev/next sit right after it (UX QA on #208) */
 .day-nav .day-prev{order:-1}   /* h1 comes first in the DOM (reading/tab order); visually prev stays at the start */
 .rows.sess li{grid-template-columns:70px 1fr auto}
 .res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px;color:var(--muted)}
@@ -375,6 +378,15 @@ div.track{background:none}
 .pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
 .pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
 .pill.s-wait{background:var(--blue-soft);color:var(--blue)}
+/* The "השתנה ב־" pill sits on the row's top edge, out of the flow, so marking a row never moves text (#177). */
+.rows li,.facts dd{position:relative}
+.pill.chg{position:absolute;top:0;inset-inline-end:0;transform:translateY(-50%);z-index:1;pointer-events:none;
+  font-size:11px;line-height:14px;padding:0 6px;background:var(--sun-soft);color:var(--sun-ink)}
+/* Kept inside the space between rows: .rows has 8px padding each side, the timeline 10px below / 6px above, and
+   .facts gets a 14px row gap (was 6px) so the pill fits entirely in it. */
+.timeline .pill.chg{transform:translateY(-70%)}
+.facts{row-gap:14px}
+.facts .pill.chg{transform:translateY(-100%)}
 @media (max-width:640px){.day-nav h1{flex-basis:100%;order:-2}.rows.sess li{grid-template-columns:1fr auto}}   /* .rows.sess li beats the generic phone rule */
 
 /* following (#following): nav badge */
@@ -390,4 +402,10 @@ div.track{background:none}
 .event-head{display:grid;gap:6px}
 .event-head .pills{display:flex;flex-wrap:wrap;gap:6px}
 .sess-day h3{font-size:16px;font-family:var(--f-body);font-weight:700}
-.sess-day h3 a[aria-current="date"]{color:var(--ink);text-decoration-thickness:3px;text-decoration-color:var(--sun)}
+/* Headings that are links (components.md §3). Today gets one unbroken border, not a text-decoration, which Safari
+   breaks at word spaces. */
+.hlink{color:var(--ink);text-decoration:none}
+.hlink:hover,.hlink:focus-visible{text-decoration:underline}
+.hlink[aria-current="date"]{border-bottom:3px solid var(--sun)}
+.sess-day{scroll-margin-top:64px}   /* scrolled to on arrival: clear the sticky nav (two rows on mobile) */
+@media (max-width:640px){.sess-day{scroll-margin-top:110px}}

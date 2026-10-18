@@ -151,7 +151,7 @@ function admList(key, sportId){
   if (!c || (sportId && !sportById(sportId))) return notFound();
   const list = S.athletes.filter(a => c.test(a) && (!sportId || a.sportId === sportId))
     .sort((a, b) => heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.name, b.name));
-  return `<p class="crumb"><a href="#admin">→ בקרה</a></p>
+  return `<p class="crumb"><a href="#admin"><span aria-hidden="true">→</span>&nbsp;בקרה</a></p>
   <h1 tabindex="-1">${esc(c.label)}${sportId ? ` · ${esc(sportName(sportId))}` : ""} (${list.length})</h1>
   <section class="panel">${list.length ? `<ul class="rows">${list.map(a => `<li><span class="d">${esc(sportName(a.sportId))}</span>
     <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(c.why(a))}</small></span><span></span></li>`).join("")}</ul>`

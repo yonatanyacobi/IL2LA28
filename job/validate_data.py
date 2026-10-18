@@ -1,6 +1,7 @@
 """Validate a public data.json produced by export_data.py (shipped next to it).
 
-Usage: python3 validate_data.py <data.json>  -> exit 0 if valid, 1 with one error per line otherwise.
+Usage: python3 validate_data.py <data.json>  -> exit 0 if valid, 1 with one error per line otherwise;
+       WARN lines (suspect rank dates) never change the exit code.
        python3 validate_data.py --quotas <quotas.json> <data.json>  -> checks the hand-curated quotas.json;
        data.json is context for sportId and the "earned" cross-check.
 Checks the contract the exporter guarantees; unknown keys are errors so a private field can't leak silently.
@@ -34,6 +35,8 @@ ATHLETE = {
     "history": ("history", True), "verifiedAt": ("iso", False),
     # Sortable world rank (docs/product/spec-rank-tiebreak.md); a set rankNum needs both companions (checked below).
     "rankNum": ("rankNum", False), "rankList": ("rankList", False), "rankAsOf": ("date", False),
+    # The Olympic qualification list, kept apart from the world rank (#218); same rules.
+    "olympicRankNum": ("rankNum", False), "olympicRankList": ("rankList", False), "olympicRankAsOf": ("date", False),
 }
 RANK_LIST_MAX = 80
 HISTORY = {"at": ("date!", True), "kind": ("kind", True), "text": ("str!", True), "source": ("url", True)}
@@ -150,22 +153,56 @@ def validate(data):
                 if all(isinstance(d, str) for d in dates) and dates != sorted(dates):
                     err(f"{where}: not sorted by date")
 
+    days = export_days(data.get("generatedAt"))
     for coll, spec in (("sports", SPORT), ("athletes", ATHLETE), ("competitions", COMP), ("changes", CHANGE)):
         seen = set()
         for i, row in enumerate(data[coll]):
             path = f"{coll}[{i}]" + (f"({row.get('id')})" if isinstance(row, dict) and "id" in row else "")
             check(row, spec, path)
-            if coll == "athletes" and isinstance(row, dict) and type(row.get("rankNum")) is int:
-                if not (isinstance(row.get("rankList"), str) and row["rankList"].strip()):
-                    err(f"{path}.rankList: required when rankNum is set")
-                if not is_date(row.get("rankAsOf")):
-                    err(f"{path}.rankAsOf: YYYY-MM-DD required when rankNum is set")
+            for p in ("rank", "olympicRank"):
+                if coll != "athletes" or not isinstance(row, dict):
+                    continue
+                if type(row.get(p + "Num")) is int:
+                    if not (isinstance(row.get(p + "List"), str) and row[p + "List"].strip()):
+                        err(f"{path}.{p}List: required when {p}Num is set")
+                    if not is_date(row.get(p + "AsOf")):
+                        err(f"{path}.{p}AsOf: YYYY-MM-DD required when {p}Num is set")
+                as_of = row.get(p + "AsOf")
+                if is_date(as_of) and days and as_of > days[-1]:
+                    err(f"{path}.{p}AsOf: {as_of} is after the export ({days[-1]})")
             if "id" in spec and isinstance(row, dict):
                 rid = row.get("id")
                 if isinstance(rid, str) and rid in seen:
                     err(f"{path}: duplicate id")
                 seen.add(rid)
     return errors
+
+
+def export_days(generated_at):
+    """The export's UTC and Israel dates, ascending: a rank read "today" may carry either."""
+    if not (isinstance(generated_at, str) and STAMP.fullmatch(generated_at)):
+        return []
+    from zoneinfo import ZoneInfo
+    t = datetime.fromisoformat(generated_at[:-1] + "+00:00")
+    return sorted({t.strftime("%Y-%m-%d"), t.astimezone(ZoneInfo("Asia/Jerusalem")).strftime("%Y-%m-%d")})
+
+
+def warnings(data):
+    """Suspect but not provably wrong, so these never block publishing. A ranking list is published before it's
+    read, so an AsOf equal to the export day is usually the read date instead of the list's (IJF, 18.10).
+    A list name without a date is what the exporter leaves when a DB date is malformed (it nulls the Num)."""
+    days, out = export_days(data.get("generatedAt")), []
+    athletes = data.get("athletes") if isinstance(data.get("athletes"), list) else []
+    for i, a in enumerate(athletes):
+        if not isinstance(a, dict):
+            continue
+        for p in ("rank", "olympicRank"):
+            where = f"athletes[{i}]({a.get('id')}).{p}AsOf"
+            if type(a.get(p + "Num")) is int and a.get(p + "AsOf") in days:
+                out.append(f"{where}: {a[p + 'AsOf']} is the export day; check the date printed on {a.get(p + 'List')!r}")
+            elif isinstance(a.get(p + "List"), str) and a[p + "List"].strip() and not is_date(a.get(p + "AsOf")):
+                out.append(f"{where}: missing although {p}List is set; fix the date in the DB")
+    return out
 
 
 def validate_corrections(rows, launch_at):
@@ -406,6 +443,9 @@ def main(argv):
         errors = validate_quotas(docs[0], docs[1] if isinstance(docs[1], dict) else {})
     else:
         errors = validate(docs[0])
+        if isinstance(docs[0], dict):
+            for w in warnings(docs[0]):
+                print(f"WARN: {w}")
     for e in errors:
         print(f"INVALID: {e}")
     if not errors:
