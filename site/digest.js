@@ -57,7 +57,9 @@ function digestText(t = today()){
       const fromJob = resChanges.filter(x => !used.has(x) && changeSport(x) === c.sportId && day(x) >= c.start);
       fromJob.forEach(x => used.add(x));
       // An editor's change about an athlete whose result is already logged above would repeat it.
-      const about = fromJob.filter(x => !loggedBy.some(a => a.id === x.athleteId));
+      // A "מתקיימת עכשיו" note from before the event is stale under its results (Gil's rehearsal); it stays used, so
+      // it doesn't resurface under "מה התעדכן" either.
+      const about = fromJob.filter(x => !loggedBy.some(a => a.id === x.athleteId) && !/עכשיו/.test(str(x.text)));
       const lines = [...logged, ...about.map(x => waCut(`  – ${waText(x.text)}`))];
       return [waCut(`• ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))})`),
         ...(who.length ? waList("  ישראלים: ", names(who)) : []),
