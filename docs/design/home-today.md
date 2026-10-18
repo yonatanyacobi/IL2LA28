@@ -8,7 +8,8 @@ last 48 h (with their source), and the athletes you follow first in both.
 
 ## 1. Order of the page
 1. `.hero`: h1, the page-level `freshLine()` (near-live §3, replaces `freshness()`), the countdown. `nextUpLine` stays.
-2. **"היום"** (§2), replacing `todayStrip()`.
+2. **"היום"** (§2), replacing `todayStrip()`. Above it, `wonPanel()` when an item was earned in the last 7 days
+   (`earnedAt` ≥ today − 6): the biggest news we have. Otherwise the won panel stays in step 5.
 3. **"תוצאות אחרונות"** (§3).
 4. **"במעקב שלי"** cards, moved up from below the quota panels (unchanged markup, or the existing tip line).
 5. The rest as today: search, won, closest, review, KPI, 14 days, updates, upcoming comps.
@@ -28,7 +29,14 @@ Desktop (≥ 900px): §2 and §3 share a row, `.home-now{display:grid;gap:22px}`
 - **Cap:** 6 rows, then `<a href="#today">ועוד {n} סשנים היום</a>` (n = 1: `ועוד סשן אחד היום`).
 - **Running competitions without a known Israeli session** collapse into one `.foot` line:
   `עוד היום, בלי סשן ידוע של ישראלים: {links to #c-<id>, joined " · "}`.
-- **Stakes:** none here (they live on `#day` and `#c-`). Keeps the home rows to 2–3 lines at 400px.
+- **Stakes:** never on a row (rows stay 2–3 lines at 400px). Instead, under the list and above the "more" link, at most
+  **2 lines in total** for quota competitions running today:
+  `<p class="stakes"><b>על הכף היום · <bdi>{q.event}</bdi>:</b> {q.stakes}</p>`.
+  - Items: the today strip's rule (in-contention, `nxt(q)`, quota event inside a competition running today); `stakesLine()`'s
+    rule drops `earned` ones.
+  - Pick order: followed athlete, then an athlete in today's rows, then best `rankOf()`, then file order.
+  - `{q.event}`, not the competition name: the stakes text already starts with the competition ("גרנד סלאם אבו דאבי,
+    29 באוק׳ 2026: …"), and the weight class is what tells two Abu Dhabi lines apart.
 - **Empty:** `<p class="muted">אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.</p>`, then the next day d with a
   session (looking up to 60 days ahead): `<h3>הבא בתור: {dayTitle(d)}</h3>`, its first 3 `sessionRow(s, d)` in
   `sessionOrder`, and `<a href="#day-{d}">לכל הסשנים ב־{fmtShort(d)}</a>`. No later session: the empty line only.
@@ -55,6 +63,7 @@ Desktop (≥ 900px): §2 and §3 share a row, `.home-now{display:grid;gap:22px}`
 | more today | `ועוד {n} סשנים היום` / `ועוד סשן אחד היום` |
 | running, no session | `עוד היום, בלי סשן ידוע של ישראלים:` |
 | today empty | `אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.` |
+| stakes line | `על הכף היום · {event}: {stakes}` |
 | next (h3) | `הבא בתור: {יום ה׳, 29 באוק׳}` |
 | next link | `לכל הסשנים ב־{29 באוק׳}` |
 | results h2 | `תוצאות אחרונות` |
@@ -72,6 +81,9 @@ freshness text `נתונים חיים · עדכון אוטומטי אחרון:`,
   `--sun`, `--blue`); no new colours, so contrast is as in phase 1.
 
 ## 6. Tests (pinned clock, fixture + injected sessions)
+- Fake 29.10 (Abu Dhabi, 7 judo items): at most 2 `על הכף היום` lines; with Hershko followed, her item is first; an
+  earned item never gets one.
+- An item injected as `earned` 3 days ago: the won panel is above "היום"; 8 days ago: below, as today.
 - Today with 8 sessions: 6 rows, followed first, the "more" link reads `ועוד 2 סשנים היום`; each row links `#c-<id>`.
 - No sessions today, 5 on the next session day: the empty line, the `הבא בתור` h3, 3 rows and the `#day-{d}` link;
   no session in 60 days: the empty line only; a running competition without a session is in the one-line list.
