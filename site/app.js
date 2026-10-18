@@ -263,7 +263,10 @@ const compLink = (c, text, cls = "") => c?.id && typeof viewEvent === "function"
 // A free-text competition mention (an athlete's "next", a quota event's name), linked to the competition running in
 // that sport on that date. The text is the link only when it names that competition, so the link text describes the
 // target; otherwise the text stays plain and the competition's own name is the link beside it.
-const sameName = (x, y) => { const n = s => str(s).toLowerCase().replace(/\s+/g, " ").trim(); return !!n(x) && !!n(y) && (n(x).includes(n(y)) || n(y).includes(n(x))); };
+// Free text adds a city (", רוטרדם"), a year or a parenthetical the official name lacks, and mixes - – ־.
+const nameKey = s => str(s).toLowerCase().replace(/\([^)]*\)/g, " ").split(",")[0].replace(/\b(19|20)\d\d\b/g, " ")
+  .replace(/[‐-―־]/g, "-").replace(/\s+/g, " ").replace(/^[\s-]+|[\s-]+$/g, "");
+const sameName = (x, y) => { const a = nameKey(x), b = nameKey(y); return !!a && !!b && (a.includes(b) || b.includes(a)); };
 function compMention(text, sportId, date){
   const c = isDate(date) && typeof compOn === "function" ? compOn(sportId, date) : null;
   if (!c || compLink(c, "") === "") return esc(text);

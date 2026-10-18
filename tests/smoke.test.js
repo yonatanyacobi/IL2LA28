@@ -2398,6 +2398,25 @@ test("render budget: each main route under 50 ms at 3x today's data", async () =
   assert.deepStrictEqual(slow.map(([r, ms]) => `#${r} ${ms.toFixed(0)} ms`), []);
 });
 
+// Pairs from the published data of 18.10: [free text, official name, the text names the competition].
+test("sameName: a city, year, parenthetical or dash style doesn't make a second link name (Gil, 14-day rows)", async () => {
+  const {run} = await boot();
+  const pairs = [
+    ["אליפות העולם בהתעמלות מכשירים, רוטרדם", "אליפות העולם בהתעמלות מכשירים 2026", true],
+    ["אליפות העולם בהתעמלות מכשירים, רוטרדם – מוקדמות נשים (קרב־רב)", "אליפות העולם בהתעמלות מכשירים 2026", true],
+    ["גביע העולם בטריאתלון, טונגיונג", "גביע העולם בטריאתלון טונגיונג", true],
+    ["אליפות העולם בשייט – מקצי זוגות, גדיניה", "אליפות העולם בשייט - מקצי זוגות (49er/FX, 470, נאקרה)", true],
+    ["טורנירי טרום-מוקדמות אולימפיים FIBA", "טורנירי טרום־מוקדמות אולימפיים FIBA – אירופה (גברים)", true],
+    ["גרנד סלאם אבו דאבי", "גרנד סלאם אבו דאבי", true],
+    // The official name adds what the text lacks (gender, discipline, sport): it stays as the link beside the text.
+    ["אליפות אירופה בלקרוס סיקסס – סאלו, ספרד", "אליפות אירופה בלקרוס סיקסס – נשים", false],
+    ["אליפות העולם באקווטיקה בודפשט", "אליפות העולם באקווטיקה 2027 – מים פתוחים", false],
+    ["אליפות העולם רוטרדם – גמר קבוצתי גברים", "אליפות העולם בהתעמלות מכשירים 2026", false],
+    ["2026", "אליפות העולם 2026", false],
+  ];
+  for (const [x, y, want] of pairs) assert.strictEqual(run(`sameName(${JSON.stringify(x)}, ${JSON.stringify(y)})`), want, `${x} || ${y}`);
+});
+
 // tests/probe.js: every route on 7 dates, visitor and with follows; ~1 s on the fixture.
 test("route probe: no throw, not-found, junk, banned copy, duplicate id, dangling aria or non-https link", async () => {
   const {probe} = require("./probe.js");
