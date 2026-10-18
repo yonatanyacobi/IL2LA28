@@ -86,7 +86,8 @@ function quotaHealthPanel(){
   const t = today(), soon = addDays(t, QUOTA_SOON_D), start = q => q.nextQuotaEvent?.start || "";
   const age = daysSince(S.quotasUpdatedAt);
   const evt = q => `${esc(q.nextQuotaEvent.name)} · ${fmt(start(q))}`;
-  const ago = q => { const n = daysAgo(quotaEventEnd(q), t); return n === 1 ? "אתמול" : `לפני ${n} ימים`; };
+  // Hebrew counts: 2 → יומיים, 3–10 → ימים, 11+ → יום.
+  const ago = q => { const n = daysAgo(quotaEventEnd(q), t); return n === 1 ? "אתמול" : n === 2 ? "לפני יומיים" : `לפני ${n} ${n <= 10 ? "ימים" : "יום"}`; };
   const recheck = q => `<bdi>${esc(q.nextQuotaEvent.name)}</bdi> (${fmtRange(start(q), quotaEventEnd(q))}) · ${ago(q)} · בדיקה ידנית אחרונה: ${fmt(checkedOf(q))}`;
   const recheckFoot = `לעדכן את <span dir="ltr">data/quotas/quotas.json</span> (סטטוס, אירוע מכסה הבא, review.at) ולהריץ את <span dir="ltr">build_quotas.py</span>.`;
   const unchecked = S.quotas.filter(q => uncheckedEnd(q, t));
@@ -106,7 +107,7 @@ function quotaHealthPanel(){
   const sorted = (f, list) => list.slice().sort((a, b) => key(f, a).localeCompare(key(f, b)) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
   return `<section class="panel ${alert ? "adm-alert" : ""}" id="quotaHealth">
     <div class="sec-head">${h}<span class="pill ${alert ? "bad" : flags.length ? "soon" : "open"}">${alert ? "דורש בדיקה" : flags.length ? "תזכורת" : "תקין"}</span></div>
-    <p class="${stale ? "adm-bad" : "muted"}">${S.quotas.length} פריטים · quotas.json עודכן ${isDate(str(S.quotasUpdatedAt).slice(0, 10)) ? `ב־${fmt(str(S.quotasUpdatedAt).slice(0, 10))}` : "בתאריך לא ידוע"}${stale ? ` · ישן מ־${QUOTA_MAX_AGE_D} ימים` : ""}</p>
+    <p class="${stale ? "adm-bad" : "muted"}">${S.quotas.length} פריטים · quotas.json עודכן ${isDate(str(S.quotasUpdatedAt).slice(0, 10)) ? `ב־${fmt(str(S.quotasUpdatedAt).slice(0, 10))}` : "בתאריך לא ידוע"}${stale ? ` · ישן מ־${QUOTA_MAX_AGE_D} יום` : ""}</p>
     ${flags.map(f => `<div class="stack" data-flag="${f.key}"><h3 class="${f.alert ? "adm-bad" : ""}">${esc(f.label)} (${f.items.length})</h3>
       <ul class="rows">${sorted(f, f.items).map(q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
         <span class="t"><bdi>${esc(q.event)}</bdi><small>${f.why(q)}</small></span><span>${f.pill ? quotaStatusPill(q.israelStatus) : ""}</span></li>`).join("")}</ul>
