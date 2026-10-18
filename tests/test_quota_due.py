@@ -37,6 +37,12 @@ class QuotaDueTest(unittest.TestCase):
         self.assertEqual(run("2026-10-26", q),
                          ["לעדכן quotas.json: אליפות העולם (התעמלות מכשירים, הסתיים 2026-10-25) – פריט אחד: קבוצתי"])
 
+    def test_own_end_equal_to_competition_end_gives_one_line(self):
+        # An explicit end that matches the qualifying competition's end must not add a second warning.
+        q = [item("judo", "60-", "גרנד סלאם", "2026-10-29", "2026-10-31"), item("judo", "52-", "גרנד סלאם", "2026-10-29", "2026-10-31")]
+        self.assertEqual(run("2026-11-01", q),
+                         ["לעדכן quotas.json: גרנד סלאם (ג׳ודו, הסתיים 2026-10-31) – 2 פריטים: 60-, 52-"])
+
     def test_own_end_wins(self):
         q = [item("artistic-gymnastics", "קבוצתי", "גמר קבוצתי רוטרדם", "2026-10-20", "2026-10-20")]
         self.assertEqual(run("2026-10-20", q), [])
