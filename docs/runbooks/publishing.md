@@ -242,7 +242,8 @@ from https://www.ijf.org/competition/3157/results, and Dana signs off.
 [ ] By 28.10 (Roni): each judoka's nextDate = their actual day from the IJF outlines
     (29.10: Ashpiz, G. Primo, Nelson Levy; 30.10: Elbaz; 31.10: Hershko), and the entries checked after the draw
 [ ] Each evening (Roni): one history entry per Israeli who fought that day, kind "result", source = IJF results:
-    "<זהב|כסף|ארד|מקום 5|מקום 7|הודח/ה בסיבוב <n>> בגרנד סלאם אבו דאבי, <weight> (<DD>.10.2026)"
+    "<זהב|כסף|ארד|מקום 5|מקום 7|הודח/ה <ROUND>> בגרנד סלאם אבו דאבי, <weight> (<DD> באוק׳ 2026)"
+    (<ROUND> as in abu-dhabi-outcomes.md, e.g. "בסיבוב הראשון", "ברבע הגמר"; full rules in result-night-abu-dhabi.md)
 [ ] Medals only: one meta/status change "ג׳ודו: <name> – <same text>" with athleteId (the digest shows it once)
 [ ] No rank changes until the next IJF WRL PDF; no quota status changes
 [ ] After 31.10, one PR for all 7 judo items (stakes, nextQuotaEvent → the next event), through steps 0–7.
@@ -254,11 +255,11 @@ Digest of 1.11 in the dry run (made-up results):
 ```
 • 31 באוק׳ · גרנד סלאם אבו דאבי (ג׳ודו)
   ישראלים: גפן פרימו, יהונתן אלבז, יצחק אשפיז, רז הרשקו, תמנע נלסון לוי
-  – גפן פרימו: מקום 5 בגרנד סלאם אבו דאבי, 52- ק״ג (29.10.2026)
-  – יצחק אשפיז: ארד בגרנד סלאם אבו דאבי, 60- ק״ג (29.10.2026)
-  – תמנע נלסון לוי: זהב בגרנד סלאם אבו דאבי, 57- ק״ג (29.10.2026)
-  – יהונתן אלבז: הודח בסיבוב הראשון בגרנד סלאם אבו דאבי, 73- ק״ג (30.10.2026)
-  – רז הרשקו: כסף בגרנד סלאם אבו דאבי, 78+ ק״ג (31.10.2026)
+  – גפן פרימו: מקום 5 בגרנד סלאם אבו דאבי, 52- ק״ג (29 באוק׳ 2026)
+  – יצחק אשפיז: ארד בגרנד סלאם אבו דאבי, 60- ק״ג (29 באוק׳ 2026)
+  – תמנע נלסון לוי: זהב בגרנד סלאם אבו דאבי, 57- ק״ג (29 באוק׳ 2026)
+  – יהונתן אלבז: הודח בסיבוב הראשון בגרנד סלאם אבו דאבי, 73- ק״ג (30 באוק׳ 2026)
+  – רז הרשקו: כסף בגרנד סלאם אבו דאבי, 78+ ק״ג (31 באוק׳ 2026)
 ```
 
 ### Found in these dry runs
