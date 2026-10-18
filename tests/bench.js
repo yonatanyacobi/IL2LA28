@@ -12,8 +12,14 @@ const SCRIPTS = [...fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8").
   .map(m => path.join(ROOT, "site", m[1]));
 const FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/data.json"), "utf8"));
 const QUOTAS = JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"));
+// site/quotas.json has no standings cutoffs yet: judo's items get one, so #sport-judo renders its standings block.
+const OLY = "IJF Olympic Ranking List";
+for (const q of QUOTAS.items || []) if (q.sportId === "judo" && !q.cutoff) q.cutoff = {rank: 17, list: OLY, url: "https://www.ijf.org/wrl", final: "2028-06-15"};
 const NOW = "2026-10-29T08:00:00Z";   // Abu Dhabi day 1: strip, #day and #c- all have content
-const ROUTES = (process.env.BENCH_ONLY || "home,today,c-judo-gs-abu-dhabi-2026,a-raz-hershko,following,sports,calendar,quotas").split(",");
+// Every route a visitor can reach (#admin is editors only; the budget test switches it on).
+const ALL_ROUTES = ["home", "today", "day-2026-10-29", "day-2026-12-24", "c-judo-gs-abu-dhabi-2026", "a-raz-hershko", "following",
+  "sports", "sport-judo", "calendar", "calendar-judo", "quotas", "updates", "about", "digest", "corrections", "corrections-raz-hershko"];
+const ROUTES = process.env.BENCH_ONLY ? process.env.BENCH_ONLY.split(",") : ALL_ROUTES;
 
 // Today's shape (about 110 athletes, 10 sessions) at scale 1; athletes and sessions multiplied at higher scales.
 function dataAt(scale){
@@ -23,12 +29,17 @@ function dataAt(scale){
     startUtc: `2026-10-${29 + (i % 3)}T${String(6 + i).padStart(2, "0")}:00:00Z`, athleteIds: [judo[i % judo.length]], phase: `סבב ${i}`,
     ...(i % 2 ? {result: `תוצאה ${i}`, resultSource: "https://www.ijf.org/r", resultAt: "2026-10-29T18:00:00Z"} : {})}));
   for (const a of d.athletes) a.history = [...(a.history || []), {at: "2026-09-12", kind: "result", text: "מקום 5", source: "https://example.org/r"}];
+  d.athletes.filter(a => a.sportId === "judo").forEach((a, i) => Object.assign(a, {olympicRankNum: 5 + 3 * i, olympicRankList: OLY, olympicRankAsOf: "2026-10-12"}));
   const base = d.athletes.slice();
   for (let k = 1; k < scale; k++) {
     for (const a of base) d.athletes.push({...JSON.parse(JSON.stringify(a)), id: `${a.id}-x${k}`, name: `${a.name} ${k}`});
     for (const s of sessions.slice(0, 10)) sessions.push({...s, athleteIds: s.athleteIds.map(id => `${id}-x${k}`)});
   }
   d.sessions = sessions;
+  // A live corrections log with one entry per athlete.
+  d.launchAt = "2026-10-01T00:00:00Z";
+  d.corrections = d.athletes.map((a, i) => ({id: `fx${i}`, at: `2026-10-${String(2 + (i % 26)).padStart(2, "0")}T10:00:00Z`, reportedAt: "",
+    by: "reader", source: "https://www.ijf.org/wrl", target: {kind: "athlete", id: a.id, name: a.name}, changes: [{field: "rank", wrong: "א", right: "ב"}]}));
   return d;
 }
 
@@ -66,7 +77,7 @@ function timeRoute(b, r, runs = 15){
 }
 
 // smoke.test.js reuses these for its render budget.
-module.exports = {dataAt, boot, timeRoute};
+module.exports = {dataAt, boot, timeRoute, ALL_ROUTES};
 if (require.main === module) (async () => {
   const scales = process.argv.slice(2).map(Number).filter(Boolean);
   for (const scale of scales.length ? scales : [1, 3]) {
