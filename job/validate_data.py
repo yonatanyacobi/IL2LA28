@@ -17,6 +17,8 @@ HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
 QUOTA_STATUSES = {"earned", "in-contention", "outside", "unknown"}
 QUOTA_KEYS = {"sportId", "event", "totalQuotas", "maxPerNOC", "allocation", "israelStatus", "israelNote",
               "nextQuotaEvent", "source"}
+QUOTA_OPTIONAL = {"stakes"}
+STAKES_MAX = 140
 
 # key -> (kind, required); kinds: str, date ("" or YYYY-MM-DD), url ("" or https://), iso ("" or ISO datetime with timezone, as export_data.iso())
 SPORT = {"id": ("id", True), "he": ("str", True), "en": ("str", True), "window": ("window", True)}
@@ -170,7 +172,7 @@ def validate_quotas(q, data):
         path += f"({it.get('sportId')}/{it.get('event')})"
         for k in sorted(QUOTA_KEYS - set(it)):
             err(f"{path}.{k}: missing")
-        for k in sorted(set(it) - QUOTA_KEYS):
+        for k in sorted(set(it) - QUOTA_KEYS - QUOTA_OPTIONAL):
             err(f"{path}.{k}: unexpected key")
         if it.get("sportId") not in sports:
             err(f"{path}.sportId: unknown sport {it.get('sportId')!r}")
@@ -188,6 +190,10 @@ def validate_quotas(q, data):
             err(f"{path}.israelStatus: expected one of {sorted(QUOTA_STATUSES)}, got {status!r}")
         elif status == "earned" and it.get("sportId") not in staged:
             err(f"{path}.israelStatus: \"earned\" but no athlete in {it.get('sportId')!r} has stage >= 2 in data.json")
+        if "stakes" in it:
+            v = it["stakes"]
+            if not (isinstance(v, str) and v.strip() and "\n" not in v and len(v) <= STAKES_MAX):
+                err(f"{path}.stakes: expected one non-empty line of at most {STAKES_MAX} chars, got {v!r}")
         src = it.get("source")
         if not (isinstance(src, str) and src.startswith("https://") and len(src) > 8):
             err(f"{path}.source: expected an https:// URL, got {src!r}")

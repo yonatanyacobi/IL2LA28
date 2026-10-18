@@ -274,3 +274,14 @@ div.track{background:none}
   .links::-webkit-scrollbar{display:none}
   .links a{padding-block:10px}
 }
+.adm-bad{color:var(--bad);font-weight:700}
+#quotaHealth h3{font-family:var(--f-body);font-size:16px;font-weight:700}
+
+/* stakes line ("מה זה אומר") */
+.stakes{font-size:14px;color:var(--ink);border-inline-start:3px solid var(--sun);padding-inline-start:8px;overflow-wrap:anywhere}
+.stakes b{color:var(--sun-ink)}
+.rows .t small.stakes{color:var(--ink);margin-top:4px}
+
+/* weekly digest (#digest); the stakes-line rules of the same spec come with §1 */
+.digest textarea{width:100%;min-height:22em;resize:vertical;border:1px solid var(--line-ui,var(--stage0));border-radius:8px;
+  padding:10px 12px;background:var(--bg);font-size:15px;line-height:1.5}
