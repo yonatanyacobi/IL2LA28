@@ -19,8 +19,10 @@ COMP_FIELDS = ["sportId", "name", "location", "start", "end", "notes", "source"]
 HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction"}
 HISTORY_PUBLIC = 10
 RANK_LIST_MAX = 80
-# Public corrections log (docs/design/corrections-log.md). Same value as LAUNCH_AT in site/app.js; the PM sets it.
-LAUNCH_AT = "2026-10-22T09:00:00Z"
+# Public corrections log (docs/design/corrections-log.md). The single source: data.json carries it as launchAt and
+# the page reads it from there. None until the owner picks a launch date; the launch PR sets an ISO instant with Z.
+# While None, no correction is published.
+LAUNCH_AT = None
 CORRECTION_TARGETS = {"athlete", "sport", "quota"}
 CORRECTION_FIELDS = {"name", "event", "rank", "next", "nextDate", "notes", "stage", "sportId", "quota"}
 CORRECTION_BY = {"reader", "audit", "job"}
@@ -184,7 +186,7 @@ def main(dump, out_file, prev_file=None):
         changes.append(item)
 
     fixes = []
-    for cid, c in corrs.items():
+    for cid, c in corrs.items() if LAUNCH_AT else ():  # no launch date yet: nothing is public, nothing is an error
         row, at = correction(cid, c), instant(c.get("at"))
         if row:
             fixes.append(row)
@@ -192,7 +194,9 @@ def main(dump, out_file, prev_file=None):
             dropped.append(cid)
     fixes = sorted(fixes, key=lambda r: (instant(r["at"]), r["id"]), reverse=True)[:CORRECTIONS_MAX]
 
-    counts = {"sports": len(s_out), "athletes": len(a_out), "competitions": len(c_out), "corrections": len(fixes)}
+    counts = {"sports": len(s_out), "athletes": len(a_out), "competitions": len(c_out)}
+    if LAUNCH_AT:  # without a launch date corrections are [] by design, so the guard ignores them
+        counts["corrections"] = len(fixes)
     if prev_file and os.path.exists(prev_file):
         prev = json.load(open(prev_file, encoding="utf-8"))
         for k, n in counts.items():
@@ -205,7 +209,8 @@ def main(dump, out_file, prev_file=None):
         "schemaVersion": 3,
         "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "lastRun": iso(meta.get("lastRun")),
-        "sports": s_out, "athletes": a_out, "competitions": c_out, "changes": changes, "corrections": fixes,
+        "sports": s_out, "athletes": a_out, "competitions": c_out, "changes": changes,
+        "launchAt": LAUNCH_AT, "corrections": fixes,
     }
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))

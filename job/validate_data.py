@@ -92,10 +92,10 @@ def validate(data):
     if len(data["changes"]) > 30:
         err(f"changes: {len(data['changes'])} entries, max 30")
     extra = set(data) - {"schemaVersion", "generatedAt", "lastRun", "sports", "athletes", "competitions", "changes",
-                         "corrections"}
+                         "launchAt", "corrections"}
     if extra:
         err(f"top level: unexpected keys {sorted(extra)}")
-    errors.extend(validate_corrections(data.get("corrections", [])))
+    errors.extend(validate_corrections(data.get("corrections", []), data.get("launchAt")))
 
     sport_ids = {s.get("id") for s in data["sports"] if isinstance(s, dict)}
     athlete_ids = {a.get("id") for a in data["athletes"] if isinstance(a, dict)}
@@ -163,14 +163,19 @@ def validate(data):
     return errors
 
 
-def validate_corrections(rows):
-    """data.json "corrections" (optional): the export's public shape, after LAUNCH_AT, newest first, no emails."""
-    from export_data import (LAUNCH_AT, CORRECTION_TARGETS, CORRECTION_FIELDS, CORRECTION_BY, CORRECTIONS_MAX,
-                             EMAIL, instant)
+def validate_corrections(rows, launch_at):
+    """data.json "corrections" (optional) against its "launchAt": the export's public shape, on or after launchAt,
+    newest first, no emails. launchAt null (no launch date yet) allows only an empty list."""
+    from export_data import CORRECTION_TARGETS, CORRECTION_FIELDS, CORRECTION_BY, CORRECTIONS_MAX, EMAIL, instant
     if not isinstance(rows, list):
         return ["corrections: expected a list"]
     errors = []
     err = errors.append
+    if launch_at is not None and not (isinstance(launch_at, str) and launch_at.endswith("Z") and is_iso(launch_at)):
+        err(f"launchAt: expected null or an ISO time with Z, got {launch_at!r}")
+        launch_at = None
+    if rows and launch_at is None:
+        return errors + [f"corrections: {len(rows)} entries but no valid launchAt; nothing is public before launch"]
     if len(rows) > CORRECTIONS_MAX:
         err(f"corrections: {len(rows)} entries, max {CORRECTIONS_MAX}")
     seen, prev = set(), None
@@ -187,8 +192,8 @@ def validate_corrections(rows):
             err(f"{path}.id: missing or duplicate")
         seen.add(c.get("id"))
         at = instant(c.get("at")) if is_iso(c.get("at")) else None
-        if not at or at < instant(LAUNCH_AT):
-            err(f"{path}.at: expected an ISO time on or after {LAUNCH_AT}, got {c.get('at')!r}")
+        if not at or at < instant(launch_at):
+            err(f"{path}.at: expected an ISO time on or after launchAt {launch_at}, got {c.get('at')!r}")
         elif prev and at > prev:
             err(f"{path}.at: not newest first")
         prev = at or prev
