@@ -42,6 +42,9 @@ class QuotasTest(unittest.TestCase):
         self.assertEqual(len(errors), 1, errors)
         self.assertIn('"earned"', errors[0])
 
+    def test_stakes_optional_and_accepted_up_to_140(self):
+        self.assertEqual(self.errors(lambda q: q["items"][1].__setitem__("stakes", "א" * 140)), [])
+
     def test_iso_updated_at_accepted(self):
         self.assertEqual(self.errors(lambda q: q.__setitem__("updatedAt", "2026-10-18T12:00:00Z")), [])
 
@@ -63,6 +66,10 @@ class QuotasTest(unittest.TestCase):
             ("unexpected", lambda q: i0(q).__setitem__("israelstatus", "earned")),
             ("israelNote", lambda q: i0(q).__setitem__("israelNote", None)),
             ("expected an object", lambda q: q["items"].append("junk")),
+            ("stakes", lambda q: i0(q).__setitem__("stakes", 7)),
+            ("stakes", lambda q: i0(q).__setitem__("stakes", "  ")),
+            ("stakes", lambda q: i0(q).__setitem__("stakes", "שורה\nשנייה")),
+            ("stakes", lambda q: i0(q).__setitem__("stakes", "א" * 141)),
         ]
         for needle, mutate in cases:
             errors = self.errors(mutate)

@@ -277,6 +277,50 @@ test("sport page quota section: order, counts, escaping", async () => {
   assert.ok(out.includes('aria-label="מכסה הושגה: 1, במרוץ למכסה: 1, מחוץ למכסות כרגע: 1, אין מידע עדיין: 1"'));
 });
 
+test("quota stakes: sport page and upcoming #quotas only, escaped, dropped over 140 chars", async () => {
+  const LINE = "מה זה אומר:";
+  const {view} = await boot({quotas: SPORT_QUOTAS});
+  const judo = view("sport-judo");
+  assert.ok(judo.includes(`<p class="stakes"><b>${LINE}</b> &lt;script&gt;`) && !/<script/i.test(judo), "shown and escaped");
+  const li = judo.split("<li>").find(x => x.includes(LINE));
+  assert.ok(li.indexOf("אירוע המכסה הבא") < li.indexOf(LINE) && li.indexOf(LINE) < li.indexOf("<details>"), "placement");
+  assert.ok(!judo.includes("שמירה על המקום הראשון"), "no future quota event, no stakes line");
+  const all = view("quotas"), upcoming = all.split('id="qNextH"')[1].split("</section>")[0];
+  assert.ok(upcoming.includes(`<small class="stakes"><b>${LINE}</b>`), "#quotas upcoming list");
+  assert.strictEqual(all.split(LINE).length - 1, 1, "not in the per-status lists");
+
+  const q = JSON.parse(JSON.stringify(SPORT_QUOTAS));
+  q.items[0].stakes = "א".repeat(141);
+  const long = await boot({quotas: q});
+  assert.strictEqual(long.run("S.quotas.length"), q.items.length, "item kept");
+  assert.ok(!long.view("sport-judo").includes(LINE), "stakes over 140 chars dropped");
+});
+
+test("copy buttons report into data-copy-msg when given", async () => {
+  const {els, run, fire} = await boot();
+  run(`$("src").value = "abc"`);
+  const btn = {dataset: {copy: "src", copyMsg: "outMsg"}};
+  fire("click", {closest: () => btn});
+  await new Promise(r => setTimeout(r, 0));
+  assert.strictEqual(els.outMsg.textContent, "הועתק.");
+  assert.strictEqual(els.copyMsg?.textContent || "", "", "default message element untouched");
+});
+
+test("quota stakes in the today strip: matched by sport + date, at most 2", async () => {
+  // Abu Dhabi Grand Slam runs 29–31 Oct in the fixture; only items whose next quota event falls inside it show.
+  const q = JSON.parse(JSON.stringify(SPORT_QUOTAS));
+  const judo = q.items.filter(i => i.sportId === "judo");
+  judo.forEach((i, n) => Object.assign(i, {stakes: `stake ${n} <b>`, nextQuotaEvent: {name: "שם אחר לגמרי", start: "2026-10-29"}}));
+  judo[3].nextQuotaEvent.start = "2026-11-13";
+  const strip = stripOf((await boot({quotas: q, now: "2026-10-30T08:00:00Z"})).view("home"));
+  const row = rowsOf(strip).find(r => r.includes("גרנד סלאם אבו דאבי"));
+  assert.ok(row.includes('<small class="stakes"><b>מה זה אומר:</b> ') && row.includes("stake 0 &lt;b&gt;") && row.includes("stake 1"), "started yesterday still shows");
+  assert.ok(!row.includes("stake 3"), "next quota event outside the competition");
+  assert.ok(row.includes('ועוד 1 מקצים — <a href="#sport-judo">בדף הענף</a>') && !row.includes("stake 2"), "capped at 2");
+  const none = stripOf((await boot({now: "2026-10-30T08:00:00Z"})).view("home"));
+  assert.ok(none.length && !none.includes("מה זה אומר"), "no quotas file, no stakes line");
+});
+
 test("quota section: all-unknown note; hidden without items", async () => {
   const {view} = await boot({quotas: SPORT_QUOTAS});
   const shooting = view("sport-shooting");
@@ -310,6 +354,36 @@ test("site/quotas.json: all items load and render", async () => {
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));
+});
+
+test("#admin quota health: stale file, past/soon events, earned without a stage-2 athlete", async () => {
+  const base = QUOTAS.items[0];   // judo, valid
+  const item = (sportId, event, israelStatus, start) => ({...base, sportId, event, israelStatus,
+    nextQuotaEvent: start ? {name: `אירוע ${event}`, start} : null});
+  const quotas = {updatedAt: "2026-10-01", items: [
+    item("judo", "עבר<b>", "in-contention", "2026-10-17"),
+    item("sailing", "בקרוב", "in-contention", "2026-10-21"),
+    item("sailing", "רחוק", "in-contention", "2026-10-22"),
+    item("athletics", "הושגה-בלי", "earned", null),
+    item("judo", "הושגה-עם", "earned", null),
+  ]};
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.find(a => a.sportId === "judo").stage = 2;
+  const {run, view} = await boot({data, quotas, now: "2026-10-18T08:00:00Z"});
+  run("S.isAdmin = true; S.live = true");
+  const out = view("admin");
+  const flag = k => out.split(`data-flag="${k}"`)[1]?.split("</div>")[0] || "";
+  const panel = out.split('id="quotaHealth"')[1].split("</section>")[0];
+  assert.ok(panel.includes("ישן מ־14 ימים") && out.includes('class="panel adm-alert" id="quotaHealth"'), "17-day-old file flagged");
+  assert.ok(flag("past").includes("עבר&lt;b&gt;") && !flag("past").includes("עבר<b>"), "past event listed and escaped");
+  assert.ok(flag("past").includes('href="#sport-judo"'));
+  assert.ok(flag("soon").includes("בקרוב") && flag("soon").includes("לעדכן אחרי התחרות") && !flag("soon").includes("רחוק"), "soon = within 3 days only");
+  assert.ok(flag("earned").includes("הושגה-בלי") && !flag("earned").includes("הושגה-עם"), "earned needs a stage ≥ 2 athlete in the sport");
+
+  const fresh = await boot({quotas: {updatedAt: "2026-10-17", items: [item("sailing", "רחוק", "in-contention", "2026-12-01")]}, now: "2026-10-18T08:00:00Z"});
+  fresh.run("S.isAdmin = true; S.live = true");
+  const ok = fresh.view("admin").split('id="quotaHealth"')[1].split("</section>")[0];
+  assert.ok(ok.includes("תקין") && !ok.includes("data-flag"), "healthy file has no flags");
 });
 
 test("#quotas renders the fixture grouped by status, with links and the as-of date", async () => {

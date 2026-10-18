@@ -1,4 +1,4 @@
-import json, os, sys, unittest
+import json, os, subprocess, sys, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
@@ -27,10 +27,20 @@ class BuildQuotasTest(unittest.TestCase):
         self.assertTrue(all("review" not in i for i in out["items"]))
         self.assertEqual(out["updatedAt"], "2026-10-18")
 
+    def test_stakes_passes_through(self):
+        q = load("tests", "fixtures", "quotas.json")["items"][1]
+        master = {"updatedAt": "2026-10-18", "items": [{**q, "stakes": "מקום בגמר", "review": {"status": "ok"}}]}
+        self.assertEqual(build_quotas.build(master)["items"][0]["stakes"], "מקום בגמר")
+
     def test_built_real_master_passes_validator(self):
         out = build_quotas.build(self.master)
         self.assertTrue(out["items"])
         self.assertEqual(validate_data.validate_quotas(out, self.data), [])
+
+    def test_missing_args_print_usage(self):
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "job", "build_quotas.py")], capture_output=True, text=True)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("usage:", r.stderr)
 
     def test_committed_site_file_matches_master(self):
         # site/quotas.json is a build output; a hand edit there would be lost on the next build.

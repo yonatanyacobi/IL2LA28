@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T10:46:29Z",
+ "updatedAt": "2026-10-18T10:57:02Z",
  "items": [
   {
    "sportId": "judo",
@@ -148,7 +148,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -202,7 +202,7 @@
    "nextQuotaEvent": null,
    "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -218,7 +218,7 @@
    "nextQuotaEvent": null,
    "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -310,7 +310,7 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -329,7 +329,7 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -348,7 +348,7 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -367,7 +367,7 @@
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -383,7 +383,7 @@
    "nextQuotaEvent": null,
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.3%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Trampoline.pdf",
    "review": {
-    "status": "unchecked",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -440,7 +440,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/hcvbaw55/ows-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -459,7 +459,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/hcvbaw55/ows-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -478,7 +478,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -497,7 +497,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/qkrfk0qx/swa-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -516,7 +516,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/bo3jgm3a/div-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -572,9 +572,9 @@
   {
    "sportId": "cycling",
    "event": "כביש – מרוץ קבוצתי (גברים ונשים)",
-   "totalQuotas": 90,
-   "maxPerNOC": 4,
-   "allocation": "לפי דירוג האומות של UCI ב-19.10.2027: מקומות 1–5 ארבעה רוכבים, 6–10 שלושה, 11–20 שניים, 21–43 אחד; עוד 2 מקומות באליפות העולם 2027.",
+   "totalQuotas": 180,
+   "maxPerNOC": 8,
+   "allocation": "לכל מגדר (90 מקומות, עד 4 למדינה): לפי דירוג האומות של UCI ב-19.10.2027: מקומות 1–5 ארבעה רוכבים, 6–10 שלושה, 11–20 שניים, 21–43 אחד; עוד 2 מקומות באליפות העולם 2027.",
    "israelStatus": "unknown",
    "israelNote": "איינהורן וגפינוביץ השתתפו בפריז; מיקום ישראל בדירוג האומות לא אומת",
    "nextQuotaEvent": {
@@ -583,7 +583,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/fonnjcqq/crd-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
+    "status": "fixed",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -602,7 +602,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/1esjfvfx/ctr-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -621,7 +621,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/i1vehl3t/mtb-la28-qualification-system.pdf",
    "review": {
-    "status": "unchecked",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -659,7 +659,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -678,7 +678,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -750,7 +750,7 @@
    "israelNote": "וורייט/ברנון כסף בשבוע קיל 2026; שדה/עבו ארד באליפות אירופה 2025",
    "nextQuotaEvent": {
     "name": "אליפות העולם בשייט – מקצי זוגות, גדיניה",
-    "start": "2027-07-06"
+    "start": "2027-07-22"
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
@@ -769,11 +769,11 @@
    "israelNote": "לוי/גל מקום 14 וחסון/טיאנו מקום 16 באליפות העולם 2026",
    "nextQuotaEvent": {
     "name": "אליפות העולם בשייט – מקצי זוגות, גדיניה",
-    "start": "2027-07-06"
+    "start": "2027-07-22"
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "fixed",
+    "status": "partial",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -811,7 +811,7 @@
    },
    "source": "https://cdn.nocnsf.nl/media/wjah2oeb/vbv-la28-qualification-system.pdf",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -838,9 +838,9 @@
   {
    "sportId": "archery",
    "event": "קשת מסורתית (רקרב) – אישי, קבוצות ומעורב",
-   "totalQuotas": 52,
-   "maxPerNOC": 3,
-   "allocation": "לכל מגדר 8 קבוצות (24 מקומות) ו-28 מקומות אישיים: 3 קבוצות באליפות העולם 2027, אלופות יבשתיות, משחקים יבשתיים ותחרויות העפלה; 3 למדינה רק עם קבוצה.",
+   "totalQuotas": 104,
+   "maxPerNOC": 6,
+   "allocation": "לכל מגדר (52 מקומות, עד 3 למדינה): 8 קבוצות (24 מקומות) ו-28 מקומות אישיים: 3 קבוצות באליפות העולם 2027, אלופות יבשתיות, משחקים יבשתיים ותחרויות העפלה; 3 למדינה רק עם קבוצה.",
    "israelStatus": "unknown",
    "israelNote": "רועי דרור ומיכאלה משה זהב בזוגות מעורבים באליפות אירופה באולם 2026 (פלובדיב); חלון ההעפלה טרם נפתח",
    "nextQuotaEvent": {
@@ -900,7 +900,7 @@
    },
    "source": "https://www.worldclimbing.com/news/qualification-system-for-la28-released",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -919,7 +919,7 @@
    },
    "source": "https://olympics.bwfbadminton.com/news-single/2025/12/15/la28-badminton-qualification-regulations-approved/",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -957,7 +957,7 @@
    },
    "source": "https://about.fiba.basketball/en/our-sport/basketball/national-team-competition-systems/olympic-womens-basketball-tournaments",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -965,15 +965,15 @@
   {
    "sportId": "basketball-3x3",
    "event": "גברים ונשים",
-   "totalQuotas": 12,
-   "maxPerNOC": 1,
-   "allocation": "5 לפי דירוג המדינות ב-1.12.2027 (1 לאירופה), 2 ב-OQT לאוניברסליות (מדינות שלא שיחקו כדורסל בשתי האולימפיאדות האחרונות), 2 ב-OQT דירוג ו-2 ב-Q-Series.",
+   "totalQuotas": 24,
+   "maxPerNOC": 2,
+   "allocation": "לכל מגדר (12 קבוצות, אחת למדינה): 5 לפי דירוג המדינות ב-1.12.2027 (1 לאירופה), 2 ב-OQT לאוניברסליות (מדינות שלא שיחקו כדורסל בשתי האולימפיאדות האחרונות), 2 ב-OQT דירוג ו-2 ב-Q-Series.",
    "israelStatus": "unknown",
    "israelNote": "ישראל לא העפילה לאליפות אירופה 3x3 האחרונה בשני המגדרים; כנראה זכאית ל-OQT האוניברסליות",
    "nextQuotaEvent": null,
    "source": "https://cdn.dosb.de/Relaunch_2024/Athletenservice/Games/LA_2028/Internationale_Qualikriterien/Updates_21072026/BK3-LA28-Qualification-System_20260710.pdf",
    "review": {
-    "status": "partial",
+    "status": "fixed",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -981,15 +981,15 @@
   {
    "sportId": "flag-football",
    "event": "גברים ונשים",
-   "totalQuotas": 6,
-   "maxPerNOC": 1,
-   "allocation": "ארה״ב מארחת; 2 מאליפות העולם 2026; 2 הראשונות בכל אליפות יבשתית 2027 עולות ל-Q-Series 2028 שמחלק 3 מקומות.",
+   "totalQuotas": 12,
+   "maxPerNOC": 2,
+   "allocation": "לכל מגדר (6 קבוצות, אחת למדינה): ארה״ב מארחת; 2 מאליפות העולם 2026; 2 הראשונות בכל אליפות יבשתית 2027 עולות ל-Q-Series 2028 שמחלק 3 מקומות.",
    "israelStatus": "in-contention",
    "israelNote": "גברים: מקום 11 מ-16 באליפות העולם 2026, בלי מקום; נשים לא השתתפו. מועד אליפות אירופה 2027 טרם פורסם",
    "nextQuotaEvent": null,
    "source": "https://cdn.dosb.de/Relaunch_2024/Athletenservice/Games/LA_2028/Internationale_Qualikriterien/Updates_21072026/FFB-LA28-Qualification-System_20260710.pdf",
    "review": {
-    "status": "partial",
+    "status": "fixed",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -997,9 +997,9 @@
   {
    "sportId": "lacrosse",
    "event": "סיקסס גברים ונשים",
-   "totalQuotas": 6,
-   "maxPerNOC": 1,
-   "allocation": "אליפויות יבשתיות 2026 ← אליפות העולם בסיקסס 2027 (4 מקומות, חובה טופ 12) ← טורניר העפלה אחרון ב-2028 (מקום אחד).",
+   "totalQuotas": 12,
+   "maxPerNOC": 2,
+   "allocation": "לכל מגדר (6 קבוצות, אחת למדינה): אליפויות יבשתיות 2026 ← אליפות העולם בסיקסס 2027 (4 מקומות, חובה טופ 12) ← טורניר העפלה אחרון ב-2028 (מקום אחד).",
    "israelStatus": "in-contention",
    "israelNote": "שתי הנבחרות ישחקו באליפות אירופה בסיקסס בסאלו (נשים מ-2.11, גברים מ-10.11.2026)",
    "nextQuotaEvent": {
@@ -1008,7 +1008,7 @@
    },
    "source": "https://worldlacrosse.sport/lacrosse-qualification-set-for-olympic-games-los-angeles-2028/",
    "review": {
-    "status": "partial",
+    "status": "fixed",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -1024,7 +1024,7 @@
    "nextQuotaEvent": null,
    "source": "https://www.worldbaseball.com/news/2027-european-championship-groups-revealed-mu6trz2s",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
@@ -1040,7 +1040,7 @@
    "nextQuotaEvent": null,
    "source": "https://www.worldaquatics.com/news/4498571/la28-olympic-games-angeles-2028-water-polo-qualification-system-finalised-ioc-world-aquatics",
    "review": {
-    "status": "partial",
+    "status": "ok",
     "by": "dana",
     "at": "2026-10-18"
    }
