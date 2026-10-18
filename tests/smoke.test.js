@@ -2442,7 +2442,7 @@ test("standings: Olympic rank first, world rank as fallback; athlete page shows 
   assert.ok(ol.indexOf('<span class="d">2</span>') < ol.indexOf("cutline") && ol.indexOf("cutline") < ol.indexOf('<span class="d">20</span>'), ol);
   assert.ok(!ol.includes('<span class="d">13</span>') && !block.includes("בדירוג אחר"), "the world rank isn't placed when an Olympic one is");
   const page = b.view("a-izhak-ashpiz");
-  assert.ok(page.includes("<dt>דירוג ההעפלה ל־LA28</dt><dd>2 (<bdi>IJF Olympic Ranking List</bdi>, נכון ל־18 באוק׳ 2026)</dd>"), "Olympic line");
+  assert.ok(page.includes("<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt><dd>2 (<bdi>IJF Olympic Ranking List</bdi>, נכון ל־18 באוק׳ 2026)</dd>"), "Olympic line");
   assert.ok(page.includes('<a href="#sport-judo">מקום 2 · הקו: מקום 17</a>'), "standing uses the Olympic rank");
 });
 
@@ -2525,6 +2525,15 @@ test("route probe: each check fires", () => {
   };
   for (const [k, html] of Object.entries(bad)) assert.strictEqual(found(html).length, 1, `${k}: ${found(html)}`);
   assert.deepStrictEqual(found('<h2 id="h">ok</h2><section aria-labelledby="h"><a href="https://x.org">x</a> <a href="#home">y</a></section>'), []);
+});
+
+test("standings copy (Gil on #266): no LA28 in public text; a rank without a date gets no invented pill text", async () => {
+  const {block, b} = await standingsAt({ranks: {"izhak-ashpiz": {olympicRankNum: 2, olympicRankList: OLY, olympicRankAsOf: "2026-10-12"},
+    "j-second": {olympicRankNum: 20, olympicRankList: OLY, olympicRankAsOf: ""}}});
+  const row = block.split("<li>").find(li => li.includes('href="#a-j-second"')) || "";
+  assert.ok(row && !row.includes("pill") && !block.includes("תאריך לא ידוע"), row);
+  const page = b.view("a-izhak-ashpiz");
+  assert.ok(!/LA28/.test(visibleText(block + page)) && page.includes("<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt>"), "copy-rules: the Games' name");
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.

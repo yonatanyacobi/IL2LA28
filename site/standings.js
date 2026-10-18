@@ -31,7 +31,7 @@ function standingsItem(q){
   // A stale rank shows its date in the pill only (UX QA).
   const row = ({a, r}) => `<li><span class="d">${r.n}</span>
     <span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${isDate(r.asOf) && !rankStale(r) ? ` · ${fmt(r.asOf)}` : ""}<span class="sr">, ${r.n <= c.rank ? "מעל קו המכסה" : "מתחת לקו המכסה"}</span></span>
-    <span>${rankStale(r) ? `<span class="pill ended">דירוג מ־${isDate(r.asOf) ? fmt(r.asOf) : "תאריך לא ידוע"}</span>` : ""}</span></li>`;
+    <span>${rankStale(r) && isDate(r.asOf) ? `<span class="pill ended">דירוג מ־${fmt(r.asOf)}</span>` : ""}</span></li>`;
   const rows = placed.map(row);
   rows.splice(above, 0, `<li class="cutline" aria-hidden="true">קו המכסה: מקום ${c.rank}</li>`);
   return head + `${placed.length ? `<ol class="rows standings">${rows.join("")}</ol>` : ""}
@@ -52,7 +52,7 @@ function standingsPanel(sid){
 // athlete is ranked in on the cutoff's own list.
 function standingsFact(a){
   const o = rankOn(a.olympicRankNum, a.olympicRankList, a.olympicRankAsOf);
-  const olympic = o ? `<dt>דירוג ההעפלה ל־LA28</dt><dd>${o.n} (<bdi>${esc(o.list)}</bdi>${isDate(o.asOf) ? `, נכון ל־${fmt(o.asOf)}` : ""})</dd>` : "";
+  const olympic = o ? `<dt>דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028</dt><dd>${o.n} (<bdi>${esc(o.list)}</bdi>${isDate(o.asOf) ? `, נכון ל־${fmt(o.asOf)}` : ""})</dd>` : "";
   return olympic + quotasOf(a.sportId).map(q => [q, q.cutoff && quotaAthletes(q).includes(a) && ranksOf(a).find(r => r.list === q.cutoff.list)])
     .filter(([, r]) => r)
     .map(([q, r]) => `<dt>מול קו המכסה</dt><dd><a href="#sport-${esc(a.sportId)}">מקום ${r.n} · הקו: מקום ${q.cutoff.rank}</a> · <bdi>${esc(q.cutoff.list)}</bdi>${isDate(r.asOf) ? `, ${fmt(r.asOf)}` : ""}</dd>`).join("");
