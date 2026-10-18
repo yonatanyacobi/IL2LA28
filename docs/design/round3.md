@@ -23,27 +23,26 @@ const awaitingOf = (q, t = today()) => {
 - `stakesLine()` already hides once the event is past — keep that; the awaiting line replaces it.
 
 ### Copy
-- Pill (beside, not instead of, the status pill): `◷ ממתינים לתוצאות`
-- Line: `{name} הסתיים ב־{fmt(end)}. ממתינים לעדכון המכסות לפי ההודעה הרשמית.`
-- Single-day event: `{name} התקיים ב־{fmt(end)}. ממתינים לעדכון המכסות לפי ההודעה הרשמית.`
-  (pick by `e.start === end`).
+- Pill (beside, not instead of, the status pill): `◷ בהמתנה לתוצאות`
+- Line (no verb, so it never disagrees with a feminine event name; one form for single- and multi-day):
+  `{name} ({fmtRange(e.start, end)}). עדכון המכסות יפורסם אחרי ההודעה הרשמית.`
 - Never imply an outcome ("כנראה", "נראה ש…").
 
 ### Where
 | Place | Render |
 |---|---|
-| Sport page `quotaSection()` row | in `.q-top`: status pill + `<span class="pill q-awaiting">◷ ממתינים לתוצאות</span>`; the line goes where `אירוע המכסה הבא` would be, as `<p class="q-meta">` |
+| Sport page `quotaSection()` row | in `.q-top`: status pill + `<span class="pill q-awaiting"><span aria-hidden="true">◷</span> בהמתנה לתוצאות</span>`; the line goes where `אירוע המכסה הבא` would be, as `<p class="q-meta">` |
 | Sport page sort | awaiting rows right after `earned` (they are the newsiest) |
-| `#quotas` | new panel above "אירועי המכסה הקרובים", only if any: h2 `ממתינים לתוצאות`, `.rows` with `.d` = `fmtShort(end)`, `.t` = `{name}<small>{sport link} · {event}</small>`, third cell = status pill |
-| Home KPI (`quotaKpi()`) | append ` · <b>{n}</b> ממתינים לתוצאות` when n > 0 |
+| `#quotas` | new panel above "אירועי המכסה הקרובים", only if any: h2 `בהמתנה לתוצאות`, `.rows` with `.d` = `fmtShort(end)`, `.t` = `{name}<small>{sport link} · {event}</small>`, third cell = status pill |
+| Home KPI (`quotaKpi()`) | append ` · <b>{n}</b> מקצים בהמתנה לתוצאות` when n > 0, via `plural(n, "מקצה אחד", "מקצים")` (`· מקצה אחד בהמתנה לתוצאות`) |
 | Today strip | nothing (it lists running competitions only) |
 | Athlete page | see §3 |
 
 ```html
 <li>
-  <div class="q-top"><b>60- ק״ג גברים</b>
-    <span class="actions"><span class="pill q-in-contention">◐ במרוץ למכסה</span><span class="pill q-awaiting">◷ ממתינים לתוצאות</span></span></div>
-  <p class="q-meta">גרנד סלאם אבו דאבי הסתיים ב־31 באוק׳ 2026. ממתינים לעדכון המכסות לפי ההודעה הרשמית.</p>
+  <div class="q-top"><b><bdi>{event}</bdi></b>   <!-- e.g. "60- ק״ג גברים": <bdi> keeps the digits/sign in order -->
+    <span class="actions"><span class="pill q-in-contention"><span aria-hidden="true">◐</span> במרוץ למכסה</span><span class="pill q-awaiting"><span aria-hidden="true">◷</span> בהמתנה לתוצאות</span></span></div>
+  <p class="q-meta">גרנד סלאם אבו דאבי (29–31 באוק׳ 2026). עדכון המכסות יפורסם אחרי ההודעה הרשמית.</p>
   <details>…</details>
 </li>
 ```
@@ -53,6 +52,9 @@ const awaitingOf = (q, t = today()) => {
 .pill.q-awaiting{background:var(--blue-soft);color:var(--blue)}
 ```
 (`--blue` on `--blue-soft`: 7.1:1 light, 5.6:1 dark.) Symbol + words, so no colour-only meaning.
+
+**A11y, all status pills in this doc (and `quotaStatusPill()`):** wrap the symbol in `<span aria-hidden="true">…</span>`;
+the words carry the meaning. Wrap event names in `<bdi>` wherever they sit next to other text.
 
 ## 2. "Quota earned"
 
@@ -69,7 +71,7 @@ today strip (before search). Omit when empty.
   <ul class="rows">
     <li><span class="d">{fmtShort(earnedAt)}</span>
       <span class="t"><a href="#sport-{id}">{sport}</a> · {event}<small>{israelNote}</small></span>
-      <span class="pill q-earned">✓ מכסה הושגה</span></li>
+      <span class="pill q-earned"><span aria-hidden="true">✓</span> מכסה הושגה</span></li>
   </ul>
   <p class="foot">ברוב הענפים המכסה שייכת למדינה; הוועד האולימפי בישראל יחליט בהמשך מי ישתמש בה.</p>
 </section>
@@ -81,14 +83,14 @@ No confetti, no animation, no exclamation marks.
 
 ### Today strip
 For a running competition, a matched item (sport + date, same rule as stakes) that is already `earned`
-replaces its stakes line: `<small class="stakes won-line"><b>✓ מכסה הושגה:</b> {event}</small>`.
+replaces its stakes line: `<small class="stakes won-line"><b><span aria-hidden="true">✓</span> מכסה הושגה:</b> <bdi>{event}</bdi></small>`.
 ```css
 .stakes.won-line{border-inline-start-color:var(--ok)} .stakes.won-line b{color:var(--ok-ink)}
 ```
 
 ### Sport page
 Earned row: add `<p class="q-meta">הושגה ב־{fmt(earnedAt)}</p>` (omit if no `earnedAt`). If the sport has
-no athlete at stage ≥ 2, add once under the bar: `<p class="foot">המכסה הושגה למדינה. שלב הספורטאים יתעדכן אחרי אישור ידני.</p>`
+no athlete at stage ≥ 2, add once under the bar: `<p class="foot">המכסה הושגה למדינה. שלב הספורטאים והנבחרות יתעדכן אחרי בדיקה ידנית.</p>`
 
 ## 3. Athlete page — quota line
 
@@ -105,10 +107,10 @@ In `dl.facts`, after `דירוג או הישג`:
 ```
 | Status | Second line |
 |---|---|
-| earned | `המכסה שייכת למדינה, לא לספורטאי/ת.` + ` הושגה ב־{fmt(earnedAt)}` if known |
+| earned | `המכסה שייכת למדינה, לא לספורטאי/ת.` + ` היא הושגה ב־{fmt(earnedAt)}.` if known |
 | awaiting (§1) | the §1 line |
 | in-contention + `nxt(q)` | `אירוע המכסה הבא: {name} · {fmt(start)}` then `stakesLine(q)` |
-| outside | `לפי המצב הנוכחי, מחוץ למקומות המכסה.` |
+| outside | `לפי המצב הנוכחי, ישראל מחוץ למקומות המכסה.` |
 | unknown | `עוד אין מידע על מצב ישראל במקצה הזה.` |
 
 Last: `<a href="#sport-{id}">לכל המכסות בענף</a>` (once). At 400px `.facts` keeps `auto 1fr`; pills wrap.
