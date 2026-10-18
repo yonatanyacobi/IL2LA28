@@ -644,13 +644,50 @@ function viewAbout(){
       <li><b>מכסה הושגה</b>: הושגה מכסה אולימפית לפי הודעה רשמית של ההתאחדות הבין־לאומית. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת.</li>
       <li><b>נבחר/ה לנבחרת</b>: הוועד האולימפי בישראל הודיע רשמית על הבחירה.</li>
     </ol>
-    <h2>איך הנתונים נאספים</h2>
-    <p>פעם ביום, תהליך אוטומטי בודק תוצאות, דירוגים רשמיים והודעות של התאחדויות, ומעדכן דירוגים ותחרויות קרובות. מעבר לשלב „מכסה” או „נבחר/ה”, ספורטאים חדשים ופרישות מתפרסמים רק אחרי בדיקה ידנית. לכל נתון מצורף קישור למקור, וכדאי לבדוק מולו לפני הסתמכות.</p>
-    <p>„דירוג או הישג” הוא דירוג עולמי רשמי כשיש כזה, ואחרת התוצאה הבולטת האחרונה (מסומנת „מיקום, לא דירוג”).</p>
-    <h2>עדכניות</h2>
-    <p>${freshness() || "מועד העדכון האחרון לא ידוע."}</p>
   </section>
+  ${trustBlock()}
   ${reportBox("טעות באתר הדרך ללוס אנג׳לס 28", SITE_URL)}`;
+}
+
+// About trust block (docs/design/about-trust.md). Numbers come from the data; #about-trust focuses #trustH.
+function trustBlock(){
+  const N = S.athletes.length, V = S.athletes.filter(a => trustOf(a) === "ok").length, Q = S.quotas.length;
+  const hosts = {};
+  S.athletes.forEach(a => { if (safeUrl(a.source)) { const h = host(a.source); hosts[h] = (hosts[h] || 0) + 1; } });
+  const top = Object.keys(hosts).sort((x, y) => hosts[y] - hosts[x] || x.localeCompare(y)).slice(0, 5);
+  // The legend renders the real chips, so it can't drift from what cards and athlete pages show.
+  const d = today() + "T08:00:00Z", earlier = addDays(today(), -3) + "T08:00:00Z", later = today() + "T12:00:00Z";
+  const legend = [
+    [{verifiedAt: d, updatedAt: earlier}, "אדם בדק את הרשומה מול המקור, והיא לא השתנתה מאז."],
+    [{verifiedAt: d, updatedAt: later}, "נבדקה ידנית, ואחר כך התעדכנה אוטומטית. ייתכן שהעדכון עוד לא נבדק."],
+    [{}, "נאספה אוטומטית ועוד לא נבדקה ידנית. כדאי לבדוק מול המקור."],
+  ];
+  const tile = (n, label) => `<div class="adm-tile"><b class="digits">${n}</b><span>${label}</span></div>`;
+  return `<section class="panel prose" aria-labelledby="trustH">
+    <h2 id="trustH">אפשר לסמוך? ככה זה עובד</h2>
+    <div class="adm-tiles">
+      ${tile(N, "ספורטאים ונבחרות במעקב")}
+      ${tile(V, "נבדקו ידנית מול המקור")}
+      ${Q ? tile(Q, "מקצים בתמונת המכסות, כולם נבדקו לפני פרסום") : ""}
+    </div>
+    <p>${freshness() || "מועד העדכון האחרון לא ידוע."}</p>
+    <h3>מאיפה הנתונים</h3>
+    <ul>
+      <li>דירוגים, תוצאות ושיטות העפלה: האתרים הרשמיים של ההתאחדויות הבין־לאומיות.</li>
+      <li>בחירות לנבחרת והודעות: הוועד האולימפי בישראל וכלי תקשורת.</li>
+    </ul>
+    ${top.length ? `<p class="foot">המקורות הנפוצים באתר: <span dir="ltr">${top.map(esc).join(" · ")}</span>. בכל דף ספורטאי/ת יש קישור למקור.</p>` : ""}
+    <p class="foot">„דירוג או הישג” הוא דירוג עולמי רשמי כשיש כזה, ואחרת התוצאה הבולטת האחרונה (מסומנת „מיקום, לא דירוג”).</p>
+    <h3>שלוש רמות ביטחון</h3>
+    <dl class="facts trust-legend">${legend.map(([a, text]) => `<dt>${trustChip(a)}</dt><dd>${text}</dd>`).join("")}</dl>
+    <h3>מה אוטומטי ומה לא</h3>
+    <ul>
+      <li><b>אוטומטי, פעם ביום:</b> דירוגים, תוצאות אחרונות, תחרויות קרובות.</li>
+      <li><b>רק אחרי אישור של אדם:</b> שינוי שלב, ספורטאי/ת חדש/ה, הסרה מהרשימה, וכל נתוני המכסות.</li>
+    </ul>
+    <h3>תיקונים</h3>
+    <p>כל דיווח נבדק מול מקור לפני שהוא מתפרסם.${typeof fixLogLive === "function" && fixLogLive() ? ` כל תיקון נרשם ב<a href="#corrections">יומן התיקונים</a>.` : ""} אין לנו גישה למידע שאינו פומבי.</p>
+  </section>`;
 }
 
 const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
@@ -975,6 +1012,7 @@ document.addEventListener("click", e => {
 $("frm").addEventListener("submit", saveForm);
 $("fIsFix").addEventListener("change", e => { $("fixRows").hidden = !e.target.checked; });
 $("visitorBtn").addEventListener("click", () => setVisitorView(true));
+$("visitorMsgClose").addEventListener("click", () => { $("visitorMsg").hidden = true; });
 $("editModeBtn").addEventListener("click", () => setVisitorView(false));
 $("archBtn").addEventListener("click", archive);
 $("cancelBtn").addEventListener("click", () => $("dlg").close());
@@ -1071,7 +1109,7 @@ const VISITOR_KEY = "la28.viewAsVisitor";
 function setVisitorView(on){
   store.set(VISITOR_KEY, on);
   if (store.get(VISITOR_KEY, !on) !== on) {   // storage blocked: a reload would land in the same mode
-    $("visitorMsg").textContent = "אי אפשר להחליף תצוגה: הדפדפן חוסם שמירה מקומית באתר הזה.";
+    $("visitorMsgText").textContent = "אי אפשר להחליף תצוגה: הדפדפן חוסם שמירה מקומית באתר הזה.";
     $("visitorMsg").hidden = false;
     return;
   }

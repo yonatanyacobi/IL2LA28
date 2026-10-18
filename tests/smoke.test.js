@@ -807,7 +807,7 @@ test("#admin quota health: stale file, past/soon events, earned without a stage-
   const out = view("admin");
   const flag = k => out.split(`data-flag="${k}"`)[1]?.split("</div>")[0] || "";
   const panel = out.split('id="quotaHealth"')[1].split("</section>")[0];
-  assert.ok(panel.includes("ישן מ־14 ימים") && out.includes('class="panel adm-alert" id="quotaHealth"'), "17-day-old file flagged");
+  assert.ok(panel.includes("ישן מ־14 יום") && out.includes('class="panel adm-alert" id="quotaHealth"'), "17-day-old file flagged");
   assert.ok(flag("awaiting").includes("עבר&lt;b&gt;") && !flag("awaiting").includes("עבר<b>"), "ended event listed and escaped");
   assert.ok(flag("awaiting").includes('href="#sport-judo"') && flag("awaiting").includes("אתמול"));
   assert.ok(flag("soon").includes("בקרוב") && flag("soon").includes("לעדכן אחרי התחרות") && !flag("soon").includes("רחוק"), "soon = within 3 days only");
@@ -1269,13 +1269,47 @@ test("view as visitor: editors get a toggle; visitor mode runs on data.json with
   assert.ok(hid(pub, "visitorBar") && hid(pub, "visitorBtn"), "no bar or toggle for non-editors");
 });
 
+test("#about trust block: computed counts, top sources, real chips, #trustH anchor", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.athletes.forEach(a => delete a.verifiedAt);
+  Object.assign(data.athletes[0], {verifiedAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z"});
+  Object.assign(data.athletes[1], {verifiedAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z"});
+  data.athletes[2].source = "https://evil.example/<img src=x>";
+  const {view, run} = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-18T08:00:00Z"});
+  for (const h of ["about", "about-trust"]) {
+    const out = view(h);
+    const block = out.split('aria-labelledby="trustH"')[1].split("</section>")[0];
+    assert.ok(block.includes('<h2 id="trustH">'), h);
+    const nums = [...block.matchAll(/digits">(\d+)</g)].map(m => +m[1]);
+    assert.deepStrictEqual(nums, [data.athletes.length, 2, SITE_QUOTAS.items.length], "N, V, Q from the data");
+    assert.ok(block.includes("trust ok") && block.includes("trust stale") && block.includes("trust auto"), "three real chips");
+    assert.ok(block.includes("המקורות הנפוצים באתר") && !/<img/i.test(block), "top sources, escaped");
+    assert.ok(!out.includes("<h2>איך הנתונים נאספים</h2>") && !out.includes("<h2>עדכניות</h2>"), "old sections replaced");
+  }
+  const noQ = await boot({data, quotas: "fail"});
+  assert.strictEqual([...noQ.view("about").split('aria-labelledby="trustH"')[1].split("</section>")[0].matchAll(/digits">/g)].length, 2, "Q = 0: tile omitted");
+});
+
+test("#admin re-check ages use Hebrew counts: יומיים, ימים up to 10, יום from 11", async () => {
+  const item = {...QUOTAS.items[0], event: "x", israelStatus: "in-contention", checkedAt: "2026-10-01",
+    nextQuotaEvent: {name: "אירוע", start: "2026-10-05", end: "2026-10-05"}};
+  for (const [now, text] of [["2026-10-07", "לפני יומיים"], ["2026-10-15", "לפני 10 ימים"], ["2026-10-26", "לפני 21 יום"]]) {
+    const b = await boot({quotas: {updatedAt: "2026-10-01", items: [item]}, now: `${now}T08:00:00Z`});
+    b.run("S.isAdmin = true; S.live = true");
+    assert.ok(b.view("admin").split('id="quotaHealth"')[1].includes(text), `${now}: ${text}`);
+  }
+});
+
 test("visitor bar markup: inside the sticky nav, not a live region; short toggle keeps its full name", async () => {
   const html = fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8");
   const nav = html.split('<nav class="nav"')[1].split("</nav>")[0];
   const bar = nav.match(/<div class="visitor-bar"[^>]*>/)?.[0] || "";
   assert.ok(bar.includes('id="visitorBar"') && !/\brole=/.test(bar), "bar inside <nav>, no role");
   assert.ok(nav.includes('id="visitorChip"'));
-  assert.ok(/id="visitorBtn"[^>]*aria-label="צפייה באתר כגולש\/ת"/.test(nav) || /aria-label="צפייה באתר כגולש\/ת"[^>]*id="visitorBtn"/.test(nav));
+  // WCAG 2.5.3: the accessible name contains the visible label, both the desktop and the phone form.
+  const btn = nav.match(/<button[^>]*id="visitorBtn"[^>]*>([\s\S]*?)<\/button>/);
+  const name = btn[0].match(/aria-label="([^"]*)"/)[1], visible = btn[1].replace(/<[^>]+>/g, "");
+  assert.ok(name.includes(visible) && name.includes("כגולש/ת"), `${name} vs ${visible}`);
 });
 
 test("view-as-visitor toggle with blocked storage shows a message instead of reloading", async () => {
@@ -1283,7 +1317,8 @@ test("view-as-visitor toggle with blocked storage shows a message instead of rel
   e.run(`localStorage.setItem = () => { throw new Error("blocked"); }; localStorage.getItem = () => { throw new Error("blocked"); }`);
   e.run("setVisitorView(true)");
   assert.ok(!e.ctx.reloads, "no reload");
-  assert.ok(!e.run(`$("visitorMsg").hidden`) && e.run(`$("visitorMsg").textContent`).includes("חוסם שמירה מקומית"));
+  assert.ok(!e.run(`$("visitorMsg").hidden`) && e.run(`$("visitorMsgText").textContent`).includes("חוסם שמירה מקומית"));
+  assert.ok(fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8").includes('id="visitorMsgClose"'), "message has a close button");
   const ok = await boot({claude: fakeEditor()});
   ok.run("setVisitorView(true)");
   assert.ok(ok.ctx.reloads === 1 && ok.run(`$("visitorMsg").hidden`), "normal storage: reload, no message");
