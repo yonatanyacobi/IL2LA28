@@ -232,6 +232,18 @@ Expected (made-up 7th place), with no warnings and no proposals:
 ```
 With `tri-api-tongyeong-provisional.json`, the plan carries only the warning "הרשימה עוד לא סופית; לא נכתב דבר".
 
+#### After #163 merges: the shorter result wording
+New entries read `מקום 7 בספרינט · גביע העולם בטריאתלון טונגיונג` (DNF/DSQ: `לא סיים/ה (ספרינט) · …`,
+`נפסל/ה (ספרינט) · …`). The digest drops the ` · {competition}` its bullet already names; the athlete page and
+#following keep it. Existing entries:
+- **No write is needed.** The old wording (`מקום 7 בגביע העולם … (ספרינט, 24 באוק׳ 2026)`) stays valid: the
+  dedupe accepts both forms for the same day, so the next run never adds the result again, and the digest prints
+  old entries as they are.
+- **Optional rewrite** of an old entry, to drop the repeated name in the digest: by hand, after #163 is live
+  (copied to the task folder). Read the athlete with ArtifactData, change only that history entry's `text` to the
+  new form (same `at`, `kind`, `source`), and `update` with the doc's `if_version`. Don't touch `updatedAt`: the
+  facts didn't change. Only Tongyeong 24.10 (Sagiv) predates #163.
+
 ### Abu Dhabi Grand Slam, judo (29–31.10): results entered by editors
 
 No quota (abu-dhabi-outcomes.md). There is no results tool for judo yet. Per day, Roni enters each Israeli's result
