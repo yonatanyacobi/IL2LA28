@@ -230,11 +230,12 @@ test("empty data renders empty states", async () => {
 const rowsOf = strip => strip.split("<li>").slice(1);
 const count = (s, needle) => s.split(needle).length - 1;
 
-test("home KPI uses the singular for one athlete and one verified record", async () => {
+test("home KPI uses the singular for one athlete; the hero line for one verified record (F3)", async () => {
   const one = {...FIXTURE.athletes[0], verifiedAt: "2026-10-01", updatedAt: "2026-09-01"};
-  const kpi = (await boot({data: {...FIXTURE, athletes: [one]}})).view("home").match(/<p class="kpi">.*?<\/p>/)[0];
-  assert.ok(kpi.includes("ספורטאי/ת או נבחרת אחת במעקב") && !kpi.includes("ספורטאים ונבחרות"), kpi);
-  assert.ok(kpi.includes("נבדק/ה ידנית"), kpi);
+  const home = (await boot({data: {...FIXTURE, athletes: [one]}, now: "2026-10-18T15:00:00Z"})).view("home");
+  const kpi = home.match(/<p class="kpi">.*?<\/p>/)[0];
+  assert.ok(kpi.includes("ספורטאי/ת או נבחרת אחת במעקב") && !kpi.includes("ספורטאים ונבחרות") && !kpi.includes("ידנית"), kpi);
+  assert.ok(home.split('<section class="hero">')[1].split("</section>")[0].includes("1 מתוך 1 נבדק/ה ידנית"), "singular in the hero");
 });
 
 test("quotas.json loads into S.quotas and invalid items are dropped", async () => {
@@ -1476,10 +1477,12 @@ test("verification: card badge only when checked, three athlete-page states, #ab
   assert.ok(about.includes("<h1 tabindex=\"-1\">אודות</h1>") && !about.includes(NOT_FOUND));
   assert.strictEqual(els.view.innerHTML, about);
 
-  assert.ok(view("home").includes("נבדקו ידנית עד כה") && view("home").includes('href="#about-trust"'));
+  const hero = h => h.split('<section class="hero">')[1].split("</section>")[0];
+  assert.ok(/ \d+ מתוך \d+ נבדקו ידנית · <a href="#about-trust">איך בודקים<\/a>/.test(hero(view("home"))), "F3: in the hero line");
   const none = JSON.parse(JSON.stringify(FIXTURE));
   none.athletes.forEach(a => delete a.verifiedAt);
-  assert.ok(!(await boot({data: none})).view("home").includes("נבדקו"), "V = 0: no verified count");
+  const noneHome = (await boot({data: none, now: "2026-10-18T15:00:00Z"})).view("home");
+  assert.ok(!noneHome.includes("נבדקו") && hero(noneHome).includes("ממקורות רשמיים · <a href=\"#about-trust\">איך בודקים</a>"), "V = 0: no verified count");
 });
 
 // round3.md §5: "ההזדמנויות הקרובות למכסה" panel and the hero "הבא בתור" line.
@@ -2289,6 +2292,22 @@ test("render budget: each main route under 50 ms at 3x today's data", async () =
   const slow = ["home", "today", "c-judo-gs-abu-dhabi-2026", "a-raz-hershko", "following", "sports", "calendar", "quotas", "day-2026-12-24"]
     .map(r => [r, bench.timeRoute(b, r, 5)]).filter(([, ms]) => ms > 50);
   assert.deepStrictEqual(slow.map(([r, ms]) => `#${r} ${ms.toFixed(0)} ms`), []);
+});
+
+test("first-visitor audit F1/F3: hero tag links to #about, the line names the sources and the hand checks, phones show both", async () => {
+  const b = await boot({quotas: SITE_QUOTAS, now: "2026-10-18T15:00:00Z"});
+  const home = b.view("home"), hero = home.split('<section class="hero">')[1].split("</section>")[0];
+  assert.ok(hero.includes('<div class="hero-title"><h1 tabindex="-1">הדרך ללוס אנג׳לס 28</h1><a class="tag" href="#about">מעקב לא רשמי · מה זה?</a></div>'), "F1");
+  const verified = Number(b.run(`S.athletes.filter(a => trustOf(a) !== "auto").length`)), n = FIXTURE.athletes.length;
+  assert.ok(hero.includes(`<p class="fresh"><i></i><span>נכון ל־<time datetime="`) && hero.includes(`</time> · ממקורות רשמיים · ${verified} מתוך ${n} נבדקו ידנית · <a href="#about-trust">איך בודקים</a></span></p>`), "F3");
+  assert.ok(!home.match(/<p class="kpi">.*?<\/p>/)[0].includes("ידנית"), "F3: the KPI drops the count");
+  // Phones hide only .hero-sub (home-today §1); the tag and the line sit outside it.
+  const sub = hero.split('<p class="muted hero-sub">')[1].split("</p>")[0];
+  assert.ok(!sub.includes("#about") && !sub.includes("fresh"), "not inside the hidden subtitle");
+  const stale = (await boot({data: {...FIXTURE, generatedAt: "2026-10-27T05:00:00Z", lastRun: "2026-10-27T05:00:00Z"}, quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"})).view("home");
+  assert.ok(stale.split('<section class="hero">')[1].split("</section>")[0].includes('<p class="fresh stale">'), "stale keeps freshLine's wording");
+  const busy = home.split("ב־14 הימים הקרובים")[1].split("</section>")[0];
+  assert.ok(/<small>[^<]+ · (<a href="#c-[^"]+">|[^<]+)/.test(busy) && !busy.includes("undefined"), "ישראלים בפעולה rows: nextCompFact (S3)");
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
