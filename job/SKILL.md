@@ -40,7 +40,7 @@ EACH RUN:
 4. meta/status (update with if_version from your read; on version mismatch re-read and merge, never drop entries written by others): lastRun = now; prepend one short Hebrew line per meaningful direct change, with athleteId when about one athlete. No lines for proposals. No duplicate lines. Keep 30.
 5. PUBLISH (every run, even if nothing changed, so approved proposals and human edits reach the public):
    a. Artifact action "read" with the URL and path "data.json" → saves the currently published data.json; copy it to <scratchpad>/prev.json.
-   b. ArtifactData list athletes, competitions, sports, corrections (limit 1000) and get meta/status, each with out_dir = <scratchpad>/dump (fresh dir).
+   b. ArtifactData list athletes, competitions, sports, corrections, sessions (limit 1000) and get meta/status, each with out_dir = <scratchpad>/dump (fresh dir).
    c. Run: python3 ~/.claude/scheduled-tasks/la28-israel-daily-update/export_data.py <scratchpad>/dump <scratchpad>/data.json <scratchpad>/prev.json
       If it exits non-zero (it refuses when a collection shrinks >20%), DO NOT publish; record the error.
       Then run: python3 ~/.claude/scheduled-tasks/la28-israel-daily-update/validate_data.py <scratchpad>/data.json
