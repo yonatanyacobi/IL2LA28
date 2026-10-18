@@ -6,6 +6,9 @@ python3 -m unittest discover -s tests     # job/ scripts (stdlib only)
 node tests/smoke.test.js                  # site/*.js in a vm with a DOM shim
 ```
 
+`smoke.test.js` also runs `tests/probe.js` on the fixture (every route, 7 dates, visitor and with follows; ~1 s).
+Before a publish, run it on the real export: `node tests/probe.js <data.json> <quotas.json> [YYYY-MM-DD ...]`.
+
 ## Refreshing `tests/fixtures/data.json`
 
 The fixture is a real public export. Refresh it when it misses records that people's dry runs need (new athletes,

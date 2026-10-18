@@ -217,6 +217,19 @@ test("hostile strings are escaped and unsafe links dropped", async () => {
   assert.ok(outs[3].includes("&lt;img"), "athlete page should show the escaped name");
 });
 
+// The full-site publish map (publishing.md step 5) and SCRIPTS must name every script index.html loads, or a new
+// file (e.g. sessions.js) is tested but never published, or published but never tested.
+test("every <script src> in index.html is in SCRIPTS and in the publish map", () => {
+  const html = fs.readFileSync(path.join(ROOT, "site/index.html"), "utf8");
+  const runbook = fs.readFileSync(path.join(ROOT, "docs/runbooks/publishing.md"), "utf8");
+  const srcs = [...html.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]);
+  assert.ok(srcs.length >= 8, "index.html scripts found");
+  for (const f of srcs) {
+    assert.ok(SCRIPTS.includes(path.join(ROOT, "site", f)), `${f}: not in SCRIPTS`);
+    assert.ok(runbook.includes(`"${f}": "site/${f}"`), `${f}: not in the publishing.md files map`);
+  }
+});
+
 test("empty data renders empty states", async () => {
   const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}});
   assert.ok(view("home").includes("אין תחרויות קרובות ידועות."));
@@ -1404,9 +1417,22 @@ test("#digest: athletes in a competition under way are listed under it", async (
   const competing = digestSection(text, "ישראלים מתחרים השבוע");
   const bullets = competing.split("\n• ");
   const gym = bullets.find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026"));
-  assert.ok(gym && gym.includes("עד 25 באוק׳") && gym.includes("מתקיימת עכשיו"), competing);
+  assert.ok(gym && gym.includes("עד 25 באוק׳") && gym.includes("(התעמלות מכשירים), בעיצומה"), competing);
   for (const n of ["ארטיום דולגופיאט", "ליהיא רז", "יהלי שושני"]) assert.strictEqual(count(competing, n), 1, n);
   assert.ok(competing.includes("שחר שגיב"), "upcoming athletes still listed");
+});
+
+test("#digest: no relative time for running competitions (one-day: date only; last day: יום אחרון)", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  data.competitions.push({id: "fra-marathon", sportId: "athletics", name: "מרתון פרנקפורט", location: "פרנקפורט", start: "2026-10-25", end: "2026-10-25", source: "https://example.org/f"});
+  const runner = data.athletes.find(a => a.sportId === "athletics");
+  runner.nextDate = "2026-10-25";
+  const gym = data.athletes.find(a => a.sportId === "artistic-gymnastics");
+  gym.nextDate = "2026-10-25";
+  const competing = digestSection((await digestOf({data, now: "2026-10-25T09:00:00Z"})).text, "ישראלים מתחרים השבוע");
+  assert.ok(competing.includes("• 25 באוק׳ · מרתון פרנקפורט (אתלטיקה)\n"), competing);
+  assert.ok(competing.includes("• עד 25 באוק׳ · אליפות העולם בהתעמלות מכשירים 2026 (התעמלות מכשירים), יום אחרון"), competing);
+  assert.ok(!/מתקיימת עכשיו|מסתיימת היום|, היום/.test(competing), competing);
 });
 
 test("#digest: one bullet per quota event, classes and athletes under it", async () => {
@@ -2374,6 +2400,25 @@ test("sameName: a city, year, parenthetical or dash style doesn't make a second 
     ["2026", "אליפות העולם 2026", false],
   ];
   for (const [x, y, want] of pairs) assert.strictEqual(run(`sameName(${JSON.stringify(x)}, ${JSON.stringify(y)})`), want, `${x} || ${y}`);
+});
+
+// tests/probe.js: every route on 7 dates, visitor and with follows; ~1 s on the fixture.
+test("route probe: no throw, not-found, junk, banned copy, duplicate id, dangling aria or non-https link", async () => {
+  const {probe} = require("./probe.js");
+  const {renders, findings} = await probe({data: FIXTURE, quotas: QUOTAS_SNAPSHOT});
+  assert.ok(renders > 1000, `only ${renders} renders`);
+  assert.deepStrictEqual(findings, []);
+});
+
+test("route probe: each check fires", () => {
+  const {check} = require("./probe.js");
+  const found = html => { const out = []; check(html, "x", w => out.push(w)); return out; };
+  const bad = {
+    junk: "<p>undefined</p>", attr: '<a href="#a-null">x</a>', banned: "<span>השעה תפורסם</span>",
+    dup: '<h2 id="a"></h2><p id="a"></p>', aria: '<section aria-labelledby="nope"></section>', http: '<a href="http://x.org">x</a>',
+  };
+  for (const [k, html] of Object.entries(bad)) assert.strictEqual(found(html).length, 1, `${k}: ${found(html)}`);
+  assert.deepStrictEqual(found('<h2 id="h">ok</h2><section aria-labelledby="h"><a href="https://x.org">x</a> <a href="#home">y</a></section>'), []);
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.

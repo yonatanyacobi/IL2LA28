@@ -45,7 +45,8 @@ quotas PR doesn't change for them.
 2. **Session**: `result`, `resultSource` = https://www.ijf.org/competition/3157/results, `resultAt` =
    `date -u +%Y-%m-%dT%H:%M:%SZ`; all three, or the export blanks the result. Day 1 holds three judoka: join as
    `<name>: <result> · <name>: <result> · <name>: <result>`. A final-block session gets only the judoka in it.
-3. **"מה התעדכן"**: medals only. Prepend `{"at": "<their day>", "text": "ג׳ודו: <name> – <history text>", "athleteId": …}`
+3. **"מה התעדכן"**: medals only. Prepend `{"at": "<their day>", "text": "ג׳ודו: <name> <זכה/זכתה> ב<זהב/כסף/ארד> בגרנד סלאם אבו דאבי, <weight>", "athleteId": …}`
+   (the finals template in result-night.md: gendered verb, no date, since it's in `at`, no trailing period)
    to `meta/status` `changes`, `if_version` from your read, keep 30. The digest shows it once (publishing.md D3).
 
 ## Values
@@ -58,7 +59,8 @@ History text (publishing.md):
   style, so the job doesn't record it twice.
 - `<ROUND>` as in abu-dhabi-outcomes.md, e.g. `בסיבוב הראשון`, `ברבע הגמר`.
 - Gender: הודח for Ashpiz, Elbaz and Simin; הודחה for G. Primo, Nelson Levy, Goshen and Hershko.
-- Session `result`: the same outcome words (`זהב`, `כסף`, `ארד`, `מקום 5`, `מקום 7`, `הודח/ה <ROUND>`).
+- Session `result`: the same outcome words (`זהב`, `כסף`, `ארד`, `מקום 5`, `מקום 7`, `הודח <ROUND>` / `הודחה <ROUND>`),
+  in the athlete's own form as above, never the slash.
 - Didn't fight (withdrew, DNS): no entry.
 - In the same write: `next` = `""`, `nextDate` = `""`, unless an official entry list for the next event already
   has them (then that event and its start date).
