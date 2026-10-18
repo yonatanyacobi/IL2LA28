@@ -22,6 +22,7 @@ official schedule prints**: the venue's local time and its IANA time zone. Nobod
 | result | Hebrew, ≤ 120, or `""` | e.g. `מקום 12 במוקדמות, לא עלה לגמר`. Not a field of results, only the Israelis' outcome |
 | resultSource | https or `""` | the official result list. Required with `result` |
 | resultAt | ISO with Z, or `""` | when the result was recorded (UTC). Required with `result` |
+| review | `{status, by, at}` | the fact-check. Only `ok` / `fixed` rows are exported (as for quota items); internal, never exported |
 | updatedBy, notes, … | anything | internal. **Never exported** (whitelist) |
 
 **Who writes:** research data (times, entrants) reaches the DB through a reviewed research PR, applied by an editor.
@@ -42,6 +43,7 @@ from a guess.
 - **Text** goes through the export's `text()` (strip, geresh); `phase` and `result` are cut at 120 characters.
 - **Order:** by `date`, then `startUtc` (untimed last), then `id`.
 - **Dropped and reported** (the export's `dropped` list) when:
+  - `review.status` isn't `ok` or `fixed` (unchecked, HOLD, partial, or missing): the fact-check gate;
   - `competitionId` is unknown or not exported;
   - `date` is invalid or outside the competition's dates;
   - `source` isn't https;
