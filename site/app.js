@@ -745,7 +745,9 @@ async function decide(id, approve, btn){
   if (!p) return;
   const stamp = {updatedAt: new Date().toISOString(), updatedBy: S.uid || "admin"};
   try {
-    if (approve) {
+    // An empty update patch changes nothing: writing updatedAt would only mark a verified record as stale.
+    const empty = p.kind !== "create" && !Object.keys(p.patch || {}).length;
+    if (approve && !empty) {
       const t = S.athletes.find(a => a.id === p.target);
       const ref = S.db.collection("athletes").doc(p.target);
       const patch = {...p.patch, ...stamp};
