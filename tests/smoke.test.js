@@ -875,7 +875,8 @@ test("#c- Abu Dhabi (fallback data): header, 3 days, athletes once each, quota i
   const sched = out.split('id="evSchedH"')[1].split("</section>")[0];
   for (const id of ["gefen-primo", "izhak-ashpiz", "raz-hershko", "timna-nelson-levy", "yonatan-elbaz"])
     assert.strictEqual(sched.split(`href="#a-${id}"`).length - 1, 1, `${id} once in the schedule`);
-  assert.ok(out.includes('<h2 id="evAthH">הישראלים בתחרות (5)</h2>') && out.includes("5 ישראלים"), "athletes panel and kpi");
+  assert.ok(out.includes('<h2 id="evAthH">הישראלים בתחרות (5)</h2>') && out.includes("5 ספורטאים ונבחרות"), "athletes panel and kpi");
+  assert.ok(out.includes('<bdi><a href="https://allsportdb.com/Sports/Judo"'), "source host isolated");
   const stakes = out.split('id="evStakesH"')[1]?.split("</section>")[0] || "";
   assert.ok(stakes.includes("<bdi>78+ ק״ג נשים</bdi>") && stakes.includes('<a href="#sport-judo">לכל המכסות בענף</a>'), "judo quota items");
   assert.ok(out.includes(`value="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT#c-${AD}"`) && out.includes('data-copy-msg="evShareMsg"'), "share box");
@@ -890,20 +891,22 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   data.athletes.find(a => a.id === "raz-hershko").history = [{at: "2026-10-29", kind: "result", text: "<b>ארד</b>"}];
   const res = (await eventAt(AD, "2026-10-30T08:00:00Z", {data})).out;
   assert.ok(res.includes("&lt;b&gt;ארד&lt;/b&gt;") && !res.includes("<b>ארד</b>"), "result escaped");
-  assert.ok(res.includes("1 תוצאות"), "kpi counts the result");
+  assert.ok(res.includes("תוצאה אחת") && !res.includes("1 תוצאות"), "kpi counts the result, singular");
+  const athPanel = res.split('id="evAthH"')[1].split("</section>")[0];
+  assert.ok(!athPanel.includes("ארד"), "no unsourced result line in the athletes panel");
 
   const q = JSON.parse(JSON.stringify(REAL_QUOTAS));
   const won = q.items.find(i => i.sportId === "judo" && i.nextQuotaEvent?.start === "2026-10-29");
   Object.assign(won, {israelStatus: "earned", stakes: "stake earned"});
   const earned = (await eventAt(AD, "2026-10-29T08:00:00Z", {quotas: q})).out.split('id="evStakesH"')[1].split("</section>")[0];
-  assert.ok(earned.includes("<b>מכסה הושגה</b>") && !earned.includes("stake earned"), "earned: no stakes");
+  assert.ok(earned.includes("pill q-earned") && !earned.includes("<b>מכסה הושגה</b>") && !earned.includes("stake earned"), "earned: the pill only, no stakes");
 
   const series = JSON.parse(JSON.stringify(FIXTURE));
   series.competitions.push({id: "long-series", sportId: "judo", name: "סדרה ארוכה", location: "", start: "2026-09-01", end: "2027-03-01", notes: "", source: "", qualifying: false});
   assert.ok((await eventAt("long-series", "2026-10-29T08:00:00Z", {data: series})).out.includes('<span class="pill ended">סדרה עונתית</span>'));
 
   const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z")).out;
-  assert.ok(doha.includes("אין ספורטאים ונבחרות מישראל ידועים בתחרות הזו.") && doha.includes('במעקב בענף</a>') && !doha.includes('id="evAthH"'), "never claims they compete");
+  assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת במעקב בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
   assert.ok(doha.includes('id="evStakesH"') && doha.includes("הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
   const dohaItems = doha.split('id="evStakesH"')[1].split("</section>")[0].split("<li>").slice(1);
   for (const li of dohaItems) assert.ok(li.includes("q-in-contention") || !li.includes("מה זה אומר"), "stakes only for in-contention items");
