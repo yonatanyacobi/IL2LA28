@@ -149,8 +149,12 @@ function sessionRow(s, d, groupDateOnly = false){
   const names = s.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   const state = sessionState(s, d);
   const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : s.timed ? "השעה תפורסם" : groupDateOnly ? "" : "תאריך בלבד";
+  // Keyed by day, competition and athletes, so the same session on #day and #c- is one row. The signature leaves out
+  // what changes with the clock or a run without news (the status chip, checkedAt).
+  const mark = rowMark(`sess|${d}|${s.comp?.id || ""}|${s.athletes.map(a => a.id).join(",")}|${s.phase}`,
+    [s.result, s.resultSource, s.resultAt, s.startUtc, s.athletes.map(a => a.name).join(",")].join("\u241f"));
   return `<li><span class="d">${when}</span>
-    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${sessionDetail(s, state)}</span>
+    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${sessionDetail(s, state)}${mark}</span>
     <span>${statusChip(state)}</span></li>`;
 }
 
