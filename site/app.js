@@ -136,7 +136,7 @@ function quotaSection(id){
         <details><summary>איך מחולקות המכסות</summary>${q.allocation ? `<p>${esc(q.allocation)}</p>` : ""}<p class="foot">${src}</p></details>
       </li>`;
     }).join("")}</ul>
-    <p class="foot">ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת; הוועד האולימפי בישראל בוחר בהמשך מי ישתמש בה.${isDate(S.quotasUpdatedAt) ? ` נתוני מכסות עודכנו: ${fmt(S.quotasUpdatedAt)}.` : ""}</p>
+    <p class="foot">ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת; הוועד האולימפי בישראל בוחר בהמשך מי ישתמש בה.${isDate(S.quotasUpdatedAt.slice(0, 10)) ? ` נתוני מכסות עודכנו: ${fmt(S.quotasUpdatedAt.slice(0, 10))}.` : ""}</p>
   </section>`;
 }
 
