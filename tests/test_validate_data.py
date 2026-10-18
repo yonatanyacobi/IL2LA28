@@ -110,6 +110,33 @@ class ValidateTest(unittest.TestCase):
             self.assertTrue(errors, needle)
             self.assertIn(needle, "\n".join(errors), needle)
 
+    def test_olympic_rank_fields(self):
+        setr = lambda **kw: lambda d: d["athletes"][0].update(kw)
+        O, D = "IJF Olympic Ranking List", "2026-10-13"
+        for ok in [{}, dict(olympicRankNum=3, olympicRankList=O, olympicRankAsOf=D),
+                   dict(olympicRankNum=None, olympicRankList="", olympicRankAsOf=""),
+                   dict(rankNum=1, rankList="IJF World Ranking List", rankAsOf=D, olympicRankNum=3, olympicRankList=O,
+                        olympicRankAsOf=D)]:
+            self.assertEqual(self.broken(setr(**ok)), [], ok)
+        for bad, needle in [(dict(olympicRankNum=0, olympicRankList=O, olympicRankAsOf=D), "olympicRankNum"),
+                            (dict(olympicRankNum="3", olympicRankList=O, olympicRankAsOf=D), "olympicRankNum"),
+                            (dict(olympicRankNum=4, olympicRankAsOf=D), "olympicRankList: required"),
+                            (dict(olympicRankNum=4, olympicRankList=O), "olympicRankAsOf: YYYY-MM-DD required"),
+                            (dict(olympicRankList="x" * 81), "olympicRankList"),
+                            (dict(olympicRankAsOf="13.10.2026"), "olympicRankAsOf"),
+                            (dict(olympicRank=3), "unexpected key")]:
+            errors = self.broken(setr(**bad))
+            self.assertTrue(errors, bad)
+            self.assertIn(needle, "\n".join(errors), bad)
+
+    def test_history_caps_per_kind(self):
+        res = lambda n: [{"at": "2026-01-01", "kind": "result", "text": f"r{i}", "source": "https://x.org"} for i in range(n)]
+        oth = lambda n: [{"at": "2026-02-01", "kind": "rank", "text": f"o{i}", "source": ""} for i in range(n)]
+        set_h = lambda h: lambda d: d["athletes"][0].__setitem__("history", h)
+        self.assertEqual(self.broken(set_h(res(60) + oth(10))), [])
+        self.assertIn("11 non-result entries, max 10", "\n".join(self.broken(set_h(res(5) + oth(11)))))
+        self.assertIn("61 result entries, max 60", "\n".join(self.broken(set_h(res(61)))))
+
     def test_rank_fields(self):
         def setr(**kw):
             return lambda d: d["athletes"][0].update(kw)
