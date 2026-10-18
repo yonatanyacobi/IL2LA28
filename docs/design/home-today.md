@@ -13,6 +13,10 @@ last 48 h (with their source), and the athletes you follow first in both.
 4. **"במעקב שלי"** cards, moved up from below the quota panels (unchanged markup, or the existing tip line).
 5. The rest as today: search, won, closest, review, KPI, 14 days, updates, upcoming comps.
 
+**Compact hero at ≤ 640px**, so the "היום" h2 and its first row are on the first screen at 400×800:
+- the subtitle paragraph is hidden (the same text is on `#about`); the `מעקב לא רשמי` tag moves out of it, next to the h1;
+- `@media (max-width:640px){.hero{gap:8px}.hero h1{font-size:24px}.count{padding:4px 12px}.count b{font-size:20px}}`.
+
 Desktop (≥ 900px): §2 and §3 share a row, `.home-now{display:grid;gap:22px}` and
 `@media (min-width:900px){.home-now{grid-template-columns:3fr 2fr;align-items:start}}`. At 400px they stack.
 
@@ -25,8 +29,9 @@ Desktop (≥ 900px): §2 and §3 share a row, `.home-now{display:grid;gap:22px}`
 - **Running competitions without a known Israeli session** collapse into one `.foot` line:
   `עוד היום, בלי סשן ידוע של ישראלים: {links to #c-<id>, joined " · "}`.
 - **Stakes:** none here (they live on `#day` and `#c-`). Keeps the home rows to 2–3 lines at 400px.
-- **Empty:** `<p class="muted">אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.</p>` plus, when a later session
-  exists: `<p>הבא בתור: <a href="#day-{d}">{fmt(d)}</a> · {comp}</p>`.
+- **Empty:** `<p class="muted">אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.</p>`, then the next day d with a
+  session (looking up to 60 days ahead): `<h3>הבא בתור: {dayTitle(d)}</h3>`, its first 3 `sessionRow(s, d)` in
+  `sessionOrder`, and `<a href="#day-{d}">לכל הסשנים ב־{fmtShort(d)}</a>`. No later session: the empty line only.
 
 ## 3. "תוצאות אחרונות" — the last 48 h
 - **Data:**
@@ -50,7 +55,8 @@ Desktop (≥ 900px): §2 and §3 share a row, `.home-now{display:grid;gap:22px}`
 | more today | `ועוד {n} סשנים היום` / `ועוד סשן אחד היום` |
 | running, no session | `עוד היום, בלי סשן ידוע של ישראלים:` |
 | today empty | `אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.` |
-| next | `הבא בתור: {date} · {comp}` |
+| next (h3) | `הבא בתור: {יום ה׳, 29 באוק׳}` |
+| next link | `לכל הסשנים ב־{29 באוק׳}` |
 | results h2 | `תוצאות אחרונות` |
 | results sub (`.foot`) | `ב־48 השעות האחרונות · {CADENCE} · לכל העדכונים באתר` |
 | results empty | `אין תוצאות חדשות ב־48 השעות האחרונות.` |
@@ -67,8 +73,12 @@ freshness text `נתונים חיים · עדכון אוטומטי אחרון:`,
 
 ## 6. Tests (pinned clock, fixture + injected sessions)
 - Today with 8 sessions: 6 rows, followed first, the "more" link reads `ועוד 2 סשנים היום`; each row links `#c-<id>`.
-- No sessions today: the empty line and "הבא בתור"; a running competition without a session is in the one-line list.
+- No sessions today, 5 on the next session day: the empty line, the `הבא בתור` h3, 3 rows and the `#day-{d}` link;
+  no session in 60 days: the empty line only; a running competition without a session is in the one-line list.
 - 7 results: 5 rows plus a `<details>` with the other 2; `לכל העדכונים באתר` is in the foot, not in the summary.
 - Results: 47 h old shows, 49 h old doesn't; a history result from yesterday shows without "עודכן"; a result
   without a source is dropped; a session and a history result for the same athlete and day show once.
 - Output contains no "חי", "בזמן אמת" or "לפני" + "דקות", also with `S.live = true`.
+- **400×800, light and dark (browser, via the preview pane):** on `#home` with sessions today, `#todayH` and its first
+  `li` have `getBoundingClientRect().bottom ≤ 800` and no horizontal scroll. Smoke (string): `id="todayH"` comes
+  before `id="q"` and before any other `<h2` in the home HTML.
