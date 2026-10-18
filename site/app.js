@@ -15,7 +15,7 @@ const FIX_FIELDS = ["name", "event", "rank", "next", "nextDate", "notes", "stage
 const FIX_MAX = 300;
 const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "rankNum", "rankList", "rankAsOf", "next", "nextDate", "notes", "source"];
 const RANK_MAX_AGE_D = 60;
-const HISTORY_MAX = 20;
+const HISTORY_MAX = 20, RESULTS_MAX = 60;   // = job/athlete_patch.py HISTORY_MAX, RESULTS_MAX
 const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
 
 const $ = id => document.getElementById(id);
@@ -751,7 +751,12 @@ function describePatch(p, t){
   }).join("");
 }
 
-const historyWith = (a, entry) => [...(Array.isArray(a?.history) ? a.history : []), entry].slice(-HISTORY_MAX);
+// Results are the game log (#186): kept apart from the cap of 20 with their own cap, as job/athlete_patch.py does.
+function historyWith(a, entry){
+  const all = [...(Array.isArray(a?.history) ? a.history : []), entry], isRes = h => h?.kind === "result";
+  let dropRes = all.filter(isRes).length - RESULTS_MAX, dropOther = all.length - all.filter(isRes).length - HISTORY_MAX;
+  return all.filter(h => isRes(h) ? !(dropRes-- > 0) : !(dropOther-- > 0));
+}
 
 async function decide(id, approve, btn){
   const p = S.proposals.find(x => x.id === id);

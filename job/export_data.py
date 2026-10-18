@@ -17,7 +17,8 @@ ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2}
 ATHLETE_FIELDS = ["name", "name_en", "sportId", "event", "rank", "next", "nextDate", "notes", "source", "updatedAt"]
 COMP_FIELDS = ["sportId", "name", "location", "start", "end", "notes", "source"]
 HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note", "correction"}
-HISTORY_PUBLIC = 10
+HISTORY_PUBLIC = 10   # non-result entries per athlete in data.json
+RESULTS_PUBLIC = 60   # kind "result" entries, capped separately (= athlete_patch.RESULTS_MAX)
 RANK_LIST_MAX = 80
 # Public corrections log (docs/design/corrections-log.md). The single source: data.json carries it as launchAt and
 # the page reads it from there. None until the owner picks a launch date; the launch PR sets an ISO instant with Z.
@@ -132,7 +133,11 @@ def history(items):
         out.append({"at": h["at"], "kind": h.get("kind") if h.get("kind") in HISTORY_KINDS else "note",
                     "text": text(h["text"], 300), "source": https(h.get("source"))})
     out.sort(key=lambda h: h["at"])
-    return out[-HISTORY_PUBLIC:]
+    # Results are the public game log (#186): capped on their own, so other kinds never push them out.
+    res = [h for h in out if h["kind"] == "result"][-RESULTS_PUBLIC:]
+    other = [h for h in out if h["kind"] != "result"][-HISTORY_PUBLIC:]
+    keep = {id(h) for h in res + other}
+    return [h for h in out if id(h) in keep]
 
 
 SESSION_TEXT_MAX = 120
