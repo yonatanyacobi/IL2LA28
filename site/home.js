@@ -2,12 +2,12 @@
 // Loaded after day.js and event.js; reuses their sessions and near-live labels. viewHome() calls homeNow().
 "use strict";
 
-const HOME_RESULTS_H = 48, HOME_RESULTS_MAX = 5;
+const HOME_RESULTS_H = 48, HOME_RESULTS_MAX = 5, HOME_STAKES_MAX = 2, HOME_NEXT_ROWS = 3, HOME_NEXT_LOOKAHEAD = 60;
 const homeDayTitle = d => asDate(d).toLocaleDateString("he-IL", {weekday: "short", day: "numeric", month: "short"});
-const compLink = c => c ? `<a href="#c-${esc(c.id)}">${esc(c.name)}</a>` : "";
+// Noa's compLink(c, text) lands in app.js with #188; until then, the same function. Drop this line after merging it.
+if (typeof compLink === "undefined") window.compLink = (c, text) => c?.id ? `<a href="#c-${esc(c.id)}">${text}</a>` : text;
+const compA = c => c ? compLink(c, esc(c.name)) : "";
 const sportLink = sid => `<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a>`;
-
-const HOME_STAKES_MAX = 2, HOME_NEXT_ROWS = 3;
 
 // PM on #171: one "על הכף היום" line per quota competition running today, at most 2. Each competition's item is
 // picked followed → athlete in today's rows → best rank → file order; stakesLine()'s rules decide what may show
@@ -21,7 +21,8 @@ function todayStakes(sessions, t){
     .map(c => quotasOf(c.sportId).map((q, i) => ({c, q, i, k: key(q)}))
       .filter(({q}) => stakesLine(q) && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start)).sort(cmp)[0])
     .filter(Boolean).sort(cmp).slice(0, HOME_STAKES_MAX);
-  return picks.map(({c, q}) => `<p class="stakes"><b>על הכף היום · ${compLink(c)}:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</p>`).join("");
+  // The quota event, not the competition: the stakes text already opens with the competition (UX on #171).
+  return picks.map(({q}) => `<p class="stakes"><b>על הכף היום · <bdi>${esc(q.event)}</bdi>:</b> ${esc(q.stakes)}</p>`).join("");
 }
 
 function homeToday(){
@@ -31,20 +32,25 @@ function homeToday(){
   const running = S.comps.filter(c => c.start <= t && t <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS
     && athletesOf(c.sportId).length && !withComp.has(c.id)).sort((x, y) => heCmp(x.name, y.name));
   let next = "";
-  if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && !next; i++) if (hasIsraelis(addDays(t, i))) next = addDays(t, i);
-  const where = s => `<small>${[sportLink(s.sportId), compLink(s.comp)].filter(Boolean).join(" · ")}</small>`;
-  const rows = (list, d) => `<ul class="rows sess">${list.map(s => sessionRow(s, d, where(s))).join("")}</ul>`;
+  if (!sessions.length) for (let i = 1; i <= HOME_NEXT_LOOKAHEAD && !next; i++) if (hasIsraelis(addDays(t, i))) next = addDays(t, i);
+  const where = s => `<small>${s.comp ? compA(s.comp) : sportLink(s.sportId)}</small>`;
+  // "תאריך בלבד" once per run of untimed rows in one competition; the rest keep it for screen readers only.
+  const rows = (list, d) => `<ul class="rows sess">${list.map((s, i) => {
+    const html = sessionRow(s, d, where(s)), prev = list[i - 1];
+    return prev && !s.timed && !prev.timed && prev.comp === s.comp
+      ? html.replace('<span class="d">תאריך בלבד</span>', '<span class="d"><span class="sr">תאריך בלבד</span></span>') : html;
+  }).join("")}</ul>`;
   // PM on #171: an empty day shows the next session day's first rows, so the home still opens on sessions.
-  const nextBlock = () => `<h3>הבא בתור, ${homeDayTitle(next)}</h3>
+  const nextBlock = () => `<h3>הבא בתור: ${homeDayTitle(next)}</h3>
     ${rows(daySessions(next).sort(sessionOrder).slice(0, HOME_NEXT_ROWS), next)}
     <p><a href="#day-${next}">לכל הסשנים ב־${fmtShort(next)}</a></p>`;
-  return `<section class="panel" aria-labelledby="homeTodayH">
-    <div class="sec-head"><h2 id="homeTodayH">היום, ${homeDayTitle(t)}</h2>${sessions.length && more <= 0 ? `<a href="#today">לכל התחרויות היום</a>` : ""}</div>
-    ${sessions.length ? rows(sessions.slice(0, TODAY_MAX), t) : `<p class="muted">אין היום סשנים ידועים של ספורטאים ונבחרות מישראל.</p>`}
+  return `<section class="panel" aria-labelledby="todayH">
+    <h2 id="todayH"><a href="#today">היום, ${homeDayTitle(t)}</a></h2>
+    ${sessions.length ? rows(sessions.slice(0, TODAY_MAX), t) : `<p class="muted">אין היום סשנים ידועים של ספורטאים או נבחרות מישראל.</p>`}
     ${todayStakes(sessions, t)}
     ${more > 0 ? `<p><a href="#today">${more === 1 ? "ועוד סשן אחד היום" : `ועוד ${more} סשנים היום`}</a></p>` : ""}
     ${next ? nextBlock() : ""}
-    ${running.length ? `<p class="foot">מתקיימות היום, בלי סשן ידוע של ישראלים: ${running.map(compLink).join(" · ")}</p>` : ""}
+    ${running.length ? `<p class="foot">עוד היום, בלי סשן ידוע של ישראלים: ${running.map(compA).join(" · ")}</p>` : ""}
   </section>`;
 }
 
@@ -71,13 +77,16 @@ function homeResults(){
   const rows = recentResults();
   const row = r => `<li><span class="d">${r.resultAt ? whenIL(r.resultAt) : fmtShort(r.at)}</span>
     <span class="t">${r.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")}
-      · ${compLink(r.comp) || sportLink(r.sportId)}
+      · ${compA(r.comp) || sportLink(r.sportId)}
       <span class="res"><b>תוצאה:</b> ${esc(r.result)} · ${hostLink(r.source, "מקור")}</span></span><span></span></li>`;
+  const more = rows.length - HOME_RESULTS_MAX;
+  // Every result stays on the home; #updates is the change log, never worded as "more results".
   return `<section class="panel" aria-labelledby="homeResH">
     <h2 id="homeResH">תוצאות אחרונות</h2>
-    <p class="foot">מ־48 השעות האחרונות · ${CADENCE}</p>
-    ${rows.length ? `<ul class="rows">${rows.slice(0, HOME_RESULTS_MAX).map(row).join("")}</ul>` : `<p class="muted">אין תוצאות חדשות מ־48 השעות האחרונות.</p>`}
-    ${rows.length > HOME_RESULTS_MAX ? `<p><a href="#updates">לכל העדכונים</a></p>` : ""}
+    ${rows.length ? `<ul class="rows">${rows.slice(0, HOME_RESULTS_MAX).map(row).join("")}</ul>` : `<p class="muted">אין תוצאות חדשות ב־48 השעות האחרונות.</p>`}
+    ${more > 0 ? `<details><summary>${more === 1 ? "ועוד תוצאה אחת" : `ועוד ${more} תוצאות`} ב־48 השעות האחרונות</summary>
+      <ul class="rows">${rows.slice(HOME_RESULTS_MAX).map(row).join("")}</ul></details>` : ""}
+    <p class="foot">ב־48 השעות האחרונות · ${CADENCE} · <a href="#updates">לכל העדכונים באתר</a></p>
   </section>`;
 }
 

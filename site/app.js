@@ -384,8 +384,8 @@ function viewHome(){
   return `
   <section class="hero">
     <div>
-      <h1 tabindex="-1">הדרך ללוס אנג׳לס 28</h1>
-      <p class="muted">מעקב אחרי מסלול ההעפלה של ספורטאיות, ספורטאים ונבחרות מישראל לאולימפיאדת לוס אנג׳לס, 14–30 ביולי 2028.<span class="tag">מעקב לא רשמי</span></p>
+      <div class="hero-title"><h1 tabindex="-1">הדרך ללוס אנג׳לס 28</h1><span class="tag">מעקב לא רשמי</span></div>
+      <p class="muted hero-sub">מעקב אחרי מסלול ההעפלה של ספורטאיות, ספורטאים ונבחרות מישראל לאולימפיאדת לוס אנג׳לס, 14–30 ביולי 2028.</p>
       ${hub ? freshLine(inToday.size > 0) : freshness()}
       ${nextUpLine(rows)}
     </div>
