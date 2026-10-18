@@ -216,3 +216,21 @@ main:focus{outline:none}
   .links a,.crumb a,.sec-head a{display:inline-flex;align-items:center;min-height:44px}
   .btn,.toolbar select,.chk,label input,label select,.share input{min-height:44px}
 }
+
+/* editor dashboard (#admin) */
+.pill.bad{background:var(--sun-soft);color:var(--bad)}
+.adm-alert{border-color:var(--bad);border-width:2px}
+.adm-warn{margin:0;padding-inline-start:18px;color:var(--bad);font-weight:700}
+.adm-errs{margin:0;padding-inline-start:18px;font-size:14px;overflow-wrap:anywhere}
+.adm-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.adm-tile{display:grid;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-decoration:none;color:var(--ink);min-height:44px}
+.adm-tile:hover{border-color:var(--blue)}
+.adm-tile b{font-size:26px;line-height:1.1}
+.adm-tile span{font-size:14px;color:var(--muted)}
+.adm-tile.hot b{color:var(--sun-ink)}
+
+/* trust chip (symbol + text, so it never relies on colour) */
+.trust{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px}
+.trust.ok{background:var(--ok-soft);color:var(--ok)}
+.trust.stale{background:var(--sun-soft);color:var(--sun-ink)}
+.trust.auto{border:1px solid var(--line);color:var(--muted)}

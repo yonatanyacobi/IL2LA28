@@ -3,7 +3,7 @@
 Usage: python3 export_data.py <dump_dir> <out_file> [<previous_data.json>]
 <dump_dir> holds athletes/, competitions/, sports/ and meta/status.json, as written by
 ArtifactData list/get with out_dir. Only public fields are exported; proposals, run logs,
-archived athletes and updatedBy (a viewer id) never leave the database.
+archived athletes, updatedBy and verifiedBy (viewer ids) never leave the database.
 With a previous data.json, the export refuses (exit 2) to shrink any collection by more
 than 20%, so a failed or truncated dump can't publish a half-empty site.
 """
@@ -11,6 +11,8 @@ import glob, json, os, re, sys
 from datetime import datetime, timezone
 
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# Timezone required: the page compares verifiedAt with updatedAt as instants.
+ISO = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$")
 ATHLETE_FIELDS = ["name", "name_en", "sportId", "event", "rank", "next", "nextDate", "notes", "source", "updatedAt"]
 COMP_FIELDS = ["sportId", "name", "location", "start", "end", "notes", "source"]
 HISTORY_KINDS = {"start", "stage", "rank", "result", "next", "note"}
@@ -35,6 +37,10 @@ def https(u):
 
 def date(v):
     return v if isinstance(v, str) and DATE.match(v) else ""
+
+
+def iso(v):
+    return v if isinstance(v, str) and ISO.match(v) else ""
 
 
 def stage(v):
@@ -81,7 +87,7 @@ def main(dump, out_file, prev_file=None):
             continue
         row = {"id": aid, **{k: text(a.get(k)) for k in ATHLETE_FIELDS}}
         row.update(stage=stage(a.get("stage")), source=https(a.get("source")), nextDate=date(a.get("nextDate")),
-                   history=history(a.get("history")))
+                   verifiedAt=iso(a.get("verifiedAt")), history=history(a.get("history")))
         a_out.append(row)
 
     c_out = []

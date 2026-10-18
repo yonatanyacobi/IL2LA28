@@ -53,6 +53,8 @@ const athletesOf = sid => S.athletes.filter(a => a.sportId === sid);
 const upcoming = () => S.comps.filter(c => (c.end || c.start) >= today()).sort((a, b) => a.start.localeCompare(b.start));
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
+// Compared as instants: the job and the page write ISO strings with different precision.
+const trustOf = a => { const v = Date.parse(str(a.verifiedAt)), u = Date.parse(str(a.updatedAt)); return isNaN(v) ? "auto" : isNaN(u) || v >= u ? "ok" : "stale"; };
 
 function winStatus(w){
   if (!w || !isDate(w.from)) return null;
@@ -73,6 +75,11 @@ function stageBar(list, thin){
     counts.map((c, i) => c ? `<i class="s${i}" style="width:${(c / n * 100).toFixed(2)}%"></i>` : "").join("")}</div>`};
 }
 
+function trustChip(a){
+  const t = trustOf(a), d = fmt(str(a.verifiedAt).slice(0, 10));
+  return `<span class="trust ${t}">${t === "auto" ? "◌ איסוף אוטומטי" : t === "ok" ? `✓ נבדק ידנית ${d}` : `✓ נבדק ${d} · עודכן מאז`}</span>`;
+}
+
 function compRow(c, withSport){
   const t = today(), end = c.end || c.start, live = c.start <= t && end >= t, past = end < t;
   return `<div class="comp ${past ? "past" : ""}">
@@ -88,7 +95,7 @@ function athleteCard(a){
   return `<a class="card" href="#a-${esc(a.id)}">
     <span class="nm">${fav ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : ""}${esc(a.name)}${isNew(a) ? ` <span class="new">חדש</span>` : ""}</span>
     ${a.event ? `<span class="ev">${esc(a.event)}</span>` : ""}
-    <span><span class="pill st${s}">${STAGES[s]}</span></span>
+    <span><span class="pill st${s}">${STAGES[s]}</span> ${trustChip(a)}</span>
     ${a.rank ? `<span class="ln"><span>דירוג או הישג: </span>${esc(a.rank)}</span>` : ""}
     ${a.next ? `<span class="ln"><span>התחרות הבאה: </span>${esc(a.next)}${isDate(a.nextDate) ? ` (${fmtShort(a.nextDate)})` : ""}</span>` : ""}
   </a>`;
@@ -110,6 +117,7 @@ function viewHome(){
   const mine = S.athletes.filter(a => S.follows.has(a.id)).sort((a, b) => heCmp(a.name, b.name));
   const mineNew = mine.filter(isNew).length;
   const colors = ["var(--stage0)", "var(--blue)", "var(--sun)", "var(--ok)"];
+  const verified = S.athletes.filter(a => trustOf(a) !== "auto").length;
   return `
   <section class="hero">
     <div>
@@ -128,7 +136,7 @@ function viewHome(){
       <div class="cards">${mine.map(athleteCard).join("")}</div></section>`
     : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>`}
   <section class="panel" aria-label="התקדמות בהעפלה">
-    <p class="kpi"><b>${S.athletes.length}</b> ספורטאים ונבחרות במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה</p>
+    <p class="kpi"><b>${S.athletes.length}</b> ספורטאים ונבחרות במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה · <b>${verified}</b> מתוך ${S.athletes.length} נבדקו ידנית</p>
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
     <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: ישראל שלחה לפריז 2024 ${PARIS_ATHLETES} ספורטאיות וספורטאים. נבחרת נספרת כאן כרשומה אחת.</p>
@@ -181,7 +189,7 @@ function viewSports(){
       <span class="meta">${list.length} במעקב${fresh ? ` · <span class="new">${fresh} עודכנו</span>` : ""}${nc ? ` · התחרות הבאה: ${esc(nc.name)} (${fmtShort(nc.start)})` : ""}</span>
     </a></li>`;
   }).join("")}</ul>
-  ${without.length ? `<section class="panel"><h2>ענפים בלי ספורטאים ונבחרות מישראל במעקב כרגע</h2>
+  ${without.length ? `<section class="panel"><h2>ענפים בלי ספורטאים או נבחרות מישראל במעקב כרגע</h2>
     <div class="chips">${without.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div></section>` : ""}`;
 }
 
@@ -224,7 +232,7 @@ function viewAthlete(id){
     <div><h1 tabindex="-1">${esc(a.name)}</h1>${a.name_en ? `<p class="muted" dir="ltr" style="text-align:right">${esc(a.name_en)}</p>` : ""}</div>
     <div class="actions">
       <button class="btn ghost follow" data-follow="${esc(id)}" aria-pressed="${fav}">${fav ? "★ במעקב שלך" : `☆ מעקב אחרי ${esc(a.name)}`}</button>
-      ${S.isAdmin ? `<button class="btn small" data-edit="${esc(id)}">עריכה</button>` : ""}
+      ${S.isAdmin ? `<button class="btn small" data-edit="${esc(id)}">עריכה</button><button class="btn ghost small" data-verify="${esc(id)}">סימון כנבדק</button>` : ""}
     </div>
   </div>
   <section class="panel">
@@ -234,6 +242,7 @@ function viewAthlete(id){
       <dt>ענף</dt><dd><a href="#sport-${esc(a.sportId)}">${esc(sp?.he || a.sportId)}</a>${a.event ? ` · ${esc(a.event)}` : ""}</dd>
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}</dd>` : ""}
       ${a.next ? `<dt>התחרות הבאה</dt><dd>${esc(a.next)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}</dd>` : ""}
+      <dt>בדיקה</dt><dd>${trustChip(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
       ${safeUrl(a.source) ? `<dt>מקור</dt><dd>${linkOut(a.source, host(a.source))}</dd>` : ""}
     </dl>
@@ -269,8 +278,9 @@ function reportBox(subject, link){
   </section>`;
 }
 
-function viewCalendar(sportFilter){
-  if (sportFilter !== undefined) S.cal.sport = sportFilter;
+// The hash is the source of truth, so "#calendar" clears a filter left over from "#calendar-<id>".
+function viewCalendar(sportFilter = ""){
+  S.cal.sport = sportFilter;
   const t = today(), {sport, qual, past} = S.cal;
   const rows = S.comps.filter(c => (!sport || c.sportId === sport) && (!qual || c.qualifying) && (past || (c.end || c.start) >= t))
     .sort((a, b) => a.start.localeCompare(b.start));
@@ -489,6 +499,16 @@ async function archive(){
   } catch (e) { showFormErr(errText(e)); }
 }
 
+// Leaves updatedAt alone, so the chip reads "verified" until the next real change.
+async function markVerified(id, btn){
+  try {
+    await S.db.collection("athletes").doc(id).update({verifiedAt: new Date().toISOString(), verifiedBy: S.uid || "admin"});
+  } catch (e) {
+    btn.disabled = false;
+    btn.closest(".sec-head").insertAdjacentHTML("afterend", `<p class="err" role="alert">${esc(errText(e))}</p>`);
+  }
+}
+
 // ---------- router ----------
 function currentRoute(){
   try { return decodeURIComponent(location.hash.slice(1)) || "home"; } catch { return "home"; }
@@ -507,8 +527,10 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about") html = viewAbout(), nav = "about";
+  else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound(), nav = "";
   $("view").innerHTML = banner() + html;
+  $("adminLink").hidden = !(S.isAdmin && S.live);
   document.querySelectorAll(".links a").forEach(a => a.dataset.nav === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   if (nav === "home") renderResults();
   return h;
@@ -542,10 +564,11 @@ document.addEventListener("input", e => {
   if (e.target.id === "cPast") { S.cal.past = e.target.checked; route(); }
 });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-follow],[data-copy],[data-retry]");
+  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry]");
   if (!t) return;
   if (t.dataset.edit) return openForm(S.athletes.find(a => a.id === t.dataset.edit));
   if (t.dataset.add) return openForm(null, t.dataset.add);
+  if (t.dataset.verify) { t.disabled = true; return markVerified(t.dataset.verify, t); }
   if (t.dataset.act) { t.disabled = true; return decide(t.closest(".prop").dataset.id, t.dataset.act === "approve", t); }
   if (t.dataset.follow) { toggleFollow(t.dataset.follow); route(); return $("view").querySelector("[data-follow]")?.focus(); }
   if ("retry" in t.dataset) { S.failed = false; route(); return loadPublic(); }
