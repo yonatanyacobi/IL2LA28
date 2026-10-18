@@ -269,8 +269,9 @@ function reportBox(subject, link){
   </section>`;
 }
 
-function viewCalendar(sportFilter){
-  if (sportFilter !== undefined) S.cal.sport = sportFilter;
+// The hash is the source of truth, so "#calendar" clears a filter left over from "#calendar-<id>".
+function viewCalendar(sportFilter = ""){
+  S.cal.sport = sportFilter;
   const t = today(), {sport, qual, past} = S.cal;
   const rows = S.comps.filter(c => (!sport || c.sportId === sport) && (!qual || c.qualifying) && (past || (c.end || c.start) >= t))
     .sort((a, b) => a.start.localeCompare(b.start));
