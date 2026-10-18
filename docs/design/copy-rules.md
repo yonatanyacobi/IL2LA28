@@ -57,6 +57,8 @@ The job follows the same rule (`job/SKILL.md`, #85). The export normalises `data
 | rank field | `דירוג או הישג`; place-not-rank is marked `(מיקום, לא דירוג)` | `דירוג נוכחי` |
 | runbook link | `מדריך` | `ראנבוק` |
 | schedule | `לוח הזמנים` | `לו״ז` |
+| an athlete's start in a competition (a `session` in code) | `הופעה` (`הופעה אחת`, `3 הופעות`); a competition's list: `לוח הזמנים של הישראלים` | `סשן`, `לוח הסשנים` |
+| what a stage means | one sentence from `STAGE_HELP` (app.js), the same text on the athlete page and in About | a paraphrase written on the page |
 | the visitor's own follow | `מעקב`, `במעקב שלך`, `במעקב שלי`, `☆ מעקב אחרי…` (the only meaning of מעקב) | `מעקב` for anything else |
 | stage 0 | `לפני חלון ההעפלה` | `במעקב` |
 | on the site's list | `ברשימה`: `110 ספורטאים ונבחרות ברשימה`, `3 ברשימה בענף` | `במעקב`, `שבמעקב` |
