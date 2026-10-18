@@ -67,6 +67,26 @@ class QuotaDueTest(unittest.TestCase):
         q = [item("judo", "60-", "אירוע", "2026-10-20", "2026-10-20")]
         self.assertEqual(len(run("2026-10-28", q, days=10)), 2)  # the item (10-20) and the worlds (10-25)
 
+    def test_date_matrix_on_real_data(self):
+        # Same dates as the smoke date matrix: a warning starts the day after the page stops showing the event.
+        root = os.path.join(HERE, "..")
+        with open(os.path.join(HERE, "fixtures", "data.json"), encoding="utf-8") as f:
+            data = json.load(f)
+        with open(os.path.join(root, "site", "quotas.json"), encoding="utf-8") as f:
+            quotas = json.load(f)
+        expected = {
+            "2026-10-20": [],
+            "2026-10-24": ["רוטרדם – גמר קבוצתי גברים (התעמלות מכשירים, הסתיים 2026-10-20)"],
+            "2026-10-27": ["טונגיונג (טריאתלון, הסתיים 2026-10-24)", "אליפות העולם בהתעמלות מכשירים 2026 (התעמלות מכשירים, הסתיים 2026-10-25)"],
+            "2026-10-30": [],
+            "2026-11-01": ["גרנד סלאם אבו דאבי (ג׳ודו, הסתיים 2026-10-31) – 7 פריטים"],
+        }
+        for t, parts in expected.items():
+            out = quota_due.due(data, quotas, date.fromisoformat(t))
+            self.assertEqual(len(out), len(parts), (t, out))
+            for line, part in zip(out, parts):
+                self.assertIn(part, line, t)
+
     def test_cli(self):
         quotas = {"items": [item("judo", "60-", "גרנד סלאם", "2026-10-29")]}
         with tempfile.TemporaryDirectory() as tmp:
