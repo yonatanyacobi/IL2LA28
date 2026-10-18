@@ -36,7 +36,22 @@ mailbox into a visible promise. Existing tokens only. Works at 400px, in light a
 2. **Job**: when it finds an error in its own earlier write, it files a proposal with
    `correction: {by: "job", reportedAt}`. Approving it in the review queue writes the doc, as in (1). Add this to `job/SKILL.md`.
 3. **Export** (`export_data.py`): `corrections` with `at >= LAUNCH_AT`, newest first. The >20% shrink guard
-   applies. `LAUNCH_AT` is one constant, shared with `app.js`; the **lead sets it** in the launch PR (see Decisions).
+   applies.
+
+### Launch date: one constant, unset until the owner picks a date
+- **The only copy:** `LAUNCH_AT = None` in `job/export_data.py`. The launch PR sets it to an ISO instant with Z
+  once the owner picks the date. `app.js` has **no** copy of it.
+- **The export publishes it:** `data.json.launchAt`, either the ISO string or `null`.
+- **While `LAUNCH_AT` is `None`:**
+  - export: `launchAt: null` and `corrections: []`, so nothing is public even if DB entries exist. The validator
+    accepts this pair and rejects any non-empty `corrections` without `launchAt`.
+- **Client:**
+  - `S.launchAt` is the `isDate(launchAt.slice(0,10))` value, else `""`. The log is **live** iff `S.launchAt`.
+  - Not live, for visitors: `#corrections` and `#corrections-<id>` render `notFound()`, and every entry point
+    in §3 is omitted (reportBox line, About, athlete fact, footer link).
+  - Not live, for editors in live mode: the page renders above a `.banner` with
+    `תצוגה מקדימה לעורכים: היומן יתפרסם לציבור אחרי שייקבע מועד ההשקה.` The entry points stay hidden.
+- **Going live** needs no client change. The launch PR changes one line, and the next export publishes the date.
 
 The 25 pre-launch audit fixes are **not** entries. They are mentioned once, in the intro (§2).
 
@@ -182,11 +197,12 @@ Desktop: the three steps sit in one row, and `.fix-diff` shows the label in its 
 - **Speed and stat:** the copy follows the 24h / 48h / later thresholds; `{stat}` is absent with fewer than 5 entries.
 - **Empty state:** with `corrections: []`, the page shows the "מטעות לתיקון" panel plus the empty state, and no month headings.
 - **Escaping:** `wrong` and `right` values from the fixture are escaped. No `@` appears in any entry (no reporter emails).
-- **Export:** entries before `LAUNCH_AT` aren't exported.
+- **Export:** entries before `LAUNCH_AT` aren't exported; with `LAUNCH_AT = None` the export has `launchAt: null` and `corrections: []`.
+- **Not live:** with `launchAt: null`, `#corrections` is not found for visitors, no page links to `#corrections`, and an editor sees the preview banner.
 
 ## Decisions (PM, on #89)
-- `LAUNCH_AT = "2026-10-22T09:00:00Z"` (12:00 Israel time). If launch slips to the 27.10 fallback, it becomes
-  `"2026-10-27T10:00:00Z"`; the lead sets it in the launch PR.
+- **`LAUNCH_AT` (PM, updated):** there is no fixed date yet. It stays `None` until the owner picks one; the launch
+  PR then sets it in `export_data.py` only. The page is built but unlinked until then.
 - "תיקנו 25" may be published, worded as a check against sources, not "ידנית" (see `{verified}`).
 - The 48-hour target applies every day, including nights and weekends (launch runbook shifts).
 - `{REPORT_EMAIL}` is the dedicated reports inbox (backlog item D2), never a personal address. **Don't ship
