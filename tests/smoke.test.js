@@ -127,6 +127,40 @@ test("empty data renders empty states", async () => {
   assert.ok(view("sports").length > 0);
 });
 
+// No quotas loader on main yet, so the fixture is injected into S.quotas directly.
+const QUOTAS = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/quotas-sport.json"), "utf8"));
+async function bootQuotas(){
+  const b = await boot();
+  b.run(`S.quotas = ${JSON.stringify(QUOTAS.items)}; S.quotasAt = ${JSON.stringify(QUOTAS.generatedAt)}`);
+  return b;
+}
+
+test("sport page quota section: order, counts, escaping, unsafe links", async () => {
+  const {view} = await bootQuotas();
+  const out = view("sport-judo");
+  assert.ok(out.includes("מכסות לישראל") && out.includes("4 מקצים"));
+  assert.ok(out.indexOf("שיטת ההעפלה") < out.indexOf("מכסות לישראל") && out.indexOf("מכסות לישראל") < out.indexOf("ספורטאים ונבחרות"));
+  const order = ["עד 57", "עד 78", "קבוצה מעורבת", "עד 100"].map(e => out.indexOf(e));
+  assert.deepStrictEqual([...order].sort((x, y) => x - y), order, "earned → in-contention → outside → unknown");
+  assert.ok(out.includes("✓ מכסה הושגה") && out.includes("◐ במרוץ למכסה") && out.includes("○ מחוץ למכסות כרגע"));
+  assert.ok(out.includes("? אין מידע עדיין"), "unknown status falls back to unknown");
+  assert.ok(out.includes("18 מכסות בעולם · עד מכסה אחת למדינה") && out.includes("עד 2 מכסות למדינה"));
+  assert.ok(out.includes("גרנד סלאם אבו דאבי") && !out.includes("תחרות שעברה"), "past quota event hidden");
+  assert.ok(out.includes("ijf.org") && out.includes("נתוני מכסות עודכנו"));
+  assert.ok(!/<img/i.test(out) && out.includes("&lt;img"), "israelNote escaped");
+  assert.ok(!/href\s*=\s*["']?\s*javascript:/i.test(out), "javascript: source dropped");
+  assert.ok(out.includes('aria-label="מכסה הושגה: 1, במרוץ למכסה: 1, מחוץ למכסות כרגע: 1, אין מידע עדיין: 1"'));
+});
+
+test("quota section: all-unknown note; hidden without items", async () => {
+  const {view} = await bootQuotas();
+  const shooting = view("sport-shooting");
+  assert.ok(shooting.includes("מקצה אחד") && shooting.includes("עוד אין מידע על מצב ישראל"));
+  assert.ok(!view("sport-surfing").includes("מכסות לישראל"));
+  const {view: plain} = await boot();
+  assert.ok(!plain("sport-judo").includes("מכסות לישראל"), "no S.quotas → no section");
+});
+
 test("fetch failure shows the retry view", async () => {
   const {view} = await boot({fetchFails: true});
   assert.ok(view("home").includes("data-retry"));
