@@ -187,6 +187,15 @@ function changeRow(c){
 }
 
 const TODAY_MAX = 6, SERIES_DAYS = 31, STAKES_MAX = 2;   // STAKES_MAX: quota lines per strip row
+// Quota items don't reference athletes: link by the athlete's name in the item text, or by weight class,
+// which the two files spell differently ("עד 57 ק״ג (נשים)" vs "57- ק״ג נשים").
+function weightKey(s){
+  const m = str(s).match(/(מעל|עד)?\s*(\d+)\s*([-+])?\s*ק[״"]ג.*(נשים|גברים)/);
+  const sign = m && (m[3] || {מעל: "+", עד: "-"}[m[1]]);
+  return sign ? m[2] + sign + m[4] : "";
+}
+const quotaAthletes = q => athletesOf(q.sportId).filter(a => (a.name && (q.israelNote.includes(a.name) || q.stakes.includes(a.name)))
+  || (weightKey(a.event) && weightKey(a.event) === weightKey(q.event)));
 const dayNo = (from, to) => Math.round((new Date(to + "T12:00:00") - new Date(from + "T12:00:00")) / 864e5) + 1;
 
 // From the schedule, not live results. One row per running competition in a tracked sport, listing the
@@ -221,7 +230,10 @@ function todayStrip(rows){
     const small = [athletes.length ? athletes.sort((a, b) => heCmp(a.name, b.name)).map(who).join(", ") : "",
       esc(c.location), athletes.length ? "" : (n => n === 1 ? "ישראלי/ת אחד/ת במעקב בענף" : `${n} ישראלים במעקב בענף`)(athletesOf(sportId).length), linkOut(c.source)].filter(Boolean).join(" · ");
     // Matched by sport + date (names are free text). Not via stakesLine: the event may have started before today.
-    const stakes = quotasOf(sportId).filter(q => q.stakes && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start));
+    // Followed athletes' items first, then items of athletes listed in this row, then file order (stable sort).
+    const rank = q => { const as = quotaAthletes(q); return as.some(a => S.follows.has(a.id)) ? 0 : as.some(a => athletes.includes(a)) ? 1 : 2; };
+    const stakes = quotasOf(sportId).filter(q => q.stakes && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
+      .sort((x, y) => rank(x) - rank(y));
     const onLine = stakes.slice(0, STAKES_MAX).map(q => `<small class="stakes"><b>מה זה אומר:</b> ${esc(q.event)}: ${esc(q.stakes)}</small>`).join("")
       + (stakes.length > STAKES_MAX ? `<small>ועוד ${stakes.length - STAKES_MAX} מקצים — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
