@@ -36,7 +36,7 @@ mailbox into a visible promise. Existing tokens only. Works at 400px, in light a
 2. **Job**: when it finds an error in its own earlier write, it files a proposal with
    `correction: {by: "job", reportedAt}`. Approving it in the review queue writes the doc, as in (1). Add this to `job/SKILL.md`.
 3. **Export** (`export_data.py`): `corrections` with `at >= LAUNCH_AT`, newest first. The >20% shrink guard
-   applies. `LAUNCH_AT` is one constant, shared with `app.js`; the **PM sets it**.
+   applies. `LAUNCH_AT` is one constant, shared with `app.js`; the **lead sets it** in the launch PR (see Decisions).
 
 The 25 pre-launch audit fixes are **not** entries. They are mentioned once, in the intro (§2).
 
@@ -56,7 +56,7 @@ Nav highlight: "אודות". Route tokens: `corrections` and `corrections-<athle
 <p class="crumb"><a href="#about">→ אודות</a></p>
 <h1 tabindex="-1">יומן התיקונים</h1>
 <p class="muted">כל טעות שתוקנה באתר מאז ההשקה ב־{fmt(LAUNCH_AT)}: מה היה כתוב, מה נכון, ומאיזה מקור.
-  לפני ההשקה בדקנו את הרשומות מול המקורות ותיקנו 25 מהן.{verified}</p>
+  לפני ההשקה בדקנו את כל הרשומות מול המקורות ותיקנו 25 מהן.{verified}</p>
 
 <section class="panel" aria-labelledby="howH">
   <h2 id="howH">מטעות לתיקון</h2>
@@ -90,7 +90,7 @@ Nav highlight: "אודות". Route tokens: `corrections` and `corrections-<athle
 - `{stat}`: shown once there are ≥ 5 entries with `reportedAt` — ` עד עכשיו, {k} מתוך {n} התיקונים בוצעו תוך 48 שעות.`
   Below 5 it's omitted; small numbers would mislead.
 - `{speed}`, from `h = (at - reportedAt) / 36e5`:
-  - h < 24: `תוך פחות מיום`
+  - h < 24: `תוך יממה`
   - h ≤ 48: `תוך יומיים`
   - otherwise: `אחרי {ceil(h/24)} ימים`
 
@@ -169,7 +169,7 @@ On `#corrections-<id>` with no entries: `אין תיקונים מתועדים ל
 │ │ דירוג או הישג                     │ │
 │ │ היה: ̶2̶ ̶ב̶ע̶ו̶ל̶ם̶                     │ │
 │ │ עכשיו: 1 בעולם (IJF, 21.10.2026) │ │
-│ │ תוקן ב־24 באוק׳ · תוך פחות מיום · ijf│ │
+│ │ תוקן ב־24 באוק׳ · תוך יממה · ijf    │ │
 │ └──────────────────────────────────┘ │
 └──────────────────────────────────────┘
 ```
