@@ -416,3 +416,7 @@ div.track{background:none}
 .game-log li{grid-template-columns:110px 1fr}
 .game-log .res{display:block;overflow-wrap:anywhere}
 @media (max-width:640px){.game-log li{grid-template-columns:70px 1fr}.game-log .d{grid-column:auto}}
+
+/* home "השבוע" (S4): the day stays beside its row on phones; the pill wraps under the text */
+.rows.week li{grid-template-columns:8.5em 1fr auto}
+@media (max-width:640px){.rows.week li{grid-template-columns:6.5em 1fr}.rows.week .d{grid-column:auto}.rows.week li > :nth-child(3){grid-column:2}}
