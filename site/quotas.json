@@ -3,6 +3,174 @@
  "items": [
   {
    "sportId": "judo",
+   "event": "60- ק״ג גברים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "17 הראשונים בדירוג האולימפי של IJF עולים ישירות (צבירת נקודות 15 ביוני 2026–12 ביוני 2028, פרסום הדירוג הסופי עד 15 ביוני 2028); בנוסף 104 מכסות יבשתיות לפי דירוג יבשתי (13 לגברים ו־13 לנשים באירופה).",
+   "israelStatus": "in-contention",
+   "israelNote": "יצחק אשפיז מדורג 5 בעולם (IJF, אוק׳ 2026); אין עדיין מכסות – צבירת הנקודות נמשכת עד 12 ביוני 2028 והדירוג הסופי יפורסם עד 15 ביוני 2028",
+   "stakes": "גרנד סלאם אבו דאבי, 29 באוק׳ 2026: נקודות לדירוג IJF, לא מכסה ישירה; אשפיז (5 בעולם) מדורג 2 בתחרות; היעד: טופ 17 ב־12 ביוני 2028",
+   "nextQuotaEvent": {
+    "name": "גרנד סלאם אבו דאבי",
+    "start": "2026-10-29",
+    "end": "2026-10-31"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "judo",
+   "event": "73- ק״ג גברים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "17 הראשונים בדירוג האולימפי של IJF עולים ישירות; מכסה יבשתית למדורגים הבאים (ספורטאי/ת אחד/ת לכל מדינה במסלול היבשתי).",
+   "israelStatus": "in-contention",
+   "israelNote": "יהונתן אלבז מדורג 26 בעולם (IJF, אוק׳ 2026) – מחוץ ל-17, במרחק מהמסלול היבשתי",
+   "stakes": "גרנד סלאם אבו דאבי, 30 באוק׳ 2026: נקודות לדירוג IJF, לא מכסה ישירה; אלבז (26 בעולם) רשום, מדורג 8 בתחרות",
+   "nextQuotaEvent": {
+    "name": "גרנד סלאם אבו דאבי",
+    "start": "2026-10-29",
+    "end": "2026-10-31"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "judo",
+   "event": "52- ק״ג נשים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; מכסות יבשתיות לפי דירוג יבשתי.",
+   "israelStatus": "in-contention",
+   "israelNote": "גפן פרימו מדורגת 11 בעולם (IJF, אוק׳ 2026)",
+   "stakes": "גרנד סלאם אבו דאבי, 29 באוק׳ 2026: נקודות לדירוג IJF, לא מכסה ישירה; גפן פרימו (11 בעולם) רשומה, מדורגת 3 בתחרות",
+   "nextQuotaEvent": {
+    "name": "גרנד סלאם אבו דאבי",
+    "start": "2026-10-29",
+    "end": "2026-10-31"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "judo",
+   "event": "57- ק״ג נשים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; אם לנבחרת יותר ממדורגת אחת ב־17, הוועד האולימפי בוחר מי תקבל את המכסה.",
+   "israelStatus": "in-contention",
+   "israelNote": "תמנע נלסון לוי 6 בעולם, ענבל שמש 35 (IJF, אוק׳ 2026); רק אחת יכולה לייצג",
+   "stakes": "גרנד סלאם אבו דאבי, 29 באוק׳ 2026: נקודות לדירוג IJF, לא מכסה ישירה; נלסון לוי (6 בעולם) מדורגת 1 בתחרות; שמש לא רשומה",
+   "nextQuotaEvent": {
+    "name": "גרנד סלאם אבו דאבי",
+    "start": "2026-10-29",
+    "end": "2026-10-31"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "judo",
+   "event": "63- ק״ג נשים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; מכסות יבשתיות לפי דירוג יבשתי.",
+   "israelStatus": "in-contention",
+   "israelNote": "כרם פרימו מדורגת 13 בעולם (IJF, אוק׳ 2026)",
+   "stakes": "גרנד סלאם אבו דאבי, 30 באוק׳ 2026: נקודות לדירוג IJF, לא מכסה ישירה; כרם פרימו לא ברשימת הרשומים של IJF נכון ל־18 באוק׳ 2026",
+   "nextQuotaEvent": {
+    "name": "גרנד סלאם אבו דאבי",
+    "start": "2026-10-29",
+    "end": "2026-10-31"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "judo",
+   "event": "78- ק״ג נשים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; מכסות יבשתיות לפי דירוג יבשתי.",
+   "israelStatus": "in-contention",
+   "israelNote": "ענבר לניר מדורגת 22 בעולם (IJF, אוק׳ 2026) – מחוץ ל-17",
+   "stakes": "גרנד סלאם אבו דאבי, 31 באוק׳ 2026: לניר אחרי ניתוח בכתף ולא ברשימת הרשומים של IJF נכון ל־18 באוק׳ 2026",
+   "nextQuotaEvent": {
+    "name": "גרנד סלאם אבו דאבי",
+    "start": "2026-10-29",
+    "end": "2026-10-31"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "judo",
+   "event": "78+ ק״ג נשים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "17 הראשונות בדירוג האולימפי של IJF עולות ישירות; אם לנבחרת יותר ממדורגת אחת ב־17, הוועד האולימפי בוחר מי תקבל את המכסה.",
+   "israelStatus": "in-contention",
+   "israelNote": "רז הרשקו מדורגת 1 בעולם, יולי עלמה מישינר 13 (IJF, אוק׳ 2026); רק אחת יכולה לייצג",
+   "stakes": "גרנד סלאם אבו דאבי, 31 באוק׳ 2026: נקודות לדירוג IJF, לא מכסה ישירה; הרשקו (1 בעולם) מדורגת 1 בתחרות; מישינר לא רשומה",
+   "nextQuotaEvent": {
+    "name": "גרנד סלאם אבו דאבי",
+    "start": "2026-10-29",
+    "end": "2026-10-31"
+   },
+   "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "cutoff": {
+    "rank": 17,
+    "list": "IJF Olympic Ranking List",
+    "url": "https://www.ijf.org/wrl_olympic",
+    "final": "2028-06-15",
+    "opens": "2026-06-15"
+   },
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "judo",
    "event": "70- ק״ג נשים",
    "totalQuotas": null,
    "maxPerNOC": 1,
@@ -33,6 +201,89 @@
     "end": "2026-10-31"
    },
    "source": "https://www.ausjudo.com.au/wp-content/uploads/2026/06/JUD-LA28-Qualification-System-v12-May-2026.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "taekwondo",
+   "event": "49- ק״ג נשים",
+   "totalQuotas": 16,
+   "maxPerNOC": 1,
+   "allocation": "5 הראשונות בדירוג האולימפי של WT (ינואר 2028) + מובילת סדרת הגרנד סלאם; השאר בטורנירי מוקדמות יבשתיים (אירופה: 2 לכל משקל) בפבר׳–אפר׳ 2028.",
+   "israelStatus": "unknown",
+   "israelNote": "אלכסנדרה דן, רבקה באייך ואבישג סמברג במשקל; דירוג אולימפי לא נמצא. מכסה אחת לכל מדינה",
+   "nextQuotaEvent": {
+    "name": "גמר הגרנד פרי",
+    "start": "2026-11-28"
+   },
+   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "taekwondo",
+   "event": "57- ק״ג נשים",
+   "totalQuotas": 16,
+   "maxPerNOC": 1,
+   "allocation": "5 הראשונות בדירוג האולימפי של WT (ינואר 2028) + מובילת סדרת הגרנד סלאם; השאר בטורנירי מוקדמות יבשתיים בפבר׳–אפר׳ 2028.",
+   "israelStatus": "unknown",
+   "israelNote": "אריאל ויגדור (מקום 5 באליפות אירופה 2026 במשקל 53-, לא אולימפי); דירוג אולימפי לא נמצא",
+   "nextQuotaEvent": {
+    "name": "גמר הגרנד פרי",
+    "start": "2026-11-28"
+   },
+   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "taekwondo",
+   "event": "68- ק״ג גברים",
+   "totalQuotas": 16,
+   "maxPerNOC": 1,
+   "allocation": "5 הראשונים בדירוג האולימפי של WT (ינואר 2028) + מוביל סדרת הגרנד סלאם; השאר בטורנירי מוקדמות יבשתיים בפבר׳–אפר׳ 2028.",
+   "israelStatus": "unknown",
+   "israelNote": "נמרוד קרביצקי; דירוג אולימפי לא נמצא",
+   "nextQuotaEvent": {
+    "name": "גמר הגרנד פרי",
+    "start": "2026-11-28"
+   },
+   "source": "https://cdn.nocnsf.nl/media/nlqpjps2/tkw-la28-qualification-system.pdf",
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "fencing",
+   "event": "דקר קבוצתי גברים",
+   "totalQuotas": 8,
+   "maxPerNOC": 1,
+   "allocation": "דירוג הקבוצות של FIE ב־1 באפר׳ 2028 (תחרויות 1 באפר׳ 2027–1 באפר׳ 2028): 4 הראשונות + הקבוצה הטובה מכל אחד מ־4 האזורים בין מקומות 5–24. 3 סייפים לקבוצה, וכולם עולים גם לאישי.",
+   "israelStatus": "unknown",
+   "israelNote": "תקופת הדירוג טרם נפתחה (מתחילה ב־1 באפר׳ 2027)",
+   "nextQuotaEvent": null,
+   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
+   "cutoff": {
+    "rank": 4,
+    "list": "FIE Senior Team Ranking",
+    "url": "https://fie.org/athletes",
+    "final": "2028-04-01",
+    "opens": "2027-04-01"
+   },
+   "checkedAt": "2026-10-18"
+  },
+  {
+   "sportId": "fencing",
+   "event": "דקר אישי גברים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "למדינות בלי קבוצה: 10 מכסות – 2 לפי דירוג אישי מותאם, 4 לפי דירוג אזורי (אחד לכל אזור) ו־4 בטורנירים אזוריים באפריל 2028.",
+   "israelStatus": "unknown",
+   "israelNote": "יובל פרייליך מדורג 262 בעולם (FIE, אוק׳ 2026); תקופת הדירוג נפתחת ב־1 באפר׳ 2027",
+   "nextQuotaEvent": null,
+   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
+   "cutoff": {
+    "rank": 2,
+    "list": "FIE Senior Individual Adjusted Official Ranking (AOR)",
+    "url": "https://fie.org/athletes",
+    "final": "2028-04-01",
+    "opens": "2027-04-01"
+   },
    "checkedAt": "2026-10-18"
   },
   {
@@ -726,5 +977,5 @@
    "checkedAt": "2026-10-18"
   }
  ],
- "unpublished": 16
+ "unpublished": 4
 }
