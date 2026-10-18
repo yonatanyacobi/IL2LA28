@@ -15,7 +15,7 @@ The site stays read-only for visitors; every gate below is about what they see.
 
 | # | Gate | Status | Owner |
 |---|---|---|---|
-| G1 | **Audit corrections decided.** All 25 ✏️ proposals in the review queue are approved or rejected, none pending. The 5 top-harm items in `docs/audit/2026-10-18.md` (flag football, Bluman/Bond, Vered-Vilenchik, Shoshani, basketball men) are approved and in the published data.json | 🔴 25 pending | Owner |
+| G1 | **Audit corrections applied.** All 25 ✏️ corrections from `docs/audit/2026-10-18.md` are in the DB, including the 5 top-harm items (flag football, Bluman/Bond, Vered-Vilenchik, Shoshani, basketball men) | 🟢 applied 18.10 by the coordinator under the owner's delegation; spot-check the next published data.json | Owner |
 | G2 | **❓ records aren't shown as checked.** None of the 27 ❓ records has `verifiedAt` unless its open claim was checked. Unverified records keep the "אוטומטי" chip, which is acceptable for launch | 🟡 owner to confirm | Owner + Dana |
 | G3 | **High-visibility records verified.** Everyone who appears in the home strip or the digest between 20.10 and 1.11 is ✅ and marked "נבדק ידנית": the 8 Rotterdam gymnasts, the triathletes in Tongyeong, the weightlifters, the 7 judo entrants in Abu Dhabi and the Doha shooters | 🔴 not started | Dana → owner |
 | G4 | **5 ❓ quota items stay unpublished** (athletics ×2: no WA system yet; sailing ×3: 2026 placings not verified). `build_quotas.py` publishes only `ok`/`fixed`, so this is green while nobody flips them without sources | 🟢 enforced by build | Roni/Yael, Dana |
