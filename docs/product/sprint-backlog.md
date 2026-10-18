@@ -48,7 +48,7 @@ quota item reflects the official result **within 24 h** of it (`docs/runbooks/re
 
 ### L1. Readiness check + launch PR (PM + lead, S)
 - 22.10: the gate report goes to the owner (template in PR #88).
-- On the owner's date: the launch PR sets `LAUNCH_AT` and swaps `{REPORT_EMAIL}` for the owner's dedicated address (D2).
+- On the owner's date: the launch PR sets `LAUNCH_AT`. The dedicated address (D2) goes in earlier, in Shira's swap.
   No announcement (D6).
 
 ### L2. "מה קרה" result line on athlete pages (Noa, M)

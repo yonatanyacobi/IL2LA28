@@ -3,7 +3,7 @@
 Owner: PM. Follows `docs/company/strategy.md` §2. The artifact has no visitor analytics and signed-out visitors can't
 write to the DB, so we measure what we control: the data, the pipeline, the team's latency and the reports we get.
 Weekly log: `docs/product/metrics/<YYYY-Www>.md`, written by the PM every Sunday next to the digest. The baseline
-week is the launch week (22.10).
+week is W42 (`metrics/2026-W42.md`). Post-launch counting (M7, M8) starts on the launch date the owner sets.
 
 ## The metrics
 
