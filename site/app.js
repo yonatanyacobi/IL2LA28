@@ -197,9 +197,9 @@ function trustChip(a, where){
 }
 function trustNote(a){
   const t = trustOf(a), src = safeUrl(a.source);
-  const line = t === "ok" ? `הרשומה הושוותה למקור${src ? ` (${esc(host(src))})` : ""} ולא השתנתה מאז.`
+  const line = t === "ok" ? `הפרטים הושוו ידנית למקור${src ? ` (${esc(host(src))})` : ""} ולא השתנו מאז.`
     : t === "stale" ? `מאז התעדכנו פרטים אוטומטית (${fmt(str(a.updatedAt).slice(0, 10))}). הם ייכללו בבדיקה הבאה.`
-    : `הפרטים נאספו אוטומטית ממקורות פומביים, והרשומות נבדקות ידנית בהדרגה.${src ? " בינתיים כדאי להיעזר בקישור למקור." : ""}`;
+    : `הפרטים נאספו אוטומטית ממקורות פומביים, והבדיקה הידנית נעשית בהדרגה.${src ? " בינתיים כדאי להיעזר בקישור למקור." : ""}`;
   return `${trustChip(a)}<span class="muted">${line}</span><a href="#about-trust">איך אנחנו בודקים</a>`;
 }
 
@@ -495,12 +495,12 @@ function viewHome(){
   ${closestPanel(rows)}
   ${reviewPanel()}
   <section class="panel" aria-label="התקדמות בהעפלה">
-    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} ברשימה · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה${verified ? ` · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית עד כה · <a href="#about-trust">איך בודקים</a>` : ""}</p>
+    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} ברשימה · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה${verified ? ` · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית עד כה · <a href="#about-trust">איך אנחנו בודקים</a>` : ""}</p>
     ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
     <p class="foot"><a href="#about">מה אומרים השלבים?</a></p>
-    <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: ישראל שלחה לפריז 2024 ${PARIS_ATHLETES} ספורטאיות וספורטאים. נבחרת נספרת כאן כרשומה אחת.</p>
+    <p class="foot">${quota ? "" : "טרם הושגו מכסות. "}לשם השוואה: ישראל שלחה לפריז 2024 ${PARIS_ATHLETES} ספורטאיות וספורטאים. נבחרת נספרת כאן פעם אחת.</p>
   </section>
   <div class="grid2">
     <section class="panel">
@@ -724,9 +724,9 @@ function trustBlock(){
   // The legend renders the real chips, so it can't drift from what cards and athlete pages show.
   const d = today() + "T08:00:00Z", earlier = addDays(today(), -3) + "T08:00:00Z", later = today() + "T12:00:00Z";
   const legend = [
-    [{verifiedAt: d, updatedAt: earlier}, "אדם בדק את הרשומה מול המקור, והיא לא השתנתה מאז."],
-    [{verifiedAt: d, updatedAt: later}, "נבדקה ידנית, ואחר כך התעדכנה אוטומטית. ייתכן שהעדכון עוד לא נבדק."],
-    [{}, "נאספה אוטומטית ועוד לא נבדקה ידנית. כדאי לבדוק מול המקור."],
+    [{verifiedAt: d, updatedAt: earlier}, "הפרטים נבדקו ידנית מול המקור, ולא השתנו מאז."],
+    [{verifiedAt: d, updatedAt: later}, "הפרטים נבדקו ידנית, ואחר כך התעדכנו אוטומטית. ייתכן שהעדכון עוד לא נבדק."],
+    [{}, "הפרטים נאספו אוטומטית ועוד לא נבדקו ידנית. כדאי לבדוק מול המקור."],
   ];
   const tile = (n, label) => `<div class="adm-tile"><b class="digits">${n}</b><span>${label}</span></div>`;
   return `<section class="panel prose" aria-labelledby="trustH">
@@ -756,7 +756,7 @@ function trustBlock(){
   </section>`;
 }
 
-const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p>ייתכן שהקישור ישן או שהרשומה הוסרה.</p><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
+const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p>ייתכן שהקישור ישן או שהדף הוסר.</p><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
 
 function freshness(){
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
@@ -779,7 +779,7 @@ function banner(){
 function reviewPanel(){
   if (!S.isAdmin) return "";
   const pend = S.proposals.filter(p => p.status === "pending");
-  const note = `<p class="foot">את/ה רואה נתונים חיים. הציבור רואה את הפרסום האחרון, שמתעדכן בכל ריצה של העדכון היומי.</p>`;
+  const note = `<p class="foot">את/ה רואה את הנתונים העדכניים מהמאגר, לפני הפרסום. הציבור רואה את הפרסום האחרון, שמתעדכן בכל ריצה של העדכון היומי.</p>`;
   if (!pend.length) return `<section class="panel">${note}</section>`;
   return `<section class="panel review"><h2>הצעות לאישורך (${pend.length})</h2>${note}
     <div class="stack">${pend.map(p => {

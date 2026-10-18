@@ -54,7 +54,7 @@ function viewCorrections(id = ""){
   <p class="crumb"><a href="#about"><span aria-hidden="true">→</span>&nbsp;אודות</a></p>
   <h1 tabindex="-1">יומן התיקונים</h1>
   <p class="muted">כל טעות שתוקנה באתר מאז ההשקה${S.launchAt ? ` ב־${fmt(S.launchAt.slice(0, 10))}` : ""}: מה היה כתוב, מה נכון, ומאיזה מקור.
-    בבדיקה מול המקורות לפני ההשקה תיקנו ${PRE_LAUNCH_FIXES} רשומות.${V ? ` ${V === 1 ? "רשומה אחת כבר נבדקה" : `${V} רשומות כבר נבדקו`} ידנית מול המקור.` : ""}</p>
+    בבדיקה מול המקורות לפני ההשקה תיקנו פרטים אצל ${PRE_LAUNCH_FIXES} ספורטאים ונבחרות.${V ? ` נבדקו ידנית מול המקור עד כה: ${V === 1 ? "ספורטאי/ת או נבחרת אחת" : `${V} ספורטאים ונבחרות`}.` : ""}</p>
   <section class="panel" aria-labelledby="howH">
     <h2 id="howH">מטעות לתיקון</h2>
     <ol class="steps" role="list">
