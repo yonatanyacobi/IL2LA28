@@ -379,6 +379,8 @@ function viewHome(){
   const mineNew = mine.filter(isNew).length;
   const colors = ["var(--stage0)", "var(--blue)", "var(--sun)", "var(--ok)"];
   const verified = S.athletes.filter(a => trustOf(a) !== "auto").length;
+  // PM on #171: a quota earned in the last 7 days is the biggest news, so it goes above "היום".
+  const wonFirst = hub && S.quotas.some(q => q.israelStatus === "earned" && q.earnedAt >= addDays(t, -6) && q.earnedAt <= t);
   return `
   <section class="hero">
     <div>
@@ -389,6 +391,7 @@ function viewHome(){
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
+  ${wonFirst ? wonPanel() : ""}
   ${hub ? homeNow() : ""}
   ${mine.length ? `<section class="panel">
       <div class="sec-head"><h2>במעקב שלי</h2>${mineNew ? `<span class="new">${mineNew} עודכנו מאז הביקור הקודם</span>` : ""}</div>
@@ -397,7 +400,7 @@ function viewHome(){
   <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
   <p class="sr" id="qCount" aria-live="polite"></p>
   <div id="results"></div>
-  ${wonPanel()}
+  ${wonFirst ? "" : wonPanel()}
   ${closestPanel(rows)}
   ${reviewPanel()}
   <section class="panel" aria-label="התקדמות בהעפלה">
