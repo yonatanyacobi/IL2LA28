@@ -24,7 +24,7 @@ Dana; sessions: Dana; `earned`: Dana + Tamar). The coordinator writes to the DB.
 | 6–15.11 | ISA World Surfing Games, Peru (Lelior, entry unverified) | Ofir | – | quota possible; runbook needed once the entry is confirmed |
 | 10–18.11 | European Sixes Salou, men's lacrosse | Yael | [result-night-salou.md](result-night-salou.md) (#214) | as for the women |
 | 11, 14, 17.11 | EuroBasket Women 2027 qualifiers (women's team, 19:40 / 19:40 / 19:00) | Yael | [result-night-basketball-women-nov.md](result-night-basketball-women-nov.md) (#214) | sessions live (v47) |
-| 13–14.11 | WTCS Abu Dhabi, triathlon (Sagiv, start list unverified) | Ofir | – | runbook due by 3.11 |
+| 13.11 | WTCS Abu Dhabi, triathlon, sprint (Sagiv, start list unverified) | Ofir | [result-night-wtcs-abu-dhabi.md](result-night-wtcs-abu-dhabi.md) (#223) | competition record and strings due by 11.11 |
 | 13–15.11 | Judo Grand Prix Zagreb (only if Israelis enter) | Roni | – | check the IJF entry list |
 | 27, 30.11 | World Cup 2027 qualifiers, men's basketball (The Hague 21:00, Riga 19:30) | Yael | – | runbook due by 17.11 |
 | 28–29.11 | World Triathlon Cup Jeddah (Sagiv's entry unknown) | Ofir | – | only if entered |
