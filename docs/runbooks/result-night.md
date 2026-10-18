@@ -44,14 +44,18 @@ In `data/quotas/quotas.json`, edit only the affected item(s):
 | `israelNote` | Short Hebrew fact with an absolute date and geresh, e.g. `נבחרת הגברים במקום 3 בגמר הקבוצתי ברוטרדם (20.10.2026)` |
 | `source` | The official https URL that proves the status (for `earned`: the allocation/result) |
 | `nextQuotaEvent` | The next event that can change this item, or `null` |
-| `review` | `{"status": "unchecked", "by": "<you>", "at": "2026-10-20"}`. The build skips it until signed off |
+| `review` | `{"status": "unchecked", "by": "<you>", "at": "2026-10-20"}`. The build skips it until signed off; for `earned`, until Dana and Tamar sign off |
 
 Also set the top-level `updatedAt` to the value printed by `date` above.
 
-## 3. Fact-check (Dana)
+## 3. Fact-check (Dana; for `earned`, Dana and Tamar)
 
 Dana compares the item with the sources and sets `review` to `{"status": "ok", "by": "dana", "at": "<date>"}`, or
-`"fixed"` if she corrected it. She commits on the same branch:
+`"fixed"` if she corrected it. She commits on the same branch.
+
+**`earned` is approved by Dana and Tamar together, without the owner** (owner decision, 2026-10-18). The item stays
+`unchecked` until both have checked it; then `review` is `{"status": "ok", "by": "dana+tamar", "at": "<date>"}`.
+
 
 ```sh
 git add data/quotas/quotas.json

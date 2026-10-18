@@ -21,7 +21,7 @@
     </div>
   </nav>
   <div class="visitor-bar" id="visitorBar" role="status" hidden>
-    <span>את/ה צופה באתר כמו גולש/ת: נתונים מהפרסום הציבורי, בלי כלי עריכה.</span>
+    <span>את/ה צופה באתר כגולש/ת: הנתונים מהפרסום הציבורי, בלי כלי עריכה.</span>
     <button class="btn small" type="button" id="editModeBtn">חזרה למצב עריכה</button>
   </div>
   <p class="sr" id="routeStatus" aria-live="polite"></p>
@@ -45,6 +45,11 @@
         <label>שלב<select id="fStageIn"></select></label>
         <label>דירוג או הישג<input id="fRank" maxlength="80" placeholder="למשל: מקום 7 בעולם"></label>
       </div>
+      <div class="row">
+        <label>מיקום בדירוג (מספר, לא חובה)<input id="fRankNum" type="number" min="1" step="1" inputmode="numeric"></label>
+        <label>תאריך הדירוג<input id="fRankAsOf" type="date"></label>
+      </div>
+      <label>שם רשימת הדירוג (באנגלית, כמו אצל ההתאחדות)<input id="fRankList" maxlength="80" dir="ltr" placeholder="IJF World Ranking List"></label>
       <div class="row">
         <label>התחרות הבאה<input id="fNext" maxlength="100"></label>
         <label>תאריך התחרות<input id="fNextDate" type="date"></label>

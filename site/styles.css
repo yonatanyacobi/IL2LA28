@@ -237,8 +237,9 @@ main:focus{outline:none}
 /* trust chip (symbol + text, so it never relies on colour) */
 .trust{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px}
 .trust.ok{background:var(--ok-soft);color:var(--ok-ink)}
-.trust.stale{background:var(--sun-soft);color:var(--sun-ink)}
-.trust.auto{border:1px solid var(--line);color:var(--muted)}
+.trust.stale{background:transparent;border:1px solid var(--line-ui);color:var(--ink)}   /* lower confidence, not a warning */
+.trust.auto{background:transparent;border:1px dashed var(--line-ui);color:var(--muted)}
+dd.stack .trust{justify-self:start}
 .today{border-inline-start:4px solid var(--sun)}
 
 /* quota status (shared: #quotas, sport page, #sports cards, home) */
@@ -309,3 +310,7 @@ div.track{background:none}
 .next-up b{color:var(--sun-ink)}
 /* editors' "view as visitor" preview */
 .visitor-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:center;background:var(--blue-soft);color:var(--ink);border-bottom:1px solid var(--line);padding:6px 16px;font-size:14px}
+
+/* quota earned (round3.md §2) */
+.won{border-inline-start:4px solid var(--ok)}
+.stakes.won-line{border-inline-start-color:var(--ok)} .stakes.won-line b{color:var(--ok-ink)}
