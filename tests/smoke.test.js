@@ -219,32 +219,35 @@ test("empty data renders empty states", async () => {
   assert.ok(view("sports").length > 0);
 });
 
-// UX S5: one form (.empty), what is known plus one next step; never the internal word "במאגר".
-test("empty states: one form, a next step, no \"במאגר\"", async () => {
+// UX S5 / components §9: a section's empty line is <p class="muted"> with what is known plus one way on (none on
+// athlete history); "במאגר" appears nowhere in site/.
+test("empty states (S5): p.muted lines, each table row's way on, no \"במאגר\"", async () => {
+  const fs = require("fs");
+  for (const f of fs.readdirSync(path.join(ROOT, "site")).filter(f => /\.(js|html)$/.test(f)))
+    assert.ok(!fs.readFileSync(path.join(ROOT, "site", f), "utf8").includes("במאגר"), `במאגר in site/${f}`);
   const {view} = await boot({data: {...FIXTURE, athletes: [], competitions: [], changes: []}, now: "2026-10-19T09:00:00Z"});
   const judo = view("sport-judo"), home = view("home");
-  assert.ok(judo.includes('<div class="empty"><p>אין תחרויות קרובות ידועות בענף.</p><p><a href="#calendar-judo">ללוח התחרויות בענף</a></p></div>'), "sport: link to its calendar");
-  assert.ok(home.includes('<div class="empty"><p>אין תחרויות קרובות ידועות.</p><p><a href="#calendar">ללוח התחרויות</a></p></div>'));
-  assert.ok(home.includes('<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.</p></div>'), "no Israeli day ahead: no link");
-  for (const out of [judo, home, view("updates"), view("calendar")]) {
-    assert.ok(!out.includes("במאגר"), "internal word in UI copy");
-    assert.ok(!/<p class="muted">(אין|עוד אין|לא נמצאו)/.test(out), "empty list in the old p.muted form");
-  }
-  // Athlete page and home schedule with data: the athlete links to their sport's calendar; the home schedule links
-  // to the next #day with Israelis when nothing is in the next 14 days.
+  assert.ok(judo.includes('<p class="muted">אין תחרויות קרובות ידועות בענף. <a href="#calendar-judo">לוח התחרויות</a></p>'), "sport row");
+  assert.ok(home.includes('<p class="muted">אין תחרויות קרובות ידועות. <a href="#calendar">לוח התחרויות</a></p>'), "home row");
+  assert.ok(home.includes('<p class="muted">אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים הקרובים.</p>'), "no Israeli day ahead: no link");
+  for (const out of [judo, home, view("updates"), view("calendar")])
+    assert.ok(!out.includes('class="empty"'), "a section's empty state is a p.muted line, not div.empty");
+  // With data: athlete "תחרויות קרובות" links to the sport's calendar, history has no link, and the home 14 days
+  // link to the next #day with Israelis.
   const far = JSON.parse(JSON.stringify(FIXTURE));
   far.athletes.forEach(a => { a.nextDate = ""; a.history = []; });
   far.athletes[0].nextDate = "2026-12-20";
+  far.competitions = far.competitions.filter(c => c.sportId !== far.athletes[0].sportId);
   far.sessions = [];
   const b = await boot({data: far, now: "2026-10-19T09:00:00Z"});
-  const a0 = far.athletes[0];
-  assert.ok(b.view(`a-${a0.id}`).includes(`<div class="empty"><p>עוד אין אירועים מתועדים.</p><p><a href="#calendar-${a0.sportId}">ללוח התחרויות בענף</a></p></div>`));
-  assert.ok(b.view("home").includes('<p><a href="#day-2026-12-20">לתחרות הבאה: '), "home schedule: next #day with Israelis");
+  const a0 = far.athletes[0], page = b.view(`a-${a0.id}`);
+  assert.ok(page.includes(`<p class="muted">אין תחרויות קרובות ידועות בענף. <a href="#calendar-${a0.sportId}">לוח התחרויות</a></p>`), "athlete row");
+  assert.ok(page.includes('<p class="muted">עוד אין אירועים מתועדים.</p>'), "athlete history: no way on");
+  assert.ok(b.view("home").includes(' <a href="#day-2026-12-20">ליום התחרויות הבא: '), "home 14-days row");
   // Everyone in the next 14 days is in the today strip: the schedule says so instead of "no competitions".
   far.athletes[0].nextDate = "2026-10-19";
-  const c = await boot({data: far, now: "2026-10-19T09:00:00Z"});
-  const h = c.view("home");
-  assert.ok(h.includes("כל מי שמתחרה ב־14 הימים הקרובים כבר מופיע למעלה, ב„ישראלים מתחרים היום”.") && !h.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים"),
+  const h = (await boot({data: far, now: "2026-10-19T09:00:00Z"})).view("home");
+  assert.ok(h.includes("כל מי שמתחרה ב־14 הימים הקרובים כבר מופיע למעלה.") && !h.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל בשבועיים"),
     "strip-only day: no false 'no competitions'");
 });
 

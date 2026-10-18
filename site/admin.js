@@ -217,7 +217,7 @@ function viewAdmin(sub){
   const cell = (k, sid, list) => { const v = list.filter(CHECKS[k].test).length; return `<td>${v ? `<a href="#admin-${k}-${esc(sid)}">${v}</a>` : "0"}</td>`; };
   const sports = S.sports.filter(s => athletesOf(s.id).length).sort((a, b) => heCmp(a.he, b.he));
   return `<h1 tabindex="-1">בקרת נתונים</h1>
-  <p class="muted">לעורכים בלבד. ${plural(S.athletes.length, "רשומה פעילה אחת", "רשומות פעילות")} במאגר החי.</p>
+  <p class="muted">לעורכים בלבד. ${plural(S.athletes.length, "רשומה פעילה אחת", "רשומות פעילות")}.</p>
   ${resultNightPanel()}
   ${runPanel()}
   ${launchPanel()}

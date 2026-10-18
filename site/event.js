@@ -81,7 +81,7 @@ function viewEvent(id){
   </div>
   <section class="panel" aria-labelledby="evSumH"><h2 id="evSumH">בקצרה</h2>
     ${athletes.length ? `<p class="kpi">${kpi}</p>`
-      : tracked ? emptyState("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", `#sport-${c.sportId}`, `${who(tracked)} במעקב בענף`)
+      : tracked ? emptyLine("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", `#sport-${c.sportId}`, `${who(tracked)} במעקב בענף`)
         : calEmpty("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", c.sportId)}
   </section>
   <div class="event-cols">
