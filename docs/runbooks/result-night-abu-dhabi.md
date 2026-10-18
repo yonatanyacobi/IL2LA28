@@ -14,17 +14,21 @@ IJF WRL PDF.
 | 29.10 | גפן פרימו | `gefen-primo` | 52- ק״ג (נשים) |
 | 29.10 | תמנע נלסון לוי | `timna-nelson-levy` | 57- ק״ג (נשים) |
 | 30.10 | יהונתן אלבז | `yonatan-elbaz` | 73- ק״ג (גברים) |
+| 30.10 | מאיה גושן | `maya-goshen` | 70- ק״ג (נשים) |
+| 31.10 | יוסיף סימין | `iosif-simin` | 100- ק״ג (גברים) |
 | 31.10 | רז הרשקו | `raz-hershko` | 78+ ק״ג (נשים) |
 
-Not entered (IJF list, 18.10): כרם פרימו (63-), ענבר לניר (78-). Re-check all of this after the draw.
+Not entered (IJF list, 18.10): כרם פרימו (63-), ענבר לניר (78-). Goshen and Simin were added to the DB after
+abu-dhabi-outcomes.md; their entries, like everyone's, are re-checked after the draw. There are no quota items for 70- and 100-, so the 1.11
+quotas PR doesn't change for them.
 
 ## Sequence
 
 | When | Step | Who |
 |---|---|---|
-| by 28.10 | Each judoka's `nextDate` = their actual day (29.10: Ashpiz, G. Primo, Nelson Levy; 30.10: Elbaz; 31.10: Hershko) | Roni |
+| by 28.10 | Each judoka's `nextDate` = their actual day (29.10: Ashpiz, G. Primo, Nelson Levy; 30.10: Elbaz, Goshen; 31.10: Simin, Hershko; already so in v49) | Roni |
 | 28.10, 12:00 | Online draw (judotv.com). Re-check entries on https://www.ijf.org/competition/3157/judoka_athletes. A withdrawal: no history entry, out of the session's `athleteIds`, and outcome (ד) on 1.11 | Roni |
-| 28.10, after the draw | Fill `timeLocal` of the three prelim sessions from the IJF/judobase schedule (the Outlines say "TBC"); Dana signs them (`review` is `unchecked` today) and they load through `job/load_sessions.py`. No time published: keep them out | Roni → Dana → coordinator |
+| 28.10, after the draw | Fill `timeLocal` of the three prelim sessions from the IJF/judobase schedule (the Outlines say "TBC"); add Goshen to the 30.10 and Simin to the 31.10 `athleteIds` (missing in roni.json); Dana signs them (`review` is `unchecked` today) and they load through `job/load_sessions.py`. No time published: keep them out | Roni → Dana → coordinator |
 | each day, prelims (time per the draw) | Watch https://www.ijf.org/competition/3157/results. That page only; no news, no judobase live | Roni |
 | an Israeli reaches the final block (semi-final or repechage) | Move that day's block from `pendingFinalBlocks` to `sessions` (17:00 Asia/Dubai = 15:00 Israel) with their `athleteIds`; Dana signs | Roni → Dana → coordinator |
 | each day, 15:00 → end of the final block | Final block | – |
@@ -53,7 +57,7 @@ History text (publishing.md):
 - `<weight>` = the category without the bracket, e.g. `57- ק״ג`; `<DD>` = 29, 30 or 31. The date is in the job's
   style, so the job doesn't record it twice.
 - `<ROUND>` as in abu-dhabi-outcomes.md, e.g. `בסיבוב הראשון`, `ברבע הגמר`.
-- Gender: הודח for Ashpiz and Elbaz, הודחה for G. Primo, Nelson Levy and Hershko.
+- Gender: הודח for Ashpiz, Elbaz and Simin; הודחה for G. Primo, Nelson Levy, Goshen and Hershko.
 - Session `result`: the same outcome words (`זהב`, `כסף`, `ארד`, `מקום 5`, `מקום 7`, `הודח/ה <ROUND>`).
 - Didn't fight (withdrew, DNS): no entry.
 - In the same write: `next` = `""`, `nextDate` = `""`, unless an official entry list for the next event already
