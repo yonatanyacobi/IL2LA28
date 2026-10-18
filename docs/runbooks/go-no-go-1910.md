@@ -1,6 +1,6 @@
 # Go/no-go: result night 19.10, Rotterdam women's qualification
 
-Owner: PM (runs this page and logs the outcome on #238). Decision: coordinator, at **16:30**. Israel time throughout.
+Owner: PM (runs this page and logs the outcome on #238). Decision: coordinator, at **16:00**. Israel time throughout.
 What to write and how: [result-night-1910.md](result-night-1910.md). Reserve and apparatus-final texts for Raz and Shamai:
 [result-watch-rotterdam-wag.md](../research/result-watch-rotterdam-wag.md) (#184 is merged, so the runbook's "Not
 covered yet" note no longer applies). This page only says whether we go, who does what, and how to undo it.
@@ -21,7 +21,7 @@ covered yet" note no longer applies). This page only says whether we go, who doe
 ## Times
 | When | What |
 |---|---|
-| 16:30 | Go/no-go (below) |
+| 16:00 | Go/no-go (below) |
 | 17:00–18:20 | Sub 7: Shoshani, bars. **Record nothing at 18:20**: subs 8–10 can still push her down |
 | before 21:10 | Dana: Raz and Shamai in the sub 10 start list |
 | 22:10–23:30 | Sub 10: Raz and Shamai, all-around |
@@ -30,7 +30,7 @@ covered yet" note no longer applies). This page only says whether we go, who doe
 | 20.10, 07:13 | Daily run; then Roni checks `runs/2026-10-20` |
 | 20.10, after that | v54 (release plan on #238) |
 
-## Go/no-go at 16:30 (each must be yes)
+## Go/no-go at 16:00 (each must be yes)
 - [ ] `#day-2026-10-19` on the live site, signed out, shows both sessions (`…-wag-q-sub7` 17:00, `…-wag-q-sub10` 22:10)
       with the three athletes. If not: Dana signs #157 and the sessions are loaded first.
 - [ ] `runs/2026-10-19` says `published: true`, and the home freshness line shows today.
