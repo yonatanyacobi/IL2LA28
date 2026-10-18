@@ -32,22 +32,33 @@
 גילי שריר 63- (18), יוסף סימין 100- (23), תמר מלכה 48- (26), אדלינה נוביצקי 70- (42), מאיה גושן 70- (57).
 שריר במקום 18 קרובה ל-17 הראשונות, ולכן כדאי שהעורכים ישקלו להוסיף אותה למעקב.
 
-## טאקוונדו: פתוח (0 מתוך 5)
+## טאקוונדו: חלקי (2 מתוך 5)
+
+**מקור חלופי רשמי:** ספר התוצאות של WT לגרנד פרי פריז 2026 (9–11.10.2026).
+במסמך יש טבלת זריעה עם העמודה "Rank WT Olympic" ועם הכותרת "As of 11 OCT 2026":
+https://results.worldtaekwondo.org/resultbooks/paris-2026-world-taekwondo-grand-prix-result-book-6acf30b155e45.pdf
+(הקישור נמצא ב-https://results.worldtaekwondo.org/competitions?type=gp)
 
 | athleteId | rankNum | rankList | rankAsOf | source |
 |---|---|---|---|---|
-| alexandra-dan | null | WT Olympic Ranking | | פתוח |
-| rivka-bayech | null | WT Olympic Ranking | | פתוח |
-| avishag-semberg | null | WT Olympic Ranking | | פתוח |
-| ariel-vigdor | null | WT Olympic Ranking | | פתוח |
-| nimrod-krivitsky | null | WT Olympic Ranking | | פתוח |
+| rivka-bayech | 21 | WT Olympic Ranking | **פתוח** (ספר התוצאות מתאריך 11.10.2026) | ספר התוצאות של פריז, W-49kg: "BAYECH Rivka ISR-1815 21", זרועה 19 |
+| alexandra-dan | 37 | WT Olympic Ranking | **פתוח** (ספר התוצאות מתאריך 11.10.2026) | ספר התוצאות של פריז, W-49kg: "DAN Oleksandra ISR-2245 37", זרועה 29 |
+| avishag-semberg | null | WT Olympic Ranking | | לא השתתפה בפריז ולא במוג׳ו |
+| ariel-vigdor | null | WT Olympic Ranking | | לא השתתפה בפריז ולא במוג׳ו |
+| nimrod-krivitsky | null | WT Olympic Ranking | | לא השתתף בפריז ולא במוג׳ו |
 
-- **רשימה:** WT Olympic Ranking. 5 הראשונים בה ב-6.1.2028 מקבלים מכסה, כך שזו הרשימה הנכונה לפי המפרט.
-  לפי WT, מחזור הנקודות האולימפי התאפס ביולי 2026: https://www.worldtaekwondo.org/wtnews/view.html?nid=142099
-- **למה פתוח:** הדירוג מתפרסם רק ב-worldtkd.simplycompete.com/playerRankingV2. זו אפליקציית JavaScript שלא נקראה
-  כאן, ובאתר WT לא נמצא PDF או גיליון של דירוג אולימפי לאוקטובר 2026.
-- **צפוי:** WT מפרסמת דירוג חודשי. אפשר לנסות שוב בדפדפן עם גישה ל-simplycompete, או לבקש קובץ מ-sport@worldtaekwondo.org.
-  יעד: לפני גמר הגרנד פרי ב-28.11. ל-28.10 אפשר להגיע רק אם תהיה גישה לאתר.
+- **רשימה:** WT Olympic Ranking. 5 הראשונים בה ב-6.1.2028 מקבלים מכסה.
+  לפי WT, השלב השני של מחזור הנקודות התחיל ביולי 2026: https://www.worldtaekwondo.org/wtnews/view.html?nid=142099
+- **הדירוג המלא:** מתפרסם רק ב-worldtkd.simplycompete.com/playerRankingV2. האתר מחזיר 403 לבקשות אוטומטיות,
+  ולא עקפתי את החסימה. גם באתר WT ובהודעות שלו לא נמצא PDF של הדירוג האולימפי.
+- **תאריך הרשימה:** ספר התוצאות לא מציין מאיזה חודש הדירוג ששימש לזריעה. לפי המפרט `rankAsOf` חובה,
+  וזו אותה שאלה כמו בסיוף.
+  - הצעה: `rankAsOf` = 2026-10-11, תאריך ספר התוצאות, עם הערה ב-`rank`.
+  - חלופה: לחכות לגמר הגרנד פרי (28–29.11.2026). ספר התוצאות שלו יציג דירוג עדכני של המשתתפים.
+- **השלושה האחרים:** נבדק גם ספר התוצאות של מוג׳ו (5–7.9.2026, "As of 29 SEP 2026") ולא נמצאו בו ישראלים.
+  נשארו שתי דרכים:
+  - גישה ידנית ל-simplycompete בדפדפן רגיל.
+  - בקשה ל-sport@worldtaekwondo.org.
 - לפי המפרט, `rankNum: null` לא מזיק: הפריטים האלה ממוינים אחרי פריטים עם דירוג.
 
 ## סיוף: חלקי
@@ -73,5 +84,5 @@
 | Sport | List (`rankList`) | Confirmed by |
 |---|---|---|
 | judo | IJF World Ranking List. ה-WRL OG האולימפי עדיף, אבל אי אפשר לקרוא אותו כרגע | Roni ✔ |
-| taekwondo | WT Olympic Ranking | Roni ✔ (הנתונים פתוחים) |
+| taekwondo | WT Olympic Ranking | Roni ✔ (2 מתוך 5 מספר התוצאות של פריז; `rankAsOf` פתוח) |
 | fencing | FIE Senior Individual Ranking; לקבוצות: FIE Senior Team Ranking | Roni ✔ (`rankAsOf` פתוח) |
