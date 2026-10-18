@@ -111,9 +111,18 @@ function winStatus(w){
   return t < w.from ? ["soon", "טרם נפתח"] : isDate(w.to) && t > w.to ? ["done", "נסגר"] : ["open", "פתוח"];
 }
 
+// When the browser blocks storage the follow still holds until the page closes; say so instead of failing
+// silently (QA F1). Uses the same status bar as the visitor toggle.
+function saveFollows(key, list){
+  store.set(key, list);
+  if (JSON.stringify(store.get(key, null)) === JSON.stringify(list)) return;
+  $("visitorMsgText").textContent = "המעקב לא נשמר: הדפדפן חוסם שמירה מקומית באתר הזה, ולכן הוא יימחק כשתסגרו את הדף.";
+  $("visitorMsg").hidden = false;
+}
+
 function toggleFollow(id){
   S.follows.has(id) ? S.follows.delete(id) : S.follows.add(id);
-  store.set("la28.follows", [...S.follows]);
+  saveFollows("la28.follows", [...S.follows]);
 }
 
 // ---------- shared fragments ----------

@@ -16,7 +16,7 @@ S.followSports = new Set(store.get("la28.followSports", []));
 
 function toggleFollowSport(id){
   S.followSports.has(id) ? S.followSports.delete(id) : S.followSports.add(id);
-  store.set("la28.followSports", [...S.followSports]);
+  saveFollows("la28.followSports", [...S.followSports]);
 }
 
 const followedAthletes = () => S.athletes.filter(a => S.follows.has(a.id) || S.followSports.has(a.sportId));
