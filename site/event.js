@@ -38,7 +38,7 @@ function eventStakes(c){
   return `<section class="panel" aria-labelledby="evStakesH"><h2 id="evStakesH">מה על הכף</h2>
     <ul class="qlist">${items.map(q => `<li>
       <div class="q-top"><b><bdi>${esc(q.event)}</bdi></b><span class="actions">${quotaStatusPill(q.israelStatus)}${awaitingOf(q) ? AWAIT_PILL : ""}</span></div>
-      ${q.israelStatus === "earned" ? `<p class="q-meta"><b>מכסה הושגה</b></p>` : q.israelStatus === "in-contention" ? stakesLine(q) : ""}</li>`).join("")}</ul>
+      ${q.israelStatus === "in-contention" ? stakesLine(q) : ""}</li>`).join("")}</ul>
     <p><a href="#sport-${esc(c.sportId)}">לכל המכסות בענף</a></p></section>`;
 }
 
@@ -50,8 +50,9 @@ function viewEvent(id){
   const athletes = [...new Map(flat.flatMap(([s]) => s.athletes.map(a => [a.id, a]))).values()]
     .sort((x, y) => S.follows.has(y.id) - S.follows.has(x.id) || heCmp(x.name, y.name));
   const count = k => flat.filter(([s, d]) => sessStatus(s, d) === k).length;
-  const kpi = [plural(athletes.length, "ישראלי/ת אחד/ת", "ישראלים"), ...[["result", "תוצאות"], ["wait", "בהמתנה לתוצאה"], ["before", "לפני התחרות"]]
-    .map(([k, label]) => (n => n ? `${n} ${label}` : "")(count(k)))].filter(Boolean).join(" · ");
+  const who = n => plural(n, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות");
+  const kpi = [who(athletes.length), ...[["result", n => plural(n, "תוצאה אחת", "תוצאות")], ["wait", n => `${n} בהמתנה לתוצאה`], ["before", n => `${n} לפני התחרות`]]
+    .map(([k, label]) => (n => n ? label(n) : "")(count(k)))].filter(Boolean).join(" · ");
   const stakes = eventStakes(c);
   const tracked = athletesOf(c.sportId).length;
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun), tsOk = ts && !isNaN(Date.parse(ts));
@@ -72,7 +73,7 @@ function viewEvent(id){
   </div>
   <section class="panel" aria-labelledby="evSumH"><h2 id="evSumH">בקצרה</h2>
     ${athletes.length ? `<p class="kpi">${kpi}</p>`
-      : `<p>אין ספורטאים ונבחרות מישראל ידועים בתחרות הזו.${tracked ? ` <a href="#sport-${esc(c.sportId)}">${plural(tracked, "ישראלי/ת אחד/ת", "ישראלים")} במעקב בענף</a>` : ""}</p>`}
+      : `<p>לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.${tracked ? ` <a href="#sport-${esc(c.sportId)}">${who(tracked)} במעקב בענף</a>` : ""}</p>`}
   </section>
   <div class="event-cols">
     <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הסשנים</h2>${schedule}</section>
@@ -81,13 +82,13 @@ function viewEvent(id){
       ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH">הישראלים בתחרות (${athletes.length})</h2>
         <div class="stack">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
           const st = last ? sessStatus(last[0], last[1]) : "";
-          const line = st === "result" ? `<p class="res"><b>תוצאה:</b> ${esc(last[0].result)}</p>`
-            : st === "wait" ? `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`
+          // A result is shown only in the schedule row, next to its source.
+          const line = st === "wait" ? `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`
             : st === "live" ? `<span class="pill s-live">מתחרה היום</span>` : st === "before" ? `<span class="pill s-before">לפני התחרות</span>` : "";
-          return `<div class="stack">${athleteCard(a)}${line && st !== "result" ? `<p>${line}</p>` : line}</div>`; }).join("")}</div></section>` : ""}
+          return `<div class="stack">${athleteCard(a)}${line ? `<p>${line}</p>` : ""}</div>`; }).join("")}</div></section>` : ""}
     </div>
   </div>
-  <p class="foot">${[tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)}` : "", CADENCE, linkOut(c.source, host(c.source))].filter(Boolean).join(" · ")}</p>
+  <p class="foot">${[tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)}` : "", CADENCE, safeUrl(c.source) ? `<bdi>${linkOut(c.source, host(c.source))}</bdi>` : ""].filter(Boolean).join(" · ")}</p>
   <section class="panel" aria-labelledby="evShareH"><h2 id="evShareH">שיתוף</h2>
     <div class="share"><input id="evShare" readonly value="${esc(link)}" dir="ltr" aria-label="קישור לתחרות"><button class="btn ghost small" data-copy="evShare" data-copy-msg="evShareMsg">העתקה</button></div>
     <p class="foot" id="evShareMsg" aria-live="polite"></p>
