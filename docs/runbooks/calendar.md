@@ -32,4 +32,4 @@ Dana; sessions: Dana; `earned`: Dana + Tamar). The coordinator writes to the DB.
 Unconfirmed entries, no night planned: weightlifting Worlds Ningbo (to 8.11, Celia Gold not confirmed), fencing
 World Cup Bern (12–14.11, no LA28 effect), LPGA events (Beck, entries not confirmed).
 
-Daily job run: 23:45. Every runbook enters results before it, and checks `runs/<next day>` for duplicates.
+Daily job run: **07:13** (scheduled task; it also publishes). Every runbook enters results before the next morning's run, and checks `runs/<that day>` for duplicates. To make results public the same night, run only step 5 (PUBLISH) of `job/SKILL.md`.
