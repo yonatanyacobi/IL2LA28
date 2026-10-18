@@ -23,7 +23,7 @@ function viewQuotas(){
   ${waiting.length ? `<section class="panel" aria-labelledby="qWaitH">
     <h2 id="qWaitH">בהמתנה לתוצאות</h2>
     <ul class="rows">${waiting.map(([q, w]) => `<li><span class="d">${fmtShort(w.end)}</span>
-      <span class="t">${esc(w.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · <bdi>${esc(q.event)}</bdi></small></span>
+      <span class="t"><bdi>${esc(w.name)}</bdi><small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · <bdi>${esc(q.event)}</bdi></small></span>
       <span>${quotaStatusPill(q.israelStatus)}</span></li>`).join("")}</ul>
   </section>` : ""}
   ${next.length ? `<section class="panel" aria-labelledby="qNextH">

@@ -4,6 +4,8 @@
 
 const FIX_BY = {reader: "דיווח של קורא/ת", audit: "בדיקת עובדות", job: "נמצא בעדכון האוטומטי"};
 const FIX_STAT_MIN = 5;   // below this, a share "within 48 hours" would mislead
+// Pre-launch source audit (PM decision on #89); fixed history, not entries, so it's not derived from data.
+const PRE_LAUNCH_FIXES = 25;
 
 const fixHours = c => isNaN(Date.parse(c.reportedAt)) ? NaN : (Date.parse(c.at) - Date.parse(c.reportedAt)) / 36e5;
 // No verb: the foot already starts with "תוקן ב־". Slow fixes are shown too; hiding them would defeat the page.
@@ -38,6 +40,7 @@ function viewCorrections(id = ""){
   const timed = all.filter(c => !isNaN(fixHours(c)));
   const stat = timed.length >= FIX_STAT_MIN ? ` עד עכשיו, ${timed.filter(c => fixHours(c) <= 48).length} מתוך ${timed.length} התיקונים בוצעו תוך 48 שעות.` : "";
   const name = id && (S.athletes.find(a => a.id === id)?.name || list[0]?.target.name);
+  if (id && !name) return notFound();   // neither a current athlete nor one with entries
   const months = {};
   list.forEach(c => (months[c.at.slice(0, 7)] ??= []).push(c));
   const mail = `<span dir="ltr">${esc(REPORT_EMAIL)}</span>`;
@@ -47,10 +50,11 @@ function viewCorrections(id = ""){
     : id ? `<div class="empty"><p>אין תיקונים מתועדים לרשומה הזאת.</p><p><a href="#corrections">לכל התיקונים</a></p></div>`
     : `<div class="empty"><p>עוד אין תיקונים מאז ההשקה.</p>
       <p>מצאתם טעות? שלחו קישור ומקור ל־${mail}, והתיקון יופיע כאן.</p></div>`;
-  return `<p class="crumb"><a href="#about">→ אודות</a></p>
+  return `${S.launchAt ? "" : `<div class="banner">תצוגה מקדימה לעורכים: היומן יתפרסם לציבור אחרי שייקבע מועד ההשקה.</div>`}
+  <p class="crumb"><a href="#about">→ אודות</a></p>
   <h1 tabindex="-1">יומן התיקונים</h1>
-  <p class="muted">כל טעות שתוקנה באתר מאז ההשקה ב־${fmt(LAUNCH_AT.slice(0, 10))}: מה היה כתוב, מה נכון, ומאיזה מקור.
-    לפני ההשקה בדקנו את הרשומות מול המקורות ותיקנו 25 מהן.${V ? ` ${V} מהן כבר נבדקו ידנית.` : ""}</p>
+  <p class="muted">כל טעות שתוקנה באתר מאז ההשקה${S.launchAt ? ` ב־${fmt(S.launchAt.slice(0, 10))}` : ""}: מה היה כתוב, מה נכון, ומאיזה מקור.
+    לפני ההשקה בדקנו את כל הרשומות מול המקורות ותיקנו ${PRE_LAUNCH_FIXES} מהן.${V ? ` ${V} מהן כבר נבדקו ידנית.` : ""}</p>
   <section class="panel" aria-labelledby="howH">
     <h2 id="howH">מטעות לתיקון</h2>
     <ol class="steps" role="list">

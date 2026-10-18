@@ -326,3 +326,6 @@ div.track{background:none}
 .pill.by-audit,.pill.by-job{background:transparent;border:1px solid var(--line-ui,var(--stage0));color:var(--muted)}
 .timeline li.k-correction::before{border-color:var(--muted)}
 @media (max-width:640px){.steps{grid-template-columns:1fr}.fix-diff{grid-template-columns:1fr}}
+/* quota earned (round3.md §2) */
+.won{border-inline-start:4px solid var(--ok)}
+.stakes.won-line{border-inline-start-color:var(--ok)} .stakes.won-line b{color:var(--ok-ink)}

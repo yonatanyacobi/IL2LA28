@@ -9,14 +9,14 @@ const PARIS_ATHLETES = 88;
 const SITE_NAME = "הדרך ללוס אנג׳לס 28";
 const SITE_URL ="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
 const CONTACT_EMAIL = "yacobiyonatan@gmail.com";
-// Corrections log (docs/design/corrections-log.md). LAUNCH_AT is shared with export_data.py; the PM sets it.
-// REPORT_EMAIL is the dedicated reports inbox (backlog D2): a placeholder until D2 is decided, and
-// #corrections must not ship before it is real.
-const LAUNCH_AT = "2026-10-22T09:00:00Z";
+// Corrections log (docs/design/corrections-log.md). The launch date comes only from data.json.launchAt
+// (export_data.py LAUNCH_AT). REPORT_EMAIL is the dedicated reports inbox (backlog D2): a placeholder
+// until the owner sends the address.
 const REPORT_EMAIL = "{REPORT_EMAIL}";
 const FIX_FIELDS = ["name", "event", "rank", "next", "nextDate", "notes", "stage", "sportId", "quota"];
 const FIX_MAX = 300;
-const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "next", "nextDate", "notes", "source"];
+const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "rankNum", "rankList", "rankAsOf", "next", "nextDate", "notes", "source"];
+const RANK_MAX_AGE_D = 60;
 const HISTORY_MAX = 20;
 const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
 
@@ -53,7 +53,7 @@ const store = {
 const S = {
   loaded: false, live: false, failed: false, liveLost: false, generatedAt: "", lastRun: "",
   sports: [], athletes: [], comps: [], changes: [], proposals: [],
-  corrections: [],
+  corrections: [], launchAt: "",   // the corrections log is public iff launchAt (data.json) is set
   quotas: [], quotasUpdatedAt: "", quotasLoaded: false, quotasError: false, quotasUnpublished: null,   // empty when quotas.json is missing or bad: quota UI must not render
   db: null, uid: null, isAdmin: false,
   cal: {sport: "", qual: false, past: false},
@@ -137,6 +137,8 @@ function quotaEventEnd(q){
   const c = S.comps.find(c => c.sportId === q.sportId && c.start <= e.start && e.start <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS);
   return c ? c.end || c.start : e.start;
 }
+// Last fact-check of an item (build_quotas.py publishes review.at); older files only have the file date.
+const checkedOf = q => q.checkedAt || str(S.quotasUpdatedAt).slice(0, 10);
 // Past quota events are hidden in the UI; the loader keeps them for #admin checks.
 const nxt = (q, t = today()) => q.nextQuotaEvent?.name && quotaEventEnd(q) >= t ? q.nextQuotaEvent : null;
 // The quota event is over but quotas.json predates its end: the item still shows the pre-event state.
@@ -145,7 +147,7 @@ const AWAIT_DAYS = 14;
 const awaitingOf = (q, t = today()) => {
   const e = q.nextQuotaEvent, end = quotaEventEnd(q);
   if (!e?.name || !end || end >= t || q.israelStatus === "earned") return null;
-  if (str(S.quotasUpdatedAt).slice(0, 10) > end) return null;
+  if (checkedOf(q) > end) return null;   // re-checked after the event: trust the status
   return dayNo(end, t) - 1 <= AWAIT_DAYS ? {...e, end} : null;
 };
 const AWAITING = `<span aria-hidden="true">◷</span> בהמתנה לתוצאות`;
@@ -153,7 +155,8 @@ const AWAIT_PILL = `<span class="pill q-awaiting">${AWAITING}</span>`;
 // No verb: event names are both masculine and feminine ("גרנד סלאם", "אליפות").
 const awaitingLine = w => `${esc(w.name)} (${fmtRange(w.start, w.end)}). עדכון המכסות יפורסם אחרי ההודעה הרשמית.`;
 // "What it means" for Israel at the next quota event; meaningless once that event is past.
-const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
+// An earned item's stakes describe the pre-event state, so they go once it is earned.
+const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) && q.israelStatus !== "earned" ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
 
 function quotaSection(id){
   const items = quotasOf(id);
@@ -223,6 +226,11 @@ function weightKey(s){
 }
 const quotaAthletes = q => athletesOf(q.sportId).filter(a => (a.name && (q.israelNote.includes(a.name) || q.stakes.includes(a.name)))
   || (weightKey(a.event) && weightKey(a.event) === weightKey(q.event)));
+// Tie-break only (docs/product/spec-rank-tiebreak.md): rankNum counts while its list is at most 60 days old.
+// Compared only within one sport, so different lists never meet.
+const rankOf = (a, t = today()) => Number.isInteger(a.rankNum) && a.rankNum >= 1 && isDate(a.rankAsOf) && a.rankAsOf <= t
+  && dayNo(a.rankAsOf, t) - 1 <= RANK_MAX_AGE_D ? a.rankNum : Infinity;
+const byRank = (x, y) => rankOf(x) - rankOf(y) || 0;
 // Athlete page (round3.md §3). The matcher is heuristic, so the copy never says the quota is the athlete's.
 function athleteQuotaFacts(a){
   const items = S.quotas.filter(q => q.sportId === a.sportId && quotaAthletes(q).includes(a))
@@ -235,7 +243,7 @@ function athleteQuotaFacts(a){
     if (s === "in-contention") return e ? `אירוע המכסה הבא: ${esc(e.name)} · ${fmt(e.start)}` : "";
     return s === "outside" ? "לפי המצב הנוכחי, ישראל מחוץ למקומות המכסה." : "עוד אין מידע על מצב ישראל במקצה הזה.";
   };
-  return `<dt>מכסה</dt><dd class="stack">${items.map(q => { const l = line(q); return `
+  return `<dt>${items.length === 1 ? "מכסה" : "מכסות"}</dt><dd class="stack">${items.map(q => { const l = line(q); return `
     <span>${quotaStatusPill(q.israelStatus)} <bdi>${esc(q.event)}</bdi>${awaitingOf(q) ? AWAIT_PILL : ""}</span>${l ? `
     <span class="muted">${l}</span>` : ""}${q.israelStatus === "in-contention" && !awaitingOf(q) ? stakesLine(q, "stakes", "span") : ""}`; }).join("")}
     <a href="#sport-${esc(a.sportId)}">לכל המכסות בענף</a></dd>`;
@@ -262,6 +270,22 @@ function todayRows(){
     || heCmp(x.comp?.name || x.athletes[0].name, y.comp?.name || y.athletes[0].name));
 }
 
+const WON_DAYS = 14;
+// Quotas earned in the last two weeks (round3.md §2). Items without earnedAt are earned but never "new".
+function wonPanel(){
+  const t = today(), from = addDays(t, -(WON_DAYS - 1));
+  const list = S.quotas.filter(q => q.israelStatus === "earned" && q.earnedAt && q.earnedAt >= from && q.earnedAt <= t)
+    .sort((a, b) => b.earnedAt.localeCompare(a.earnedAt) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
+  if (!list.length) return "";
+  return `<section class="panel won" aria-labelledby="wonH">
+    <h2 id="wonH">${list.length === 1 ? "מכסה חדשה לישראל" : "מכסות חדשות לישראל"}</h2>
+    <ul class="rows">${list.map(q => `<li><span class="d">${fmtShort(q.earnedAt)}</span>
+      <span class="t"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · ${esc(q.event)}${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
+      ${quotaStatusPill("earned")}</li>`).join("")}</ul>
+    <p class="foot">ברוב הענפים המכסה שייכת למדינה; הוועד האולימפי בישראל יחליט בהמשך מי ישתמש בה.</p>
+  </section>`;
+}
+
 function todayStrip(rows){
   if (!rows.length) return "";
   const t = today();
@@ -272,18 +296,24 @@ function todayStrip(rows){
       <span class="t">${who(a)}<small>${[sportName(sportId), a.next].filter(Boolean).map(esc).join(" · ")}</small></span><span></span></li>`; }
     const total = dayNo(c.start, c.end || c.start);
     const small = [athletes.length ? athletes.sort((a, b) => heCmp(a.name, b.name)).map(who).join(", ") : "",
-      esc(c.location), athletes.length ? "" : (n => n === 1 ? "ישראלי/ת אחד/ת במעקב בענף" : `${n} ישראלים במעקב בענף`)(athletesOf(sportId).length), linkOut(c.source)].filter(Boolean).join(" · ");
+      esc(c.location), athletes.length ? "" : (n => n === 1 ? "ספורטאי/ת או נבחרת אחת במעקב בענף" : `${n} ספורטאים ונבחרות במעקב בענף`)(athletesOf(sportId).length), linkOut(c.source)].filter(Boolean).join(" · ");
     // Matched by sport + date (names are free text). Not via stakesLine: the event may have started before today.
     // Followed athletes' items first, then items of athletes listed in this row, then file order (stable sort).
     const rank = q => { const as = quotaAthletes(q); return as.some(a => S.follows.has(a.id)) ? 0 : as.some(a => athletes.includes(a)) ? 1 : 2; };
-    // An item whose own event already ended inside this still-running competition (a team final in a 9-day
-    // Worlds) shows "awaiting" instead of its stale stakes.
-    const stakes = quotasOf(sportId).filter(q => (q.stakes && nxt(q) || awaitingOf(q)) && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
-      .sort((x, y) => rank(x) - rank(y));
-    const onLine = stakes.slice(0, STAKES_MAX).map(q => awaitingOf(q)
+    const best = q => Math.min(Infinity, ...quotaAthletes(q).map(a => rankOf(a, t)));
+    // An earned item shows "earned" (only with earnedAt; otherwise nothing, as its stakes are stale). An item whose
+    // own event already ended inside this still-running competition (a team final in a 9-day Worlds) shows
+    // "awaiting" instead of its stale stakes.
+    const won = q => q.israelStatus === "earned";
+    const stakes = quotasOf(sportId).filter(q => (won(q) ? q.earnedAt : q.stakes && nxt(q) || awaitingOf(q))
+        && q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start))
+      .sort((x, y) => rank(x) - rank(y) || (best(x) - best(y) || 0));   // || 0: Infinity - Infinity is NaN
+    const onLine = stakes.slice(0, STAKES_MAX).map(q => won(q)
+      ? `<small class="stakes won-line"><b>✓ מכסה הושגה:</b> <bdi>${esc(q.event)}</bdi></small>`
+      : awaitingOf(q)
       ? (w => `<small class="stakes awaiting"><b>${AWAITING}:</b> <bdi>${esc(q.event)}</bdi> · ${fmtRange(w.start, w.end)}</small>`)(awaitingOf(q))
       : `<small class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</small>`).join("")
-      + (stakes.length > STAKES_MAX ? `<small>ועוד ${stakes.length - STAKES_MAX} מקצים — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
+      + (stakes.length > STAKES_MAX ? `<small>ועוד ${plural(stakes.length - STAKES_MAX, "מקצה אחד", "מקצים")} — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
       <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small>${onLine}</span>
       <span class="now">מתקיימת עכשיו</span></li>`;
@@ -324,20 +354,20 @@ function closestGroups(rows, t = today()){
 function closestPanel(rows){
   const t = today(), groups = closestGroups(rows, t);
   if (!groups.length) return "";
-  const when = s => s < t ? "מתקיים עכשיו" : s === t ? "היום" : s === addDays(t, 1) ? "מחר" : `בעוד ${dayNo(t, s) - 1} ימים`;
+  const when = s => s < t ? "מתקיים עכשיו" : s === t ? "היום" : s === addDays(t, 1) ? "מחר" : (d => d === 2 ? "בעוד יומיים" : `בעוד ${d} ימים`)(dayNo(t, s) - 1);
   const item = ({q, as}) => `<bdi>${esc(q.event)}</bdi>${as.length ? ` (${as.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")})` : ""}`;
   const row = g => {
     const more = g.items.length - CLOSE_EVENTS;
     return `<li><span class="d">${fmtShort(g.start)}</span>
       <span class="t"><a href="#sport-${esc(g.sportId)}">${esc(sportName(g.sportId))}</a> · ${esc(g.name)}
-        <small>${g.items.slice(0, CLOSE_EVENTS).map(item).join(" · ")}${more > 0 ? ` · ועוד ${more} מקצים` : ""}</small>
+        <small>${g.items.slice(0, CLOSE_EVENTS).map(item).join(" · ")}${more > 0 ? ` · ועוד ${plural(more, "מקצה אחד", "מקצים")}` : ""}</small>
         ${g.items.length === 1 ? stakesLine(g.items[0].q, "stakes", "small") : ""}</span>
       <span class="muted">${when(g.start)}</span></li>`;
   };
   return `<section class="panel today" aria-labelledby="closeH">
     <h2 id="closeH">ההזדמנויות הקרובות למכסה</h2>
     <ul class="rows">${groups.map(row).join("")}</ul>
-    <p class="foot">מקצים שבהם ישראל במרוץ למכסה, לפי אירוע המכסה הבא. <a href="#quotas">לכל תמונת המכסות</a></p>
+    <p class="foot">מקצים שבהם ישראל במרוץ למכסה, ממוינים לפי מועד אירוע המכסה הבא. <a href="#quotas">לתמונת המכסות המלאה</a></p>
   </section>`;
 }
 
@@ -352,7 +382,7 @@ function nextUpLine(rows){
   const pick = (withWho.length ? withWho : cands).sort((x, y) => x.c.start.localeCompare(y.c.start) || y.who.length - x.who.length
     || (y.c.qualifying ? 1 : 0) - (x.c.qualifying ? 1 : 0) || heCmp(x.c.name, y.c.name))[0];
   const {c, who} = pick, n = athletesOf(c.sportId).length;
-  const names = who.length === 0 ? (n === 1 ? "ישראלי/ת אחד/ת במעקב בענף" : `${n} ישראלים במעקב בענף`)
+  const names = who.length === 0 ? (n === 1 ? "ספורטאי/ת או נבחרת אחת במעקב בענף" : `${n} ספורטאים ונבחרות במעקב בענף`)
     : who.length > 3 ? `${who.length} ישראלים`
     : who.sort((a, b) => heCmp(a.name, b.name)).map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
   return `<p class="next-up"><b>הבא בתור:</b> <a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${esc(c.name)} · ${fmtRange(c.start, c.end)} · ${names}${c.qualifying ? ` · <span class="pill open">העפלה</span>` : ""}</p>`;
@@ -382,6 +412,7 @@ function viewHome(){
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
   ${todayStrip(rows)}
+  ${wonPanel()}
   ${closestPanel(rows)}
   ${reviewPanel()}
   <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
@@ -392,7 +423,7 @@ function viewHome(){
       <div class="cards">${mine.map(athleteCard).join("")}</div></section>`
     : `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת או נבחרת כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>`}
   <section class="panel" aria-label="התקדמות בהעפלה">
-    <p class="kpi"><b>${S.athletes.length}</b> ספורטאים ונבחרות במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה · <b>${verified}</b> מתוך ${S.athletes.length} נבדקו ידנית</p>
+    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} במעקב · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה · <b>${verified}</b> מתוך ${S.athletes.length} ${verified === 1 ? "נבדק/ה" : "נבדקו"} ידנית</p>
     ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
@@ -425,7 +456,7 @@ function renderResults(){
   const sportKey = s => [s.id, s.he, s.en].map(str).join(" ");
   const sports = S.sports.filter(s => searchKey(sportKey(s)).includes(q));
   const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportKey(sportById(a.sportId) || {id: a.sportId})].map(str).join(" ")).includes(q));
-  $("qCount").textContent = `נמצאו ${hits.length} ספורטאים ונבחרות ו־${sports.length} ענפים`;
+  $("qCount").textContent = `נמצאו ${hits.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${hits.length} ספורטאים ונבחרות`} ${sports.length === 1 ? "וענף אחד" : `ו־${sports.length} ענפים`}`;
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
     ${hits.length ? `<div class="cards">${hits.slice(0, SEARCH_MAX).map(athleteCard).join("")}</div>
@@ -440,7 +471,7 @@ function viewSports(){
   withA.sort((a, b) => nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
-  <p class="muted">${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
+  <p class="muted">${withA.length === 1 ? "ענף אחד עם ספורטאים ונבחרות מישראל במעקב." : `${withA.length} ענפים עם ספורטאים ונבחרות מישראל במעקב, ממוינים לפי התחרות הקרובה.`}${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
   <ul class="sports">${withA.map(s => {
     const list = athletesOf(s.id), ws = winStatus(s.window), nc = upcomingIn(s.id)[0], fresh = list.filter(isNew).length;
     return `<li><a class="sport" href="#sport-${esc(s.id)}">
@@ -508,7 +539,7 @@ function viewAthlete(id){
       <dt>בדיקה</dt><dd>${trustChip(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
       ${safeUrl(a.source) ? `<dt>מקור</dt><dd>${linkOut(a.source, host(a.source))}</dd>` : ""}
-      ${(n => n && typeof viewCorrections === "function" ? `<dt>תיקונים</dt><dd><a href="#corrections-${esc(id)}">${plural(n, "תיקון אחד", "תיקונים")}</a></dd>` : "")(
+      ${(n => n && fixLogLive() ? `<dt>תיקונים</dt><dd><a href="#corrections-${esc(id)}">${plural(n, "תיקון אחד", "תיקונים")}</a></dd>` : "")(
         S.corrections.filter(c => c.target.kind === "athlete" && c.target.id === id).length)}
     </dl>
     ${a.notes ? `<p>${esc(a.notes)}</p>` : ""}
@@ -540,7 +571,7 @@ function reportBox(subject, link){
     <div class="share"><input id="mailAddr" readonly value="${esc(CONTACT_EMAIL)}" dir="ltr" aria-label="כתובת לדיווח"><button class="btn ghost small" data-copy="mailAddr">העתקת הכתובת</button>
       <a class="btn ghost small" href="${esc(mailto)}">פתיחת מייל</a></div>
     <p class="foot" id="copyMsg2" aria-live="polite"></p>
-    ${typeof viewCorrections === "function" ? `<p class="foot">כל התיקונים מתפרסמים ב<a href="#corrections">יומן התיקונים</a>, והיעד הוא תוך 48 שעות.</p>` : ""}
+    ${fixLogLive() ? `<p class="foot">כל התיקונים מתפרסמים ב<a href="#corrections">יומן התיקונים</a>, והיעד הוא תוך 48 שעות.</p>` : ""}
   </section>`;
 }
 
@@ -709,6 +740,8 @@ function openForm(a, sportId){
   $("dlgTitle").textContent = a ? "עריכת " + a.name : "ספורטאי/ת חדש/ה";
   $("fName").value = str(a?.name); $("fNameEn").value = str(a?.name_en); $("fSportIn").value = str(editing.sportId);
   $("fEvent").value = str(a?.event); $("fStageIn").value = String(a ? stageOf(a) : 0); $("fRank").value = str(a?.rank);
+  $("fRankNum").value = Number.isInteger(a?.rankNum) ? String(a.rankNum) : ""; $("fRankList").value = str(a?.rankList);
+  $("fRankAsOf").value = isDate(a?.rankAsOf) ? a.rankAsOf : "";
   $("fNext").value = str(a?.next); $("fNextDate").value = isDate(a?.nextDate) ? a.nextDate : "";
   $("fNotes").value = str(a?.notes); $("fSource").value = str(a?.source);
   $("archBtn").hidden = !a; $("archBtn").textContent = "הסרה מהרשימה";
@@ -720,6 +753,8 @@ function formValues(){
   return {
     name: $("fName").value.trim(), name_en: $("fNameEn").value.trim(), sportId: $("fSportIn").value,
     event: $("fEvent").value.trim(), stage: +$("fStageIn").value, rank: $("fRank").value.trim(),
+    rankNum: $("fRankNum").value.trim() === "" ? null : Number($("fRankNum").value), rankList: $("fRankList").value.trim(),
+    rankAsOf: $("fRankAsOf").value,
     next: $("fNext").value.trim(), nextDate: $("fNextDate").value, notes: $("fNotes").value.trim(),
     source: $("fSource").value.trim(),
   };
@@ -733,6 +768,8 @@ async function saveForm(ev){
   const v = formValues();
   if (!v.name || !v.sportId) return;
   if (v.source && !safeUrl(v.source)) return showFormErr("קישור המקור חייב להתחיל ב־https://");
+  if (v.rankNum !== null && !(Number.isInteger(v.rankNum) && v.rankNum >= 1 && v.rankList && isDate(v.rankAsOf)))
+    return showFormErr("מיקום בדירוג הוא מספר שלם מ־1 ומעלה, ונשמר רק יחד עם שם הרשימה ותאריך הפרסום שלה.");
   const stamp = {updatedAt: new Date().toISOString(), updatedBy: S.uid || "manual"};
   const col = S.db.collection("athletes");
   $("saveBtn").disabled = true;
@@ -805,13 +842,15 @@ function route(){
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
   else if (h === "about") html = viewAbout(), nav = "about";
-  else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function") html = viewCorrections(h.slice(12)), nav = "about";
+  // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
+  else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (h === "digest" && typeof viewDigest === "function") html = viewDigest(), nav = "updates";
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound();
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
   $("view").innerHTML = banner() + html;
+  $("fixLink").innerHTML = fixLogLive() ? ` · <a href="#corrections">יומן התיקונים</a>` : "";
   // Here, not in navigate(): a deep link's first render is the skeleton, and navigate() skips the re-render after load.
   const h1 = document.querySelector("#view h1")?.textContent.trim();
   document.title = h1 && h1 !== SITE_NAME ? `${h1} · ${SITE_NAME}` : SITE_NAME;
@@ -888,10 +927,12 @@ function applySnapshot(d){
   S.comps = (Array.isArray(d.competitions) ? d.competitions : []).filter(c => isDate(c.start));
   S.changes = Array.isArray(d.changes) ? d.changes : [];
   S.corrections = correctionsFrom(d.corrections);
+  S.launchAt = isDate(str(d.launchAt).slice(0, 10)) ? str(d.launchAt) : "";
   S.loaded = true;
   applyQuotas();
 }
 
+const fixLogLive = () => !!S.launchAt && typeof viewCorrections === "function";
 // A correction without a source, target name or real change is dropped; reporters are never in the data.
 function correctionsFrom(list){
   const kinds = ["athlete", "sport", "quota"], by = ["reader", "audit", "job"];
@@ -917,6 +958,8 @@ function applyQuotas(){
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
       allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
+      checkedAt: isDate(q.checkedAt) ? q.checkedAt : "",
+      earnedAt: isDate(q.earnedAt) ? q.earnedAt : "",
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
         ...(isDate(q.nextQuotaEvent.end) && q.nextQuotaEvent.end >= q.nextQuotaEvent.start ? {end: q.nextQuotaEvent.end} : {})} : null}));
   S.quotasUpdatedAt = S.quotas.length ? str(quotaFile.updatedAt) : "";
