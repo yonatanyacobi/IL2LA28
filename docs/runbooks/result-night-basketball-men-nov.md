@@ -30,7 +30,7 @@ change. No "מה התעדכן" line for a single game.
 |---|---|---|
 | game + ~2h (27.11 ~23:00, 30.11 ~21:30) | Final score from the FIBA game page (id above). Other box scores and news are not sources | Yael |
 | + 30 min | Values → Dana | Yael |
-| after Dana, before the 23:45 run | Steps 1–2. On 27.11 the window is tight: if Dana hasn't signed by 23:30, enter after the run and delete any job entry next morning | coordinator |
+| after Dana, before the next morning's 07:13 daily run | Steps 1–2. A 27.11 result (~23:00) still has the night until the 07:13 run | coordinator |
 
 1. **Team write** through `job/athlete_patch.py`: `"result": {"at": "<game day>", "text": …, "source": <FIBA game page>}`;
    `next`/`nextDate` → the 30.11 game after 27.11, and `""` after 30.11 until the next window is official.
