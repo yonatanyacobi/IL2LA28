@@ -53,12 +53,32 @@ with WebFetch, which is already how step 2a works.
   - An extraction prompt with a fixed output schema, tested on saved copies of real result pages and PDFs (Rotterdam,
     Abu Dhabi).
 - **P2:**
-  - World Triathlon API pull, if D-R1 is approved.
+  - World Triathlon API pull. The client is in place: `job/triathlon_api.py`, read-only, with tests. Wiring it into
+    SKILL.md waits for the key.
   - A per-sport source table moved into `sports/<id>.resultsSource` so the job doesn't guess.
 
+## World Triathlon API key (D-R1, approved)
+- **Location.** `~/.config/il2la28/triathlon_api_key` holds the key on one line. The file belongs to the user who
+  runs the job and has mode 600. It sits outside the repo and outside the scheduled-task folder, so
+  `check_live_sync.py` and git never see it.
+- **Setup (owner, once).**
+  ```sh
+  mkdir -p ~/.config/il2la28 && chmod 700 ~/.config/il2la28
+  printf '%s\n' '<key>' > ~/.config/il2la28/triathlon_api_key
+  chmod 600 ~/.config/il2la28/triathlon_api_key
+  ```
+  Paste the key in the terminal only, never into chat, a ticket or a PR. If it ends up anywhere else, rotate it
+  with World Triathlon.
+- **No fallback in code.** `load_key()` refuses a missing, empty, multi-line, symlinked, foreign-owned or
+  group/world-readable file. It doesn't read environment variables, and there is no default key: the documentation
+  example key is never used. When the key is unavailable, the job falls back to the process, not to another key: it
+  reads the official event page as for other sports.
+- **Nothing in logs.** The key goes only in the `apikey` request header. Errors carry the path, the HTTP status or
+  the exception type, never the key, the headers or the response body. Tests cover this. The job must not print
+  request objects.
+
 ## Owner decisions
-- **D-R1:** request a World Triathlon API key? If yes, it is stored only in the scheduled-task folder, never in
-  the repo.
+- **D-R1: approved.** The owner is registering for a key; storage and handling are described above.
 - **D-R2:** approve the `quota` proposal kind, and the publisher (Omer) applying it.
 
 ## Risks
