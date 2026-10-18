@@ -37,3 +37,20 @@ Quota-relevant events in the next 30 days for shooting, surfing, triathlon and w
   - Sources: the entry list and final schedule links in the Doha row above.
 - **Ranking:** ISSF World Ranking 22 (ARW, 2026-10-01), https://www.issf-sports.org/competitions/worldranking/ARW
 - **Side note:** Walla spells the weightlifter "סיליה גולד" (https://sports.walla.co.il/item/3572237); the DB has "צליה גולד". Check the spelling.
+
+## Sprint 2 (2026-10-18)
+
+### Tashtchiev – Hebrew name: still no source → transliteration for the owner
+- **Searched:** Hebrew press (Walla, Sport1, Sport5, Israel Hayom, Kan) and the Olympic Committee of Israel site. No site of the Israel Shooting Federation was found, and Facebook is not readable by fetch.
+  None of these mentions her in Hebrew. ISSF is the only source: "TASHTCHIEV Olga", ISR, born 2004.
+- **Proposed transliteration (labelled "תעתיק", for the owner's decision):** **אולגה טשצ׳ייב**.
+  It follows the CLAUDE.md geresh rule, renders the "tch" of the ISSF spelling as טשצ׳, and "-iev" as ־ייב.
+  If approved, the athlete's `notes` should say "איות עברי: תעתיק, לא אומת".
+
+### Weightlifting Worlds, Ningbo (27.10–8.11) – Israeli entrants still not found
+- **Searched:** Hebrew and English news, plus the Israel Weightlifting Federation (no website found). The Israeli press in the results covers only earlier championships, with nothing on Ningbo.
+  The IWF entry list and Start Book remain behind a bot-check.
+- **Lead for `celia-gold`'s category:** she won the Israeli championships in Herzliya in the **77 kg** class with a 228 kg total, beating Nicole Rubanovich.
+  Source: https://www.juedische-allgemeine.de/kultur/228-kilogramm/ . This points to 77 kg as her Olympic category, but it is not an entry.
+- **Spelling:** Israeli press writes **"סיליה גולד"** (Sport1: https://sport1.maariv.co.il/other-industries/article/1085514/ , Kan, Walla). The DB has "צליה גולד". Propose renaming her through `proposals`.
+- **Still open:** an editor needs to open the IWF Start Book in a browser (link in the Ningbo row), or ask the federation directly.
