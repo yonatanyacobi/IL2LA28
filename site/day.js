@@ -33,10 +33,11 @@ const chipName = d => asDate(d).toLocaleDateString("he-IL", {weekday: "long", da
 const hhmm = iso => new Date(iso).toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
 const ilDate = iso => new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Jerusalem"}).format(new Date(iso));
 const followedSport = sid => !!S.followSports?.has?.(sid);
+const STAR = `<span class="star-on" aria-hidden="true">★</span><span class="sr">במעקב שלך, </span>`;
 
 function sessionRow(s, d){
   const t = today(), a = s.a;
-  const star = S.follows.has(a.id) ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : "";
+  const star = S.follows.has(a.id) ? STAR + " " : "";
   // No "עודכן ב־" without the result's own time (resultAt, from sessions); fallback results have only a date.
   const res = s.result ? `<p class="res"><b>תוצאה:</b> ${esc(s.result)}${safeUrl(s.resultSource) ? ` · ${linkOut(s.resultSource)}` : ""}</p>` : "";
   const chip = s.result ? ""
@@ -85,16 +86,16 @@ function viewDay(d){
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun), tsOk = ts && !isNaN(Date.parse(ts));
   return `<div class="day-nav">
-      <a href="#day-${prev}">→ ${isToday ? "אתמול" : "היום הקודם"}</a>
+      <a href="#day-${prev}"><span aria-hidden="true">→</span> ${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
       <h1 tabindex="-1">${dayTitle(d)}</h1>
-      <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"} ←</a>
+      <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"}<span class="sr">, ${chipName(next)}</span> <span aria-hidden="true">←</span></a>
     </div>
   <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = hasIsraelis(x);
-    return `<a href="#day-${x}" class="${has ? "has" : ""}" aria-label="${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}</a>`; }).join("")}
+    return `<a href="#day-${x}" class="${has ? "has" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}<span class="sr"> · ${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}</span></a>`; }).join("")}
     ${isToday ? "" : `<a href="#today">היום</a>`}</nav>
   <p class="foot">${tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)} · ` : ""}${CADENCE}</p>
   ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
-      <h2 id="ds-${esc(sid)}">${followedSport(sid) ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : ""}<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
+      <h2 id="ds-${esc(sid)}">${followedSport(sid) ? STAR + " " : ""}<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
     : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.</p>${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
