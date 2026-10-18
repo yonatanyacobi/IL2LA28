@@ -2,7 +2,7 @@
 "use strict";
 
 function viewQuotas(){
-  const head = `<p class="crumb"><a href="#sports">→ כל הענפים</a></p><h1 tabindex="-1">תמונת המכסות</h1>`;
+  const head = `<p class="crumb"><a href="#sports"><span aria-hidden="true">→</span>&nbsp;כל הענפים</a></p><h1 tabindex="-1">תמונת המכסות</h1>`;
   if (S.quotasError) return head + `<p class="muted">נתוני המכסות לא נטענו כרגע. שאר האתר מעודכן.</p>`;
   if (!S.quotasLoaded) return head + `<p class="muted">טוען נתוני מכסות…</p>`;
   const list = S.quotas.slice().sort((a, b) => heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
@@ -29,7 +29,7 @@ function viewQuotas(){
   ${next.length ? `<section class="panel" aria-labelledby="qNextH">
     <h2 id="qNextH">אירועי המכסה הקרובים</h2>
     <ul class="rows">${next.map(q => `<li><span class="d">${fmt(q.nextQuotaEvent.start)}</span>
-      <span class="t">${esc(q.nextQuotaEvent.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · <bdi>${esc(q.event)}</bdi></small>${stakesLine(q, "stakes", "small")}</span>
+      <span class="t">${typeof compOn === "function" ? compLink(compOn(q.sportId, q.nextQuotaEvent.start), esc(q.nextQuotaEvent.name)) : esc(q.nextQuotaEvent.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · <bdi>${esc(q.event)}</bdi></small>${stakesLine(q, "stakes", "small")}</span>
       <span>${quotaStatusPill(q.israelStatus)}</span></li>`).join("")}</ul>
   </section>` : ""}
   ${QUOTA_STATUSES.filter(k => n[k]).map(k => `<section class="panel" aria-labelledby="qH-${k}">
