@@ -6,7 +6,8 @@
 const STAGES = ["במעקב", "בחלון ההעפלה", "מכסה הושגה", "נבחר/ה לנבחרת"];
 const OPENING = new Date("2028-07-14T00:00:00-07:00");
 const PARIS_ATHLETES = 88;
-const SITE_URL = "https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
+const SITE_NAME = "הדרך ללוס אנג׳לס 28";
+const SITE_URL ="https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT";
 const CONTACT_EMAIL = "yacobiyonatan@gmail.com";
 const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "next", "nextDate", "notes", "source"];
 const HISTORY_MAX = 20;
@@ -654,6 +655,9 @@ function route(){
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound(), nav = "";
   $("view").innerHTML = banner() + html;
+  // Here, not in navigate(): a deep link's first render is the skeleton, and navigate() skips the re-render after load.
+  const h1 = document.querySelector("#view h1")?.textContent.trim();
+  document.title = h1 && h1 !== SITE_NAME ? `${h1} · ${SITE_NAME}` : SITE_NAME;
   $("adminLink").hidden = !(S.isAdmin && S.live);
   document.querySelectorAll(".links a").forEach(a => a.dataset.nav === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   if (nav === "home") renderResults();

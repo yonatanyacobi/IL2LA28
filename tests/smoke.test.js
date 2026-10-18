@@ -48,7 +48,12 @@ async function boot({data = FIXTURE, fetchFails = false, quotas, now, follows = 
     scrollTo(){}, addEventListener(){}, removeEventListener(){},
     document: {
       getElementById: id => els[id] ??= fakeEl(id),
-      querySelector: () => null, querySelectorAll: () => [],
+      // Only "#view h1" is needed (focus, route announcement, document.title).
+      querySelector: sel => {
+        const m = sel === "#view h1" && /<h1\b[^>]*>([\s\S]*?)<\/h1>/.exec(els.view?.innerHTML || "");
+        return m ? {...fakeEl("h1"), textContent: m[1].replace(/<[^>]*>/g, "").replace(/&amp;/g, "&")} : null;
+      },
+      querySelectorAll: () => [],
       addEventListener: (type, fn) => (listeners[type] ??= []).push(fn), activeElement: null,
     },
     fetch: async url => {
@@ -251,6 +256,15 @@ test("quota section: all-unknown note; hidden without items", async () => {
   const shooting = view("sport-shooting");
   assert.ok(shooting.includes("מקצה אחד") && shooting.includes("עוד אין מידע על מצב ישראל"));
   assert.ok(!view("sport-surfing").includes("מכסות לישראל"));
+});
+
+test("document.title follows the page heading", async () => {
+  const {view, ctx} = await boot();
+  const SITE = "הדרך ללוס אנג׳לס 28";
+  const cases = {home: SITE, sports: `ענפים · ${SITE}`, "a-raz-hershko": `רז הרשקו · ${SITE}`, calendar: `לוח תחרויות · ${SITE}`};
+  for (const [h, title] of Object.entries(cases)) { view(h); assert.strictEqual(ctx.document.title, title, h); }
+  view("a-nope");
+  assert.ok(ctx.document.title.endsWith(SITE));
 });
 
 test("fetch failure shows the retry view", async () => {
