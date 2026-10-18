@@ -1,7 +1,7 @@
 # Runbook: result days 3–4.11, ISSF World Championship, Doha (shooting)
 
-For the coordinator (the only DB writer). Quota texts and rules come unchanged from
-[doha-outcomes.md](doha-outcomes.md); sessions from `data/sessions/yael.json` and `docs/research/sessions-yael.md`;
+For the coordinator (the only DB writer). Quota texts and rules come from
+[doha-outcomes.md](doha-outcomes.md) (dates there are now `3 בנוב׳ 2026`, as in #190); sessions from `data/sessions/yael.json` and `docs/research/sessions-yael.md`;
 the quota procedure from [result-night.md](result-night.md). This file only orders them.
 All times are Israel time (winter time from 25.10: Israel = Doha − 1).
 
@@ -12,13 +12,12 @@ worked out from the results. The mixed team on 4.11 has no quotas.
 | Athlete | id | 3.11 | 4.11 |
 |---|---|---|---|
 | סרגיי ריכטר | `sergey-richter` | 10m air rifle men (quota item `רובה אוויר 10 מ׳ גברים`) | mixed team |
-| אולגה טשצ׳ייב | `olga-tashtchiev` | 10m air rifle women (quota item `רובה אוויר 10 מ׳ נשים`) | mixed team |
+| אולגה טשצ׳ייב | `olga-tashtchiev` (in the live DB; her Hebrew name is an unverified transliteration, unchanged on the night) | 10m air rifle women (quota item `רובה אוויר 10 מ׳ נשים`) | mixed team |
 
-## Before (blockers)
+## Before
 
 | By | Step | Who |
 |---|---|---|
-| 1.11 | **Tashtchiev is not tracked yet** (event-watch D5): her create proposal has to be approved, or her sessions are dropped by the export and nothing can be recorded for her. Her Hebrew name is an unverified transliteration; it isn't changed on the night | Yael → editor |
 | 2.11 evening | ISSF start lists: each Israeli's relay. Replace each `…-q` session with `-q1`/`-q2` and its `timeLocal` (Asia/Qatar), per the session `notes` in yael.json; Dana signs | Yael → Dana → coordinator |
 | 2.11 | Re-check `nextQuotaEvent`: Tallinn 2027 if its date is out, else New Delhi 21–30.4.2027 (doha-outcomes.md) | Yael |
 
@@ -65,8 +64,6 @@ From doha-outcomes.md (א) without the date (it's in `at`). Prefix exactly `קל
 ## Open (ask Yael / Shira)
 
 - **No history (`result.text`) wording for the athletes.** doha-outcomes.md has only the quota items' `israelNote`.
-  Needs a line per outcome (final place, qualification place with score, didn't start), dates in the job's style
+  Yael is writing a line per outcome (final place, qualification place with score, didn't start), dates in the job's style
   `(3 בנוב׳ 2026)`. Until then the coordinator can't do step 1.
-- **Medal line** above is mine; doha-outcomes.md has no medal wording.
-- **Quota notes keep `(3.11.2026)`**: they're hand-curated quotas.json text, not job history, so the job-style date
-  decision doesn't apply. Confirm.
+- **Medal line** above is mine; doha-outcomes.md has no medal wording. Shira is checking it.
