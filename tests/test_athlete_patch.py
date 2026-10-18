@@ -35,6 +35,15 @@ class AthletePatchTest(unittest.TestCase):
         for k in ("verifiedAt", "verifiedBy", "nextDate"):
             self.assertNotIn(k, patch)
 
+    def test_new_result_entry_alone_is_a_change(self):
+        entry = {"at": "2026-10-24", "kind": "result", "text": "מקום 2 בגביע העולם", "source": "https://x.org/r"}
+        patch = ap.build(CUR, {"historyEntry": entry}, NOW)
+        self.assertEqual((patch["updatedAt"], patch["history"][-1]), (NOW, entry))
+        self.assertNotIn("source", patch)  # the record's own source is not replaced by a result page
+        logged = {**CUR, "history": CUR["history"] + [{**entry, "text": "מקום 2 בגביע העולם "}]}
+        self.assertEqual(ap.build(logged, {"historyEntry": entry}, NOW), {}, "already logged (padding ignored)")
+        self.assertEqual(ap.build(CUR, {"historyEntry": {**entry, "kind": "rank"}}, NOW), {}, "only results count alone")
+
     def test_history_capped(self):
         cur = {**CUR, "history": [{"at": f"2026-01-{i:02d}"} for i in range(1, 21)]}
         h = ap.build(cur, {"notes": "חדש", "historyEntry": {"at": "2026-10-19"}}, NOW)["history"]

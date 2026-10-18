@@ -1431,6 +1431,28 @@ test("editor: unticked fieldset writes no correction; new athletes don't get the
   assert.ok(e.els.fixSet.hidden);
 });
 
+test("approving an empty patch only closes the proposal; a real patch still stamps updatedAt", async () => {
+  const {run} = await boot();
+  const id = FIXTURE.athletes[0].id;
+  run(`globalThis.writes = [];
+    const doc = (col, d) => ({update: async v => writes.push({col, d, op: "update", v}), set: async v => writes.push({col, d, op: "set", v}),
+      get: async () => ({exists: true})});
+    S.db = {collection: col => ({doc: d => doc(col, d)}), doc: path => doc(path, "")};
+    S.uid = "u1";
+    S.proposals = [{id: "e1", kind: "update", target: ${JSON.stringify(id)}, patch: {}, summary: "בדיקה ריקה", status: "pending"},
+                   {id: "r1", kind: "update", target: ${JSON.stringify(id)}, patch: {rank: "3 בעולם"}, status: "pending"}];`);
+  const btn = `({disabled: true, closest: () => ({insertAdjacentHTML(){}})})`;
+  await run(`decide("e1", true, ${btn})`);
+  let w = JSON.parse(run("JSON.stringify(writes)"));
+  assert.deepStrictEqual(w.map(x => x.col), ["proposals"], "empty patch: no athlete or meta/status write");
+  assert.strictEqual(w[0].v.status, "approved");
+  run("writes.length = 0");
+  await run(`decide("r1", true, ${btn})`);
+  w = JSON.parse(run("JSON.stringify(writes)"));
+  const upd = w.find(x => x.col === "athletes");
+  assert.ok(upd && upd.v.rank === "3 בעולם" && upd.v.updatedAt, "non-empty patch still writes updatedAt");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {
