@@ -1,10 +1,15 @@
 // Daily view: #today, #day and #day-YYYY-MM-DD (docs/design/daily-and-following.md §1; copy: Shira).
 // Loaded after app.js and uses its helpers. Sessions come from data.json.sessions (docs/design/sessions-contract.md);
 // athletes with no session that day fall back to pseudo-sessions from their nextDate and history entries of kind
-// "result". Results arrive with the job run, so the page says when, never "live".
+// "result". Results arrive with the job run, so every label says what we know and as of when (docs/design/near-live.md,
+// copy per #156), never "live".
 "use strict";
 
-const CADENCE = "מתעדכן פעם ביום";   // the one place to change when event-day runs are approved (OD2)
+// CADENCE and NEXT_CHECK change together when event-day runs are approved (OD2).
+const CADENCE = "מתעדכן פעם ביום";
+const NEXT_CHECK = "נבדוק שוב בעדכון היומי הבא";
+const STALE_H = 26;                  // a page showing today's sessions is stale past this since the last check
+const AWAIT_LONG_H = 48;             // past this since the window end, an awaiting row stops implying a next check
 const DAY_STRIP = 3;                 // chips on each side of the selected date
 const DAY_LOOKAHEAD = 120;           // how far the empty state searches for the next day with Israelis
 const SESSION_WINDOW_H = 3;          // a timed session counts as "now" from its start to +3h
@@ -32,25 +37,27 @@ function exportedSessions(){
     const athletes = (Array.isArray(s.athleteIds) ? s.athleteIds : []).map(id => S.athletes.find(a => a.id === id)).filter(Boolean);
     const proven = str(s.result).trim() && safeUrl(s.resultSource) && isUtc(s.resultAt);
     return comp && athletes.length ? {comp, athletes, sportId: comp.sportId, phase: str(s.phase).slice(0, 120),
+      source: safeUrl(s.source), checkedAt: isUtc(s.checkedAt) ? s.checkedAt : "",
       startUtc: isUtc(s.startUtc) ? s.startUtc : null, day: isUtc(s.startUtc) ? ilDate(s.startUtc) : s.date, timed: true,
       result: proven ? str(s.result).slice(0, 120) : "", resultSource: proven ? s.resultSource : "", resultAt: proven ? s.resultAt : ""} : null;
   }).filter(Boolean);
 }
 
+// The job records results in athletes' history (#137). Never a source-less result (near-live.md §4).
+const historyResult = (a, d) => (Array.isArray(a.history) ? a.history : [])
+  .find(h => h.kind === "result" && h.at === d && str(h.text).trim() && safeUrl(h.source));
+
 // Fallback pseudo-sessions for day d, one per athlete (deduped by athlete + day; a recorded result wins).
 function fallbackSessions(d){
   const out = new Map();
   for (const a of S.athletes) {
-    const res = (Array.isArray(a.history) ? a.history : []).find(h => h.kind === "result" && h.at === d && str(h.text).trim());
+    const res = historyResult(a, d);
     const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null, timed: false};
     if (res) out.set(a.id, {...base, result: str(res.text).slice(0, 120), resultSource: res.source, resultAt: ""});
     else if (a.nextDate === d) out.set(a.id, {...base, result: ""});
   }
   return [...out.values()];
 }
-
-// The job records results in athletes' history (#137); a session without its own result takes them for that day.
-const historyResult = (a, d) => (Array.isArray(a.history) ? a.history : []).find(h => h.kind === "result" && h.at === d && str(h.text).trim());
 
 // Exported sessions, plus fallback pseudo-sessions for athletes who have no session in that day's competition (merged
 // per athlete). An athlete with a session on any day of the competition gets no fallback row, or a nextDate on day 1
@@ -64,7 +71,7 @@ function daySessions(d){
     if (!found.length) return s;
     const text = found.length === 1 && s.athletes.length === 1 ? str(found[0][1].text)
       : found.map(([a, h]) => `${a.name}: ${str(h.text)}`).join(" · ");
-    return {...s, result: text.slice(0, 120), resultSource: found[0][1].source, resultAt: ""};   // a date only: no "עודכן ב־"
+    return {...s, result: text.slice(0, 120), resultSource: found[0][1].source, resultAt: ""};   // a date only
   });
   const covered = new Set(real.flatMap(s => s.athletes.map(a => a.id)));
   return [...real, ...fallbackSessions(d).filter(s => !covered.has(s.athletes[0].id)
@@ -72,26 +79,78 @@ function daySessions(d){
 }
 const hasIsraelis = d => daySessions(d).length > 0;
 
+// Shared near-live labels (docs/design/near-live.md §5), used by #day and #c-<id>.
+const checkTime = () => { const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun); return isUtc(ts) ? ts : ""; };
+const timeTag = (iso, text) => `<time datetime="${esc(new Date(iso).toISOString())}">${text}</time>`;
+
+// "18:40" today, "29 באוק׳, 18:40" otherwise, with the year outside the current one; always Israel time.
+const whenIL = iso => timeTag(iso, `${ilDate(iso) === today() ? "" : fmtShortY(ilDate(iso)) + ", "}${hhmm(iso)}`);
+
+// "{label}: {host}"; <bdi> keeps the host's dots in order inside RTL text (#156).
+const hostLink = (u, label) => safeUrl(u)
+  ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}: <bdi>${esc(host(u))}</bdi><span class="sr"> (נפתח בחלון חדש)</span></a>` : "";
+
+// End of the session's window: start + 3h, or the end of Israel day d when untimed.
+function windowEnd(s, d){
+  if (s.startUtc) return Date.parse(s.startUtc) + SESSION_WINDOW_H * 36e5;
+  const next = Date.parse(addDays(d, 1) + "T00:00:00Z");
+  const ilHour = Number(new Intl.DateTimeFormat("en-GB", {timeZone: "Asia/Jerusalem", hour: "numeric", hourCycle: "h23"}).format(next));
+  return next - ilHour * 36e5;
+}
+
+// "result" | "resultDate" | "before" | "competing" | "awaitFresh" | "awaitChecked" | "awaitLong". A result wins, then
+// the clock. "Checked" needs the session's own checkedAt after the window: a run's time doesn't prove it looked (#156).
+function sessionState(s, d, now = Date.now()){
+  if (str(s.result).trim() && safeUrl(s.resultSource)) return s.resultAt ? "result" : "resultDate";
+  const t = today();
+  if (s.startUtc ? now < Date.parse(s.startUtc) : d > t) return "before";
+  const end = windowEnd(s, d);
+  if (s.startUtc ? now < end : d === t) return "competing";
+  if (now - end > AWAIT_LONG_H * 36e5) return "awaitLong";
+  return s.checkedAt && Date.parse(s.checkedAt) > end ? "awaitChecked" : "awaitFresh";
+}
+const isAwait = state => state.startsWith("await");
+const isResult = state => state.startsWith("result");
+
+function statusChip(state){
+  if (isAwait(state)) return `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`;
+  return {competing: `<span class="pill s-live">מתחרה היום</span>`, before: `<span class="pill s-before">לפני התחרות</span>`}[state] || "";
+}
+
+function sessionDetail(s, state){
+  const line = html => `<span class="res">${html}</span>`;
+  const src = hostLink(s.resultSource, "מקור");
+  if (state === "result") return line(`<b>תוצאה:</b> ${esc(s.result)} · עודכן ב־${whenIL(s.resultAt)} · ${src}`);
+  if (state === "resultDate") return line(`<b>תוצאה:</b> ${esc(s.result)} · ${src}`);
+  if (state === "awaitFresh") return line(NEXT_CHECK);
+  if (state === "awaitChecked") return line(`נבדק לאחרונה ב־${whenIL(s.checkedAt)} · התוצאה עוד לא נמצאה במקור הרשמי`);
+  if (state === "awaitLong") {   // no time: it would read as a promise
+    const board = linkOut(s.source || s.comp?.source, "לוח התחרות הרשמי");
+    return line(`התוצאה עוד לא נמצאה${board ? ` · ${board}` : ""}`);
+  }
+  return "";
+}
+
+// Page line under the h1 (§3). Stale only when the page shows something happening today.
+function freshLine(hasToday){
+  const ts = checkTime();
+  if (!ts) return `<p class="fresh"><i></i><span>${CADENCE}</span></p>`;
+  return hasToday && Date.now() - Date.parse(ts) > STALE_H * 36e5
+    ? `<p class="fresh stale"><i></i><span>הנתונים לא עודכנו מאז ${whenIL(ts)} · ייתכן שיש תוצאות שעוד לא מופיעות כאן</span></p>`
+    : `<p class="fresh"><i></i><span>נכון ל־${whenIL(ts)} · ${CADENCE}</span></p>`;
+}
+
 function sessionRow(s, d){
-  const t = today(), now = Date.now();
   const names = s.athletes.map(a => `${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
-  // "עודכן ב־" only with the result's own time (resultAt); fallback results have only a date.
-  const stamp = s.resultAt ? ` · עודכן ב־${ilDate(s.resultAt) === t ? hhmm(s.resultAt) : `${fmtShort(ilDate(s.resultAt))}, ${hhmm(s.resultAt)}`}` : "";
-  const res = s.result ? `<span class="res"><b>תוצאה:</b> ${esc(s.result)}${stamp}${safeUrl(s.resultSource) ? ` · ${linkOut(s.resultSource)}` : ""}</span>` : "";
-  const start = s.startUtc ? Date.parse(s.startUtc) : NaN;
-  const status = s.result ? ""
-    : !isNaN(start) ? (now < start ? "before" : now < start + SESSION_WINDOW_H * 36e5 ? "live" : "wait")
-    : d < t ? "wait" : d === t ? "live" : "before";
-  const chip = {wait: `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`,
-    live: `<span class="pill s-live">מתחרה היום</span>`, before: `<span class="pill s-before">לפני התחרות</span>`}[status] || "";
-  const when = s.startUtc ? hhmm(s.startUtc) : s.timed ? "השעה תפורסם" : "תאריך בלבד";
-  // Keyed by day, competition and athletes, so the same session on #day and #c- is one row; the chip is left out
-  // of the signature because it changes with the clock.
+  const state = sessionState(s, d);
+  const when = s.startUtc ? timeTag(s.startUtc, hhmm(s.startUtc)) : s.timed ? "השעה תפורסם" : "תאריך בלבד";
+  // Keyed by day, competition and athletes, so the same session on #day and #c- is one row. The signature leaves out
+  // what changes with the clock or a run without news (the status chip, checkedAt).
   const mark = rowMark(`sess|${d}|${s.comp?.id || ""}|${s.athletes.map(a => a.id).join(",")}|${s.phase}`,
     [s.result, s.resultSource, s.resultAt, s.startUtc, s.athletes.map(a => a.name).join(",")].join("\u241f"));
   return `<li><span class="d">${when}</span>
-    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${res}${mark}</span>
-    <span>${chip}</span></li>`;
+    <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${sessionDetail(s, state)}${mark}</span>
+    <span>${statusChip(state)}</span></li>`;
 }
 
 const followedIn = s => s.athletes.some(a => S.follows.has(a.id));
@@ -110,7 +169,7 @@ function compBlock(comp, sessions, sid, d){
   // Stakes: in-contention items whose quota event covers this day (an earned item mustn't show pre-event stakes).
   const stakes = quotasOf(sid).filter(q => q.israelStatus === "in-contention" && q.stakes && q.nextQuotaEvent
     && q.nextQuotaEvent.start <= d && d <= quotaEventEnd(q)).slice(0, STAKES_MAX);
-  return `<h3>${esc(comp.name)}</h3>
+  return `<h3>${compLink(comp, esc(comp.name), "hlink")}</h3>
     ${now ? `<p class="now">מתקיימת עכשיו${total > 1 ? ` · יום ${dayNo(comp.start, d)} מתוך ${total}` : ""}</p>` : ""}
     ${list}
     ${stakes.map(q => `<p class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</p>`).join("")}
@@ -137,16 +196,15 @@ function viewDay(d){
   let after = "";
   if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && !after; i++) if (hasIsraelis(addDays(d, i))) after = addDays(d, i);
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
-  const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun), tsOk = ts && !isNaN(Date.parse(ts));
   return `<div class="day-nav">
       <h1 tabindex="-1">${dayTitle(d)}</h1>
       <a class="day-prev" href="#day-${prev}"><span aria-hidden="true">→</span> ${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
       <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"}<span class="sr">, ${chipName(next)}</span> <span aria-hidden="true">←</span></a>
     </div>
+  ${freshLine(isToday && sessions.length > 0)}
   <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = hasIsraelis(x);
     return `<a href="#day-${x}" class="${has ? "has" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}<span class="sr"> · ${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}</span></a>`; }).join("")}
     ${isToday ? "" : `<a href="#today">היום</a>`}</nav>
-  <p class="foot">${tsOk ? `נכון ל־${fmt(ilDate(ts))}, ${hhmm(ts)} · ` : ""}${CADENCE}</p>
   ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
       <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}

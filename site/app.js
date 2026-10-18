@@ -15,7 +15,7 @@ const FIX_FIELDS = ["name", "event", "rank", "next", "nextDate", "notes", "stage
 const FIX_MAX = 300;
 const EDIT_FIELDS = ["name", "name_en", "sportId", "event", "stage", "rank", "rankNum", "rankList", "rankAsOf", "next", "nextDate", "notes", "source"];
 const RANK_MAX_AGE_D = 60;
-const HISTORY_MAX = 20;
+const HISTORY_MAX = 20, RESULTS_MAX = 60;   // = job/athlete_patch.py HISTORY_MAX, RESULTS_MAX
 const QUOTA_STATUSES = ["earned", "in-contention", "outside", "unknown"];
 
 const $ = id => document.getElementById(id);
@@ -221,11 +221,24 @@ function quotaSection(id){
   </section>`;
 }
 
+// Entry points to the competition page (event-page.md §3): the name links to #c-<id> when event.js is loaded.
+// Shared with day.js and quotas.js; `cls` is optional (e.g. "hlink" for heading links, components.md).
+const compLink = (c, text, cls = "") => c?.id && typeof viewEvent === "function" ? `<a href="#c-${esc(c.id)}"${cls ? ` class="${cls}"` : ""}>${text}</a>` : text;
+
+// The competition is inferred from her nextDate. Her own "next" text is the link only when it names that competition
+// (so the link text describes the target); otherwise her text stays plain and the competition's name is the link.
+const sameName = (x, y) => { const n = s => str(s).toLowerCase().replace(/\s+/g, " ").trim(); return !!n(x) && !!n(y) && (n(x).includes(n(y)) || n(y).includes(n(x))); };
+function nextCompFact(a){
+  const c = isDate(a.nextDate) && typeof compOn === "function" ? compOn(a.sportId, a.nextDate) : null;
+  if (!c || compLink(c, "") === "") return esc(a.next);
+  return sameName(a.next, c.name) ? compLink(c, esc(a.next)) : `${esc(a.next)} · ${compLink(c, esc(c.name))}`;
+}
+
 function compRow(c, withSport){
   const t = today(), end = c.end || c.start, live = c.start <= t && end >= t, past = end < t;
   return `<div class="comp ${past ? "past" : ""}">
     <span class="when">${fmtRange(c.start, c.end)}</span>
-    <span class="what"><b>${withSport ? `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ` : ""}${esc(c.name)}</b>
+    <span class="what"><b>${withSport ? `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ` : ""}${compLink(c, esc(c.name))}</b>
       <span>${esc(c.location)}${c.notes ? " · " + esc(c.notes) : ""}${safeUrl(c.source) ? " · " + linkOut(c.source) : ""}</span></span>
     <span>${live ? `<span class="now">מתקיימת עכשיו</span>` : past ? `<span class="pill ended">הסתיימה</span>` : c.qualifying ? `<span class="pill open">העפלה</span>` : ""}</span>
   </div>`;
@@ -349,7 +362,7 @@ function todayStrip(rows){
       : `<small class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</small>`).join("")
       + (stakes.length > STAKES_MAX ? `<small>ועוד ${plural(stakes.length - STAKES_MAX, "מקצה אחד", "מקצים")} — <a href="#sport-${esc(sportId)}">בדף הענף</a></small>` : "");
     return `<li><span class="d">${total > 1 ? `יום ${dayNo(c.start, t)} מתוך ${total}` : "היום"}</span>
-      <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${esc(c.name)}<small>${small}</small>${onLine}</span>
+      <span class="t"><a href="#sport-${esc(sportId)}">${esc(sportName(sportId))}</a> · ${compLink(c, esc(c.name))}<small>${small}</small>${onLine}</span>
       <span class="now">מתקיימת עכשיו</span></li>`;
   };
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
@@ -418,9 +431,9 @@ function nextUpLine(rows){
     || (y.c.qualifying ? 1 : 0) - (x.c.qualifying ? 1 : 0) || heCmp(x.c.name, y.c.name))[0];
   const {c, who} = pick, n = athletesOf(c.sportId).length;
   const names = who.length === 0 ? (n === 1 ? "ספורטאי/ת או נבחרת אחת במעקב בענף" : `${n} ספורטאים ונבחרות במעקב בענף`)
-    : who.length > 3 ? `${who.length} ישראלים`
+    : who.length > 3 ? `${who.length} ספורטאים ונבחרות`
     : who.sort((a, b) => heCmp(a.name, b.name)).map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ");
-  return `<p class="next-up"><b>הבא בתור:</b> <a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${esc(c.name)} · ${fmtRange(c.start, c.end)} · ${names}${c.qualifying ? ` · <span class="pill open">העפלה</span>` : ""}</p>`;
+  return `<p class="next-up"><b>הבא בתור:</b> <a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLink(c, esc(c.name))} · ${fmtRange(c.start, c.end)} · ${names}${c.qualifying ? ` · <span class="pill open">העפלה</span>` : ""}</p>`;
 }
 
 // ---------- views ----------
@@ -571,7 +584,7 @@ function viewAthlete(id){
       <dt>ענף</dt><dd><a href="#sport-${esc(a.sportId)}">${esc(sp?.he || a.sportId)}</a>${a.event ? ` · ${esc(a.event)}` : ""}</dd>
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}${rowMark(`rank|${id}`, a.rank)}</dd>` : ""}
       ${athleteQuotaFacts(a)}
-      ${a.next ? `<dt>התחרות הבאה</dt><dd>${esc(a.next)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}${rowMark(`next|${id}`, a.next + a.nextDate)}</dd>` : ""}
+      ${a.next ? `<dt>התחרות הבאה</dt><dd>${nextCompFact(a)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}${rowMark(`next|${id}`, a.next + a.nextDate)}</dd>` : ""}
       <dt>בדיקה</dt><dd class="stack">${trustNote(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
       ${safeUrl(a.source) ? `<dt>מקור</dt><dd>${linkOut(a.source, host(a.source))}</dd>` : ""}
@@ -622,7 +635,7 @@ function calendarResults(){
   return rows.length ? Object.keys(months).sort().map(m => `<section class="month">
       <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}<span class="sr"> ${months[m].length === 1 ? "תחרות" : "תחרויות"}</span></span></h2>
       ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
-    : `<div class="empty">אין תחרויות שמתאימות לסינון.</div>`;
+    : `<div class="empty">אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה.</div>`;
 }
 
 function viewCalendar(sportFilter = ""){
@@ -716,7 +729,7 @@ function trustBlock(){
   </section>`;
 }
 
-const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
+const notFound = () => `<div class="empty"><h1 tabindex="-1">הדף לא נמצא</h1><p>ייתכן שהקישור ישן או שהרשומה הוסרה.</p><p><a href="#home">חזרה לדף הראשי</a></p></div>`;
 
 function freshness(){
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
@@ -727,6 +740,7 @@ function freshness(){
 }
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
 
+let lastBanner = "";
 function banner(){
   if (S.liveLost) return `<div class="banner">החיבור לנתונים החיים נותק. מוצגת הגרסה הציבורית האחרונה. רעננו את הדף כדי להתחבר מחדש.</div>`;
   const ts = S.generatedAt;
@@ -740,7 +754,7 @@ function reviewPanel(){
   const pend = S.proposals.filter(p => p.status === "pending");
   const note = `<p class="foot">את/ה רואה נתונים חיים. הציבור רואה את הפרסום האחרון, שמתעדכן בכל ריצה של העדכון היומי.</p>`;
   if (!pend.length) return `<section class="panel">${note}</section>`;
-  return `<section class="panel review"><h2>ממתינים לאישורך (${pend.length})</h2>${note}
+  return `<section class="panel review"><h2>הצעות לאישורך (${pend.length})</h2>${note}
     <div class="stack">${pend.map(p => {
       const t = S.athletes.find(a => a.id === p.target);
       const who = p.kind === "create" ? `ספורטאי/ת חדש/ה: ${esc(p.patch?.name)}` : esc(t?.name || p.target);
@@ -764,7 +778,12 @@ function describePatch(p, t){
   }).join("");
 }
 
-const historyWith = (a, entry) => [...(Array.isArray(a?.history) ? a.history : []), entry].slice(-HISTORY_MAX);
+// Results are the game log (#186): kept apart from the cap of 20 with their own cap, as job/athlete_patch.py does.
+function historyWith(a, entry){
+  const all = [...(Array.isArray(a?.history) ? a.history : []), entry], isRes = h => h?.kind === "result";
+  let dropRes = all.filter(isRes).length - RESULTS_MAX, dropOther = all.length - all.filter(isRes).length - HISTORY_MAX;
+  return all.filter(h => isRes(h) ? !(dropRes-- > 0) : !(dropOther-- > 0));
+}
 
 async function decide(id, approve, btn){
   const p = S.proposals.find(x => x.id === id);
@@ -954,7 +973,7 @@ function route(){
   const h = currentRoute();
   renderedDay = today();
   let html, nav;
-  if (S.failed && !S.loaded) html = `<div class="empty">לא הצלחנו לטעון את הנתונים. <button class="btn small" data-retry>נסו שוב</button></div>`, nav = "";
+  if (S.failed && !S.loaded) html = `<div class="empty" role="alert"><h1 tabindex="-1">לא הצלחנו לטעון את הנתונים</h1><p>ייתכן שמדובר בתקלה זמנית. אפשר לנסות שוב בעוד רגע.</p><p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
   else if (!S.loaded) html = `<div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div>`, nav = "home";
   else if (h === "home") html = viewHome(), nav = "home";
   else if (h === "sports") html = viewSports(), nav = "sports";
@@ -975,7 +994,11 @@ function route(){
   else html = notFound();
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
   if (typeof followingDecorate === "function") html = followingDecorate(h, html);
-  $("view").innerHTML = banner() + html;
+  const b = banner();
+  $("view").innerHTML = b + html;
+  // The banner is rebuilt on every render; announce it through one persistent status only when its text changes.
+  const bt = b.replace(/<[^>]*>/g, "");
+  if (bt !== lastBanner) { lastBanner = bt; const st = $("bannerStatus"); if (st) st.textContent = bt; }
   $("fixLink").innerHTML = fixLogLive() ? ` · <a href="#corrections">יומן התיקונים</a>` : "";
   if (focusTrust && S.loaded) {   // once per arrival, so data refreshes don't steal focus
     focusTrust = false;
@@ -1056,7 +1079,7 @@ document.addEventListener("click", e => {
   if (t.dataset.verify) { t.disabled = true; return markVerified(t.dataset.verify, t); }
   if (t.dataset.act) { t.disabled = true; return decide(t.closest(".prop").dataset.id, t.dataset.act === "approve", t); }
   if (t.dataset.follow) { toggleFollow(t.dataset.follow); route(); return $("view").querySelector("[data-follow]")?.focus(); }
-  if ("retry" in t.dataset) { S.failed = false; route(); return loadPublic(); }
+  if ("retry" in t.dataset) { S.failed = false; route(); $("view").focus({preventScroll: true}); return loadPublic(); }
   if (t.dataset.copy) {
     const input = $(t.dataset.copy);
     const msg = $(t.dataset.copyMsg || (t.dataset.copy === "mailAddr" ? "copyMsg2" : "copyMsg"));

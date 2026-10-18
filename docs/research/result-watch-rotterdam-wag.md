@@ -14,7 +14,7 @@ Longines "Official" results. Style follows `docs/research/result-watch-tongyeong
 - **The list of finalists can change after qualification.** A withdrawal before a final can lift a reserve
   (R1–R3), and the per-country limit can remove an athlete. So:
   - "עלתה לגמר" is based on the Q mark in the Official list;
-  - a reserve is recorded as "מחליפה";
+  - a reserve is recorded as "מחליפה <R>" in the history text, in the session `result` and in `next`;
   - a later change is a new entry, not an edit of this one.
 
 ## Timeline (Israel time = Rotterdam + 1)
@@ -36,17 +36,43 @@ An athlete write with `"result": {at, text, source}` through `job/athlete_patch.
 - `at` = "2026-10-19";
 - `source` = the URL of the Official PDF for that apparatus or all-around.
 
-The texts were built with `tri_results.he_date()` ("19 באוק׳ 2026") and the competition name from data.json. They
-pass `athlete_patch.result_entry()` unchanged and are 95–111 characters long (the limit is 300).
+**Wording (coordinator decision, 18.10):** the `result.text` values are character-for-character the same as the
+gendered texts in #173 (Omer's runbook), for example "…, עלתה לגמר הקרב־רב" and "…, מחליפה <R> לגמר המקבילים".
+`gym_results.py` isn't in the daily job yet (#219 is a skeleton), so the 20.10 run writes no gymnastics result
+and there's no duplicate risk. Maya will add a gender option to `result_text` so that it produces the same
+strings. The texts use `tri_results.he_date()` and the data.json competition name, and pass
+`athlete_patch.result_entry()`.
 
 ### Raz (`lihie-raz`) and Shamai (`roni-shamay`), all-around
 | Outcome | `result.text` | session `result` | `next` / `nextDate` |
 |---|---|---|---|
 | Q to the all-around final | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרב־רב` | `מקום <N> בקרב־רב, עלתה לגמר` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים` / `2026-10-23` |
+| Reserve (R1–R3) | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקרב־רב` | `מקום <N> בקרב־רב, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרב־רב נשים (כמחליפה <R>)` / `2026-10-23` |
 | Not qualified | `מקום <N> בקרב־רב במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), לא עלתה לגמר הקרב־רב` | `מקום <N> בקרב־רב, לא עלתה לגמר` | `""` / `""`, unless an editor knows the next competition |
 
-- **Apparatus final as well** (for example Shamai on bars): a second, separate write, with the bars row below and its
-  own `source`. Each update gets one history entry, so the two can't share one write.
+- **Apparatus final as well**: a second, separate write, with its own `source` (the Official PDF for that
+  apparatus). Each update gets one history entry, so the two can't share one write.
+
+#### Raz / Shamai: apparatus finals (24–25.10)
+One write per apparatus. `<R>` = ראשונה/שנייה/שלישית. A plain "not qualified" on an apparatus isn't recorded: the
+all-around entry already covers the day.
+
+| Apparatus (final date) | Q: `result.text` | Reserve: `result.text` | session `result` | `next` / `nextDate` if this is her nearest final |
+|---|---|---|---|---|
+| Vault (24.10) | `מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקפיצות` | `מקום <N> בקפיצות במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקפיצות` | `מקום <N> בקפיצות, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קפיצות נשים` / `2026-10-24` |
+| Uneven bars (24.10) | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר המקבילים` | `מקום <N> במקבילים מדורגים במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר המקבילים` | `מקום <N> במקבילים, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר מקבילים מדורגים נשים` / `2026-10-24` |
+| Beam (25.10) | `מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקורה` | `מקום <N> בקורה במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקורה` | `מקום <N> בקורה, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קורה נשים` / `2026-10-25` |
+| Floor (25.10) | `מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), עלתה לגמר הקרקע` | `מקום <N> בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (19 באוק׳ 2026), מחליפה <R> לגמר הקרקע` | `מקום <N> בקרקע, עלתה לגמר` / `…, מחליפה <R>` | `אליפות העולם בהתעמלות מכשירים, רוטרדם – גמר קרקע נשים` / `2026-10-25` |
+
+- **`next` order:**
+  - all-around final 23.10 → vault and bars 24.10 → beam and floor 25.10;
+  - `next` names only the nearest one;
+  - a reserve spot counts only if she has no final as a qualifier;
+  - add "(כמחליפה <R>)" to the `next` text for a reserve, as in the all-around table.
+- **Sessions:** a Q moves the matching block from `pendingFinalBlocks` to a session (24.10 or 25.10 at 14:00 Europe/Amsterdam,
+  the FIG Work Plan block), with only that athlete's id. A reserve gets no session until she is confirmed in the
+  final's start list.
+- All the texts are #173's gendered strings and pass `athlete_patch.result_entry()`.
 - If she reaches both finals, `next` points to the nearest one: the all-around final on 23.10 comes before 24–25.10.
 
 ### Shoshani (`yali-shoshani`), uneven bars
@@ -71,6 +97,21 @@ The contract requires both whenever `result` is set. Without them the export bla
 - `stage`;
 - `quotas.json`: the 2026 Worlds give no individual quotas, which start at the 2027 Worlds;
 - `rankNum`.
+
+## The men's team line in "מה התעדכן" (Omer's digest, owned by Roni)
+It's based on #134, the item `artistic-gymnastics` / `קבוצתי גברים`, outcome (ב). Publish it **only after** Dana and Tamar
+sign #134 against FIG's Official results. Until then the digest has no team line.
+
+Line (Shira's wording on #184): one line, opening with the sport prefix the digest's `changeSport()` needs. There's no
+date in the line, because the date is in the entry's `at`, and no forecast wording:
+```
+התעמלות מכשירים: נבחרת הגברים סיימה במקום 20 במוקדמות אליפות העולם ברוטרדם ולא עלתה לגמר הקבוצתי, ולכן לא השיגה מכסה. ההזדמנות הבאה: אליפות העולם 2027, שבה 9 מכסות לנבחרות.
+```
+- The rank (20) and the date come from #134's israelNote. If the Official PDF gives a different rank, change only the
+  number.
+- No individual finalists in this line. Dolgopyat's and Berkovich's floor final (24.10) is its own line, from the
+  result on 24.10.
+- The source link is the Official FIG/Longines team qualification PDF, the same one #134 cites.
 
 ## Risks
 1. **Duplicate entry from the job.** The job (step 2a) may write its own result for Rotterdam on 20.10.

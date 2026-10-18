@@ -1,0 +1,168 @@
+{
+ "updatedAt": "2026-10-18T16:00:00Z",
+ "athletes": [
+  {
+   "athleteId": "sergey-richter",
+   "rankNum": 55,
+   "rankList": "ISSF World Ranking",
+   "rankAsOf": "2026-10-01",
+   "source": "https://www.issf-sports.org/competitions/worldranking/ARM",
+   "notes": "10m Air Rifle Men, rating 706; page \"Version: 01.10.2026\". Not the list that allocates quotas (see cutoffs).",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "olga-tashtchiev",
+   "rankNum": 22,
+   "rankList": "ISSF World Ranking",
+   "rankAsOf": "2026-10-01",
+   "source": "https://www.issf-sports.org/competitions/worldranking/ARW",
+   "notes": "10m Air Rifle Women, rating 1614; page \"Version: 01.10.2026\".",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "roi-dror",
+   "rankNum": 22,
+   "rankList": "World Archery World Ranking",
+   "rankAsOf": "2026-10-12",
+   "source": "https://api.worldarchery.sport/v3/ATHLETEBIOGRAPHY/?Id=44855",
+   "notes": "Recurve men (CatCode RM); RnkDtIssued 2026-10-12.",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "michaela-moshe",
+   "rankNum": 74,
+   "rankList": "World Archery World Ranking",
+   "rankAsOf": "2026-10-12",
+   "source": "https://api.worldarchery.sport/v3/ATHLETEBIOGRAPHY/?Id=46668",
+   "notes": "Recurve women (CatCode RW); RnkDtIssued 2026-10-12.",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "lina-glushko",
+   "rankNum": 528,
+   "rankList": "WTA Singles Rankings",
+   "rankAsOf": "2026-10-12",
+   "source": "https://www.wtatennis.com/players/323091/lina-glushko",
+   "notes": "Rank from the WTA profile's player stats (singles rank 528). The list date 2026-10-12 is the date attribute on https://www.wtatennis.com/rankings/singles, read 2026-10-18. The profile marks her Inactive.",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "amit-vales",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://www.atptour.com/en/players/amit-vales/v0g2/overview",
+   "notes": "ATP site returns 403 to fetch; rank not read. Leave unranked (\"ללא דירוג\") until read.",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "athleteId": "misha-zilberman",
+   "rankNum": null,
+   "rankList": "",
+   "rankAsOf": "",
+   "source": "https://bwfbadminton.com/rankings/",
+   "notes": "BWF returns 403 to fetch; the June 2026 rank in the record is Wikipedia-sourced and stale. Leave unranked until read.",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  }
+ ],
+ "cutoffs": [
+  {
+   "sportId": "tennis",
+   "event": "יחידים נשים",
+   "cutoff": {
+    "rank": 56,
+    "list": "WTA Singles Rankings",
+    "url": "https://www.wtatennis.com/rankings/singles",
+    "final": "2028-06-12"
+   },
+   "source": "https://www.itftennis.com/media/15928/tennis-la28-qualification-system.pdf",
+   "notes": "D.1: 56 direct acceptances on the WTA singles rankings of 12 June 2028, max 4 per NOC, so the real last-in rank is usually deeper than 56. ITF places need a top-500 ranking. No quota item for tennis exists yet: this needs one first.",
+   "review": {
+    "status": "hold",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "tennis",
+   "event": "יחידים גברים",
+   "cutoff": {
+    "rank": 56,
+    "list": "ATP Singles Rankings",
+    "url": "https://www.atptour.com/en/rankings/singles",
+    "final": "2028-06-12"
+   },
+   "source": "https://www.itftennis.com/media/15928/tennis-la28-qualification-system.pdf",
+   "notes": "As for women. No quota item yet.",
+   "review": {
+    "status": "hold",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "shooting",
+   "event": "רובה אוויר 10 מ׳ גברים",
+   "cutoff": null,
+   "source": "https://www.asia-shooting.org/wp-content/uploads/2026/07/Qualification-System-01Jul26-ISSF.pdf",
+   "notes": "No rank cutoff: quotas come from results at designated competitions. The Olympic Ranking of 1.5.2028 gives only 1 place per event, to the best-ranked athlete not yet qualified. The ISSF World Ranking above is context, not the quota list. Same for women's air rifle.",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "archery",
+   "event": "קשת מסורתית (רקרב) – אישי, קבוצות ומעורב",
+   "cutoff": null,
+   "source": "https://www.worldarchery.sport/news/202304/",
+   "notes": "No rank cutoff for recurve: all recurve places come from events (Worlds 2027, continental Games and qualifiers, final tournament). The world ranking allocates only 2 compound mixed-team places.",
+   "review": {
+    "status": "ok",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "sportId": "badminton",
+   "event": "יחידים גברים",
+   "cutoff": null,
+   "source": "https://olympics.bwfbadminton.com/news-single/2025/12/15/la28-badminton-qualification-regulations-approved/",
+   "notes": "The ranking period opens 2027-05-03 (Olympic ranking of 2.5.2028). The 38 singles places fill down the ranking with per-NOC limits (2 only with two in the top 16), so there is no single cutoff rank to state. Revisit when the period opens.",
+   "review": {
+    "status": "hold",
+    "by": "tamar",
+    "at": "2026-10-18"
+   }
+  }
+ ]
+}
