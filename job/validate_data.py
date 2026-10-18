@@ -140,8 +140,11 @@ def validate(data):
             elif kind == "history":
                 for i, h in enumerate(v):
                     check(h, HISTORY, f"{where}[{i}]")
-                if len(v) > 10:
-                    err(f"{where}: {len(v)} entries, max 10")
+                n_res = sum(1 for h in v if isinstance(h, dict) and h.get("kind") == "result")
+                if len(v) - n_res > 10:   # = export_data.HISTORY_PUBLIC
+                    err(f"{where}: {len(v) - n_res} non-result entries, max 10")
+                if n_res > 60:            # = export_data.RESULTS_PUBLIC
+                    err(f"{where}: {n_res} result entries, max 60")
                 dates = [h.get("at") for h in v if isinstance(h, dict)]
                 if all(isinstance(d, str) for d in dates) and dates != sorted(dates):
                     err(f"{where}: not sorted by date")

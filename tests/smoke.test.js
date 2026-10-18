@@ -1649,6 +1649,26 @@ async function bootEditor({failCorrection = 0} = {}){
   return {...b, writes, set, save};
 }
 
+test("historyWith: results capped apart (60) from the other kinds (20), order kept", async () => {
+  const {run} = await boot();
+  const res = n => Array.from({length: n}, (_, i) => ({at: "2025-01-01", kind: "result", text: `r${i}`}));
+  const oth = n => Array.from({length: n}, (_, i) => ({at: "2026-01-01", kind: "rank", text: `o${i}`}));
+  const hw = (hist, entry) => JSON.parse(run(`JSON.stringify(historyWith(${JSON.stringify({history: hist})}, ${JSON.stringify(entry)}))`));
+  // 20 others + 5 results, then a stage entry: the oldest other goes, never a result.
+  const mixed = [...res(2), ...oth(20), ...res(3)];
+  let h = hw(mixed, {at: "2026-10-24", kind: "stage", text: "s"});
+  assert.strictEqual(h.filter(x => x.kind === "result").length, 5);
+  assert.deepStrictEqual(h.filter(x => x.kind !== "result").map(x => x.text), [...oth(20).slice(1).map(x => x.text), "s"]);
+  assert.deepStrictEqual(h.slice(0, 2).map(x => x.text), ["r0", "r1"], "order kept");
+  // A new result with 20 others already there: nothing else is dropped.
+  h = hw(mixed, {at: "2026-10-24", kind: "result", text: "new"});
+  assert.strictEqual(h.length, 26);
+  // 60 results + one more: the oldest result goes.
+  h = hw(res(60), {at: "2026-10-24", kind: "result", text: "new"});
+  assert.deepStrictEqual([h.length, h[0].text, h[59].text], [60, "r1", "new"]);
+  assert.strictEqual(hw(undefined, {kind: "start", text: "x"}).length, 1, "no history yet");
+});
+
 test("editor correction: record + log entry in the export's shape, no reporter identity", async () => {
   const e = await bootEditor();
   assert.ok(!e.els.fixSet.hidden, "fieldset shown when editing a published record");
