@@ -244,8 +244,14 @@ class ExportTest(unittest.TestCase):
                 "source": "https://www.ijf.org/x", "by": "reader"}
         return {**base, **kw}
 
+    def test_launch_at_is_an_instant(self):
+        # Set by the launch PR (sprint 7 #5): an ISO instant in UTC, so the page and the export agree on it.
+        self.assertRegex(ex.LAUNCH_AT, r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+        self.assertIsNotNone(ex.instant(ex.LAUNCH_AT))
+
+    @mock.patch.object(ex, "LAUNCH_AT", None)
     def test_corrections_without_launch_date(self):
-        self.assertIsNone(ex.LAUNCH_AT, "the launch PR sets it; until then nothing is public")
+        self.assertIsNone(ex.LAUNCH_AT, "without a launch date nothing is public")
         corrections = {"ok": self.fix(), "bad": self.fix(source="")}
         with Dump(athletes={"a": athlete()}, corrections=corrections) as d:
             data = d.run()
@@ -258,7 +264,9 @@ class ExportTest(unittest.TestCase):
             with open(prev, "w") as f:
                 json.dump({"sports": [{}], "athletes": [{}], "corrections": [{}] * 10}, f)
             with Dump(athletes={"a": athlete()}, corrections=corrections) as d:
-                self.assertEqual(d.cli(prev).returncode, 0)
+                # In-process, so the patched LAUNCH_AT applies (a subprocess would read the module's own value).
+                # The shrink guard exits 2 via SystemExit, which would fail this test.
+                d.run(prev)
 
     @mock.patch.object(ex, "LAUNCH_AT", LAUNCH)
     def test_corrections_exported_after_launch_newest_first_without_identity(self):

@@ -23,7 +23,9 @@ RANK_LIST_MAX = 80
 # Public corrections log (docs/design/corrections-log.md). The single source: data.json carries it as launchAt and
 # the page reads it from there. None until the owner picks a launch date; the launch PR sets an ISO instant with Z.
 # While None, no correction is published.
-LAUNCH_AT = None
+# PLACEHOLDER (launch PR, sprint 7 #5): 22.10 12:00 Israel time (+03:00). Replace with the owner's D1 date at
+# 12:00 Israel time in UTC (+03:00 until 25.10, +02:00 after) before merging.
+LAUNCH_AT = "2026-10-22T09:00:00Z"
 CORRECTION_TARGETS = {"athlete", "sport", "quota"}
 CORRECTION_FIELDS = {"name", "event", "rank", "next", "nextDate", "notes", "stage", "sportId", "quota"}
 CORRECTION_BY = {"reader", "audit", "job"}
