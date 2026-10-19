@@ -77,6 +77,9 @@ class CheckSignoffTest(unittest.TestCase):
         self.assertEqual(set(log), {"items"})
         self.assertTrue(all(cs.logged(e) for e in log["items"]), "every entry has a reason, an https source and two checkers")
 
+    # publish-v55.md step 4 runs the tests on a `git archive`, which has no .git to `git show` from.
+    @unittest.skipUnless(subprocess.run(["git", "rev-parse", "--git-dir"], cwd=HERE, capture_output=True).returncode == 0,
+                         "not a git checkout")
     def test_cli_against_head(self):
         root = os.path.join(HERE, "..")
         r = subprocess.run([sys.executable, os.path.join(root, "job", "check_signoff.py"), "HEAD"], cwd=root,
