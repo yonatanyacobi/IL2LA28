@@ -100,12 +100,14 @@ Rules (they win over anything below):
 Runbook: docs/runbooks/publish-v55.md, steps 0–7 in order; publishing.md step 5 for anything it doesn't say.
 This task is the one exception to "never change a site file": it publishes the site files from the clean archive
 of origin/main, exactly as the runbook's step 5 script writes them into publish-call.json, and nothing else.
-- Step 0 failing (the 07:13 run didn't publish, a check is red, the map script asserts): don't publish; post what
+- No 07:13 publish: the step-0 data is the coordinator's 08:30 manual export instead (a comment on THREAD with its
+  generatedAt, and the published data.json carries it). Neither there by 09:17: don't publish; post that.
+- Step 0 failing otherwise (a check is red, the map script asserts): don't publish; post what
   failed and notify.
 - Step 1 first: record the live version id and save the stripped page; post both on THREAD before publishing.
 - After publishing, run step 7. Any failure there: run the runbook's rollback at once, post both version ids,
   notify.
-- Never pass data.json in files: the 07:13 export stays.
+- Never pass data.json in files: the step-0 export (07:13 or the 08:30 manual one) stays.
 ```
 
 ## 3. Rotterdam finals nights, 23–25.10
@@ -285,15 +287,20 @@ Rules (they win over anything below):
   forms, geresh ׳, dates like "24 באוק׳ 2026").
 
 Checks, all read-only, each one line in one THREAD comment (OK or the problem):
-1. runs/<today> exists with status "done" and published true; its errors and warnings, quoted.
+1. runs/<today> exists with status "done" and published true; its errors and warnings, quoted. No runs/<today>
+   at all means the 07:13 run didn't run (the scheduler missed it): say so and notify.
 2. The published data.json (Artifact read, path "data.json"): generatedAt is today; python3 job/validate_data.py
    on it is OK; python3 job/validate_data.py --quotas site/quotas.json on it is OK.
 3. Live job folder in sync: python3 job/check_live_sync.py prints OK.
 4. Session gaps: ArtifactData dump (athletes, competitions, sessions) and python3 job/session_gaps.py <dump>
    --days 14; each line goes to the comment for the researchers.
-5. Duplicate results: no athlete has two history entries of kind "result" with the same `at` and different
-   text (the job vs a manual entry); list them for Maya.
-6. Runbook coverage: every event in docs/runbooks/calendar.md within 14 days has a runbook link, not "–".
+5. Duplicate results: two history entries of kind "result" for one athlete are a duplicate only if they are about
+   the same event and phase (e.g. both the floor final, both the all-around qualification) and their texts differ
+   (the job vs a manual entry). Different apparatus or phases on one day are normal (Berkovich, 18.10: all-around
+   and floor). List duplicates for Maya; when unsure, list the pair as "to check", not as a duplicate.
+6. Runbook coverage: every event in docs/runbooks/calendar.md within 14 days has a runbook link, not "–". A row
+   whose status is conditional ("only if…", "only after a Q", entries unknown or unverified) is not a gap until the
+   condition is met; list those separately as "conditional".
 7. Render: node tests/preview_at.js <data.json> site/quotas.json <today> exits 0.
 Anything red that blocks tomorrow's run or a result night in the next 48 hours: notify.
 ```
