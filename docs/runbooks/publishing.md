@@ -52,7 +52,9 @@ On the branch, before asking for review, the author runs steps 2 and 4 below and
 
 Every quota item a PR adds or changes is approved by Dana and Tamar together (team charter, docs/product/team.md;
 for `earned`, result-night.md step 3). `check_signoff.py` says STOP on such an item unless `review.by` is
-`"dana+tamar"`.
+`"dana+tamar"`. To remove an item, the same PR appends an entry to `data/quotas/removed.json`:
+`{"sportId", "event", "reason" (short Hebrew), "source" (https, the official page that shows it), "review"}`, signed
+by both. Without one the removal is a STOP. The log is append-only: never edit or delete an entry.
 
 ### 1. Merge (lead)
 
