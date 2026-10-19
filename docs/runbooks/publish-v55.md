@@ -8,6 +8,27 @@ about 15 s.
 Work only in the scratchpad (the publish tool takes no `/tmp` paths) and in a folder of your own: shared folders
 were wiped by other agents' cleanups.
 
+## Go/no-go (coordinator decides at 09:10)
+
+Each line is pass or fail, signed on the release thread by the person named. **Any fail = no-go:** nothing is
+published, v53 stays live, and the next attempt is the following morning at 09:17 (never inside a freeze on #238).
+
+| # | Check | Pass when | Signs |
+|---|---|---|---|
+| 1 | The 19.10 result night is closed | Every result written tonight is in the 07:13 export, Gil's post-publish check passed, and no correction is open (run-sheet-1910.md) | Product lead |
+| 2 | The 07:13 run published | `runs/2026-10-20` says `published: true`; `generatedAt` is 20.10 (step 3) | Gil |
+| 3 | `main` is frozen | SHA noted (step 0); no merge until step 7 is done | Lead |
+| 4 | Checks on the archive | Step 4: every line OK, `cmp` silent, both previews exit 0 | Omer |
+| 5 | Files map | Step 5 prints the 12 scripts; `publish-call.json` written | Omer |
+| 6 | `quotas.json` diff | The new or changed items against live are all signed by both fact-checkers (`check_signoff.py`, #330); no item removed without a reason | Dana and Tamar |
+| 7 | Rollback point saved | `<PREV>` version id and `<P>/prev/page.html` exist (step 1) | Omer |
+| 8 | Test viewer works | The view-only test account opens the live site with no "מצב עריכה" chip (launch-day.md) | Gil |
+
+**After the publish (step 7), Gil signs pass or fail:**
+- **Roll back** (below) on any P0: a route that doesn't render, a console error from a site script, data missing or
+  wrong on a checked page, or a script that 404s. The coordinator decides within 10 minutes of Gil's report.
+- **Fix forward** on a P1 or P2: file an issue, and it ships with the next publish. No rollback.
+
 ## 0. Before 09:00
 
 ```
@@ -97,7 +118,7 @@ Artifact publish with `url` = https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT 
 
 ## Rollback (≈2 min)
 
-If step 7 fails, the coordinator republishes `<PREV>` without touching `data.json`:
+On a P0 in step 7, the coordinator republishes `<PREV>` (the v53-era page and files) without touching `data.json`:
 
 - `file_path` = `<P>/prev/page.html` (step 1; HTML can't be copied from a version);
 - `files` = each script, `styles.css` and `quotas.json` copied from `<PREV>`, and `null` for the four new
