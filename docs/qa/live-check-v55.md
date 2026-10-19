@@ -43,7 +43,7 @@ DevTools console open with "Preserve log"; **pass on every route:** no error fro
 | `#c-ag-worlds-2026` | Rotterdam: 24.10 floor final for Dolgopyat and Berkovich |
 | `#sport-judo` | "דירוג מול קו המכסה": 100- ק״ג with `7 יוסיף סימין` above the dashed line at 17; 70- ק״ג with the line above `35 מאיה גושן`; other classes "בדירוג אחר"; rank column stays put at 400px |
 | `#sport-fencing` | Standings: "תקופת הדירוג להעפלה נפתחת ב־1 באפר׳ 2027." only |
-| `#a-iosif-simin` | Facts: "דירוג ההעפלה לאולימפיאדת לוס אנג׳לס 2028" and "מול קו המכסה"; "תוצאות בתחרויות" section |
+| `#a-iosif-simin` | Facts: "דירוג ההעפלה האולימפי" and "מול קו המכסה"; "תוצאות בתחרויות" section |
 | `#a-yali-shoshani` | If `data.json` has her 19.10 result: it is in "תוצאות בתחרויות" with its source and not in "היסטוריה". If not: "עוד לא תועדו תוצאות של יהלי שושני בתחרויות." |
 | `#following`, `#following-sports` | Follow one athlete and one sport first: the open tab is visibly selected; sport-only feed rows say "ענף במעקב: …" |
 | `#quotas`, `#calendar`, `#updates`, `#digest`, `#about`, `#about-trust` | Render; the digest is under 3,500 characters |
