@@ -76,6 +76,7 @@ def parse_results(page):
 
 def plan(data, get, today, days=4):
     """data: {"athletes", "competitions", "sessions"} as the DB has them; get(url) -> bytes."""
+    from athlete_patch import stored_text
     from tri_results import as_date
     out = {"warnings": [], "updates": [], "proposals": []}
     warn = lambda s: out["warnings"].append(f"תוצאות ג׳ודו: {s}")
@@ -121,9 +122,10 @@ def plan(data, get, today, days=4):
                 warn(f"{tag}: {a['id']} במקום {r['place']}, אבל אין סשן שלו/ה בתחרות ליום; לא נכתב דבר")
                 continue
             text = result_text(r["place"], comp["name"], r["category"], day, r["gender"])
+            # Compared as stored (athlete_patch.stored_text): the export folds "ב-XYZ" into "ב־XYZ" (#380).
             logged = [h for h in a.get("history") or [] if isinstance(h, dict) and h.get("kind", "result") == "result"
-                      and h.get("at") == day and comp["name"] in str(h.get("text"))]
-            if any(h.get("text") == text for h in logged):
+                      and h.get("at") == day and stored_text(comp["name"]) in stored_text(h.get("text"))]
+            if any(stored_text(h.get("text")) == stored_text(text) for h in logged):
                 continue   # entered on the result night (same wording) or by an earlier run
             if logged:
                 warn(f"{tag}: {a['id']}: רשום כבר \"{logged[0].get('text')}\", ובדף התוצאות עכשיו \"{text}\"; לבדוק, לא נכתב דבר")

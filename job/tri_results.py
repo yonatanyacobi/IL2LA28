@@ -89,6 +89,7 @@ def result_text(row, comp_name, distance, day):
 
 def plan(data, fetch, today, days=4, propose=True):
     """propose: data["athletes"] are the DB records (main(): --db), so a notes patch can be built from them."""
+    from athlete_patch import stored_text
     out = {"warnings": [], "updates": [], "proposals": []}
     for comp in due_competitions(data, today, days):
         tag = f"{comp['name']} ({comp.get('end') or comp['start']})"
@@ -123,9 +124,10 @@ def plan(data, fetch, today, days=4, propose=True):
             pos, text = result_text(r, comp["name"], dist, day)
             if not text:
                 continue
+            # Compared as stored (athlete_patch.stored_text): the export folds "ב-XYZ" into "ב־XYZ" (#380).
             same_day = [h for h in a.get("history") or [] if isinstance(h, dict) and h.get("kind", "result") == "result"
-                        and h.get("at") == day and comp["name"] in str(h.get("text"))]
-            if any(h.get("text") == text for h in same_day):
+                        and h.get("at") == day and stored_text(comp["name"]) in stored_text(h.get("text"))]
+            if any(stored_text(h.get("text")) == stored_text(text) for h in same_day):
                 continue  # already logged on an earlier run
             if same_day:   # a different result for this race is logged (a protest, or a hand entry): a person decides
                 out["warnings"].append(f"תוצאות טריאתלון: {a.get('name') or a['id']}: ב־{tag} רשום כבר \"{same_day[0].get('text')}\","

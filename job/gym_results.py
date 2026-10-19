@@ -424,7 +424,8 @@ _DAY_HE = re.compile(r" \(\d{1,2} \S+ \d{4}\)")
 
 def undated(text):
     """A result text without its "(18 באוק׳ 2026)": competition, phase, apparatus, place and outcome stay."""
-    return _DAY_HE.sub("", str(text))
+    from athlete_patch import stored_text   # as stored: the export folds "ב-XYZ" into "ב־XYZ" (#380)
+    return _DAY_HE.sub("", stored_text(str(text)))
 
 
 def same_result(h, text, start, end):

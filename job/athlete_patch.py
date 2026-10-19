@@ -48,6 +48,12 @@ def norm(k, v):
     return text(v, 10_000) if isinstance(v, str) else ("" if v is None else v)
 
 
+def stored_text(t):
+    """A result text as history stores it (geresh, prefix maqaf, 300 chars). Results scripts compare in this form,
+    or a freshly built "ב-XYZ" never matches its stored "ב־XYZ" and is written again."""
+    return text(t, 300)
+
+
 def result_entry(r):
     """The history entry for a recorded result. Refused unless it has the competition day, text and an official link."""
     if not isinstance(r, dict) or set(r) - {"at", "text", "source"}:
@@ -58,7 +64,7 @@ def result_entry(r):
         raise ValueError('"result".text is empty')
     if not https(r.get("source")):
         raise ValueError('"result".source must be the official https results link')
-    return {"at": r["at"], "kind": "result", "text": text(r["text"], 300), "source": r["source"]}
+    return {"at": r["at"], "kind": "result", "text": stored_text(r["text"]), "source": r["source"]}
 
 
 def build(current, proposed, now):
