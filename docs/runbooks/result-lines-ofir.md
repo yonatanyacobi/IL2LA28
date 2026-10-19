@@ -16,13 +16,14 @@ Sources checked by Ofir (19.10, #328):
 | Surfing | WSL: the event's results and heat pages on worldsurfleague.com. ISA: the event's results on isasurf.org, **browser-only** (403 to our tools) | Live heat scores before the heat is final, news |
 
 ## Marathon and road (World Athletics)
-`<TIME>` is the official net time as listed, e.g. `2:07:22`. Add `, שיא אישי` or `, שיא ישראלי` after the time only
+`<TIME>` is the official net time as listed, e.g. `2:07:22`; it goes inside the brackets, before the date (owner, 19.10), as in the
+Amsterdam entries. Add `, שיא אישי` or `, שיא ישראלי` after the time only
 when the official list marks it (PB / NR). Don't write a qualifying-time line: World Athletics hasn't published the
 LA28 marathon system yet.
 
 | Outcome | History, men | History, women | Session |
 |---|---|---|---|
-| Finished | `מקום <P> ב<COMP>, <TIME> (<DATE>)` | same | `מקום <P>, <TIME>` |
+| Finished | `מקום <P> ב<COMP> (<TIME>, <DATE>)` | same | `מקום <P>, <TIME>` |
 | Did not finish | `לא סיים את <COMP> (<DATE>)` | `לא סיימה את <COMP> (<DATE>)` | `לא סיים/סיימה` |
 | Did not start, or not on the list | no entry | no entry | none |
 
