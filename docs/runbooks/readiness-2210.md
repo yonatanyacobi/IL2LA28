@@ -26,7 +26,7 @@ result night. Of the dates before Abu Dhabi, 26–28.10 fit.
 | Result nights | ⬜ | The first one is tonight, 19.10; table below |
 | Open bugs | 🟢 | None blocking. 23 PRs merged since 19.10 00:00 (#303–#334), including stakes only where Israel competes (#322), the late-data render (#308) and both-checker quota sign-off (#330) |
 | Legal and disclaimer | 🟢 | Every item checked in the code; professional review is the owner's call |
-| Your decisions | 🟡 ⏳ OWNER | D1 (date), D11 (Teferi), the view-only test account for QA. D10 is done |
+| Your decisions | 🟡 ⏳ OWNER | D1 (date), D-R2 (quota proposals, by 25.10), D11 (Teferi), the view-only test account for QA. D10 is done |
 
 ## 1. Data coverage
 | Check | How | 18.10 / now | Green when |
@@ -78,9 +78,9 @@ From [owner-decisions.md](../product/owner-decisions.md).
 | D1 | Launch date | the owner's call, after this report | The site stays unshared |
 | D8 | Digest-copy counter | 25.10 | B: no counter |
 | D9 | No English, no Paralympics until mid-2027 | 25.10 | Treated as confirmed |
-| D-R2 | Daily job proposes quota updates | 25.10 | B: fully manual |
+| D-R2 | Daily job proposes quota updates; options and costs in [d-r2-options.md](../product/d-r2-options.md) (#350) | 25.10 | B: fully manual. **⏳ OWNER** |
 | D10 | Trampoline athletes' Hebrew names | – | **Done:** the federation's spelling (#298, #303); both records checked |
-| D11 | Browser check: Teferi's Sporthive result (lpga.com optional) | before launch | Teferi's result stays on hold. **⏳ OWNER, 19.10: no answer yet**; the Browser verifier is on hold |
+| D11 | Browser check: Teferi's Sporthive result (lpga.com optional) | before launch | Teferi's result stays on hold. **⏳ OWNER, 19.10: no answer yet**; the owner checks by hand (the Browser verifier trial ended) |
 | – | **Public link** for signed-out visitors (launch-day.md, Sharing settings) | before D1 | No public launch. **⏳ OWNER: check the site's Share menu now, not on launch day** |
 | – | **View-only test account** for pre-launch QA (launch-day.md, Test viewer) | 20.10 09:10 (v55 check 8) | QA runs as an editor with "צפייה כגולש/ת", which is weaker. **⏳ OWNER** |
 | – | **Daily task fires at 07:13** (§3) | 20.10 07:13 | Hand exports by the coordinator. **⏳ OWNER** |
