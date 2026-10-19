@@ -94,7 +94,7 @@ With no sessions and no fallback athletes: `לא ידוע על ספורטאים 
 - **Day groups:** `<h3><a href="#day-{date}">{weekday, date}</a> <span class="muted">(יום {n})</span></h3>`.
   Each group holds a `<ul class="rows sess">` of the shared `sessionRow(s)`. Followed athletes go first within a
   day, then by time.
-- **No sessions yet, before start:** `הסשנים של הישראלים יפורסמו לפי לוח הזמנים הרשמי.`
+- **No sessions yet, before start:** `עוד אין הופעות ידועות של ישראלים בתחרות הזו.`
   With the fallback athletes, list them under their `nextDate` day with `תאריך בלבד`.
 - **Today's group** gets `aria-current="date"` on its h3 link, and the page scrolls it into view on arrival
   (route hook; respects `prefers-reduced-motion`).

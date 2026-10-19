@@ -644,7 +644,7 @@ function viewAthlete(id){
     <h2>היסטוריה</h2>
     ${hist.length ? `<ol class="timeline">${hist.map(h => `<li class="k-${esc(h.kind)}"><span class="d">${fmt(h.at)}</span>
       <span>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}${(k => rowMark(k, k))(`hist|${id}|${h.at}|${h.kind}|${h.text}`)}</span></li>`).join("")}</ol>`
-      : emptyLine("עוד אין אירועים מתועדים.")}
+      : emptyLine("עוד אין רשומות בהיסטוריה.")}
   </section>
   <section class="stack">
     <h2>תחרויות קרובות בענף</h2>
@@ -1223,7 +1223,7 @@ const isExport = d => Array.isArray(d?.athletes) && typeof d.generatedAt === "st
 function loadFailure(kind){
   const [h, p] = kind === "access" ? ["האתר לא זמין עבורך כרגע",
       `ייתכן שהאתר עוד לא נפתח לציבור, או שהקישור דורש התחברות לחשבון. אם קיבלתם את הקישור מאיתנו, כתבו לנו: <span dir="ltr">${esc(CONTACT_EMAIL)}</span>`]
-    : kind === "timeout" ? ["הטעינה נמשכת יותר מדי", "ייתכן שהחיבור איטי או שהשרת לא עונה. אפשר לנסות שוב בעוד רגע."]
+    : kind === "timeout" ? ["הטעינה נמשכת יותר מדי", "הנתונים לא הגיעו בזמן. אפשר לנסות שוב בעוד רגע."]
     : ["לא הצלחנו לטעון את הנתונים", "ייתכן שמדובר בתקלה זמנית. אפשר לנסות שוב בעוד רגע."];
   return `<h1 tabindex="-1">${h}</h1><p>${p}</p>`;
 }
