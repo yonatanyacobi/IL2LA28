@@ -38,6 +38,6 @@ on as listed in `sprint-7.md`.
 | 17 | **Weekly owner update, 25.10** | CEO | Sent from owner-update-template.md: the week's results, readiness, decisions needed |
 | 18 | **Board fixes** from the 18.10 review: card rows on phones, 2-line goals, "Sprint 7" once, current statuses | Board keeper | At 400px each worker's job is readable without side-scrolling, in light and dark |
 | 19 | **Returning-visitor audit (25.10) and the 22.10 readiness report** | Product lead | audit-2510.md findings filed by 13:00 on 25.10; the report reviewed with the coordinator at 12:00 on 22.10 |
-| 20 | **Browser checks when unblocked** (D11: Sporthive for Teferi; lpga.com optional) | Browser verifier (on hold) | Starts only after the owner allows the domains; until then nothing waits on it |
+| 20 | **D11 owner-side check** (the Browser verifier trial ended): ask the owner to open the Sporthive page for Teferi's Amsterdam result (lpga.com optional) and reply with place and time as shown; pass the reply to Ofir to write and to Tamar to sign | Coordinator | Teferi's result is live with the Sporthive source within 24 h of the owner's reply, or the readiness report says it's still on hold |
 
 **Noa:** item 11 is hers once the host-shortening fix lands.
