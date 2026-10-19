@@ -13,7 +13,7 @@ texts. It's one page on purpose; the reasoning lives in the PR threads it cites.
 | Gershayim `״` (U+05F4), never `"` | `ק״ג`, `ארה״ב`, `ק״מ` | `ק"ג` |
 | Quotation marks `„…”` | `„מכסה הושגה”` | `"מכסה הושגה"` |
 | En dash with spaces for ranges in text; `fmtRange()` for dates | `29 באוק׳ – 31 באוק׳ 2026` | `29-31/10` |
-| Scores: a colon, higher score first (an en dash between two numbers flips them in RTL: `78–65` shows as `65–78`) | `ניצחון 78:65 על פולין`, `הפסד 78:65 לפולין` | `ניצחון 78–65` |
+| Scores: a colon, higher score first (an en dash between two numbers flips them in RTL: `78–65` shows as `65–78`). DB notes too: they're plain text, so no `<bdi>` or isolate marks, and the colon needs none | `ניצחון 78:65 על פולין`, `הפסד 78:65 לפולין`, `(2:0 לברקאי ארר)` | `ניצחון 78–65`, `9-8 על איטליה`, `0-2 ל…` |
 
 The job follows the same rule (`job/SKILL.md`, #85). The export normalises `data.json`, but the DB doesn't.
 
@@ -81,6 +81,7 @@ name itself is wrong, fix the record first (an editor's DB change), then the tex
 - **Status is never colour alone**, and every pill has words. New colours need the contrast table (AA 4.5:1, or 3:1 for borders).
 
 ## Self-check before opening a PR
-1. `grep -nE "[א-ת]-[א-ת0-9]|[א-ת]'|[א-ת]\"[א-ת]|LA28"` on your changed strings; fix anything not in a URL or code.
+1. `grep -nE "[א-ת]-[א-ת0-9]|[א-ת]'|[א-ת]\"[א-ת]|LA28|[^0-9-][0-9]{1,3}[-–][0-9]{1,3}[^0-9-]"` on your changed strings;
+   fix anything not in a URL, code or a date. The last pattern finds hyphenated scores.
 2. Every `${n}` next to a noun → `plural()`.
 3. Read each new string aloud at count 1, at count 2, for a team, and the next day. Is it still true?
