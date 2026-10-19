@@ -144,9 +144,9 @@ class ValidateTest(unittest.TestCase):
         def at(stamp, **kw):
             d = copy.deepcopy(self.good)
             d["generatedAt"] = stamp
-            for a in d["athletes"]:   # the fixture itself carries the 18.10 IJF bug; pin a clean baseline
+            for a in d["athletes"]:   # the real fixture carries rankAsOf warnings of its own; pin a clean baseline
                 for p in ("rank", "olympicRank"):
-                    if a.get(p + "AsOf"):
+                    if a.get(p + "AsOf") or a.get(p + "List"):
                         a[p + "AsOf"] = "2026-10-12"
             d["athletes"][0].update(kw)
             return validate_data.validate(d), validate_data.warnings(d)
@@ -166,11 +166,11 @@ class ValidateTest(unittest.TestCase):
         self.assertEqual(at("2026-10-18T09:00:00Z", rankNum=None, rankList="", rankAsOf="2026-10-18")[1], [])
 
     def test_cli_warns_without_failing(self):
-        # The fixture carries the real 18.10 IJF rankAsOf bug.
+        # The fixture (export of 18.10, 17:16Z) carries a real data gap: amit-vales has a rankList but no rankAsOf.
         out = subprocess.run([sys.executable, os.path.join(HERE, "..", "job", "validate_data.py"), FIXTURE],
                              capture_output=True, text=True)
         self.assertEqual(out.returncode, 0)
-        self.assertTrue(any(l.startswith("WARN: ") and "raz-hershko" in l for l in out.stdout.splitlines()))
+        self.assertTrue(any(l.startswith("WARN: ") and "amit-vales" in l and "rankAsOf: missing" in l for l in out.stdout.splitlines()))
         self.assertTrue(out.stdout.rstrip().endswith("OK: " + FIXTURE))
 
     def test_history_caps_per_kind(self):
