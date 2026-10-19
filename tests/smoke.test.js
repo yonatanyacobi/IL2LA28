@@ -2852,6 +2852,32 @@ test("standings UX QA: caveat once per panel, no cut line without placed athlete
   assert.ok(/@media \(max-width:640px\)\{\.rows\.standings li\{grid-template-columns:3\.5ch 1fr auto\}/.test(css), "rank stays beside the name on phones");
 });
 
+// sprint-7.md: stakes only where Israel competes (an Israeli in the sport has a session or nextDate in the event).
+test("stakes only where Israel competes: Rotterdam men's team final hidden, Abu Dhabi 29.10 shown", async () => {
+  const TEAM = "גמר קבוצתי ב־20 באוק׳ 2026", NOTE = "ישראל לא משתתפת בשלב הזה";
+  // 20.10: Israel isn't in the men's team final (no session or nextDate that day).
+  const r = await boot({quotas: SITE_QUOTAS, now: "2026-10-20T09:00:00Z"});
+  const home = r.view("home");
+  assert.ok(!home.includes("על הכף היום · <bdi>קבוצתי גברים</bdi>") && !home.includes(TEAM), "home: no team-final stakes");
+  assert.ok(!r.view("day-2026-10-20").includes(TEAM), "#day: no team-final stakes");
+  const ev = r.view("c-ag-worlds-2026").split('id="evStakesH"')[1].split("</section>")[0];
+  assert.ok(ev.includes(`<p class="muted">${NOTE}</p>`) && !ev.includes(TEAM), "#c-: the note instead of the stakes");
+  assert.ok(!r.view("digest").includes(TEAM), "digest: no team-final stakes");
+  // Shown again once an Israeli has a session in it.
+  const inFinal = clone();
+  inFinal.sessions = [...inFinal.sessions, {competitionId: "ag-worlds-2026", date: "2026-10-20", startUtc: "2026-10-20T14:00:00Z",
+    athleteIds: ["artem-dolgopyat"], phase: "גמר קבוצתי"}];
+  const withSession = await boot({data: inFinal, quotas: SITE_QUOTAS, now: "2026-10-20T09:00:00Z"});
+  assert.ok(withSession.view("home").includes(TEAM) && withSession.view("c-ag-worlds-2026").split('id="evStakesH"')[1].includes(TEAM),
+    "with an Israeli session the stakes return");
+  // 29.10, Abu Dhabi day 1: Israeli judoka have nextDate inside the event.
+  const a = await boot({quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"});
+  assert.ok(a.view("home").includes("על הכף היום · <bdi>"), "home: the Grand Slam stakes");
+  assert.ok(a.view("day-2026-10-29").includes('<p class="stakes"><b>מה זה אומר:</b>'), "#day: stakes");
+  const ad = a.view("c-judo-gs-abu-dhabi-2026").split('id="evStakesH"')[1].split("</section>")[0];
+  assert.ok(ad.includes("<b>מה זה אומר:</b>") && !ad.includes(NOTE), "#c-: stakes, no note");
+});
+
 test("home today lists only athletes competing today, not the rest of a running competition (Gil P3)", async () => {
   // 30.10, day 2 of Abu Dhabi: the judo athletes' nextDate is 29.10, so none of them competes today.
   // The fixture's Abu Dhabi: nextDate 29.10 (Primo, Ashpiz, Nelson Levy), 30.10 (Elbaz, Goshen), 31.10 (Hershko, Simin).
