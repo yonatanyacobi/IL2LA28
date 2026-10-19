@@ -12,7 +12,7 @@ A report to the owner, not a go/no-go.
 | When | Step | Who |
 |---|---|---|
 | 22.10 morning | The daily job has run and published. Check `#admin` last run (G7) and spot-check 3 corrected records in data.json (G1) | Lead, Omer |
-| 10:00 | QA on the **live** artifact, signed out, on a phone and a desktop: home, today strip, `#quotas`, `#digest`, one athlete page, the error box (G6) | Gil |
+| 10:00 | QA on the **live** artifact as the test viewer (below), on a phone and a desktop: home, today strip, `#quotas`, `#digest`, one athlete page, the error box (G6) | Gil |
 | 11:00 | Fill in the gate report below, with a source per row | PM |
 | 12:00 | Review the report with the coordinator; every red gate gets an owner and an ETA | PM, coordinator |
 | 12:30 | **Send the report to the owner**, with the recommendation: "ready", or "ready once X, Y are done" | Coordinator |
@@ -46,9 +46,9 @@ has an owner and an ETA. Pre-filled values are as of 18.10 ~16:30; **re-check ev
 | PM | Morning gate re-check, day-1 metrics, owns this runbook |
 | Lead | Release freeze, launch PR (`LAUNCH_AT`; check the dedicated address is live), tag, publish, rollback |
 | Omer (publisher) | Data fixes after reports: run the daily task, check the published data.json |
-| Gil | Final QA on the live site, signed out |
+| Gil | Final QA on the live site as the test viewer; the signed-out check after 13:00 |
 | Dana, Tamar | Error-report triage, on call in shifts (Dana 12:00–18:00, Tamar 18:00–23:00) |
-| Owner | Sharing setting (link opens signed out), dedicated inbox (D2) |
+| Owner | The test share (by L−1), the sharing setting (link opens signed out at 13:00), dedicated inbox (D2) |
 
 ### Timeline
 | When | Step | Who |
@@ -56,11 +56,12 @@ has an owner and an ETA. Pre-filled values are as of 18.10 ~16:30; **re-check ev
 | L−1, 18:00 | **Freeze.** Only launch-blocker fixes merge to main | Lead |
 | L−1 evening | QA regression on main; the lead tags it `launch-rc`. Launch PR ready: `LAUNCH_AT` = L 12:00 Israel time in UTC (`+03:00` until 25.10, `+02:00` after), and the dedicated address | Gil, Lead |
 | L 09:30 | **Save the rollback copies** (see Rollback) | Lead |
-| L 10:00 | Live QA, signed out (as in Part 1) | Gil |
+| L 10:00 | Live QA as the test viewer (as in Part 1) | Gil |
 | L 11:00 | Re-run the gate report; all gates green, or the coordinator holds the launch and tells the owner | PM, coordinator |
 | L 12:00 | Merge and publish the launch PR (`result-night.md` step 8, every changed site file). Tag `launch-<YYYY-MM-DD>` | Lead |
-| L 12:30 | Live check again, signed out (2 minutes) | Gil |
+| L 12:30 | Live check again as the test viewer (2 minutes) | Gil |
 | L 13:00 | The owner opens the link to signed-out visitors (sharing setting). No announcement (D6) | Owner |
+| L 13:05 | **Signed-out check** in a private window (the Check below, 2 minutes). A fail is rollback trigger 1 | Gil |
 | L 13:00–23:00 | Watch: inbox triage at least hourly, the today strip at the day's events | Dana/Tamar, Omer |
 | L+1 09:00 | **Day-1 review:** reports received/fixed, corrections, anything rolled back. One line in the weekly metrics log | PM |
 
@@ -79,9 +80,13 @@ the signed-out checks, the artifact's sharing must give:
 shows this when `data.json` answers 401/403, a sign-in page or JSON that isn't the export) and not a skeleton. `#home`,
 `#calendar`, `#quotas` and an athlete page all render.
 
-**Timing:** the 10:00 and 12:30 checks above are signed out, so they need the link open first. Either the owner
-opens it at L 09:45 with no announcement (D6 still holds until 13:00), or Gil runs those checks signed in through
-"צפייה כגולש/ת" and repeats the signed-out check right after 13:00. The PM picks one before L.
+**Test viewer (decided 19.10).** The link opens only at 13:00, so every check before it runs as a **test viewer**: the
+owner shares the artifact, **view only**, with one test account in the organization (by L−1, and before the 25.10 live
+QA). Gil signs in with it. A viewer without edit rights gets no `db` and reads `data.json` only, which is the same code
+path a signed-out visitor runs. The page must show no "מצב עריכה" chip and no edit controls; if it does, it's the
+wrong account. The editors' "צפייה כגולש/ת" toggle is not a substitute: it still runs in an editor session. What a test
+viewer can't show (the signed-out sign-in wall, a link that needs an account) is the 13:05 check's job. Opening the
+link early was rejected: before 13:00 the launch PR and the final QA aren't done yet.
 
 Don't launch on a result night, or during the daily job's publish step. When L is set, re-check every date-based line:
 the `#digest` text, `LAUNCH_AT` and this timeline.

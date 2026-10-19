@@ -49,7 +49,7 @@ Green when every night that has ended was published from an Official source with
 One correction made through the corrections log counts as yellow, not red.
 
 ## 3. Open bugs
-- [ ] Gil's 10:00 live QA (G6): no open P0 or P1, at 400px and 1280px, light and dark, signed out.
+- [ ] Gil's 10:00 live QA (G6): no open P0 or P1, at 400px and 1280px, light and dark, as the test viewer (launch-day.md).
 - [x] No open regression PRs or issues (18.10: the only open PR is #134, a quotas outcome; open issues are roadmap items).
 - [x] Smoke (146/146) and unit tests pass on main 9bbdfcb, and `check_live_sync.py` prints OK (18.10, 21:45).
 - [ ] The last 2 daily runs published with no errors in `#admin` (G7).

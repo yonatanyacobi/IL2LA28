@@ -1,6 +1,6 @@
 # UX audit, Sun 25.10: a returning visitor the morning after a result night
 
-Owner: UX. Live site, signed out, **25.10, 10:00–12:00**, the same window as Gil's live QA (sprint 7 item 8). The two
+Owner: UX. Live site, as the test viewer (launch-day.md), **25.10, 10:00–12:00**, the same window as Gil's live QA (sprint 7 item 8). The two
 don't overlap:
 - **Gil checks that each piece works:** his pass/fail list is the "new home" checklist on #237 (§E result night and
   auto-refresh, §F dark and a11y).
@@ -11,9 +11,9 @@ Both use the same setup, the same viewport (400×800, light then dark) and the s
 ## Setup (the evening before is part of the script)
 | When | Step | Who |
 |---|---|---|
-| 23.10 evening | In a fresh browser profile (the "returning" one), open the site and follow: **Lihie Raz**, **Shachar Sagiv**, and the sport **ג׳ודו**. Open `#following` once. This sets the baselines (`la28.seen`, `la28.followingSeen`) | UX |
+| 23.10 evening | In a fresh browser profile (the "returning" one), signed in as the test viewer, open the site and follow: **Lihie Raz**, **Shachar Sagiv**, and the sport **ג׳ודו**. Open `#following` once. This sets the baselines (`la28.seen`, `la28.followingSeen`) | UX |
 | 24.10 | Don't open the site in that profile. The result day (Tongyeong 04:30; the floor final 15:00 if there was a Q) and the 25.10 07:13 run happen | – |
-| 25.10, 09:50 | Gil and UX: same profile type, signed out, 400×800. Note `generatedAt` from `#about` (the "נכון ל־" time) | Gil, UX |
+| 25.10, 09:50 | Gil and UX: the test viewer's account, 400×800. Note `generatedAt` from `#about` (the "נכון ל־" time) | Gil, UX |
 | 25.10, 10:00 | Open a second tab on home and leave it open for the whole session (for task T6) | UX |
 
 If 24.10 has no publishable result (no Official list yet, or no Q), run the script anyway: T1–T2 then test the

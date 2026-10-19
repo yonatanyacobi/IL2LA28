@@ -17,7 +17,7 @@ from which PDF, and where it goes. Project owner: PM. The only DB writer is the 
 | from ~23:30, every 30 min | Roni | Looks for the **Official** PDFs (list below) | PDFs saved and linked on #238 |
 | Official + 30 min | Roni → Tamar | Values (rank `<N>`, Q / R / out) per athlete, from the PDFs, into the texts | Tamar: "values OK" on #238 |
 | after Tamar | coordinator | Writes (below), then the same-night export and publish (`job/SKILL.md` step 5: `prev.json` first) | `generatedAt` of the new export noted |
-| publish + 15 min | Gil | 400px, light then dark, signed out: `#day-2026-10-19`, `#c-ag-worlds-2026`, `#a-<id>`, home | Pass/fail on #238 |
+| publish + 15 min | Gil | 400px, light then dark, as the test viewer (launch-day.md): `#day-2026-10-19`, `#c-ag-worlds-2026`, `#a-<id>`, home | Pass/fail on #238 |
 | as it happens | PM | Fills the result-night table in readiness-2210.md §2 (PDF time, write time, public time, M3) | One row per athlete |
 | 20.10, after 07:13 | Roni | `runs/2026-10-20` has no second Rotterdam entry (if it does: delete the job's entry, tell Maya) | Checked on #238 |
 | 20.10 morning | PM | Post-night summary for the owner (below) | Sent |
