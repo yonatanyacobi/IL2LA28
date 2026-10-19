@@ -1742,15 +1742,24 @@ test("#digest: this week's results group ended competitions with their changes",
   assert.ok(judo.includes("גרנד סלאם אבו דאבי (ג׳ודו)\n") && judo.includes("  ישראלים: ") && judo.includes("התוצאות עוד לא עודכנו באתר."), judo);
 });
 
-test("#digest: athletes in a competition under way are listed under it", async () => {
-  // 20 Oct: day 4 of the gymnastics Worlds; the gymnasts' nextDate (18–19 Oct) has passed.
-  const {text} = await digestOf({now: "2026-10-20T09:00:00Z"});
-  const competing = digestSection(text, "ישראלים מתחרים השבוע");
-  const bullets = competing.split("\n• ");
-  const gym = bullets.find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026"));
-  assert.ok(gym && gym.includes("עד 25 באוק׳") && gym.includes("(התעמלות מכשירים), בעיצומה"), competing);
-  for (const n of ["ארטיום דולגופיאט", "ליהיא רז", "יהלי שושני"]) assert.strictEqual(count(competing, n), 1, n);
-  assert.ok(competing.includes("שחר שגיב"), "upcoming athletes still listed");
+test("#digest: a competition under way lists only athletes still to compete (nextDate ≥ today)", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const g = id => data.athletes.find(a => a.id === id);
+  g("artem-dolgopyat").nextDate = "2026-10-24";   // floor final
+  g("yali-shoshani").nextDate = "2026-10-25";     // a day-2 final
+  g("lihie-raz").nextDate = "2026-10-19";         // done after qualification
+  const gymOf = async now => digestSection((await digestOf({data, now})).text, "ישראלים מתחרים השבוע")
+    .split("\n• ").find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026")) || "";
+  // 20 Oct, day 4 of the Worlds: Raz is done; Dolgopyat and Shoshani still compete.
+  const d20 = await gymOf("2026-10-20T09:00:00Z");
+  assert.ok(d20.includes("עד 25 באוק׳") && d20.includes("(התעמלות מכשירים), בעיצומה"), d20);
+  assert.ok(d20.includes("ארטיום דולגופיאט") && d20.includes("יהלי שושני") && !d20.includes("ליהיא רז"), d20);
+  // 25 Oct, last day: only Shoshani; Dolgopyat's final was yesterday.
+  const d25 = await gymOf("2026-10-25T09:00:00Z");
+  assert.ok(d25.includes("יהלי שושני") && !d25.includes("ארטיום דולגופיאט") && d25.includes("יום אחרון"), d25);
+  // Nobody left: no Rotterdam line at all.
+  g("yali-shoshani").nextDate = "2026-10-24";
+  assert.strictEqual(await gymOf("2026-10-25T09:00:00Z"), "", "no one still to compete: no line");
 });
 
 test("#digest: no relative time for running competitions (one-day: date only; last day: יום אחרון)", async () => {
