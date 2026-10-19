@@ -12,7 +12,7 @@ from which PDF, and where it goes. Project owner: PM. The only DB writer is the 
 | **16:00** | coordinator | **Go / no-go.** No-go: nothing is written tonight, and the results go in on 20.10 | Decision posted on #238 |
 | 17:00–18:20 | – | Sub 7: Shoshani, uneven bars. The site shows "מתחרה היום" | – |
 | 18:20 | Roni | **Writes nothing for Shoshani yet.** Subs 8–10 can still push her down | – |
-| by 21:10 | Dana | Raz and Shamay are in the sub 10 start list (Longines → Women's Qualifications → Start List). A missing name goes to the coordinator, and nothing is recorded for her | Confirmed on #238 |
+| by 21:10 | Dana | Raz and Shamay are in the sub 10 start list (FIG start list, [link.php?id=6713](https://live.gymnastics.sport/link.php?id=6713); REVISED 18.10 20:40 already has both, bibs 503/504). A missing name goes to the coordinator, and nothing is recorded for her | Confirmed on #238 |
 | 22:10–23:30 | – | Sub 10: Raz and Shamay, all-around | – |
 | from ~23:30, every 30 min | Roni | Looks for the **Official** PDFs (list below) | PDFs saved and linked on #238 |
 | Official + 30 min | Roni → Tamar | Values (rank `<N>`, Q / R / out) per athlete, from the PDFs, into the texts | Tamar: "values OK" on #238 |
@@ -25,8 +25,17 @@ from which PDF, and where it goes. Project owner: PM. The only DB writer is the 
 No Official PDF by the morning: wait, and record nothing from any other source.
 
 ## Which PDF, for whom
-Longines Official results: https://gym.longinestiming.com/2026/Artistic-17247/en-us/Default → Women's Qualifications →
-"Select file to download". Only files marked **Official**.
+FIG's own live site (Longines often times out from here). Checked on the men's qualification, 19.10:
+- **Standings:** `https://live.gymnastics.sport/live/17247/womensqual.php?app=` + `aa` / `vt` / `ub` / `bb` / `fx`.
+  The label under the title reads INTERMEDIATE during the session and **OFFICIAL** when final. Use only OFFICIAL.
+- **PDFs:** [schedule.php?idevent=17247](https://live.gymnastics.sport/schedule.php?idevent=17247) → "Qualification
+  (subdivisions 4 to 10)" → **Results** row (A.-Around, Vault, U.Bars, Beam, Floor). The links stay grey until FIG
+  posts them; each one opens as `link.php?id=<n>`. The men's equivalents are 6696–6703, and their combined
+  "MAG Qualifications - Individual Results" is [6710](https://live.gymnastics.sport/link.php?id=6710) under General Files.
+- **Start list:** sub 7 starts 16:00 Rotterdam (17:00 IL), with Shoshani (bib 505); sub 10 starts 21:10 (22:10 IL).
+
+Longines Official results remain a fallback: https://gym.longinestiming.com/2026/Artistic-17247/en-us/Default →
+Women's Qualifications → "Select file to download". Only files marked **Official**.
 | Athlete | id | Session | PDFs |
 |---|---|---|---|
 | יהלי שושני | `yali-shoshani` | `ag-worlds-2026-20261019-wag-q-sub7` | Uneven Bars Results |
