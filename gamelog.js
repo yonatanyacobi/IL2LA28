@@ -62,17 +62,19 @@ function gameLogRow({comp, entries, first, last}, id){
   const latest = keys.filter(k => changedRows.has(k)).sort((x, y) => changedRows.get(y).localeCompare(changedRows.get(x)))[0];
   return `<li><span class="d">${logDays(first, last)}</span>
     <span class="t">${comp ? compLink(comp, esc(comp.name)) : `<span class="muted">תחרות שאינה ברשימה</span>`}${entries.map((e, i) =>
-      `<span class="res">${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${latest && i === entries.length - 1 ? rowMark(latest, latest) : ""}</span>`).join("")}</span></li>`;
+      `<span class="res">${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${isUtc(e.resultAt) ? ` · עודכן ב־${whenIL(e.resultAt)}` : ""}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${latest && i === entries.length - 1 ? rowMark(latest, latest) : ""}</span>`).join("")}</span></li>`;
 }
 
 function gameLogSection(a){
   const rows = gameLogRows(a), n = rows.reduce((k, r) => k + r.entries.length, 0);
+  const nextDay = !n ? exportedSessions().filter(s => s.athletes.includes(a) && isDate(s.day) && s.day >= today())
+    .map(s => s.day).sort()[0] : null;
   const shown = rows.slice(0, GAMELOG_ROWS), more = rows.slice(GAMELOG_ROWS), k = more.reduce((x, r) => x + r.entries.length, 0);
   return `<section class="panel" aria-labelledby="logH"><h2 id="logH">תוצאות בתחרויות</h2>
     ${n ? `<p class="kpi muted">${plural(n, "תוצאה אחת", "תוצאות")}${(m => !m ? "" : m === 1 ? " בתחרות אחת" : ` ב־${m} תחרויות`)(rows.filter(r => r.comp).length)}</p>
     <ul class="rows game-log">${shown.map(r => gameLogRow(r, a.id)).join("")}</ul>
     ${more.length ? `<details><summary>${k === 1 ? "הצגת עוד תוצאה אחת" : `הצגת עוד ${k} תוצאות`}</summary><ul class="rows game-log">${more.map(r => gameLogRow(r, a.id)).join("")}</ul></details>` : ""}
     <p class="foot">כל תוצאה מופיעה עם המקור שלה · ${CADENCE}</p>`
-    : `<p class="muted">עוד לא תועדו תוצאות של ${esc(a.name)} בתחרויות.</p>`}
+    : `<p class="muted">עוד לא תועדו תוצאות של ${esc(a.name)} בתחרויות.</p>${nextDay ? `<p><a href="#day-${esc(nextDay)}">להופעה הבאה הידועה: ${esc(dayTitle(nextDay))}</a></p>` : ""}`}
   </section>`;
 }

@@ -3,7 +3,7 @@
 "use strict";
 
 const DAY_STRIP = 3;                 // chips on each side of the selected date
-const DAY_LOOKAHEAD = 120;           // how far the empty state searches for the next day with Israelis
+const DAY_LOOKAHEAD = 120;           // empty-state search limit in each direction
 
 // "Real" date: rejects 2026-02-30, which JS would roll over to 2 March.
 const realDate = d => isDate(d) && !isNaN(asDate(d)) && addDays(d, 0) === d;
@@ -48,8 +48,11 @@ function viewDay(d){
   const rank = sid => followsSport(sid) ? 0 : [...bySport.get(sid).values()].some(c => c.list.some(followedIn)) ? 1 : 2;
   const sports = [...bySport.keys()].sort((x, y) => rank(x) - rank(y) || heCmp(sportName(x), sportName(y)));
   const firstStart = c => c.list.map(s => s.startUtc).sort(byStart)[0] || null;
-  let after = "";
-  if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && !after; i++) if (hasIsraelis(addDays(d, i))) after = addDays(d, i);
+  let before = "", after = "";
+  if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && (!before || !after); i++) {
+    if (!before && hasIsraelis(addDays(d, -i))) before = addDays(d, -i);
+    if (!after && hasIsraelis(addDays(d, i))) after = addDays(d, i);
+  }
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
   return `<div class="day-nav">
       <h1 tabindex="-1">${isToday ? `היום, ${dayTitle(d)}` : dayTitle(d)}</h1>
@@ -64,5 +67,5 @@ function viewDay(d){
       <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a class="hlink" href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
-    : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה.</p>${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
+    : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה.</p>${before ? `<p><a href="#day-${before}">לתחרות הקודמת: ${fmt(before)}</a></p>` : ""}${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
 }

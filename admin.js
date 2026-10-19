@@ -252,6 +252,8 @@ const rnAthletes = sid => {
     + (props ? ` · <b>${props === 1 ? "הצעת שלב אחת ממתינה" : `${props} הצעות שלב ממתינות`}</b>` : "");
 };
 const rnKey = q => `la28.rn.${q.sportId}|${q.event}|${q.nextQuotaEvent.start}`;
+const validRnStep = i => Number.isInteger(i) && i >= 0 && i < RN_STEPS.length;
+const rnDone = key => [...new Set(store.getArray(key).filter(validRnStep))];
 
 // Yesterday's and today's sessions past their window with no result yet, in the order their windows ended (the order
 // results come in), each with its official link: the session's source, else its competition's. Ended sessions
@@ -291,7 +293,7 @@ function resultNightPanel(){
     <div class="sec-head"><h2>ליל תוצאות (${items.length})</h2>${runbook}</div>
     ${sessions}
     <p class="foot">אין מכסה פומבית בלי מקור רשמי. „הושגה” עולה רק אחרי ששלב הספורטאים פורסם (שלב 4 לפני שלב 6).</p>
-    ${items.map(q => { const done = store.get(rnKey(q), []); return `<details class="rn-item" ${done.length < RN_STEPS.length ? "open" : ""}>
+    ${items.map(q => { const done = rnDone(rnKey(q)); return `<details class="rn-item" ${done.length < RN_STEPS.length ? "open" : ""}>
       <summary>${esc(sportName(q.sportId))} · ${esc(q.event)} ${quotaStatusPill(q.israelStatus)}
         <small class="muted">${esc(q.nextQuotaEvent.name)} · ${quotaEventEnd(q) === t ? "מסתיים היום" : "הסתיים אתמול"} · ${done.length} מתוך ${RN_STEPS.length} שלבים</small></summary>
       <ol class="rn-steps">${RN_STEPS.map((f, i) => `<li><label class="chk"><input type="checkbox" data-rn="${esc(rnKey(q))}" data-step="${i}" ${done.includes(i) ? "checked" : ""}>
@@ -303,7 +305,9 @@ function resultNightPanel(){
 document.addEventListener("change", e => {
   const box = e.target;
   if (!box?.dataset?.rn) return;
-  const i = Number(box.dataset.step), done = new Set(store.get(box.dataset.rn, []));
+  const i = Number(box.dataset.step);
+  if (!/^\d+$/.test(box.dataset.step) || !validRnStep(i)) return;
+  const done = new Set(rnDone(box.dataset.rn));
   box.checked ? done.add(i) : done.delete(i);
   store.set(box.dataset.rn, [...done].sort((a, b) => a - b));
 });

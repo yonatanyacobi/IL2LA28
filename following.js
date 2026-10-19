@@ -5,12 +5,17 @@
 
 const FEED_MAX = 20;
 // Baseline for "since your last visit to #following". A first visit sets it silently, so nothing is "new".
-const followSeenAtLoad = store.get("la28.followingSeen", null);
+const savedFollowSeen = store.get("la28.followingSeen", null);
+const followSeenAtLoad = typeof savedFollowSeen === "string" &&
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(savedFollowSeen) &&
+  isDate(savedFollowSeen.slice(0, 10)) && Number.isFinite(Date.parse(savedFollowSeen)) ? savedFollowSeen : null;
 // What the viewer saw of each followed record at that visit, so an updatedAt bump that changes nothing visible
 // (a source link, a verification stamp) doesn't count as news.
 const SHOWN_FIELDS = ["name", "event", "stage", "rank", "next", "nextDate"];
 const shownOf = a => SHOWN_FIELDS.map(k => str(a[k])).join("\u241f");
-const shownAtLoad = store.get("la28.followingShown", {});
+const savedFollowingShown = store.get("la28.followingShown", {});
+const shownAtLoad = Object.fromEntries(savedFollowingShown && typeof savedFollowingShown === "object" && !Array.isArray(savedFollowingShown)
+  ? Object.entries(savedFollowingShown).filter(([, value]) => typeof value === "string") : []);
 let badgeSince = followSeenAtLoad;
 S.followSports = new Set(store.getArray("la28.followSports"));
 

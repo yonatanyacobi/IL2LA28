@@ -71,7 +71,7 @@ function recentResults(){
     rows.push({athletes: [a], comp: compOn(a.sportId, d), sportId: a.sportId, phase: "", startUtc: null, day: d,
       result: str(h.text).slice(0, 120), resultSource: h.source, resultAt: ""});
   }
-  const fav = r => r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1, key = r => r.resultAt || r.day + "T00:00:00Z";
+  const fav = r => followsSport(r.sportId) || r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1, key = r => r.resultAt || r.day + "T00:00:00Z";
   return rows.sort((x, y) => fav(x) - fav(y) || key(y).localeCompare(key(x)) || heCmp(x.athletes[0].name, y.athletes[0].name));
 }
 

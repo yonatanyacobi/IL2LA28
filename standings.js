@@ -9,9 +9,14 @@ const rankOn = (n, list, asOf) => Number.isInteger(n) && n >= 1 ? {n, list: str(
 const ranksOf = a => [rankOn(a.olympicRankNum, a.olympicRankList, a.olympicRankAsOf), rankOn(a.rankNum, a.rankList, a.rankAsOf)].filter(Boolean);
 // Raw numbers order the rows (not rankOf(), which hides stale ranks); stale ones are flagged instead. A date after
 // today is a data error, never "fresh" (Noa on #266).
-const rankStale = r => !isDate(r.asOf) || r.asOf > today() || dayNo(r.asOf, today()) - 1 > RANK_MAX_AGE_D;
+const rankDateKnown = r => {
+  if (!isDate(r.asOf)) return false;
+  const date = new Date(r.asOf + "T12:00:00Z");
+  return !isNaN(date) && date.toISOString().slice(0, 10) === r.asOf;
+};
+const rankStale = r => !rankDateKnown(r) || r.asOf > today() || dayNo(r.asOf, today()) - 1 > RANK_MAX_AGE_D;
 // The athlete page dates a rank the way the sport page does: the neutral pill when stale, plain otherwise.
-const rankWhen = (r, fresh) => !isDate(r.asOf) ? "" : rankStale(r) ? ` <span class="pill ended">דירוג מ־${fmt(r.asOf)}</span>` : fresh(fmt(r.asOf));
+const rankWhen = (r, fresh) => !rankDateKnown(r) ? ` <span class="pill ended">תאריך הדירוג לא ידוע</span>` : rankStale(r) ? ` <span class="pill ended">דירוג מ־${fmt(r.asOf)}</span>` : fresh(fmt(r.asOf));
 const STANDINGS_CAVEAT = "הקו הוא מקום ברשימה, לא תחזית. ברוב השיטות כל מדינה יכולה לקבל לכל היותר מכסה אחת במקצה, ויש גם מסלולים יבשתיים.";
 
 function standingsGroups(q){
@@ -34,7 +39,7 @@ function teamStanding(q){
   const r = {n: t.num, asOf: t.asOf}, above = r.n <= c.rank, line = `<li class="cutline" aria-hidden="true">קו המכסה: מקום ${c.rank}</li>`;
   const row = `<li><span class="d">${r.n}</span>
     <span class="t">נבחרת ישראל${!rankStale(r) ? ` · ${fmt(r.asOf)}` : ""} · ${linkOut(t.source)}<span class="sr">, ${above ? "מעל קו המכסה" : "מתחת לקו המכסה"}</span></span>
-    <span>${rankStale(r) ? `<span class="pill ended">דירוג מ־${fmt(r.asOf)}</span>` : ""}</span></li>`;
+    <span>${rankWhen(r, () => "")}</span></li>`;
   return `<ol class="rows standings">${above ? row + line : line + row}</ol>`;
 }
 
@@ -49,11 +54,11 @@ function standingsItem(q){
   // A stale rank shows its date in the pill only (UX QA).
   const row = ({a, r}) => `<li><span class="d">${r.n}</span>
     <span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${isDate(r.asOf) && !rankStale(r) ? ` · ${fmt(r.asOf)}` : ""}<span class="sr">, ${r.n <= c.rank ? "מעל קו המכסה" : "מתחת לקו המכסה"}</span></span>
-    <span>${rankStale(r) && isDate(r.asOf) ? `<span class="pill ended">דירוג מ־${fmt(r.asOf)}</span>` : ""}</span></li>`;
+    <span>${rankWhen(r, () => "")}</span></li>`;
   const rows = placed.map(row);
   rows.splice(above, 0, `<li class="cutline" aria-hidden="true">קו המכסה: מקום ${c.rank}</li>`);
   return head + `${placed.length ? `<ol class="rows standings">${rows.join("")}</ol>` : ""}
-    ${other.length ? `<p class="muted">בדירוג אחר: ${other.map(({a, r}) => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>, מקום ${r.n} ב־<bdi>${esc(r.list)}</bdi>`).join(" · ")}</p>` : ""}
+    ${other.length ? `<p class="muted">בדירוג אחר: ${other.map(({a, r}) => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>, מקום ${r.n} ב־<bdi>${esc(r.list)}</bdi>${!rankDateKnown(r) ? rankWhen(r, () => "") : ""}`).join(" · ")}</p>` : ""}
     ${none.length ? `<p class="muted">ללא דירוג: ${none.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")}</p>` : ""}
     <p class="foot">הדירוג הסופי נקבע ב־${fmt(c.final)}.</p>`;
 }
