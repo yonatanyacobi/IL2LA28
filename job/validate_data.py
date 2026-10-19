@@ -1,7 +1,7 @@
 """Validate a public data.json produced by export_data.py (shipped next to it).
 
 Usage: python3 validate_data.py <data.json>  -> exit 0 if valid, 1 with one error per line otherwise;
-       WARN lines (suspect rank dates) never change the exit code.
+       WARN lines (suspect rank dates, cross-record gaps) never change the exit code.
        python3 validate_data.py --quotas <quotas.json> <data.json>  -> checks the hand-curated quotas.json;
        data.json is context for sportId and the "earned" cross-check.
 Checks the contract the exporter guarantees; unknown keys are errors so a private field can't leak silently.
@@ -203,6 +203,53 @@ def warnings(data):
                 out.append(f"{where}: {a[p + 'AsOf']} is the export day; check the date printed on {a.get(p + 'List')!r}")
             elif isinstance(a.get(p + "List"), str) and a[p + "List"].strip() and not is_date(a.get(p + "AsOf")):
                 out.append(f"{where}: missing although {p}List is set; fix the date in the DB")
+    return out
+
+
+SERIES_DAYS = 31   # as the page's compOn() and quota_due.py: a longer competition is a season-long series
+
+
+def israel_day(utc_iso):
+    from zoneinfo import ZoneInfo
+    return datetime.fromisoformat(utc_iso[:-1] + "+00:00").astimezone(ZoneInfo("Asia/Jerusalem")).strftime("%Y-%m-%d")
+
+
+def xref_warnings(data):
+    """Checks across collections. Warnings only: each is a gap someone fills, not a file the site can't show.
+    (A session's competition and athletes must exist; validate() already makes that an error, and the export drops
+    archived athletes, so every athlete in data.json is active.)
+    - An upcoming nextDate inside a known competition (same sport, containing the day, at most SERIES_DAYS long) with
+      no session listing the athlete on that Israel day: the rule of #admin-nosession and session_gaps.py.
+    - A qualifying competition without a source.
+    - A rankAsOf / olympicRankAsOf after the export day: a list can't be dated after it was read."""
+    if not isinstance(data, dict):
+        return []
+    days, out = export_days(data.get("generatedAt")), []
+    last = days[-1] if days else ""
+    lst = lambda k: [x for x in data.get(k) or [] if isinstance(x, dict)] if isinstance(data.get(k), list) else []
+    comps, sessions = lst("competitions"), lst("sessions")
+    on_day = set()
+    for s in sessions:
+        start = s.get("startUtc")
+        day = israel_day(start) if isinstance(start, str) and start.endswith("Z") and is_iso(start) else s.get("date")
+        for aid in s.get("athleteIds") or []:
+            on_day.add((aid, day))
+    for i, a in enumerate(lst("athletes")):
+        where, d = f"athletes[{i}]({a.get('id')})", a.get("nextDate")
+        if is_date(d) and (not last or d >= days[0]) and (a.get("id"), d) not in on_day:
+            hits = sorted((c for c in comps if c.get("sportId") == a.get("sportId") and is_date(c.get("start"))
+                           and c["start"] <= d <= (c.get("end") or c["start"])
+                           and (datetime.fromisoformat(c.get("end") or c["start"]) - datetime.fromisoformat(c["start"])).days + 1 <= SERIES_DAYS),
+                          key=lambda c: (c.get("end") or c["start"], str(c.get("id"))))
+            if hits:
+                out.append(f"{where}.nextDate: {d} is in {hits[0].get('id')} but no session lists them that day")
+        for p in ("rank", "olympicRank"):
+            at = a.get(p + "AsOf")
+            if last and is_date(at) and at > last:
+                out.append(f"{where}.{p}AsOf: {at} is after the export ({last}); a list can't be dated after it was read")
+    for i, c in enumerate(comps):
+        if c.get("qualifying") is True and not (isinstance(c.get("source"), str) and c["source"].startswith("https://")):
+            out.append(f"competitions[{i}]({c.get('id')}).source: a qualifying competition needs its official source")
     return out
 
 
@@ -452,7 +499,7 @@ def main(argv):
     else:
         errors = validate(docs[0])
         if isinstance(docs[0], dict):
-            for w in warnings(docs[0]):
+            for w in warnings(docs[0]) + xref_warnings(docs[0]):
                 print(f"WARN: {w}")
     for e in errors:
         print(f"INVALID: {e}")
