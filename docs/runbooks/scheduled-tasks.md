@@ -2,7 +2,7 @@
 
 Drafts for the coordinator to create as scheduled tasks (CEO plan, owner-approved), so result nights don't depend on
 one session's timers. Each prompt is self-contained: paste the block under "Prompt" as the task's prompt, replace
-THREAD with the issue or PR number, and use the schedule above it. All prompts share the same rules block, kept
+THREAD with the number in its schedule line, and use the schedule above it. All prompts share the same rules block, kept
 identical on purpose; change it in every prompt or in none.
 
 What the tasks don't do, by design: sign off values (a person posts "values OK" on THREAD), change stages,
@@ -66,7 +66,7 @@ due now, and stop:
 
 ## 2. v55 full publish, 20.10 09:17
 
-**Schedule:** One-time, 20.10 09:17. THREAD = the PR that merged docs/runbooks/publish-v55.md (#292).
+**Schedule:** One-time, 20.10 09:17. THREAD = #292 (the PR that merged docs/runbooks/publish-v55.md).
 
 **Prompt:**
 
@@ -111,8 +111,8 @@ of origin/main, exactly as the runbook's step 5 script writes them into publish-
 ## 3. Rotterdam finals nights, 23–25.10
 
 **Schedule:** Recurring for 23–25.10 at 21:30, 22:30 and 23:30 (23.10, all-around final) and at 16:15, 17:15 and 18:15
-(24.10 and 25.10, apparatus finals), plus 06:15 and 07:15 on 24.10 for Tongyeong. THREAD = one issue per day,
-created by the coordinator, its number in the task's first line.
+(24.10 and 25.10, apparatus finals), plus 06:15 and 07:15 on 24.10 for Tongyeong. THREAD = #312 (23.10), #313 (24.10),
+#314 (25.10): one task per day, each with its own number.
 
 **Prompt:**
 
@@ -160,8 +160,7 @@ it), then publish data.json. 25.10 is the competition's last day: the 1.11 diges
 
 ## 4. Abu Dhabi Grand Slam, 29–31.10 (judo)
 
-**Schedule:** One-time 28.10 at 12:45 (after the draw), then recurring 29–31.10 at 17:45, 19:00 and 21:00. THREAD = an issue
-created by the coordinator.
+**Schedule:** One-time 28.10 at 12:45 (after the draw), then recurring 29–31.10 at 17:45, 19:00 and 21:00. THREAD = #315.
 
 **Prompt:**
 
@@ -208,7 +207,7 @@ https://www.ijf.org/competition/3157/judoka_athletes. No other site, no judobase
 ## 5. Doha ISSF Worlds, 3–4.11 (shooting)
 
 **Schedule:** One-time 2.11 at 20:00 (start lists), recurring 3.11 at 15:00, 16:00 and 19:00, and 4.11 at 14:00.
-THREAD = an issue created by the coordinator.
+THREAD = #316.
 
 **Prompt:**
 
@@ -254,7 +253,7 @@ Athletes: sergey-richter (men's 10m air rifle), olga-tashtchiev (women's 10m air
 
 ## 6. Daily checks, 10:07
 
-**Schedule:** Recurring daily at 10:07 from 20.10. THREAD = a standing issue "Daily checks", created by the coordinator.
+**Schedule:** Recurring daily at 10:07 from 20.10. THREAD = #317 (standing issue "Daily checks (10:07)").
 
 **Prompt:**
 
@@ -298,3 +297,11 @@ Checks, all read-only, each one line in one THREAD comment (OK or the problem):
 7. Render: node tests/preview_at.js <data.json> site/quotas.json <today> exits 0.
 Anything red that blocks tomorrow's run or a result night in the next 48 hours: notify.
 ```
+
+## Rollout (coordinator, 19.10)
+
+19.10 stays on the in-session plan (live agents; Dana or Tamar post "values OK"), so no task runs in parallel and
+nothing is written twice; prompt 1 is kept for reference. Created first: the v55 publish and the daily checks, then
+the 23–25.10 nights after a dry run. Sign-off is unchanged: a human-role checker posts "values OK"; a task never
+approves its own values.
+
