@@ -231,6 +231,16 @@ const AWAIT_PILL = `<span class="pill q-awaiting">${AWAITING}</span>`;
 const awaitingLine = w => `${esc(w.name)} (${fmtRange(w.start, w.end)}). עדכון המכסות יפורסם אחרי ההודעה הרשמית.`;
 // "What it means" for Israel at the next quota event; meaningless once that event is past.
 // An earned item's stakes describe the pre-event state, so they go once it is earned.
+// Stakes tied to a day or a competition (home, #day, #c-, digest) show only where Israel competes: an Israeli in the
+// sport has a session or a nextDate inside the item's quota event (sprint-7.md; the 20.10 men's team final, which
+// Israel didn't reach, showed its stakes all day).
+function israelIn(q){
+  const e = q.nextQuotaEvent, end = quotaEventEnd(q);
+  if (!e || !isDate(e.start) || !end) return false;
+  const inside = d => e.start <= d && d <= end;
+  return athletesOf(q.sportId).some(a => isDate(a.nextDate) && inside(a.nextDate))
+    || (typeof exportedSessions === "function" && exportedSessions().some(s => s.sportId === q.sportId && inside(s.day)));
+}
 const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) && q.israelStatus !== "earned" ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
 
 function quotaSection(id){

@@ -95,7 +95,7 @@ function digestText(t = today()){
   const quotas = [...byEvent.keys()].sort().map(key => {
     const list = byEvent.get(key).sort((a, b) => heCmp(a.event, b.event)), q = list[0], e = q.nextQuotaEvent, last = quotaEventEnd(q);
     const who = S.athletes.filter(a => a.sportId === q.sportId && isDate(a.nextDate) && e.start <= a.nextDate && a.nextDate <= last);
-    const stakes = commonStakes(list);
+    const stakes = israelIn(q) ? commonStakes(list) : "";
     return [
       waCut(`• ${fmtShort(e.start)} · ${waText(sportName(q.sportId))}${list.length === 1 ? `, ${waText(q.event)}` : ""}: ${waText(e.name)}`),
       ...(list.length > 1 ? waList("  מקצים: ", list.map(x => waText(x.event))) : []),
