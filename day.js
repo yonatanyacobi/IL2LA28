@@ -22,8 +22,14 @@ function compBlock(comp, sessions, sid, d){
   const total = dayNo(comp.start, comp.end || comp.start);
   const now = comp.start <= t && t <= (comp.end || comp.start) && d === t;
   // Stakes: in-contention items whose quota event covers this day (an earned item mustn't show pre-event stakes).
-  const stakes = quotasOf(sid).filter(q => q.israelStatus === "in-contention" && q.stakes && q.nextQuotaEvent
-    && q.nextQuotaEvent.start <= d && d <= quotaEventEnd(q) && israelIn(q)).slice(0, STAKES_MAX);
+  const stakes = quotasOf(sid).filter(q => {
+    if (q.israelStatus !== "in-contention" || !q.stakes || !q.nextQuotaEvent
+      || q.nextQuotaEvent.start > d || d > quotaEventEnd(q) || !israelIn(q)) return false;
+    const event = q.nextQuotaEvent;
+    const matches = S.comps.filter(c => c.sportId === q.sportId && c.start <= event.start && event.start <= (c.end || c.start)
+      && str(c.name).trim() === str(event.name).trim());
+    return matches.length === 1 && matches[0].id === comp.id;
+  }).slice(0, STAKES_MAX);
   return `<h3>${compLink(comp, esc(comp.name), "hlink")}${tail}</h3>
     ${now ? `<p><span class="pill s-live">מתקיימת עכשיו${total > 1 ? ` · יום ${dayNo(comp.start, d)} מתוך ${total}` : ""}</span></p>` : ""}
     ${list}

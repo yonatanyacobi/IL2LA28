@@ -26,17 +26,27 @@ function toggleFollowSport(id){
 
 const followedAthletes = () => S.athletes.filter(a => S.follows.has(a.id) || S.followSports.has(a.sportId));
 
-// History entries of followed athletes (or athletes in followed sports) newer than `since`. History is dated by
-// day only, so an entry on the day of the last visit counts when its record changed after that visit.
+// Proven session results win same-day result history. Date-only history counts on the visit's Israel day
+// only when the athlete record changed after that visit.
 // A record that changed without a new history entry (most daily updates, until results land) still gets one
 // "הפרטים עודכנו" row, dated by updatedAt.
 function followFeed(since){
   if (!since) return [];
   const day = IL_DAY.format(new Date(since));
+  const sinceAt = Date.parse(since), now = Date.now();
+  const results = (typeof exportedSessions === "function" ? exportedSessions() : []).filter(s => {
+    const at = Date.parse(s.resultAt);
+    return s.result && at > sinceAt && at <= now;
+  });
   return followedAthletes().flatMap(a => {
-    const items = (Array.isArray(a.history) ? a.history : [])
+    const sessionItems = results.filter(s => s.athletes.includes(a)).map(s => ({a, session: true,
+      h: {kind: "result", at: s.day, text: s.result, source: s.resultSource}}));
+    const resultDays = new Set(sessionItems.map(item => item.h.at));
+    const historyItems = (Array.isArray(a.history) ? a.history : [])
       .filter(h => h && typeof h === "object" && !Array.isArray(h) && isDate(h.at)
+        && !(h.kind === "result" && resultDays.has(h.at))
         && (h.at > day || (h.at === day && str(a.updatedAt) > since))).map(h => ({a, h}));
+    const items = [...sessionItems, ...historyItems];
     const updatedAt = str(a.updatedAt), was = shownAtLoad[a.id];
     const at = Number.isFinite(Date.parse(updatedAt)) ? IL_DAY.format(new Date(updatedAt)) : "";
     const changed = updatedAt > since && isDate(at) && was !== undefined && was !== shownOf(a);
@@ -50,14 +60,26 @@ const viaSport = a => S.follows.has(a.id) ? "" : `<small>ענף במעקב: ${es
 const compLinkOr = c => typeof compLink === "function" ? compLink(c, esc(c.name)) : esc(c.name);
 
 function followUpcoming(){
-  const t = today();
-  const athletes = followedAthletes().filter(a => isDate(a.nextDate) && a.nextDate >= t)
+  const t = today(), through = addDays(t, 13), followed = followedAthletes();
+  const ids = new Set(followed.map(a => a.id));
+  const knownSessions = (typeof exportedSessions === "function" ? exportedSessions() : [])
+    .filter(s => t <= s.day && s.day <= through && s.athletes.some(a => ids.has(a.id)));
+  // Completed known appearances must not return through an older nextDate fallback.
+  const represented = new Set(knownSessions.flatMap(s => s.athletes.filter(a => ids.has(a.id)).map(a => `${a.id}|${s.day}`)));
+  const competitions = new Set(knownSessions.map(s => s.comp.id));
+  const sessions = knownSessions.filter(s => ["before", "competing"].includes(sessionState(s, s.day)));
+  const appearances = sessions.flatMap(s => s.athletes.filter(a => ids.has(a.id)).map(a => ({
+    k: `up|s|${s.comp.id}|${s.day}|${a.id}|${s.phase}|${s.startUtc || ""}`, d: s.day,
+    chip: s.day === t ? statusChip(sessionState(s, s.day)) : "",
+    html: `<a href="#day-${esc(s.day)}">${esc(a.name)}</a><small>${esc(sportName(s.sportId))} · ${compLinkOr(s.comp)}${s.phase ? ` · ${esc(s.phase)}` : ""}${safeUrl(s.source) ? ` · ${linkOut(s.source)}` : ""}</small>`,
+  })));
+  const athletes = followed.filter(a => isDate(a.nextDate) && a.nextDate >= t && !represented.has(`${a.id}|${a.nextDate}`))
     .map(a => ({k: `up|a|${a.id}`, d: a.nextDate, chip: a.nextDate === t ? statusChip("competing") : "",
       html: `<a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))}${a.next ? ` · ${nextCompFact(a)}` : ""}</small>`}));
-  const comps = upcoming().filter(c => S.followSports.has(c.sportId))
+  const comps = upcoming().filter(c => S.followSports.has(c.sportId) && !competitions.has(c.id))
     .map(c => ({k: `up|c|${c.id}`, d: c.start, chip: c.start <= t ? `<span class="pill s-live">מתקיימת עכשיו</span>` : "",
       html: `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLinkOr(c)}<small>${esc(c.location)}</small>`}));
-  return [...athletes, ...comps].sort((x, y) => x.d.localeCompare(y.d)).slice(0, 5);
+  return [...appearances, ...athletes, ...comps].sort((x, y) => x.d.localeCompare(y.d)).slice(0, 5);
 }
 
 function viewFollowing(tab = ""){
@@ -91,8 +113,8 @@ function viewFollowing(tab = ""){
   return `${head}
   <section class="panel" aria-labelledby="feedH">
     <h2 id="feedH">מאז הביקור הקודם (${feed.length})</h2>
-    ${feed.length ? `<ul class="rows">${feed.map(({a, h}) => `<li><span class="d">${fmt(h.at)}</span>
-      <span class="t"><a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small>${viaSport(a)}${(k => rowMark(k, k))(`feed|${a.id}|${h.at}|${h.text}`)}</span><span></span></li>`).join("")}</ul>`
+    ${feed.length ? `<ul class="rows">${feed.map(({a, h, session}) => `<li><span class="d">${fmt(h.at)}</span>
+      <span class="t"><a href="${session ? `#day-${esc(h.at)}` : `#a-${esc(a.id)}`}">${esc(a.name)}</a><small>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small>${viaSport(a)}${(k => rowMark(k, k))(`feed|${a.id}|${h.at}|${h.text}`)}</span><span></span></li>`).join("")}</ul>`
       : `<p class="muted">${followSeenAtLoad ? "אין עדכונים חדשים מאז הביקור הקודם." : "עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."}</p>`}
   </section>
   ${next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>

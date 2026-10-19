@@ -34,8 +34,9 @@ const runningWhen = (c, t) => (c.end || c.start) === c.start ? "" : c.end === t 
 // Depends only on `t` and the loaded data in S, so tests can pin the week.
 function digestText(t = today()){
   const from = addDays(t, -6);
-  const dataTs = str(S.live ? S.lastRun : (S.generatedAt || S.lastRun)).slice(0, 10);
-  const day = c => str(c.at).slice(0, 10);
+  const localDay = value => isUtc(value) ? ilDate(value) : isDate(value) ? value : "";
+  const dataTs = localDay(str(S.live ? S.lastRun : (S.generatedAt || S.lastRun)));
+  const day = c => localDay(str(c.at));
   const end = c => c.end || c.start;
   const weekChanges = S.changes.filter(c => isDate(day(c)) && day(c) >= from && day(c) <= t);
   // Results: competitions in tracked sports that ended in the 7 days before today, each with all changes about its

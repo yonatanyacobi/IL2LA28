@@ -1014,7 +1014,7 @@ function currentRoute(){
   try { return decodeURIComponent(location.hash.slice(1)) || "home"; } catch { return "home"; }
 }
 
-let renderedDay = "";
+let renderedDay = "", renderedClock = "";
 function route(){
   const h = currentRoute();
   renderedDay = today();
@@ -1045,6 +1045,7 @@ function route(){
   if (typeof followingDecorate === "function") html = followingDecorate(h, html);
   const b = banner();
   $("view").innerHTML = b + html;
+  renderedClock = clockStatusSignature(h);
   // The banner is rebuilt on every render; announce it through one persistent status only when its text changes.
   const bt = b.replace(/<[^>]*>/g, "");
   if (bt !== lastBanner) { lastBanner = bt; const st = $("bannerStatus"); if (st) st.textContent = bt; }
@@ -1158,8 +1159,33 @@ $("visitorMsgClose").addEventListener("click", () => { $("visitorMsg").hidden = 
 $("editModeBtn").addEventListener("click", () => setVisitorView(false));
 $("archBtn").addEventListener("click", archive);
 $("cancelBtn").addEventListener("click", () => $("dlg").close());
-// Past Israel midnight the today strip and "live"/"past" labels are stale.
-setInterval(() => { if (today() !== renderedDay) return refresh(); const d = $("days"); if (d) d.textContent = daysLeft(); }, 60e3);
+function clockStatusSignature(h = currentRoute()){
+  if (!S.loaded || typeof sessionState !== "function") return "";
+  let sessions;
+  if (h === "home") sessions = daySessions(today()).map(s => [s, today()]);
+  else if (h === "today" || h === "day" || /^day-/.test(h)) {
+    const d = h === "today" || h === "day" ? today() : h.slice(4);
+    if (!realDate(d)) return "";
+    sessions = daySessions(d).map(s => [s, d]);
+  } else if (h.startsWith("c-")) {
+    const c = S.comps.find(c => c.id === h.slice(2));
+    if (!c) return "";
+    const {series, groups} = eventSessions(c);
+    sessions = [...groups].flatMap(([d, list]) => list.map(s => [s, series ? s.day : d]));
+  } else return "";
+  return JSON.stringify(sessions.map(([s, d]) => [sessionState(s, d),
+    ...(h.startsWith("c-") ? s.athletes.map(a => athleteStatus(s, d, a)) : [])]));
+}
+
+function refreshClockStatuses(){
+  if (document.hidden || !S.loaded) return;
+  // Reopening Following marks its feed read; the clock must not count as a visit.
+  if (today() !== renderedDay && !/^following(-|$)/.test(currentRoute())) return refresh();
+  const signature = clockStatusSignature();
+  if (signature && signature !== renderedClock) return refresh();
+  const d = $("days"); if (d) d.textContent = daysLeft();
+}
+setInterval(refreshClockStatuses, 60e3);
 // The skip link must not change the hash: the router would treat "#view" as an unknown page.
 document.querySelector(".skip")?.addEventListener("click", e => { e.preventDefault(); $("view").focus(); });
 
@@ -1375,7 +1401,7 @@ function scheduleRefresh(){
   if (document.hidden) return;
   refreshTimer = setTimeout(async () => { await checkForUpdate(); scheduleRefresh(); }, Math.max(0, REFRESH_MS - (Date.now() - lastCheck)));
 }
-document.addEventListener("visibilitychange", scheduleRefresh);
+document.addEventListener("visibilitychange", () => { refreshClockStatuses(); scheduleRefresh(); });
 
 navigate();
 loadPublic();
