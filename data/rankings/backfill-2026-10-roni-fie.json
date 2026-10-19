@@ -1,0 +1,70 @@
+{
+ "updatedAt": "2026-10-18T18:50:00Z",
+ "athletes": [
+  {
+   "athleteId": "yuval-freilich",
+   "rankNum": 262,
+   "rankList": "FIE Senior Individual Ranking",
+   "rankAsOf": "2026-09-20",
+   "source": "https://fie.org/athletes/24944",
+   "notes": "מקום 262, 4.250 נק׳. FIE men's épée senior individual ranking, season 2027 (2026–27), read 2026-10-18T18:47Z from https://fie.org/athletes?weapon=E&gender=M&type=I&season=2027&level=S&country=ISR. FIE אינו מציג תאריך לדירוג; rankAsOf הוא תאריך התחרות האחרונה שנספרת בו (לוויין בלגרד, 20.9.2026). No AOR yet: the LA28 Adjusted Official Ranking period opens 1.4.2027.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-19"
+   }
+  },
+  {
+   "athleteId": "alon-sarid",
+   "rankNum": 28,
+   "rankList": "FIE Senior Individual Ranking",
+   "rankAsOf": "2026-09-20",
+   "source": "https://fie.org/athletes/54015",
+   "notes": "מקום 28, 55.250 נק׳. FIE men's épée senior individual ranking, season 2027 (2026–27), read 2026-10-18T18:47Z from https://fie.org/athletes?weapon=E&gender=M&type=I&season=2027&level=S&country=ISR. FIE אינו מציג תאריך לדירוג; rankAsOf הוא תאריך התחרות האחרונה שנספרת בו (לוויין בלגרד, 20.9.2026). No AOR yet: the LA28 Adjusted Official Ranking period opens 1.4.2027.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-19"
+   }
+  },
+  {
+   "athleteId": "dov-vilensky",
+   "rankNum": 31,
+   "rankList": "FIE Senior Individual Ranking",
+   "rankAsOf": "2026-09-20",
+   "source": "https://fie.org/athletes/51211",
+   "notes": "מקום 31, 51.250 נק׳. FIE name: VILENSKY Dov Ber. FIE men's épée senior individual ranking, season 2027 (2026–27), read 2026-10-18T18:47Z from https://fie.org/athletes?weapon=E&gender=M&type=I&season=2027&level=S&country=ISR. FIE אינו מציג תאריך לדירוג; rankAsOf הוא תאריך התחרות האחרונה שנספרת בו (לוויין בלגרד, 20.9.2026). No AOR yet: the LA28 Adjusted Official Ranking period opens 1.4.2027.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-19"
+   }
+  },
+  {
+   "athleteId": "yonatan-cohen",
+   "rankNum": 43,
+   "rankList": "FIE Senior Individual Ranking",
+   "rankAsOf": "2026-09-20",
+   "source": "https://fie.org/athletes/46391",
+   "notes": "מקום 43, 40.500 נק׳. FIE men's épée senior individual ranking, season 2027 (2026–27), read 2026-10-18T18:47Z from https://fie.org/athletes?weapon=E&gender=M&type=I&season=2027&level=S&country=ISR. FIE אינו מציג תאריך לדירוג; rankAsOf הוא תאריך התחרות האחרונה שנספרת בו (לוויין בלגרד, 20.9.2026). No AOR yet: the LA28 Adjusted Official Ranking period opens 1.4.2027.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-19"
+   }
+  },
+  {
+   "athleteId": "yehonatan-mesika",
+   "rankNum": 95,
+   "rankList": "FIE Senior Individual Ranking",
+   "rankAsOf": "2026-09-20",
+   "source": "https://fie.org/athletes/54018",
+   "notes": "מקום 95, 18.500 נק׳. FIE name: LAMBREY MESSIKA Yehonathan (b. 2004), the only Yehonatan in the Israeli épée list; match by name and team, check it. FIE men's épée senior individual ranking, season 2027 (2026–27), read 2026-10-18T18:47Z from https://fie.org/athletes?weapon=E&gender=M&type=I&season=2027&level=S&country=ISR. FIE אינו מציג תאריך לדירוג; rankAsOf הוא תאריך התחרות האחרונה שנספרת בו (לוויין בלגרד, 20.9.2026). No AOR yet: the LA28 Adjusted Official Ranking period opens 1.4.2027.",
+   "review": {
+    "status": "ok",
+    "by": "dana",
+    "at": "2026-10-19"
+   }
+  }
+ ]
+}
