@@ -2797,6 +2797,29 @@ test("S4 week: normal week, \"הבא בתור\" day left out, followed names, qu
   assert.deepStrictEqual(weekDays(weekOf(h22)), ["2026-10-25", "2026-10-29"]);
 });
 
+// Sprint 8: "חדש" since the viewer's last visit on #c- and the week panel, as on athlete cards.
+test("since last visit: #c- rows and week-panel days mark athletes updated after la28.seen", async () => {
+  const data = clone();
+  data.athletes.find(a => a.id === "raz-hershko").updatedAt = "2026-10-27T09:00:00Z";
+  const seen = {"la28.seen": JSON.stringify("2026-10-26T00:00:00Z")};
+  const stale = data.athletes.filter(a => a.id !== "raz-hershko" && String(a.updatedAt || "") > "2026-10-26T00:00:00Z");
+  stale.forEach(a => { a.updatedAt = "2026-10-20T00:00:00Z"; });   // precondition: only Raz changed since the visit
+  const b = await boot({data, storage: seen, now: "2026-10-28T08:00:00Z"});
+  const ev = b.view("c-judo-gs-abu-dhabi-2026").split('id="evAthH"')[1].split("</section>")[0];
+  const rowOf = (html, id) => html.split("<li>").find(r => r.includes(`href="#a-${id}"`)) || "";
+  assert.ok(rowOf(ev, "raz-hershko").includes('<span class="new">חדש</span>'), "#c-: Raz marked");
+  assert.ok(!rowOf(ev, "gefen-primo").includes('class="new"'), "#c-: an unchanged athlete isn't");
+  const week = b.view("home").split('aria-labelledby="weekH"')[1].split("</section>")[0];
+  const day = d => week.split("<li>").find(r => r.includes(`href="#day-${d}"`)) || "";
+  assert.ok(day("2026-10-31").includes('<span class="new">חדש</span>') && !day("2026-10-30").includes('class="new"'), "week: only Raz's day");
+  // A first visit has no baseline, so nothing is marked; storage that throws behaves the same.
+  const first = await boot({data, now: "2026-10-28T08:00:00Z"});
+  assert.ok(!first.view("c-judo-gs-abu-dhabi-2026").includes('class="new"') && !first.view("home").split('aria-labelledby="weekH"')[1].includes('class="new"'));
+  const blocked = await boot({data, now: "2026-10-28T08:00:00Z"});
+  blocked.ctx.localStorage.getItem = () => { throw new Error("SecurityError"); };
+  assert.strictEqual(blocked.run(`store.get("la28.seen", null)`), null, "store.get survives blocked storage");
+});
+
 test("S4 week: today only, empty week (hidden or calendar line), result night and its end", async () => {
   const on = async now => (await boot({quotas: SITE_QUOTAS, now})).view("home");
   const todayOnly = weekOf(await on("2026-11-17T08:00:00Z"));
