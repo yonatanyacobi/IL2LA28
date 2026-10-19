@@ -33,7 +33,11 @@ published, v53 stays live, and the next attempt is the following morning at 09:1
 
 ```
 [ ] Everything meant for v55 is merged; note the main SHA: git fetch && git rev-parse --short origin/main
-[ ] The 07:13 run published: runs/2026-10-20 has published: true, and #home's freshness line shows 20.10
+[ ] The 07:13 run published: runs/2026-10-20 has published: true, and #home's freshness line shows 20.10.
+    Missed (no runs/2026-10-20, as on 19.10): v55 doesn't wait. At 08:30 the coordinator exports by hand from a
+    fresh DB dump (job/SKILL.md step 5: prev.json, export_data.py, validate_data.py OK), reviews the data-only diff
+    against the published data.json, publishes data.json only and notes its generatedAt on #292. That export is
+    the step-0 data.
 [ ] No PR merges between step 1 and step 6 (tell the lead)
 ```
 
