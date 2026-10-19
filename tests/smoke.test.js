@@ -3159,6 +3159,31 @@ test("live check v55 §3/§4 on the fixture: every check passes", async () => {
   assert.deepStrictEqual(results.filter(([, ok]) => !ok).map(([id, , note]) => id + (note ? ` (${note})` : "")), []);
 });
 
+test("#admin result night: sessions awaiting a result, in the order they ended, with their official links", async () => {
+  // The fixture's 19.10 Rotterdam women's qualification: Shoshani 14:00Z, Raz + Shamay 19:10Z (windows end +3h).
+  const panelOf = async (now, data = FIXTURE) => {
+    const b = await boot({data, now});
+    b.run(`S.isAdmin = true; S.live = true`);
+    return b.view("admin").split('id="resultNight"')[1].split("</section>")[0];
+  };
+  const rows = p => (p.split('<ul class="rows sess">')[1] || "").split("</ul>")[0].split("<li>").slice(1);
+  // 23:30 Israel on the 19th: Shoshani's window is over, Raz and Shamay's isn't yet.
+  const night = rows(await panelOf("2026-10-19T20:30:00Z"));
+  assert.ok(night.length === 1 && night[0].includes('href="#a-yali-shoshani"') && night[0].includes("pill s-wait"), night.join("|"));
+  // The morning after: both, in the order they ended, each with the session's source and its competition page.
+  const panel = await panelOf("2026-10-20T08:00:00Z"), morning = rows(panel);
+  assert.ok(panel.includes("<h3>2 הופעות ממתינות לתוצאה</h3>"), panel);
+  assert.ok(morning[0].includes("yali-shoshani") && morning[1].includes("lihie-raz") && morning[1].includes("roni-shamay"), "order");
+  for (const r of morning) assert.ok(r.includes('href="#c-ag-worlds-2026"') && /href="https:\/\/www\.gymnastics\.sport\/[^"]+"[^>]*>מקור: <bdi>gymnastics\.sport<\/bdi>/.test(r), r);
+  // A recorded result takes a session off the list; two days later nothing is left.
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  Object.assign(data.sessions.find(s => s.athleteIds.includes("yali-shoshani") && s.date === "2026-10-19"),
+    {result: "מקום 30", resultSource: "https://www.gymnastics.sport/r", resultAt: "2026-10-19T20:00:00Z"});
+  const left = rows(await panelOf("2026-10-20T08:00:00Z", data));
+  assert.ok(left.length === 1 && left[0].includes("lihie-raz"), "result recorded: off the list");
+  assert.ok((await panelOf("2026-10-21T08:00:00Z")).includes("אין הופעות שממתינות לתוצאה מאתמול או מהיום."), "nothing left");
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {
