@@ -2843,7 +2843,7 @@ test("standings UX QA: caveat once per panel, no cut line without placed athlete
 
 // sprint-7.md: stakes only where Israel competes (an Israeli in the sport has a session or nextDate in the event).
 test("stakes only where Israel competes: Rotterdam men's team final hidden, Abu Dhabi 29.10 shown", async () => {
-  const TEAM = "גמר קבוצתי ב־20 באוק׳ 2026", NOTE = "ישראל לא משתתפת בשלב הזה";
+  const TEAM = "גמר קבוצתי ב־20 באוק׳ 2026", NOTE = "לא ידוע על ספורטאי/ת מישראל בשלב הזה";
   // 20.10: Israel isn't in the men's team final (no session or nextDate that day).
   const r = await boot({quotas: SITE_QUOTAS, now: "2026-10-20T09:00:00Z"});
   const home = r.view("home");
@@ -2864,7 +2864,28 @@ test("stakes only where Israel competes: Rotterdam men's team final hidden, Abu 
   assert.ok(a.view("home").includes("על הכף היום · <bdi>"), "home: the Grand Slam stakes");
   assert.ok(a.view("day-2026-10-29").includes('<p class="stakes"><b>מה זה אומר:</b>'), "#day: stakes");
   const ad = a.view("c-judo-gs-abu-dhabi-2026").split('id="evStakesH"')[1].split("</section>")[0];
-  assert.ok(ad.includes("<b>מה זה אומר:</b>") && !ad.includes(NOTE), "#c-: stakes, no note");
+  const li = ev => ad.split("<li>").find(x => x.includes(`<bdi>${ev}</bdi>`)) || "";
+  assert.ok(li("60- ק״ג גברים").includes("<b>מה זה אומר:</b>") && !li("60- ק״ג גברים").includes(NOTE), "#c-: Ashpiz's weight, stakes");
+});
+
+// Item level first: a weight whose own athletes have no start in the event shows no stakes, even when other
+// Israelis in the sport compete that day; an item that names nobody falls back to the sport (the team final above).
+test("stakes check is item-level: a judo weight with no Israeli entered stays quiet on an Abu Dhabi day", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const kerem = data.athletes.find(a => a.id === "kerem-primo");
+  Object.assign(kerem, {nextDate: ""});   // 63- ק״ג: Kerem Primo, no start known in Abu Dhabi
+  const a = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"});
+  const ev = a.view("c-judo-gs-abu-dhabi-2026").split('id="evStakesH"')[1].split("</section>")[0];
+  const li = e => ev.split("<li>").find(x => x.includes(`<bdi>${e}</bdi>`)) || "";
+  assert.ok(li("63- ק״ג נשים").includes('<p class="muted">לא ידוע על ספורטאי/ת מישראל בשלב הזה</p>') && !li("63- ק״ג נשים").includes("<b>מה זה אומר:</b>"), "63-: no stakes, the cautious note");
+  assert.ok(li("60- ק״ג גברים").includes("<b>מה זה אומר:</b>"), "60- (Ashpiz, 29.10): stakes");
+  const stakes63 = SITE_QUOTAS.items.find(i => i.sportId === "judo" && i.event === "63- ק״ג נשים").stakes;
+  for (const page of ["home", "day-2026-10-29", "digest"]) assert.ok(!a.view(page).includes(a.run(`esc(${JSON.stringify(stakes63)})`)), `${page}: no 63- stakes`);
+  // Her start becomes known (a nextDate inside the event): the stakes are back.
+  kerem.nextDate = "2026-10-30";
+  const b = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"});
+  const ev2 = b.view("c-judo-gs-abu-dhabi-2026").split('id="evStakesH"')[1].split("</section>")[0];
+  assert.ok((ev2.split("<li>").find(x => x.includes("<bdi>63- ק״ג נשים</bdi>")) || "").includes("<b>מה זה אומר:</b>"), "63-: back with her start");
 });
 
 test("home today lists only athletes competing today, not the rest of a running competition (Gil P3)", async () => {
