@@ -97,3 +97,28 @@ One line per athlete, whatever the outcome. The date is in `at`, so the line doe
 #184 is merged: for an all-around reserve or an apparatus final for Raz or Shamai, use the texts in
 [result-watch-rotterdam-wag.md](../research/result-watch-rotterdam-wag.md). Their "מה התעדכן" line follows the Q or
 Reserve pattern above, with the final's name.
+
+The "מה התעדכן" lines for these cases, written out from the Q/Reserve pattern above. The `history` and session texts
+are in that file's tables. One line per final she reaches; a Q and a reserve spot on the same night are two lines.
+
+**ליהיא רז** (`lihie-raz`)
+- all-around (reserve only; Q is above), Reserve: `התעמלות מכשירים: ליהיא רז מחליפה <R> לגמר הקרב־רב באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- vault, Q: `התעמלות מכשירים: ליהיא רז עלתה לגמר הקפיצות באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- vault, Reserve: `התעמלות מכשירים: ליהיא רז מחליפה <R> לגמר הקפיצות באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- uneven bars, Q: `התעמלות מכשירים: ליהיא רז עלתה לגמר המקבילים באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- uneven bars, Reserve: `התעמלות מכשירים: ליהיא רז מחליפה <R> לגמר המקבילים באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- beam, Q: `התעמלות מכשירים: ליהיא רז עלתה לגמר הקורה באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- beam, Reserve: `התעמלות מכשירים: ליהיא רז מחליפה <R> לגמר הקורה באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- floor, Q: `התעמלות מכשירים: ליהיא רז עלתה לגמר הקרקע באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- floor, Reserve: `התעמלות מכשירים: ליהיא רז מחליפה <R> לגמר הקרקע באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+
+**רוני שמאי** (`roni-shamay`)
+- all-around (reserve only; Q is above), Reserve: `התעמלות מכשירים: רוני שמאי מחליפה <R> לגמר הקרב־רב באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- vault, Q: `התעמלות מכשירים: רוני שמאי עלתה לגמר הקפיצות באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- vault, Reserve: `התעמלות מכשירים: רוני שמאי מחליפה <R> לגמר הקפיצות באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- uneven bars, Q: `התעמלות מכשירים: רוני שמאי עלתה לגמר המקבילים באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- uneven bars, Reserve: `התעמלות מכשירים: רוני שמאי מחליפה <R> לגמר המקבילים באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- beam, Q: `התעמלות מכשירים: רוני שמאי עלתה לגמר הקורה באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- beam, Reserve: `התעמלות מכשירים: רוני שמאי מחליפה <R> לגמר הקורה באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- floor, Q: `התעמלות מכשירים: רוני שמאי עלתה לגמר הקרקע באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
+- floor, Reserve: `התעמלות מכשירים: רוני שמאי מחליפה <R> לגמר הקרקע באליפות העולם ברוטרדם (מקום <N> במוקדמות)`
