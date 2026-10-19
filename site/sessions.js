@@ -94,10 +94,8 @@ const timeTag = (iso, text) => `<time datetime="${esc(new Date(iso).toISOString(
 const whenIL = iso => timeTag(iso, `${ilDate(iso) === today() ? "" : fmtShortY(ilDate(iso)) + ", "}${hhmm(iso)}`);
 
 // "{label}: {host}"; <bdi> keeps the host's dots in order inside RTL text (#156).
-// A CDN host ("78884ca6…ssl.cf3.rackcdn.com") means nothing to a reader and overflows 400px: show its last two labels.
-const shortHost = h => (l => l.length > 3 ? l.slice(-2).join(".") : h)(str(h).split("."));
 const hostLink = (u, label) => safeUrl(u)
-  ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}: <bdi>${esc(shortHost(host(u)))}</bdi><span class="sr"> (נפתח בחלון חדש)</span></a>` : "";
+  ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}: <bdi>${esc(host(u))}</bdi><span class="sr"> (נפתח בחלון חדש)</span></a>` : "";
 
 // End of the session's window: start + 3h, or the end of Israel day d when untimed.
 function windowEnd(s, d){
