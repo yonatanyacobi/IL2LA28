@@ -2,7 +2,7 @@
 
 Owner: Omer (Publisher). For each event night: who does what, when official results can be expected, and what
 changes on the site. The how is in [result-night.md](result-night.md) (research → sign-off) and
-[publishing.md](publishing.md) (merge → live → digest). Roles are from `docs/company/roles.md`.
+[publishing.md](publishing.md) (merge → live → digest). Roles are from `docs/product/team.md`.
 
 All times are Israel time. Israel and the EU both leave summer time on **Sunday 25.10**, so Rotterdam is 1 hour
 behind Israel throughout. Korea is 6 hours ahead (24.10). After 25.10, Abu Dhabi and Doha are 2 and 1 hours ahead.
