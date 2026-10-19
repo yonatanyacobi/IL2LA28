@@ -206,6 +206,42 @@ def warnings(data):
     return out
 
 
+COPY_SKIP_KEYS = {"source", "url"}
+# docs/design/copy-rules.md §1 and §5 (Gil's anchored pattern). Time and date ranges are allowed and blanked first.
+SCORE = re.compile(r"(?:^|[^0-9-])([0-9]{1,3}[-–][0-9]{1,3})(?:[^0-9-]|$)")
+RANGE_OK = re.compile(r"\d{1,2}:\d{2} ?[-–] ?\d{1,2}:\d{2}"                              # 14:30–16:00
+                      r"|\d{1,2}(?:\.\d{1,2}(?:\.\d{2,4})?)?[-–]\d{1,2}\.\d{1,2}(?:\.\d{2,4})?"   # 10–18.11.2026
+                      r"|\d{1,2} ?[-–] ?\d{1,2} ב?(?:ינו|פבר|מר|אפר|מאי|יונ|יול|אוג|ספט|אוק|נוב|דצמ)")   # 17–25 באוקטובר
+COPY_RULES = (
+    (re.compile(r"LA ?28"), "LA28 in public text; write אולימפיאדת לוס אנג׳לס 2028"),
+    (SCORE, "a dash between numbers; a score takes a colon, higher first (78:65)"),
+    (re.compile(r"[א-ת]['\"]|['\"][א-ת]"), "ASCII ' or \" next to Hebrew; use geresh ׳, gershayim ״ or „…”"),
+)
+
+
+def copy_warnings(data):
+    """Copy-rule slips in the Hebrew strings of data.json: DB fields are free text, so fixed slips come back."""
+    out = []
+
+    def walk(v, path):
+        if isinstance(v, dict):
+            tag = f"{path}({v['id']})" if isinstance(v.get("id"), str) else path
+            for k, x in v.items():
+                if k not in COPY_SKIP_KEYS:
+                    walk(x, f"{tag}.{k}" if tag else k)
+        elif isinstance(v, list):
+            for i, x in enumerate(v):
+                walk(x, f"{path}[{i}]")
+        elif isinstance(v, str) and re.search(r"[א-ת]", v):
+            text = RANGE_OK.sub(lambda m: " " * len(m.group(0)), v)
+            for rx, why in COPY_RULES:
+                m = rx.search(text)
+                if m:
+                    out.append(f"{path}: {why}: {v[max(0, m.start() - 15):m.end() + 15]!r}")
+    walk(data, "")
+    return out
+
+
 SERIES_DAYS = 31   # as the page's compOn() and quota_due.py: a longer competition is a season-long series
 
 
@@ -499,7 +535,7 @@ def main(argv):
     else:
         errors = validate(docs[0])
         if isinstance(docs[0], dict):
-            for w in warnings(docs[0]) + xref_warnings(docs[0]):
+            for w in warnings(docs[0]) + xref_warnings(docs[0]) + copy_warnings(docs[0]):
                 print(f"WARN: {w}")
     for e in errors:
         print(f"INVALID: {e}")
