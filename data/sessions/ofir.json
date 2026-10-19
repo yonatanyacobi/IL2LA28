@@ -10,8 +10,8 @@
    "athleteIds": ["shachar-sagiv"],
    "phase": "גביע העולם בטריאתלון – עלית גברים, ספרינט",
    "source": "https://triathlon.org/events/2026-world-triathlon-cup-tongyeong/start-lists",
-   "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
-   "notes": "HOLD (contract §5): sign off only once the elite men start list shows Sagiv. On 2026-10-18 the page showed the time (Oct 24, 2026, 10:30) but no names; recheck 2026-10-22. startUtc 2026-10-24T01:30:00Z (04:30 Israel). Result night: docs/research/result-watch-tongyeong.md."
+   "review": {"status": "ok", "by": "tamar", "at": "2026-10-19"},
+   "notes": "Signed on World Triathlon's Elite Men entry list (read 19.10): Sagiv entered, not wait-listed; bib not yet assigned. Entry list: https://triathlon.org/events/api/startlist/195162/678792 (what the start-lists page loads). 10:30 Asia/Seoul = 01:30Z = 04:30 Israel (WT programme 678792). Result night: docs/research/result-watch-tongyeong.md."
   },
   {
    "id": "frankfurt-marathon-2026-20261025-men",
