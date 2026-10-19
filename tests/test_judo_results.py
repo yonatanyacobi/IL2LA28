@@ -109,6 +109,17 @@ class JudoPlanTest(unittest.TestCase):
         self.assertNotIn("yonatan-elbaz", [u["athleteId"] for u in out["updates"]])
         self.assertTrue(any("yonatan-elbaz: רשום כבר" in w for w in out["warnings"]))
 
+    def test_stored_maqaf_matches_a_fresh_hyphen(self):
+        # #380: history keeps "ב־XYZ" (maqaf); the fresh text has "ב-XYZ". Same result, no second entry, no warning.
+        comp = {**ABU_DHABI, "name": "גרנד סלאם ב-Abu Dhabi"}
+        first, _ = self.run_plan(comps=[comp])
+        stored = {u["athleteId"]: athlete_patch.result_entry(u["result"]) for u in first["updates"]}
+        self.assertTrue(all("ב־Abu Dhabi" in e["text"] for e in stored.values()))
+        logged = [{**a, "history": [stored[a["id"]]]} if a["id"] in stored else a for a in ATHLETES]
+        again, _ = self.run_plan(athletes=logged, comps=[comp])
+        self.assertEqual(again["updates"], [])
+        self.assertFalse(any("רשום כבר" in w for w in again["warnings"]))
+
     def test_warnings_instead_of_writes(self):
         out, calls = self.run_plan(comps=[{**ABU_DHABI, "source": "https://allsportdb.com/Sports/Judo"}])
         self.assertEqual((out["updates"], calls), ([], []))

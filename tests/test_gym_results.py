@@ -235,6 +235,18 @@ class GymPlanTest(unittest.TestCase):
         again, _ = self.run_plan(athletes=done)
         self.assertEqual((again["updates"], again["warnings"]), ([], []), "a later run (or a manual entry with result_text) finds them logged")
 
+    def test_stored_maqaf_matches_a_fresh_hyphen(self):
+        # #380: history keeps "ב־XYZ" (maqaf); the fresh text has "ב-XYZ". Same result, no second entry.
+        import athlete_patch
+        comp = {**PARIS, "name": "גביע העולם ב-Paris 2026"}
+        out, _ = self.run_plan(comps=[comp])
+        done = copy.deepcopy(self.athletes)
+        for a in done:
+            a["history"] = (a.get("history") or []) + [athlete_patch.result_entry(u["result"]) for u in out["updates"] if u["athleteId"] == a["id"]]
+        self.assertTrue(any("ב־Paris" in h.get("text", "") for a in done for h in a["history"]))
+        again, _ = self.run_plan(athletes=done, comps=[comp])
+        self.assertEqual(again["updates"], [])
+
     def test_warnings_instead_of_writes(self):
         cases = [
             (dict(page=b'<a href="../../asset.php?id=fidb_1">5_Work Plan</a>'), "ספר התוצאות הרשמי עוד לא פורסם"),

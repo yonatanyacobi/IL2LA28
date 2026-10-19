@@ -101,6 +101,16 @@ class TriResultsTest(unittest.TestCase):
                          [("shachar-sagiv", "לא סיים/ה את גביע העולם בטריאתלון טונגיונג (24 באוק׳ 2026)")])
         self.assertEqual(out["warnings"], [], "no 'missing' warning for a triathlete not entered here")
 
+    def test_stored_maqaf_matches_a_fresh_hyphen(self):
+        # #380: history keeps "ב־XYZ" (maqaf); the fresh text has "ב-XYZ". Same result, no second entry, no warning.
+        data = {**DATA, "competitions": [{**TONGYEONG, "name": "גביע העולם ב-Tongyeong"}]}
+        first = run(FakeApi([row(5)]), data=data)
+        stored = athlete_patch.result_entry(first["updates"][0]["result"])
+        self.assertIn("ב־Tongyeong", stored["text"])
+        self.assertNotEqual(stored["text"], first["updates"][0]["result"]["text"])
+        again = run(FakeApi([row(5)]), data={**data, "athletes": [{**SAGIV, "history": [stored]}, OTHER]})
+        self.assertEqual((again["updates"], again["warnings"]), ([], []))
+
     def test_profile_id_is_enough(self):
         out = run(FakeApi([row(8, 41870, "SAGIV Shahar")]))   # another spelling: the profile id decides
         self.assertEqual([u["athleteId"] for u in out["updates"]], ["shachar-sagiv"])
