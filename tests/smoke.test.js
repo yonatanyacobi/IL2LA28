@@ -1419,7 +1419,7 @@ test("#admin readiness: verified X/N, starts without a session, M3 per result ni
     && nights[1].includes("1 עדיין בלי תוצאה, 1 מהן יותר מ־24 שעות") && nights[1].includes('<span class="pill bad">מעל 24 שעות</span>'), "19.10: > 24 h");
 
   // §3: the last 2 runs, each with published and errors, linking the runs log.
-  const runRows = rowsOf(panel.split('id="readyRuns"')[1]);
+  const runRows = rowsOf(panel.split('id="readyRuns"')[1]).slice(1);   // [0] is the 26 h health row (its own test)
   assert.ok(runRows[0].includes("ריצה 21 באוק׳ 2026: פורסמה") && runRows[0].includes("אין שגיאות") && num(runRows[0]) === "0");
   assert.ok(runRows[1].includes("לא פורסמה") && runRows[1].includes("שגיאה אחת") && num(runRows[1]) === "1");
   assert.ok(runRows.every(r => r.includes('href="#admin-runs"')) && b.view("admin-runs").includes("<h1 tabindex=\"-1\">יומן הריצות היומיות</h1>"));
@@ -1430,6 +1430,29 @@ test("#admin readiness: verified X/N, starts without a session, M3 per result ni
   none.run(runs([]));
   none.view("admin");
   assert.ok(none.view("admin").split('id="readyRuns"')[1].includes("אין ריצות יומיות מתועדות"));
+});
+
+// Sprint 8 item 11: no run published in 26 h → a red row with the last run and "Run now", counted in readiness.
+test("#admin daily-task health: fresh, stale and empty run logs", async () => {
+  const at = async (docs) => {
+    const b = await boot({quotas: QUOTAS, now: "2026-10-21T08:00:00Z"});
+    b.run(`S.isAdmin = true; S.live = true; S.db = {collection: () => ({orderBy: () => ({limit: () => ({
+      onSnapshot: ok => ok({docs: ${JSON.stringify(docs)}.map(d => ({id: d.id, data: () => d}))})})})})}`);
+    b.view("admin");
+    const panel = b.view("admin").split('id="launch"')[1].split("</section>")[0];
+    return {row: panel.split('id="readyRuns"')[1].split("<li>")[1], panel};
+  };
+  const run = (id, started, published, extra = {}) => ({id, status: published ? "done" : "failed", started, ended: started.replace("04:13", "04:40"), published, ...extra});
+  const fresh = await at([run("2026-10-21", "2026-10-21T04:13:00Z", true), run("2026-10-20", "2026-10-20T04:13:00Z", true)]);
+  assert.ok(fresh.row.includes("פרסום אחרון של הריצה היומית") && fresh.row.includes("3 ש׳") && !fresh.row.includes("adm-bad") && !fresh.row.includes("Run now"), "fresh: no red row");
+  // Stale: today's run failed, the last publish was 27 h ago.
+  const stale = await at([run("2026-10-21", "2026-10-21T04:13:00Z", false), run("2026-10-20", "2026-10-20T04:13:00Z", true)]);
+  assert.ok(stale.row.includes("לא פורסמה ריצה יומית ב־26 השעות האחרונות") && stale.row.includes("adm-bad") && stale.row.includes("27 ש׳")
+    && stale.row.includes("הריצה האחרונה:") && stale.row.includes("נכשלה") && stale.row.includes("(Run now)") && stale.row.includes('<span class="pill bad">'), "stale: red, last run, the fix");
+  const empty = await at([]);
+  assert.ok(empty.row.includes("לא פורסמה ריצה יומית") && empty.row.includes("אין ריצות מתועדות") && empty.row.includes("(Run now)"), "empty: red row");
+  const opens = p => Number((p.match(/(\d+) נושאים פתוחים/) || [])[1] || (p.includes("נושא פתוח אחד") ? 1 : 0));
+  assert.strictEqual(opens(stale.panel), opens(fresh.panel) + 2, "readiness counts the red row (plus the failed run's own row)");
 });
 
 test("#admin result night: picks quota events ending today/yesterday, links the runbook, keeps ticks", async () => {
