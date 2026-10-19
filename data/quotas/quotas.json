@@ -499,15 +499,15 @@
    "maxPerNOC": 2,
    "allocation": "3 בגמר אליפות העולם 2026, 2 דרך סדרת גביעי העולם 2026–27, 12 באליפות העולם 2027 בבאקו, 5 באליפויות יבשתיות 2028.",
    "israelStatus": "in-contention",
-   "israelNote": "דניאלה מוניץ 7 ומיטל מעיין סומקין 17 באליפות העולם 2026 – מחוץ ל-3 שזכו במכסה",
+   "israelNote": "דניאלה מוניץ 7 ומיטל מעיין סומקין 17 באליפות העולם 2026 – מחוץ ל־3 שזכו במכסה",
    "nextQuotaEvent": {
     "name": "אליפות העולם באקו",
     "start": "2027-09-15"
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
    "review": {
-    "status": "fixed",
-    "by": "dana+tamar",
+    "status": "unchecked",
+    "by": "shira",
     "at": "2026-10-19"
    }
   },
@@ -553,16 +553,16 @@
    "maxPerNOC": 52,
    "allocation": "קריטריון A (עד 2 למקצה) או B בתחרויות מאושרות 1 במרץ 2027–18 ביוני 2028; מקצי 50 מ׳ הסגנונות החדשים דרך מסלול ישיר נפרד.",
    "israelStatus": "unknown",
-   "israelNote": "תקופת הקריטריונים טרם נפתחה; מירון חרותי 14 ב-50 מ׳ חופשי, גורבנקו 7 ב-200/400 מעורב (אירופה 2026)",
+   "israelNote": "תקופת הקריטריונים טרם נפתחה; מירון חרותי 14 ב־50 מ׳ חופשי, גורבנקו 7 ב־200/400 מעורב (אירופה 2026)",
    "nextQuotaEvent": {
     "name": "אליפות העולם באקווטיקה בודפשט",
     "start": "2027-06-26"
    },
    "source": "https://cdn.nocnsf.nl/media/vqxbcoln/swm-la28-qualification-system.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "shira",
+    "at": "2026-10-19"
    }
   },
   {
@@ -572,16 +572,16 @@
    "maxPerNOC": 1,
    "allocation": "12 הנבחרות המהירות במקצי המוקדמות של אליפות העולם בודפשט 2027.",
    "israelStatus": "in-contention",
-   "israelNote": "ישראל בגמר ה-4x200 באליפות אירופה 2026",
+   "israelNote": "ישראל בגמר ה־4x200 באליפות אירופה 2026",
    "nextQuotaEvent": {
     "name": "אליפות העולם באקווטיקה בודפשט",
     "start": "2027-06-26"
    },
    "source": "https://cdn.nocnsf.nl/media/vqxbcoln/swm-la28-qualification-system.pdf",
    "review": {
-    "status": "ok",
-    "by": "dana",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "shira",
+    "at": "2026-10-19"
    }
   },
   {
@@ -889,16 +889,16 @@
    "maxPerNOC": 1,
    "allocation": "16 מדינות באליפות העולם 2027, 4 באירוע יבשתי אירופי, 5+1 בתחרות ההזדמנות האחרונה, ועוד 2 מקומות אוניברסליות.",
    "israelStatus": "unknown",
-   "israelNote": "עומר ורד וילנצ׳יק השתתף בפריז ואלוף העולם עד 19 ב-2025",
+   "israelNote": "עומר ורד וילנצ׳יק השתתף בפריז ואלוף העולם עד 19 ב־2025",
    "nextQuotaEvent": {
     "name": "אליפות העולם בשייט – מקצי יחיד, פורטלזה",
     "start": "2027-01-15"
    },
    "source": "https://cdn.nocnsf.nl/media/e3fjqs4m/sal-la28-qualification-system.pdf",
    "review": {
-    "status": "fixed",
-    "by": "dana",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "shira",
+    "at": "2026-10-19"
    }
   },
   {
@@ -946,7 +946,7 @@
    "maxPerNOC": 3,
    "allocation": "5 לפי דירוג סבב ה־CT של 2028 (ינואר–יוני 2028, דירוג ב־11 ביוני 2028), 10 במשחקי ISA 2028, 5 מקומות יבשתיים (לאירופה: אחד באליפות אירופה 2027); הנבחרת המובילה במשחקי ISA 2026 ו־2027 מקבלת מקום נוסף. עד 3 למדינה.",
    "israelStatus": "in-contention",
-   "israelNote": "ענת ליליאור בסבב ה-CT 2026, מקום 2 בטהיטי פרו; השתתפות ישראל במשחקי ISA 2026 לא אומתה",
+   "israelNote": "ענת ליליאור בסבב ה־CT 2026, מקום 2 בטהיטי פרו; השתתפות ישראל במשחקי ISA 2026 לא אומתה",
    "stakes": "משחקי ISA בפרו (6–15 בנוב׳ 2026): הנבחרת המובילה בכל מגדר מזכה את מדינתה במקום אחד; השתתפות ישראל לא אומתה",
    "nextQuotaEvent": {
     "name": "משחקי הגלישה העולמיים של ISA, פונטה רוקאס",
@@ -954,9 +954,9 @@
    },
    "source": "https://cdn.nocnsf.nl/media/lr1mdnmn/srf-la28-qualification-system.pdf",
    "review": {
-    "status": "fixed",
-    "by": "dana",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "shira",
+    "at": "2026-10-19"
    }
   },
   {
@@ -1062,13 +1062,13 @@
    "maxPerNOC": 3,
    "allocation": "20 קבוצות (7 באליפות העולם 2026, 2 באירוע קבוצה C ב־2027) ו־15 אישיים לפי הדירוג האולימפי 2027 (2 לקבוצה C).",
    "israelStatus": "in-contention",
-   "israelNote": "ישראל הייתה 9 אחרי הסיבוב הראשון של התחרות הקבוצתית באאכן 2026 ולא זכתה בקווטה; הסיכוי הבא – אירוע קבוצה C ב-2027",
+   "israelNote": "ישראל הייתה 9 אחרי הסיבוב הראשון של התחרות הקבוצתית באאכן 2026 ולא זכתה בקווטה; הסיכוי הבא – אירוע קבוצה C ב־2027",
    "nextQuotaEvent": null,
    "source": "https://inside.fei.org/system/files/LA2028%20Qualification%20System_final.pdf",
    "review": {
-    "status": "fixed",
-    "by": "dana",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "shira",
+    "at": "2026-10-19"
    }
   },
   {
@@ -1158,13 +1158,13 @@
    "maxPerNOC": 2,
    "allocation": "לכל מגדר (12 קבוצות, אחת למדינה): 5 לפי דירוג המדינות ב־1 בדצמ׳ 2027 (1 לאירופה), 2 ב־OQT לאוניברסליות (מדינות שלא שיחקו כדורסל בשתי האולימפיאדות האחרונות), 2 ב־OQT דירוג ו־2 ב־Q-Series.",
    "israelStatus": "unknown",
-   "israelNote": "ישראל לא העפילה לאליפות אירופה 3x3 האחרונה בשני המגדרים; כנראה זכאית ל-OQT האוניברסליות",
+   "israelNote": "ישראל לא העפילה לאליפות אירופה 3x3 האחרונה בשני המגדרים; כנראה זכאית ל־OQT האוניברסליות",
    "nextQuotaEvent": null,
    "source": "https://cdn.dosb.de/Relaunch_2024/Athletenservice/Games/LA_2028/Internationale_Qualikriterien/Updates_21072026/BK3-LA28-Qualification-System_20260710.pdf",
    "review": {
-    "status": "fixed",
-    "by": "dana",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "shira",
+    "at": "2026-10-19"
    }
   },
   {
@@ -1243,7 +1243,7 @@
    "maxPerNOC": 2,
    "allocation": "לכל מגדר: 10 באליפות העולם 2027 בלוצרן, 15 במקצי קליטה יבשתיים (3 מהם באירופה), 2 במקצה הקליטה האחרון, ועוד מקום מארחת ו־2 אוניברסליות (במסמך השיטה יש סתירה: בטבלה B.1 מקום אוניברסליות אחד לכל מגדר, ובסעיף D.7 שניים).",
    "israelStatus": "unknown",
-   "israelNote": "אין חותר/ת ישראלי/ת אולימפי/ת במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
+   "israelNote": "אין חותר/ת ישראלי/ת אולימפי/ת במעקב; לא נמצאו תוצאות בין־לאומיות ב־2026",
    "nextQuotaEvent": {
     "name": "אליפות העולם בחתירה, לוצרן",
     "start": "2027-08-23",
@@ -1251,9 +1251,9 @@
    },
    "source": "https://cdn.nocnsf.nl/media/li4hvuq4/row-la28-qualification-system.pdf",
    "review": {
-    "status": "ok",
-    "by": "tamar",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "shira",
+    "at": "2026-10-19"
    }
   },
   {
@@ -1263,13 +1263,13 @@
    "maxPerNOC": 16,
    "allocation": "לכל מגדר: רוב המקומות לפי דירוג הקליטה האולימפי ב־31 בדצמ׳ 2027 (תוצאות מ־20 באפר׳ 2026), והיתר באירועי קליטה יבשתיים ב־2028; עד 2 סירות למדינה בכל מקצה.",
    "israelStatus": "unknown",
-   "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו ספרינט במעקב; לא נמצאו תוצאות בינלאומיות ב-2026",
+   "israelNote": "אין ספורטאי/ת ישראלי/ת בקאנו ספרינט במעקב; לא נמצאו תוצאות בין־לאומיות ב־2026",
    "nextQuotaEvent": null,
    "source": "https://cdn.nocnsf.nl/media/qllnxmff/csp-la28-qualification-system.pdf",
    "review": {
-    "status": "fixed",
-    "by": "tamar",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "shira",
+    "at": "2026-10-19"
    }
   },
   {
