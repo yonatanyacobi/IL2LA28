@@ -3,7 +3,7 @@
   {
    "sportId": "artistic-gymnastics",
    "event": "אישי גברים (קרב-רב ומכשירים)",
-   "reason": "שינוי כתיב בשם המקצה בלבד (מקף עליון): „אישי גברים (קרב-רב ומכשירים)” ← „אישי גברים (קרב־רב ומכשירים)”",
+   "reason": "rename: hyphen→maqaf",
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
     "status": "unchecked",
@@ -14,7 +14,7 @@
   {
    "sportId": "artistic-gymnastics",
    "event": "אישי נשים (קרב-רב ומכשירים)",
-   "reason": "שינוי כתיב בשם המקצה בלבד (מקף עליון): „אישי נשים (קרב-רב ומכשירים)” ← „אישי נשים (קרב־רב ומכשירים)”",
+   "reason": "rename: hyphen→maqaf",
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
    "review": {
     "status": "unchecked",
@@ -25,7 +25,7 @@
   {
    "sportId": "rhythmic-gymnastics",
    "event": "אישי – קרב-רב",
-   "reason": "שינוי כתיב בשם המקצה בלבד (מקף עליון): „אישי – קרב-רב” ← „אישי – קרב־רב”",
+   "reason": "rename: hyphen→maqaf",
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
    "review": {
     "status": "unchecked",
@@ -36,7 +36,7 @@
   {
    "sportId": "rhythmic-gymnastics",
    "event": "קבוצתי – קרב-רב",
-   "reason": "שינוי כתיב בשם המקצה בלבד (מקף עליון): „קבוצתי – קרב-רב” ← „קבוצתי – קרב־רב”",
+   "reason": "rename: hyphen→maqaf",
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
    "review": {
     "status": "unchecked",
