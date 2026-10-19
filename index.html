@@ -1,0 +1,105 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הדרך ללוס אנג׳לס 28</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="styles.css">
+
+<div dir="rtl" lang="he">
+  <a class="skip" href="#view">דילוג לתוכן</a>
+  <nav class="nav" aria-label="ניווט ראשי">
+    <div class="nav-in">
+      <a class="brand" href="#home">הדרך ל<b>לוס אנג׳לס</b></a>
+      <div class="links">
+        <a href="#home" data-nav="home">ראשי</a>
+        <a href="#today" data-nav="today">היום</a>
+        <a href="#following" data-nav="following">מעקב<span class="nav-badge" id="followBadge" aria-hidden="true" hidden></span><span class="sr" id="followBadgeSr"></span></a>
+        <a href="#sports" data-nav="sports">ענפים</a>
+        <a href="#calendar" data-nav="calendar">לוח<span class="sr"> תחרויות</span></a>
+        <a href="#updates" data-nav="updates">עדכונים</a>
+        <a href="#admin" data-nav="admin" id="adminLink" hidden>בקרה</a>
+      </div>
+      <span class="admin-chip" id="adminChip" hidden>מצב עריכה</span>
+      <span class="admin-chip" id="visitorChip" hidden>תצוגת גולש/ת</span>
+      <button class="btn ghost small" type="button" id="visitorBtn" aria-label="צפייה כגולש/ת" hidden><span class="vb-more">צפייה </span>כגולש/ת</button>
+    </div>
+    <div class="visitor-bar" id="visitorBar" hidden>
+      <span><b>תצוגת גולש/ת</b><span class="vb-more">: הנתונים מהפרסום הציבורי, בלי כלי עריכה.</span></span>
+      <button class="btn small" type="button" id="editModeBtn">חזרה למצב עריכה</button>
+    </div>
+    <div class="vb-msg" id="visitorMsg" role="status" hidden>
+      <span id="visitorMsgText"></span>
+      <button class="btn ghost small" type="button" id="visitorMsgClose">סגירה</button>
+    </div>
+  </nav>
+  <p class="sr" id="routeStatus" aria-live="polite"></p>
+  <p class="sr" id="bannerStatus" role="status"></p>
+  <p class="update-note" id="updateNote" role="status" hidden></p>
+  <main id="view" tabindex="-1" aria-label="תוכן ראשי"><div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div></main>
+  <footer class="site-foot">
+    <p><a class="foot-link" href="team-board.html">לוח עבודת הצוות</a></p>
+    <p>אתר עצמאי ולא רשמי. אין לו קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של משחקי לוס אנג׳לס 2028 או לוועד האולימפי בישראל. הנתונים נאספים ממקורות פומביים. לפני שמסתמכים על נתון, כדאי לבדוק אותו מול המקור המצורף. <a class="foot-link" href="#about">אודות ואיך הנתונים נאספים</a><span id="fixLink"></span> · דיווח על טעות: <span dir="ltr">il2la28.site@gmail.com</span></p>
+  </footer>
+
+  <dialog id="dlg">
+    <form id="frm">
+      <h2 id="dlgTitle">ספורטאי/ת חדש/ה</h2>
+      <div class="row">
+        <label>שם<input id="fName" required maxlength="80"></label>
+        <label>שם באנגלית<input id="fNameEn" maxlength="80" dir="ltr" placeholder="Artem Dolgopyat"></label>
+      </div>
+      <div class="row">
+        <label>ענף<select id="fSportIn" required></select></label>
+        <label>מקצה או קטגוריה<input id="fEvent" maxlength="60"></label>
+      </div>
+      <div class="row">
+        <label>שלב<select id="fStageIn"></select></label>
+        <label>דירוג או הישג<input id="fRank" maxlength="80" placeholder="למשל: מקום 7 בעולם"></label>
+      </div>
+      <div class="row">
+        <label>מיקום בדירוג (מספר, לא חובה)<input id="fRankNum" type="number" min="1" step="1" inputmode="numeric"></label>
+        <label>תאריך הדירוג<input id="fRankAsOf" type="date"></label>
+      </div>
+      <label>שם רשימת הדירוג (באנגלית, כמו אצל ההתאחדות)<input id="fRankList" maxlength="80" dir="ltr" placeholder="IJF World Ranking List"></label>
+      <div class="row">
+        <label>התחרות הבאה<input id="fNext" maxlength="100"></label>
+        <label>תאריך התחרות<input id="fNextDate" type="date"></label>
+      </div>
+      <label>הערות<textarea id="fNotes" rows="3" maxlength="500"></textarea></label>
+      <label>קישור למקור<input id="fSource" type="url" maxlength="400" dir="ltr" placeholder="https://"></label>
+      <fieldset id="fixSet" class="fix-set" hidden>
+        <legend>תיקון טעות</legend>
+        <label class="chk"><input type="checkbox" id="fIsFix"> זה תיקון של טעות שפורסמה</label>
+        <div id="fixRows" hidden>
+          <div class="row">
+            <label>מי מצא<select id="fFixBy"><option value="reader">קורא/ת</option><option value="audit">בדיקת עובדות</option><option value="job">העדכון האוטומטי</option></select></label>
+            <label>התקבל ב־<input id="fFixAt" type="date"></label>
+          </div>
+          <label>מקור לתיקון<input id="fFixSrc" type="url" maxlength="400" dir="ltr" placeholder="https://"></label>
+        </div>
+      </fieldset>
+      <p class="warn" id="frmWarn" hidden></p>
+      <p class="err" id="frmErr" hidden></p>
+      <div class="actions">
+        <button class="btn" id="saveBtn" type="submit">שמירה</button>
+        <button class="btn ghost" type="button" id="cancelBtn">ביטול</button>
+        <span class="sp"></span>
+        <button class="btn danger" type="button" id="archBtn" hidden>הסרה מהרשימה</button>
+      </div>
+    </form>
+  </dialog>
+</div>
+
+<script src="app.js"></script>
+<script src="admin.js"></script>
+<script src="quotas.js"></script>
+<script src="digest.js"></script>
+<script src="corrections.js"></script>
+<script src="sessions.js"></script>
+<script src="day.js"></script>
+<script src="event.js"></script>
+<script src="home.js"></script>
+<script src="gamelog.js"></script>
+<script src="standings.js"></script>
+<script src="following.js"></script>

@@ -1,0 +1,422 @@
+/* Layout: sticky top nav over a single routed view (home, sports index, sport, athlete, calendar, updates).
+   Tokens: deep blue = Israel, sun = LA; semantic ok/bad stay separate from the accent. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#0f1d33; --muted:#5a6880; --line:#d9dfe8; --line-ui:#7f8ca1;
+  --blue:#1546a8; --blue-soft:#e3ebfa; --on-blue:#ffffff;
+  --sun:#d07806; --sun-soft:#fdf0dc; --sun-ink:#8f5200;
+  --ok:#147644; --ok-soft:#dff3e8; --ok-ink:#11693c; --bad:#c0392b;
+  --on-sun:#1c1204; --backdrop:rgb(5 10 20/.55);
+  --stage0:#a9b4c4; --focus:#8f5200;
+  --f-display:"Secular One","Assistant",system-ui,sans-serif;
+  --f-body:"Assistant",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1422; --surface:#142035; --ink:#e8eef8; --muted:#97a6bf; --line:#26354f; --line-ui:#5d6f90;
+  --blue:#7ea6f5; --blue-soft:#1b2d50; --on-blue:#0c1422;
+  --sun:#f5a83d; --sun-soft:#3a2a12; --sun-ink:#f5b75e;
+  --ok:#5fd18f; --ok-soft:#173826; --ok-ink:#5fd18f; --bad:#ff8a7a; --stage0:#4a5a75; --focus:#f5a83d;
+  --on-sun:#1c1204; --backdrop:rgb(0 0 0/.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1422; --surface:#142035; --ink:#e8eef8; --muted:#97a6bf; --line:#26354f; --line-ui:#5d6f90;
+  --blue:#7ea6f5; --blue-soft:#1b2d50; --on-blue:#0c1422;
+  --sun:#f5a83d; --sun-soft:#3a2a12; --sun-ink:#f5b75e;
+  --ok:#5fd18f; --ok-soft:#173826; --ok-ink:#5fd18f; --bad:#ff8a7a; --stage0:#4a5a75; --focus:#f5a83d;
+  --on-sun:#1c1204; --backdrop:rgb(0 0 0/.7); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.1}
+h2{font-size:21px}
+h3{font-size:18px}
+p{margin:0}
+a{color:var(--blue)}
+.num,.d,.when{font-variant-numeric:tabular-nums}
+.digits{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.foot{font-size:13px;color:var(--muted)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+h1:focus{outline:none}
+/* Author display rules (e.g. the mobile tap-size rule) otherwise beat the UA's [hidden]. */
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1100px;margin:0 auto;padding-inline:16px;display:flex;align-items:center;gap:4px 16px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-size:19px;color:var(--ink);text-decoration:none;padding-block:10px;white-space:nowrap}
+.brand b{color:var(--sun-ink);font-weight:400}
+.links{display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0}
+.links a{padding:12px 10px;color:var(--muted);text-decoration:none;font-weight:600;white-space:nowrap;border-bottom:3px solid transparent}
+.links a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--sun)}
+.admin-chip{font-size:12px;font-weight:700;color:var(--sun-ink);border:1px solid var(--sun);border-radius:99px;padding:1px 10px;white-space:nowrap}
+
+/* page */
+main{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;display:grid;gap:22px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:10px;min-width:0}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sec-head a{font-size:14px;font-weight:600}
+.crumb{font-size:14px}
+.crumb a{text-decoration:none}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end}
+.hero p{margin-top:6px;max-width:62ch}
+.tag{display:inline-block;font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:4px;padding:0 6px;color:var(--muted);vertical-align:middle;margin-inline-start:6px}
+a.tag{text-decoration:none}
+a.tag:hover,a.tag:focus-visible{text-decoration:underline}
+.count{background:var(--blue);color:var(--on-blue);border-radius:12px;padding:10px 18px;display:flex;gap:10px;align-items:baseline}
+.count b{font-family:var(--f-data);font-size:32px;line-height:1}
+.fresh{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin-top:8px}
+.fresh i{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.fresh.stale i{background:var(--sun)}
+
+/* progress */
+.bar4{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--line)}
+.bar4.thin{height:6px}
+.bar4 i{display:block;height:100%}
+.s0{background:var(--stage0)} .s1{background:var(--blue)} .s2{background:var(--sun)} .s3{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted);margin:0;padding:0;list-style:none}
+.legend li{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.legend b{color:var(--ink);font-family:var(--f-data)}
+.kpi b{font-family:var(--f-data);font-size:20px}
+
+/* lists */
+.rows{list-style:none;margin:0;padding:0;display:grid}
+.rows li{display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:baseline;padding-block:8px;border-top:1px solid var(--line);font-size:15px;min-width:0}
+.rows li:first-child{border-top:0}
+.rows .d{font-size:13.5px;color:var(--muted)}
+.rows .t{min-width:0;overflow-wrap:anywhere}
+.rows .t small{display:block;color:var(--muted);font-size:13.5px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px}
+
+/* pills */
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px;white-space:nowrap}
+.pill.open{background:var(--ok-soft);color:var(--ok-ink)}
+.pill.soon{background:var(--sun-soft);color:var(--sun-ink)}
+.pill.done,.pill.st1{background:var(--blue-soft);color:var(--blue)}
+.pill.st0{background:var(--line);color:var(--ink)}
+.pill.st2{background:var(--sun-soft);color:var(--sun-ink)}
+.pill.st3{background:var(--ok-soft);color:var(--ok)}
+
+/* search */
+.search{background:var(--surface);border:1px solid var(--line-ui);border-radius:10px;padding:10px 12px;width:100%}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toolbar select{background:var(--surface);border:1px solid var(--line-ui);border-radius:8px;padding:8px 10px}
+.chk{display:flex;gap:6px;align-items:center;font-size:14px}
+.fix-set{border:1px solid var(--line);border-radius:10px;padding:8px 12px 10px;margin:0;display:grid;gap:8px;min-width:0}
+.fix-set legend{padding:0 4px;font-weight:700}
+.fix-set > div{display:grid;gap:8px}
+
+/* sports index */
+.sports{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.sport{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-decoration:none;color:inherit;min-width:0}
+.sport:hover{border-color:var(--blue)}
+.sport .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.sport .top h2{font-size:20px}
+.sport .meta{font-size:14px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips a{font-size:15px;border:1px solid var(--line-ui);border-radius:99px;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)}
+.chips a[aria-current="page"]{background:var(--blue);border-color:var(--blue);color:var(--on-blue);font-weight:700}   /* #following tabs */
+
+/* athlete cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.chips + .cards{margin-top:2px}   /* + the panel's 10px gap = 12px */
+.chips-lbl{align-self:center;color:var(--muted);font-size:14px}
+.card{display:grid;gap:6px;align-content:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-decoration:none;color:inherit;min-width:0}
+.card:hover{border-color:var(--blue)}
+.card .nm{font-weight:700;font-size:17px}
+.card .ev{font-size:14px;color:var(--muted)}
+.card .ln{font-size:14px;overflow-wrap:anywhere}
+.card .ln span{color:var(--muted)}
+.ex{font-size:11px;font-weight:700;color:var(--sun-ink);border:1px solid var(--sun);border-radius:4px;padding:0 5px;white-space:nowrap}
+
+/* athlete detail */
+.track{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.track i{height:8px;border-radius:4px;background:var(--line)}
+.track i.on{background:var(--blue)}
+.track.s2 i.on{background:var(--sun)}
+.track.s3 i.on{background:var(--ok)}
+.track-labels{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:12.5px;color:var(--muted);list-style:none;margin:0;padding:0}
+.track-labels .cur{color:var(--ink);font-weight:700}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:15px}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.facts .old{color:var(--sun-ink)}
+
+/* calendar */
+.month{display:grid;gap:6px}
+.month h2{font-size:17px;font-family:var(--f-body);font-weight:700;display:flex;gap:8px;align-items:baseline}
+.month h2 span{font-size:13px;color:var(--muted);font-weight:400}
+.comp{display:grid;grid-template-columns:150px 1fr auto;gap:12px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.comp.past{background:transparent}
+.comp.past .what b{color:var(--muted)}
+.pill.ended{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.comp .when{font-size:13.5px}
+.comp .what{min-width:0;overflow-wrap:anywhere}
+.comp .what b{display:block}
+.comp .what span{font-size:13.5px;color:var(--muted)}
+.tbl{overflow-x:auto}
+.tbl table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl th,.tbl td{text-align:start;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{color:var(--muted);font-weight:600;font-size:13px}
+
+/* admin */
+.review{border-color:var(--sun)}
+.prop{display:grid;gap:4px;border-top:1px solid var(--line);padding-top:8px;font-size:14.5px}
+.prop:first-of-type{border-top:0;padding-top:0}
+.prop ul{margin:0;padding-inline-start:18px;color:var(--muted)}
+.btn{background:var(--sun);color:var(--on-sun);border:0;border-radius:8px;padding:8px 16px;font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-ui)}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid currentColor}
+.btn.small{padding:4px 12px;font-size:14px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.actions .sp{flex:1}
+.err{color:var(--bad);font-size:14px}
+.warn{color:var(--sun-ink);font-size:14px}
+.empty{border:2px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 32px))}
+dialog::backdrop{background:var(--backdrop,rgb(5 10 20/.55))}
+dialog form{padding:20px;display:grid;gap:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:grid;gap:4px;font-size:14px;font-weight:600}
+label input,label select,label textarea{border:1px solid var(--line-ui);border-radius:8px;padding:8px 10px;background:var(--bg);font-weight:400}
+
+@media (max-width:640px){
+  .hero{grid-template-columns:1fr}
+  .count{justify-self:start}
+  .row{grid-template-columns:1fr}
+  .rows li{grid-template-columns:1fr auto}
+  .rows .d{grid-column:1/-1}
+  .comp{grid-template-columns:1fr auto}
+  .comp .when{grid-column:1/-1}
+  .brand{font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* stage 3 + launch polish */
+.stack{display:grid;gap:8px}
+.new{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--sun-ink)}
+.new::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--sun)}
+.star-on{color:var(--sun-ink)}
+.follow{min-height:44px}
+.follow[aria-pressed="true"]{border-color:var(--sun);color:var(--sun-ink)}
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:0;border-inline-start:2px solid var(--line);margin-inline-start:6px}
+.timeline li{position:relative;display:grid;gap:2px;padding:6px 16px 10px 0;font-size:15px;overflow-wrap:anywhere}
+.timeline li::before{content:"";position:absolute;inset-inline-start:-7px;top:12px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--blue)}
+.timeline li.k-stage::before{background:var(--sun);border-color:var(--sun)}
+.timeline .d{font-size:13px;color:var(--muted)}
+.share{display:flex;gap:8px;flex-wrap:wrap}
+.share input{flex:1 1 240px;min-width:0;border:1px solid var(--line-ui);border-radius:8px;padding:8px 10px;background:var(--bg);font-size:14px}
+.banner{background:var(--sun-soft);color:var(--ink);border:1px solid var(--sun);border-radius:10px;padding:10px 14px;font-size:15px}
+.skeleton{display:grid;gap:14px}
+.skeleton span{display:block;height:64px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.skeleton span:first-child{height:120px}
+.prose{gap:12px;max-width:72ch}
+.prose ol{margin:0;padding-inline-start:20px;display:grid;gap:6px}
+.site-foot{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:20px 32px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+a.btn{text-decoration:none;display:inline-flex;align-items:center}
+
+/* a11y: skip link, focus target, 44px touch targets on touch-size screens */
+.skip{position:absolute;inset-inline-start:16px;top:-100px;z-index:10;background:var(--surface);color:var(--blue);border:2px solid var(--focus);border-radius:8px;padding:10px 16px;font-weight:700}
+.skip:focus{top:8px}
+main:focus{outline:none}
+@media (max-width:640px){
+  .links a,.crumb a,.sec-head a{display:inline-flex;align-items:center;min-height:44px}
+  .btn,.toolbar select,.chk,label input,label select,.share input{min-height:44px}
+}
+
+/* editor dashboard (#admin) */
+.pill.bad{background:var(--sun-soft);color:var(--bad)}
+.adm-alert{border-color:var(--bad);border-width:2px}
+.adm-warn{margin:0;padding-inline-start:18px;color:var(--bad);font-weight:700}
+.adm-errs{margin:0;padding-inline-start:18px;font-size:14px;overflow-wrap:anywhere}
+.adm-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.adm-tile{display:grid;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-decoration:none;color:var(--ink);min-height:44px}
+a.adm-tile:hover{border-color:var(--blue)}   /* static tiles on #about aren't links */
+.adm-tile b{font-size:26px;line-height:1.1}
+.adm-tile span{font-size:14px;color:var(--muted)}
+.adm-tile.hot b{color:var(--sun-ink)}
+
+/* trust chip (symbol + text, so it never relies on colour) */
+.trust{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px}
+.trust.ok{background:var(--ok-soft);color:var(--ok-ink)}
+.trust.stale{background:transparent;border:1px solid var(--line-ui);color:var(--ink)}   /* lower confidence, not a warning */
+.trust.auto{background:transparent;border:1px dashed var(--line-ui);color:var(--muted)}
+dd.stack .trust{justify-self:start}
+.today{border-inline-start:4px solid var(--sun)}
+
+/* quota status (shared: #quotas, sport page, #sports cards, home) */
+.q-earned{background:var(--ok)} .q-in-contention{background:var(--sun)} .q-outside{background:var(--stage0)}
+.q-unknown{background:repeating-linear-gradient(135deg,var(--stage0) 0 2px,var(--surface) 2px 6px)}
+.pill.q-earned{background:var(--ok-soft);color:var(--ok-ink)}
+.pill.q-in-contention{background:var(--sun-soft);color:var(--sun-ink)}
+.pill.q-outside{background:transparent;border:1px solid var(--line-ui,var(--stage0));color:var(--muted)}
+.pill.q-unknown{background:transparent;border:1px dashed var(--line-ui,var(--stage0));color:var(--muted)}
+.qsum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
+h2 .pill{font-family:var(--f-body);font-size:15px;vertical-align:middle}
+/* sport page quota section */
+.qbar i+i{border-inline-start:2px solid var(--surface)}
+.qlist{list-style:none;margin:0;padding:0;display:grid}
+.qlist>li{display:grid;gap:4px;padding-block:10px;border-top:1px solid var(--line);min-width:0;overflow-wrap:anywhere}
+.qlist>li:first-child{border-top:0}
+.q-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.q-meta{font-size:13.5px;color:var(--muted)}
+.qlist summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--blue);padding-block:10px}
+.cal-results{display:grid;gap:22px}
+
+/* QA 2026-10-18 layout fixes */
+/* An implicit auto column grows to fit one unbreakable string (a pasted URL), pushing RTL content off-screen. */
+main,.panel,.stack,.card,.sport{grid-template-columns:minmax(0,1fr)}
+main{min-width:0}
+.panel{align-content:start}
+h1,.card,.panel p,.panel dd{overflow-wrap:anywhere}
+/* .track.s1 etc. would otherwise pick up the stage-bar fills from .s0–.s3 and colour the gaps. */
+div.track{background:none}
+/* Mobile header, ~92px: brand row (44px) + one full-bleed scrolling links row (47px), faded at both
+   edges as the scroll cue; app.js scrolls the current link into view. */
+@media (max-width:640px){
+  .nav-in{row-gap:0}
+  .brand{min-height:44px;padding-block:0;display:inline-flex;align-items:center}
+  .links{order:3;flex:1 0 100%;margin-inline:-16px;padding-inline:16px;scroll-padding-inline:24px;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(to left,transparent,#000 16px,#000 calc(100% - 16px),transparent);
+    mask-image:linear-gradient(to left,transparent,#000 16px,#000 calc(100% - 16px),transparent)}
+  .links::-webkit-scrollbar{display:none}
+  .links a{padding-block:10px}
+}
+.adm-bad{color:var(--bad);font-weight:700}
+#quotaHealth h3{font-family:var(--f-body);font-size:16px;font-weight:700}
+
+/* stakes line ("מה זה אומר") */
+.stakes{font-size:14px;color:var(--ink);border-inline-start:3px solid var(--sun);padding-inline-start:8px;overflow-wrap:anywhere}
+.stakes b{color:var(--sun-ink)}
+.rows .t small.stakes{color:var(--ink);margin-top:4px}
+.pill.q-awaiting{background:var(--blue-soft);color:var(--blue)}
+.stakes.awaiting{border-inline-start-color:var(--blue)} .stakes.awaiting b{color:var(--blue)}
+
+/* weekly digest (#digest); the stakes-line rules of the same spec come with §1 */
+.digest textarea{width:100%;min-height:22em;resize:vertical;border:1px solid var(--line-ui,var(--stage0));border-radius:8px;
+  padding:10px 12px;background:var(--bg);font-size:15px;line-height:1.5}
+.adm-todo{background:var(--sun-soft);border:1px solid var(--sun);border-radius:10px;padding:10px 14px;display:grid;gap:6px}
+.adm-todo h3{font-family:var(--f-body);font-size:16px;font-weight:700;color:var(--sun-ink)}
+.adm-todo ul{margin:0;padding-inline-start:18px;overflow-wrap:anywhere}
+/* #admin result night */
+.adm-rn{border-color:var(--sun);border-width:2px}
+.rn-item{border-top:1px solid var(--line);padding-top:8px}
+.rn-item summary{cursor:pointer;font-weight:700;padding-block:6px;overflow-wrap:anywhere}
+.rn-item summary small{display:block;font-weight:400}
+.rn-steps{margin:0;padding-inline-start:20px;display:grid;gap:6px;font-size:14.5px}
+.rn-steps .chk{align-items:flex-start;font-weight:400;overflow-wrap:anywhere}
+.rn-steps .chk input{margin-top:4px;flex:none}
+.rn-steps code{font-size:12.5px;overflow-wrap:anywhere}
+/* home: "הבא בתור" (round3 §5b) */
+.next-up{margin-top:8px;font-size:15px;overflow-wrap:anywhere}
+.next-up b{color:var(--sun-ink)}
+/* editors' "view as visitor" preview */
+/* Inside the sticky nav, so it stays in view; shown only to editors in visitor mode. */
+.visitor-bar{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:center;background:var(--blue-soft);color:var(--ink);
+  border-top:1px solid var(--line);border-inline-start:4px solid var(--blue);padding:4px 16px;font-size:14px}
+.visitor-bar b{color:var(--blue)}
+@media (min-width:641px){.visitor-bar .btn{min-height:36px}}
+@media (max-width:640px){.vb-more{display:none}}
+.vb-msg{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:center;padding:4px 16px;font-size:14px;background:var(--sun-soft);color:var(--ink);border-top:1px solid var(--line)}
+/* home: chances panel shows 3 rows on phones; the #quotas link carries the rest */
+.sm-only{display:none}
+@media (max-width:640px){
+  .closest > li:nth-child(n+4){display:none}
+  .sm-only{display:inline}
+}
+
+/* corrections log (#corrections). Wrong/right carry no red/green: "היה"/"עכשיו" and the line-through do. */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;counter-reset:st}
+.steps li{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14.5px;counter-increment:st}
+.steps li b::before{content:counter(st) ". ";color:var(--sun-ink)}
+.steps li span{color:var(--muted)}
+.fix{display:grid;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.fix-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;font-weight:700}
+.fix-diff{display:grid;gap:4px 12px;grid-template-columns:auto 1fr;margin:0;font-size:15px}
+.fix-diff dt{color:var(--muted)}
+.fix-diff dd{margin:0;display:grid;gap:2px;min-width:0;overflow-wrap:anywhere}
+.fix-diff del{color:var(--muted)}
+.fix-diff ins{text-decoration:none;font-weight:600}
+.pill.by-reader{background:var(--blue-soft);color:var(--blue)}
+.pill.by-audit,.pill.by-job{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
+.timeline li.k-correction::before{border-color:var(--muted)}
+@media (max-width:640px){.steps{grid-template-columns:1fr}.fix-diff{grid-template-columns:1fr}}
+/* quota earned (round3.md §2) */
+.won{border-inline-start:4px solid var(--ok)}
+.stakes.won-line{border-inline-start-color:var(--ok)} .stakes.won-line b{color:var(--ok-ink)}
+/* About trust block: chips stack above their explanation on phones */
+@media (max-width:640px){.trust-legend{grid-template-columns:1fr}}
+/* daily view (#today, #day-<date>; daily-and-following.md §3) */
+.daystrip{display:flex;gap:6px;overflow-x:auto;padding-block:4px;scrollbar-width:thin}
+.daystrip a{flex:0 0 auto;min-width:44px;min-height:44px;display:grid;place-items:center;gap:2px;padding:4px 8px;border:1px solid var(--line-ui);border-radius:10px;text-decoration:none;color:var(--ink);font-size:14px;line-height:1.2}
+.daystrip a.has::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--sun)}
+.daystrip a[aria-current="date"]{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.daystrip a[aria-current="date"].has::after{background:var(--on-blue)}   /* sun on blue is 1.2:1 in dark */
+.day-nav{display:flex;justify-content:flex-start;align-items:baseline;gap:8px 16px;flex-wrap:wrap}
+.day-nav > a{min-height:44px;display:inline-flex;align-items:center;font-weight:600;text-decoration:none}
+.day-nav h1{order:-2}   /* start of the line; prev/next sit right after it (UX QA on #208) */
+.day-nav .day-prev{order:-1}   /* h1 comes first in the DOM (reading/tab order); visually prev stays at the start */
+.rows.sess li{grid-template-columns:70px 1fr auto}
+.res{display:block;font-size:14.5px;overflow-wrap:anywhere;margin-top:2px;color:var(--muted)}
+.res b{color:var(--ink)}
+.home-now{display:grid;gap:22px}
+.rows.standings li{grid-template-columns:3.5ch 1fr auto}
+/* the generic phone rule would put the rank alone on its own line */
+@media (max-width:640px){.rows.standings li{grid-template-columns:3.5ch 1fr auto}.rows.standings .d{grid-column:auto}}
+.rows li.cutline{display:block;border-top:2px dashed var(--sun);padding-top:4px;color:var(--sun-ink);font-size:14px;font-weight:700}
+.won-compact{display:none;margin:0;font-weight:700}
+.home-top{display:flex;flex-direction:column;gap:22px}
+@media (max-width:640px){.won-compact{display:block}.home-top > .won{order:1}}
+.hero-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 4px}
+/* home-today.md §1: the "היום" h2 and its first row fit the first screen at 400×800 (the subtitle is on #about) */
+@media (max-width:640px){.hero{gap:8px}.hero h1{font-size:24px}.hero-sub{display:none}.count{padding:4px 12px}.count b{font-size:20px}}
+@media (min-width:900px){.home-now{grid-template-columns:3fr 2fr;align-items:start}}
+.day-sport h3{font-family:var(--f-body);font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.pill.s-before{background:transparent;border:1px solid var(--line-ui);color:var(--muted)}
+.pill.s-live{background:var(--ok-soft);color:var(--ok-ink)}
+.pill.s-wait{background:var(--blue-soft);color:var(--blue)}
+/* The "השתנה ב־" pill sits on the row's top edge, out of the flow, so marking a row never moves text (#177). */
+.rows li,.facts dd{position:relative}
+.pill.chg{position:absolute;top:0;inset-inline-end:0;transform:translateY(-50%);z-index:1;pointer-events:none;
+  font-size:11px;line-height:14px;padding:0 6px;background:var(--sun-soft);color:var(--sun-ink)}
+/* Kept inside the space between rows: .rows has 8px padding each side, the timeline 10px below / 6px above, and
+   .facts gets a 14px row gap (was 6px) so the pill fits entirely in it. */
+.timeline .pill.chg{transform:translateY(-70%)}
+.facts{row-gap:14px}
+.facts .pill.chg{transform:translateY(-100%)}
+@media (max-width:640px){.day-nav h1{flex-basis:100%;order:-2}.rows.sess li{grid-template-columns:1fr auto}}   /* .rows.sess li beats the generic phone rule */
+
+/* following (#following): nav badge */
+.nav-badge{display:inline-block;min-width:18px;margin-inline-start:4px;padding:0 5px;border-radius:99px;background:var(--sun);color:var(--on-sun);font-size:11px;font-weight:700;line-height:18px;text-align:center}
+@media (max-width:640px){.links a{padding-inline:8px}}
+.site-foot .foot-link{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px}   /* "אודות" left the nav: keep a full tap target */
+/* auto-refresh: "יש עדכון" note, fixed so it shows wherever the reader is */
+.update-note{position:fixed;inset-inline:16px;bottom:16px;z-index:6;margin:0 auto;max-width:360px;padding:8px 14px;border-radius:10px;background:var(--blue);color:var(--on-blue);font-size:14px;font-weight:600;text-align:center;box-shadow:0 2px 8px rgb(0 0 0/.2)}
+
+/* competition page (#c-<id>; event-page.md §4) */
+.event-cols{display:grid;gap:22px}
+@media (min-width:900px){.event-cols{grid-template-columns:2fr 1fr;align-items:start}}
+.event-head{display:grid;gap:6px}
+.event-head .pills{display:flex;flex-wrap:wrap;gap:6px}
+.sess-day h3{font-size:16px;font-family:var(--f-body);font-weight:700}
+/* Headings that are links (components.md §3). Today gets one unbroken border, not a text-decoration, which Safari
+   breaks at word spaces. */
+.hlink{color:var(--ink);text-decoration:none}
+.hlink:hover,.hlink:focus-visible{text-decoration:underline}
+.hlink[aria-current="date"]{border-bottom:3px solid var(--sun)}
+.sess-day{scroll-margin-top:64px}   /* scrolled to on arrival: clear the sticky nav (two rows on mobile) */
+@media (max-width:640px){.sess-day{scroll-margin-top:110px}}
+
+/* athlete game log (athlete-game-log.md): date | competition and one line per result */
+.game-log li{grid-template-columns:110px 1fr}
+.game-log .res{display:block;overflow-wrap:anywhere}
+@media (max-width:640px){.game-log li{grid-template-columns:70px 1fr}.game-log .d{grid-column:auto}}
+
+/* home "השבוע" (S4): the day stays beside its row on phones; the pill wraps under the text */
+.rows.week li{grid-template-columns:8.5em 1fr auto}
+@media (max-width:640px){.rows.week li{grid-template-columns:6.5em 1fr}.rows.week .d{grid-column:auto}.rows.week li > :nth-child(3){grid-column:2}}
