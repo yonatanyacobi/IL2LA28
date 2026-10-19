@@ -348,10 +348,15 @@
     "final": "2028-04-01",
     "opens": "2027-04-01"
    },
+   "teamRank": {
+    "num": 10,
+    "asOf": "2026-10-19",
+    "source": "https://fie.org/athletes/detailed-ranking?season=2027&weapon=E&gender=M&category=S&type=E"
+   },
    "review": {
-    "status": "ok",
-    "by": "dana",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "itai",
+    "at": "2026-10-19"
    }
   },
   {

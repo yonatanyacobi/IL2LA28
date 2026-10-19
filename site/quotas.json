@@ -285,25 +285,6 @@
   },
   {
    "sportId": "fencing",
-   "event": "דקר קבוצתי גברים",
-   "totalQuotas": 8,
-   "maxPerNOC": 1,
-   "allocation": "דירוג הקבוצות של FIE ב־1 באפר׳ 2028 (תחרויות 1 באפר׳ 2027–1 באפר׳ 2028): 4 הראשונות + הקבוצה הטובה מכל אחד מ־4 האזורים בין מקומות 5–24. 3 סייפים לקבוצה, וכולם עולים גם לאישי.",
-   "israelStatus": "unknown",
-   "israelNote": "תקופת הדירוג טרם נפתחה (מתחילה ב־1 באפר׳ 2027)",
-   "nextQuotaEvent": null,
-   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
-   "cutoff": {
-    "rank": 4,
-    "list": "FIE Senior Team Ranking",
-    "url": "https://fie.org/athletes",
-    "final": "2028-04-01",
-    "opens": "2027-04-01"
-   },
-   "checkedAt": "2026-10-18"
-  },
-  {
-   "sportId": "fencing",
    "event": "דקר אישי גברים",
    "totalQuotas": null,
    "maxPerNOC": 1,
@@ -1012,5 +993,5 @@
    "checkedAt": "2026-10-18"
   }
  ],
- "unpublished": 4
+ "unpublished": 5
 }
