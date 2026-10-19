@@ -11,9 +11,12 @@ One wording for result nights and the job (Maya's automation), in the #173 style
 - **Date** in the job's style at the end of the history line: `(3 בנוב׳ 2026)`. The session line has no date.
   `at` is the local competition day.
 - **Gender:** use the form that matches the record. Use the slash form (`עלה/תה`) only when the gender isn't known.
+  Where a table's Session column shows two forms (`עלה/עלתה`, `עברה/עבר`, `הודח/ה`, `הפסיד/ה`, `פרשה/פרש`), it lists
+  both for the template: write only the athlete's own form on the site.
   Teams take noun forms (`ניצחון`, `הפסד`), so they have no gender.
 - **Scores:** write `<HI>:<LO>` with the higher score first, because a dash flips in RTL. Golf scores relative to
-  par are written in words (`4 מתחת לפאר`, `2 מעל הפאר`, `פאר`), not `-4` or `+2`, because the sign moves in RTL.
+  par are written in words (`4 מתחת לפאר`, `2 מעל לפאר`, `פאר`), not `-4` or `+2`, because the sign moves in RTL.
+  Keep the pair parallel: `מתחת לפאר` / `מעל לפאר`, never `מעל הפאר`.
 - **Placeholders:**
   - `<P>`: place, an integer.
   - `<POS>`: a place that may be tied, `12` or `12 בשוויון`.
@@ -37,7 +40,6 @@ Source: the ISSF results page of the competition, e.g. https://www.issf-sports.o
 | Quota (only once the ISSF quota tracker shows it) | `זכה במכסה לישראל ב<EV> לאולימפיאדת לוס אנג׳לס 2028 – מקום <P> בגמר ב<COMP> (<DATE>)` | `זכתה …` | `מקום <P> בגמר, מכסה לישראל` |
 | Mixed team, either phase | `עם <PARTNER>: ` + the line above, with `עלו` / `לא עלו` | same | same as above, `עלו` / `לא עלו` |
 
-The Session column gives the men's and women's verbs together (`עלה/עלתה`). Write only the athlete's form.
 
 ## Golf (LPGA)
 Source: the official leaderboard, `https://www.lpga.com/tournaments/<slug>/results`. A reserve who doesn't get into
