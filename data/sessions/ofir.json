@@ -7,11 +7,11 @@
    "date": "2026-10-24",
    "timeLocal": "10:30",
    "tz": "Asia/Seoul",
-   "athleteIds": ["shachar-sagiv"],
+   "athleteIds": ["shachar-sagiv", "itamar-levanon"],
    "phase": "גביע העולם בטריאתלון – עלית גברים, ספרינט",
    "source": "https://triathlon.org/events/2026-world-triathlon-cup-tongyeong/start-lists",
-   "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
-   "notes": "HOLD (contract §5): sign off only once the elite men start list shows Sagiv. On 2026-10-18 the page showed the time (Oct 24, 2026, 10:30) but no names; recheck 2026-10-22. startUtc 2026-10-24T01:30:00Z (04:30 Israel). Result night: docs/research/result-watch-tongyeong.md."
+   "review": {"status": "ok", "by": "tamar", "at": "2026-10-19"},
+   "notes": "Signed on World Triathlon's Elite Men entry list (read 19.10): Sagiv entered, not wait-listed; bib not yet assigned. Entry list: https://triathlon.org/events/api/startlist/195162/678792 (what the start-lists page loads). 10:30 Asia/Seoul = 01:30Z = 04:30 Israel (WT programme 678792). Result night: docs/research/result-watch-tongyeong.md."
   },
   {
    "id": "frankfurt-marathon-2026-20261025-men",
@@ -82,13 +82,13 @@
     "id": "big-ten-xc-2026-20261030-men",
     "competitionId": "big-ten-xc-2026",
     "date": "2026-10-30",
-    "timeLocal": "",
-    "tz": "",
+    "timeLocal": "11:35",
+    "tz": "America/Chicago",
     "athleteIds": ["matan-ivri"],
     "phase": "אליפות הביג טן בקרוס קאנטרי – 8 ק״מ גברים",
-    "source": "https://uwbadgers.com/sports/mens-cross-country/roster/matan-ivri/15841",
-    "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-18"},
-    "notes": "Men's 8K at 11:35 local per Wisconsin's official schedule (found by Tamar on #160). When the session moves into sessions: timeLocal 11:35, tz America/Chicago (16:35Z, 18:35 Israel)."
+    "source": "https://uwbadgers.com/sports/mens-cross-country/schedule/2026",
+    "review": {"status": "unchecked", "by": "ofir", "at": "2026-10-19"},
+    "notes": "Men's 8K, 11:35 per Wisconsin's official 2026 schedule (16:35Z, 18:35 Israel). Other pages disagree: the UW events calendar lists 10:35 for the meet, and a search snippet says 11:45. Ivri's entry rests on the roster (https://uwbadgers.com/sports/mens-cross-country/roster/matan-ivri/15841); the Big Ten entries aren't out yet."
    }
   }
  ]

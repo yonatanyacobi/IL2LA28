@@ -48,6 +48,17 @@ class SessionGapsTest(unittest.TestCase):
         self.assertIn("סרגיי ריכטר", "\n".join(sg.gaps(athletes, COMPS, sessions, TODAY, days=15)))
         self.assertEqual(sg.gaps(athletes, COMPS, sessions, "2026-11-04"), [], "every nextDate already past")
 
+    def test_same_rule_as_admin_nosession(self):
+        """#294's list: any signed session on that Israel day covers the athlete, whatever its competition."""
+        other = {"s": sess("judo-series", "2026-10-29", ["gefen-primo"])}
+        self.assertNotIn("גפן פרימו", "\n".join(sg.gaps(ATHLETES, COMPS, other, TODAY)))
+        # 23:30 in Abu Dhabi on 28.10 is 22:30 in Israel: still the 28th, so it doesn't cover the 29th...
+        late = {"s": {**sess("judo-gs-abu-dhabi-2026", "2026-10-28", ["gefen-primo"]), "timeLocal": "23:30", "tz": "Asia/Dubai"}}
+        self.assertIn("גפן פרימו", "\n".join(sg.gaps(ATHLETES, COMPS, late, TODAY)))
+        # ...but 23:30 in New York on the 28th is 05:30 on the 29th in Israel, so it does.
+        west = {"s": {**sess("judo-gs-abu-dhabi-2026", "2026-10-28", ["gefen-primo"]), "timeLocal": "23:30", "tz": "America/New_York"}}
+        self.assertNotIn("גפן פרימו", "\n".join(sg.gaps(ATHLETES, COMPS, west, TODAY)))
+
     def test_competition_choice(self):
         self.assertEqual(sg.competition_of({"sportId": "judo", "nextDate": "2026-10-29"}, COMPS), "judo-gs-abu-dhabi-2026")
         self.assertIsNone(sg.competition_of({"sportId": "judo", "nextDate": "2026-12-01"}, COMPS), "only the long series")

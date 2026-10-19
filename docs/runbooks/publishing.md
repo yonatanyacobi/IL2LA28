@@ -31,7 +31,7 @@ Copy this list into the PR thread and tick the items as you go.
 [ ] 3. Export: data.json published by the daily task, copied to /tmp/la28-data.json, stage visible
 [ ] 4. Validators: data, quotas, quota_due, node --check, unit, smoke, preview_at (today + next event day)
 [ ] 5. Republish: call prepared, coordinator published, main SHA noted in the PR
-[ ] 6. Live check at 400px, light and dark, signed out
+[ ] 6. Live check at 400px, light and dark, signed out (before launch: as the test viewer, launch-day.md)
 [ ] 7. Digest text copied from #digest, checked, handed to the owner
 ```
 
@@ -50,8 +50,11 @@ A `STOP` item is left out by the build, so it would silently not go live. No out
 For an `earned` item, the athletes' stage-2 proposals have been approved in the page (result-night.md, step 4).
 On the branch, before asking for review, the author runs steps 2 and 4 below and commits `site/quotas.json`.
 
-`earned` is approved by Dana and Tamar together (result-night.md step 3). `check_signoff.py` says STOP on an `earned`
-item unless `review.by` is `"dana+tamar"`.
+Every quota item a PR adds or changes is approved by Dana and Tamar together (team charter, docs/product/team.md;
+for `earned`, result-night.md step 3). `check_signoff.py` says STOP on such an item unless `review.by` is
+`"dana+tamar"`. To remove an item, the same PR appends an entry to `data/quotas/removed.json`:
+`{"sportId", "event", "reason" (short Hebrew), "source" (https, the official page that shows it), "review"}`, signed
+by both. Without one the removal is a STOP. The log is append-only: never edit or delete an entry.
 
 ### 1. Merge (lead)
 
@@ -147,7 +150,7 @@ The Publisher prepares the call and the coordinator runs it. The page itself is 
 
 ### 6. Live check at 400px
 
-Open the artifact signed out (a private window). Set the width to 400px (DevTools device toolbar, or a narrow
+Open the artifact signed out (a private window). Before launch the link isn't open yet: use the test viewer instead (launch-day.md). Set the width to 400px (DevTools device toolbar, or a narrow
 window). Check in light, then in dark (DevTools → Rendering → `prefers-color-scheme`).
 
 | Route | Expect |
@@ -163,7 +166,7 @@ If anything is wrong, roll back (below). Don't fix forward on the live site.
 
 ### 7. Digest text to send out
 
-1. Open `#digest` on the live site (signed out) and press **העתקת התקציר**. If the clipboard is refused, the text
+1. Open `#digest` on the live site (signed out; before launch, as the test viewer) and press **העתקת התקציר**. If the clipboard is refused, the text
    is selected in the box, so copy it by hand.
 2. Check before handing it over:
    - The release is in it: under "תוצאות השבוע" (a competition that ended) or "מה התעדכן" (the approved change).

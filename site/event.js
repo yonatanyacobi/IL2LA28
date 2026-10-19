@@ -39,7 +39,7 @@ function eventStakes(c){
   return `<section class="panel" aria-labelledby="evStakesH"><h2 id="evStakesH">מה על הכף</h2>
     <ul class="qlist">${items.map(q => `<li>
       <div class="q-top"><b><bdi>${esc(q.event)}</bdi></b><span class="actions">${quotaStatusPill(q.israelStatus)}${awaitingOf(q) ? AWAIT_PILL : ""}</span></div>
-      ${q.israelStatus === "in-contention" ? stakesLine(q) : ""}</li>`).join("")}</ul>
+      ${q.israelStatus !== "in-contention" || !stakesLine(q) ? "" : israelIn(q) ? stakesLine(q) : `<p class="muted">לא ידוע על ספורטאי/ת מישראל בשלב הזה</p>`}</li>`).join("")}</ul>
     <p><a href="#sport-${esc(c.sportId)}">לכל המכסות בענף</a></p></section>`;
 }
 
@@ -78,7 +78,7 @@ function viewEvent(id){
   const dayHead = (d, only) => `<h3><a class="hlink" href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span>${only ? DATE_ONLY : ""}</h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
   const schedule = !flat.length
-    ? calEmpty(t <= (c.end || c.start) ? "ההופעות של הישראלים יפורסמו לפי לוח הזמנים הרשמי." : "לא תועדו הופעות של ישראלים בתחרות הזו.", c.sportId)
+    ? calEmpty(t <= (c.end || c.start) ? "עוד אין הופעות ידועות של ישראלים בתחרות הזו." : "לא תועדו הופעות של ישראלים בתחרות הזו.", c.sportId)
     : [...groups].filter(([, list]) => list.length).map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k, dateOnly(list))}
         <ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list))).join("")}</ul></div>`).join("")
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועות הופעות של ישראלים.</p>` : "")(

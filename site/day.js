@@ -23,7 +23,7 @@ function compBlock(comp, sessions, sid, d){
   const now = comp.start <= t && t <= (comp.end || comp.start) && d === t;
   // Stakes: in-contention items whose quota event covers this day (an earned item mustn't show pre-event stakes).
   const stakes = quotasOf(sid).filter(q => q.israelStatus === "in-contention" && q.stakes && q.nextQuotaEvent
-    && q.nextQuotaEvent.start <= d && d <= quotaEventEnd(q)).slice(0, STAKES_MAX);
+    && q.nextQuotaEvent.start <= d && d <= quotaEventEnd(q) && israelIn(q)).slice(0, STAKES_MAX);
   return `<h3>${compLink(comp, esc(comp.name), "hlink")}${tail}</h3>
     ${now ? `<p><span class="pill s-live">מתקיימת עכשיו${total > 1 ? ` · יום ${dayNo(comp.start, d)} מתוך ${total}` : ""}</span></p>` : ""}
     ${list}
@@ -64,5 +64,5 @@ function viewDay(d){
       <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a class="hlink" href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
-    : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.</p>${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
+    : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה.</p>${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
 }

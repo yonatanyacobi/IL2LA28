@@ -13,7 +13,7 @@ texts. It's one page on purpose; the reasoning lives in the PR threads it cites.
 | Gershayim `״` (U+05F4), never `"` | `ק״ג`, `ארה״ב`, `ק״מ` | `ק"ג` |
 | Quotation marks `„…”` | `„מכסה הושגה”` | `"מכסה הושגה"` |
 | En dash with spaces for ranges in text; `fmtRange()` for dates | `29 באוק׳ – 31 באוק׳ 2026` | `29-31/10` |
-| Scores: a colon, higher score first (an en dash between two numbers flips them in RTL: `78–65` shows as `65–78`) | `ניצחון 78:65 על פולין`, `הפסד 78:65 לפולין` | `ניצחון 78–65` |
+| Scores: a colon, higher score first (an en dash between two numbers flips them in RTL: `78–65` shows as `65–78`). DB notes too: they're plain text, so no `<bdi>` or isolate marks, and the colon needs none | `ניצחון 78:65 על פולין`, `הפסד 78:65 לפולין`, `(2:0 לברקאי ארר)` | `ניצחון 78–65`, `9-8 על איטליה`, `0-2 ל…` |
 
 The job follows the same rule (`job/SKILL.md`, #85). The export normalises `data.json`, but the DB doesn't.
 
@@ -64,6 +64,12 @@ The job follows the same rule (`job/SKILL.md`, #85). The export normalises `data
 | stage 0 | `לפני חלון ההעפלה` | `במעקב` |
 | on the site's list | `ברשימה`: `110 ספורטאים ונבחרות ברשימה`, `3 ברשימה בענף` | `במעקב`, `שבמעקב` |
 
+**Athlete names in free text match the athlete record exactly.** `quotaAthletes()` links an athlete to a quota item
+by finding the record's `name` inside `israelNote` and `stakes`, so a different spelling silently drops the link.
+Copy the name from the **live** record, character for character, including maqaf and geresh (`שם־טוב עמיאל`,
+`בנימין ננדזה`). Don't copy it from memory or from the test fixture, which can lag behind a rename (D10). If the
+name itself is wrong, fix the record first (an editor's DB change), then the text.
+
 ## 6. Markup that carries meaning
 - **`<bdi>`** around any mixed or LTR fragment inside Hebrew: event names (`60- ק״ג`), hosts (`מקור: <bdi>ijf.org</bdi>`), list names.
   In WhatsApp text, put a URL on its own line.
@@ -75,6 +81,9 @@ The job follows the same rule (`job/SKILL.md`, #85). The export normalises `data
 - **Status is never colour alone**, and every pill has words. New colours need the contrast table (AA 4.5:1, or 3:1 for borders).
 
 ## Self-check before opening a PR
-1. `grep -nE "[א-ת]-[א-ת0-9]|[א-ת]'|[א-ת]\"[א-ת]|LA28"` on your changed strings; fix anything not in a URL or code.
+1. `grep -nE "[א-ת]-[א-ת0-9]|[א-ת]'|[א-ת]\"[א-ת]|LA28"` and, for dashed scores,
+   `grep -nE "(^|[^0-9-])[0-9]{1,3}[-–][0-9]{1,3}([^0-9-]|$)" | grep -vE "[0-9]:[0-9]{2} ?[-–] ?[0-9]|[-–][0-9]{1,2}\.[0-9]|[-–] ?[0-9]{1,2} ב?(ינו|פבר|מר|אפר|מאי|יונ|יול|אוג|ספט|אוק|נוב|דצמ)"`
+   on your changed strings (the second grep drops time and date ranges, which are fine; it drops the whole line, so read
+   such lines yourself). Fix anything not in a URL or code. For data.json, `validate_data.py` prints the same checks as WARN lines.
 2. Every `${n}` next to a noun → `plural()`.
 3. Read each new string aloud at count 1, at count 2, for a team, and the next day. Is it still true?

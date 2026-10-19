@@ -24,11 +24,26 @@ function standingsGroups(q){
   return {placed, other, none};
 }
 
+// A team event ranks the national team (standings.md §1): its list says "Team", or the item carries a teamRank.
+const isTeamItem = q => !!q.teamRank || /\bteam\b/i.test(q.cutoff.list);
+
+// Israel's team as one row against the line; without a teamRank it's "ללא דירוג", never its fencers' own ranks.
+function teamStanding(q){
+  const c = q.cutoff, t = q.teamRank;
+  if (!t) return `<p class="muted">ללא דירוג: נבחרת ישראל</p>`;
+  const r = {n: t.num, asOf: t.asOf}, above = r.n <= c.rank, line = `<li class="cutline" aria-hidden="true">קו המכסה: מקום ${c.rank}</li>`;
+  const row = `<li><span class="d">${r.n}</span>
+    <span class="t">נבחרת ישראל${!rankStale(r) ? ` · ${fmt(r.asOf)}` : ""} · ${linkOut(t.source)}<span class="sr">, ${above ? "מעל קו המכסה" : "מתחת לקו המכסה"}</span></span>
+    <span>${rankStale(r) ? `<span class="pill ended">דירוג מ־${fmt(r.asOf)}</span>` : ""}</span></li>`;
+  return `<ol class="rows standings">${above ? row + line : line + row}</ol>`;
+}
+
 function standingsItem(q){
   const c = q.cutoff, t = today();
   const head = `<h3><bdi>${esc(q.event)}</bdi></h3>
     <p class="foot">${[safeUrl(c.url) ? `<bdi>${linkOut(c.url, c.list)}</bdi>` : "", linkOut(q.source, "שיטת ההעפלה")].filter(Boolean).join(" · ")}</p>`;
   if (c.opens && t < c.opens) return head + `<p class="muted">תקופת הדירוג להעפלה נפתחת ב־${fmt(c.opens)}.</p>`;
+  if (isTeamItem(q)) return head + teamStanding(q) + `<p class="foot">הדירוג הסופי נקבע ב־${fmt(c.final)}.</p>`;
   const {placed, other, none} = standingsGroups(q);
   const above = placed.filter(({r}) => r.n <= c.rank).length;
   // A stale rank shows its date in the pill only (UX QA).
@@ -56,7 +71,7 @@ function standingsPanel(sid){
 function standingsFact(a){
   const o = rankOn(a.olympicRankNum, a.olympicRankList, a.olympicRankAsOf);
   const olympic = o ? `<dt>דירוג ההעפלה האולימפי</dt><dd>מקום ${o.n} (<bdi>${esc(o.list)}</bdi>${rankWhen(o, d => `, נכון ל־${d}`)})</dd>` : "";
-  return olympic + quotasOf(a.sportId).map(q => [q, q.cutoff && quotaAthletes(q).includes(a) && ranksOf(a).find(r => r.list === q.cutoff.list)])
+  return olympic + quotasOf(a.sportId).map(q => [q, q.cutoff && !isTeamItem(q) && quotaAthletes(q).includes(a) && ranksOf(a).find(r => r.list === q.cutoff.list)])
     .filter(([, r]) => r)
     .map(([q, r]) => `<dt>מול קו המכסה</dt><dd><a href="#sport-${esc(a.sportId)}">מקום ${r.n} · הקו: מקום ${q.cutoff.rank}</a> · <bdi>${esc(q.cutoff.list)}</bdi>${rankWhen(r, d => `, ${d}`)}</dd>`).join("");
 }

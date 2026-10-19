@@ -49,6 +49,24 @@ class ApplyRankingsTest(unittest.TestCase):
             "loadedFrom": "roni"}}])
         self.assertEqual(out["unchanged"], ["raz-hershko"])
 
+    def test_fie_aor_is_an_olympic_list(self):
+        """FIE's Adjusted Official Ranking exists only for Olympic qualification (fencing standings, #179)."""
+        self.assertIs(ar.fields_for("FIE Senior Individual Adjusted Official Ranking (AOR)"), ar.OLYMPIC_FIELDS)
+        self.assertIs(ar.fields_for("FIE Senior Individual Ranking"), ar.RANK_FIELDS)
+        self.assertIs(ar.fields_for("WT Olympic Ranking"), ar.OLYMPIC_FIELDS)
+
+    def test_olympic_looking_names_that_route_to_the_world_rank_warn(self):
+        for name in ("FIE AOR", "FIE Senior Individual AOR", "Olympique Ranking", "IJF Olymp. Ranking"):
+            self.assertTrue(ar.misrouted(name), name)
+        for name in ("FIE Senior Individual Adjusted Official Ranking (AOR)", "WT Olympic Ranking", "IJF World Ranking List",
+                     "FIE Senior Individual Ranking", "Laura Ranking"):
+            self.assertFalse(ar.misrouted(name), name)
+        out = run([athlete(rankList="FIE AOR")])
+        self.assertEqual(out["errors"], [])
+        self.assertEqual(len(out["warnings"]), 1)
+        self.assertIn("'FIE AOR' looks like an Olympic list", out["warnings"][0])
+        self.assertEqual(run([athlete()])["warnings"], [])
+
     @needs_231
     def test_rows_route_by_list_world_rank_untouched_by_olympic_rows(self):
         """PM on #218: rank/rankNum stay the world ranking; Olympic-list rows go to olympicRank*."""

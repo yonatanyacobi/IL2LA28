@@ -126,6 +126,6 @@ lines used interchangeably, and only `#day` offers a way on.
 | sport / athlete "תחרויות קרובות" | `אין תחרויות קרובות ידועות בענף.` | `לוח התחרויות` → `#calendar-<sport>` |
 | home "תחרויות קרובות" | `אין תחרויות קרובות ידועות.` | `לוח התחרויות` → `#calendar` |
 | home 14 days | as today | `ליום התחרויות הבא: {date}` → next `#day` with Israelis |
-| athlete history | `עוד אין אירועים מתועדים.` | none |
+| athlete history | `עוד אין רשומות בהיסטוריה.` | none |
 
 **Done when** `במאגר` appears nowhere in `site/`, and each row of the table renders its link in a smoke test.

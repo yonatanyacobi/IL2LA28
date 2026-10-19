@@ -75,7 +75,15 @@ function rowMark(key, sig){
   return at ? `<span class="pill chg"><span class="sr"> · </span>השתנה ב־<time datetime="${esc(at)}">${ilTime(at)}</time></span>` : "";
 }
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
-const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };
+// Every source label goes through host(). A long host (a CDN, a news subdomain) is cut to its registrable domain:
+// the last 2 labels, or 3 under a .co.il-style second level ("sports.walla.co.il" → "walla.co.il").
+// 17 keeps "ifsc.results.info", where the subdomain is the federation.
+const HOST_MAX = 17, SECOND_LEVEL = /^(co|org|ac|gov|net|muni|k12)$/;
+const shortHost = h => {
+  const l = h.split("."), keep = l.length > 2 && l.at(-1).length === 2 && SECOND_LEVEL.test(l.at(-2)) ? 3 : 2;
+  return h.length > HOST_MAX && l.length > keep ? l.slice(-keep).join(".") : h;
+};
+const host = u => { try { return shortHost(new URL(u).hostname.replace(/^www\./, "")); } catch { return "מקור"; } };
 // Match key for search: keyboards type ' and " where the data has ׳ and ״ (and vice versa).
 const searchKey = s => str(s).normalize("NFD").replace(/[֑-ׇֽֿׁׂׅׄ]/g, "")
   .replace(/[׳'`’‘]/g, "'").replace(/[״"“”]/g, '"').replace(/\s+/g, " ").trim().toLowerCase();
@@ -126,6 +134,7 @@ const quotasOf = sid => (IDX.quotasBySport().get(sid) || []).slice();
 const upcoming = () => { const t = today(); return S.comps.filter(c => (c.end || c.start) >= t).sort((a, b) => a.start.localeCompare(b.start)); };
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
+const NEW_MARK = ` <span class="new">חדש</span>`;   // changed since this viewer's last visit (cards, #c-, the week)
 // Per-viewer follows: athletes in S.follows, sports in S.followSports (following.js; absent before it loads).
 const followsSport = id => !!S.followSports?.has(id);
 // Compared as instants: the job and the page write ISO strings with different precision.
@@ -231,6 +240,20 @@ const AWAIT_PILL = `<span class="pill q-awaiting">${AWAITING}</span>`;
 const awaitingLine = w => `${esc(w.name)} (${fmtRange(w.start, w.end)}). עדכון המכסות יפורסם אחרי ההודעה הרשמית.`;
 // "What it means" for Israel at the next quota event; meaningless once that event is past.
 // An earned item's stakes describe the pre-event state, so they go once it is earned.
+// Stakes tied to a day or a competition (home, #day, #c-, digest) show only where Israel competes in that item: one
+// of the item's own athletes (quotaAthletes: exact name in its text, copy-rules #307, or the same weight) has a
+// nextDate or a session inside the item's quota event. Only an item that names nobody (e.g. a team event) falls back
+// to any Israeli in the sport (sprint-7.md; the 20.10 men's team final, which Israel didn't reach, showed its stakes
+// all day; on an Abu Dhabi day a weight with no Israeli entered showed them too).
+function israelIn(q){
+  const e = q.nextQuotaEvent, end = quotaEventEnd(q);
+  if (!e || !isDate(e.start) || !end) return false;
+  const inside = d => e.start <= d && d <= end;
+  const named = quotaAthletes(q), pool = named.length ? named : athletesOf(q.sportId), ids = new Set(pool.map(a => a.id));
+  return pool.some(a => isDate(a.nextDate) && inside(a.nextDate))
+    || (typeof exportedSessions === "function" && exportedSessions().some(s => s.sportId === q.sportId && inside(s.day)
+      && s.athletes.some(a => ids.has(a.id))));
+}
 const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) && q.israelStatus !== "earned" ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
 
 function quotaSection(id){
@@ -299,7 +322,7 @@ const STAR = `<span class="star-on" aria-hidden="true">★</span><span class="sr
 function athleteCard(a, status = ""){
   const s = stageOf(a), fav = S.follows.has(a.id);
   return `<a class="card" href="#a-${esc(a.id)}">
-    <span class="nm">${fav ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : ""}${esc(a.name)}${isNew(a) ? ` <span class="new">חדש</span>` : ""}</span>
+    <span class="nm">${fav ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : ""}${esc(a.name)}${isNew(a) ? NEW_MARK : ""}</span>
     ${a.event ? `<span class="ev">${esc(a.event)}</span>` : ""}
     <span><span class="pill st${s}">${STAGES[s]}</span> ${trustChip(a, "card")}</span>
     ${a.rank ? `<span class="ln"><span>דירוג או הישג: </span>${esc(a.rank)}</span>` : ""}
@@ -310,7 +333,7 @@ function athleteCard(a, status = ""){
 
 // components.md §6: a row for side columns or more than 4 athletes, in <ul class="rows">; the status is the last cell.
 function athleteRow(a, status = ""){
-  return `<li><span class="d"></span><span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${
+  return `<li><span class="d"></span><span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${isNew(a) ? NEW_MARK : ""}${
     a.event ? `<small><bdi>${esc(a.event)}</bdi></small>` : ""}</span><span>${status}</span></li>`;
 }
 
@@ -621,7 +644,7 @@ function viewAthlete(id){
     <h2>היסטוריה</h2>
     ${hist.length ? `<ol class="timeline">${hist.map(h => `<li class="k-${esc(h.kind)}"><span class="d">${fmt(h.at)}</span>
       <span>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}${(k => rowMark(k, k))(`hist|${id}|${h.at}|${h.kind}|${h.text}`)}</span></li>`).join("")}</ol>`
-      : emptyLine("עוד אין אירועים מתועדים.")}
+      : emptyLine("עוד אין רשומות בהיסטוריה.")}
   </section>
   <section class="stack">
     <h2>תחרויות קרובות בענף</h2>
@@ -699,7 +722,8 @@ function viewAbout(){
   return `<h1 tabindex="-1">אודות</h1>
   <section class="panel prose">
     <h2>על האתר</h2>
-    <p>אתר עצמאי ולא רשמי שעוקב אחרי ספורטאיות, ספורטאים ונבחרות מישראל בדרך לאולימפיאדת לוס אנג׳לס 2028. אין לאתר קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של המשחקים או לוועד האולימפי בישראל.</p>
+    <p>אתר עצמאי ולא רשמי שעוקב אחרי ספורטאיות, ספורטאים ונבחרות מישראל בדרך לאולימפיאדת לוס אנג׳לס 2028. לכל ספורטאי/ת ונבחרת יש דף עם השלב בדרך להעפלה, הדירוג או ההישג האחרון, התחרות הבאה וקישור למקור.</p>
+    <p>אין לאתר קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של משחקי לוס אנג׳לס 2028 או לוועד האולימפי בישראל.</p>
     <h2>ארבעת השלבים</h2>
     <ol>${STAGES.map((x, i) => `<li><b>${x}</b>: ${STAGE_HELP[i]}</li>`).join("")}</ol>
   </section>
@@ -722,7 +746,7 @@ function trustBlock(){
   ];
   const tile = (n, label) => `<div class="adm-tile"><b class="digits">${n}</b><span>${label}</span></div>`;
   return `<section class="panel prose" aria-labelledby="trustH">
-    <h2 id="trustH">אפשר לסמוך? ככה זה עובד</h2>
+    <h2 id="trustH">איך אנחנו בודקים את הנתונים</h2>
     <div class="adm-tiles">
       ${tile(N, "ספורטאים ונבחרות ברשימה")}
       ${tile(V, "נבדקו ידנית מול המקור")}
@@ -732,16 +756,16 @@ function trustBlock(){
     <h3>מאיפה הנתונים</h3>
     <ul>
       <li>דירוגים, תוצאות ושיטות העפלה: האתרים הרשמיים של ההתאחדויות הבין־לאומיות.</li>
-      <li>בחירות לנבחרת והודעות: הוועד האולימפי בישראל וכלי תקשורת.</li>
+      <li>בחירה לנבחרת והודעות: הוועד האולימפי בישראל וכלי תקשורת.</li>
     </ul>
     ${top.length ? `<p class="foot">המקורות הנפוצים באתר: <span dir="ltr">${top.map(esc).join(" · ")}</span>. בכל דף ספורטאי/ת יש קישור למקור.</p>` : ""}
     <p class="foot">„דירוג או הישג” הוא דירוג עולמי רשמי כשיש כזה, ואחרת התוצאה הבולטת האחרונה (מסומנת „מיקום, לא דירוג”).</p>
-    <h3>שלוש רמות ביטחון</h3>
+    <h3>שלוש רמות בדיקה</h3>
     <dl class="facts trust-legend">${legend.map(([a, text]) => `<dt>${trustChip(a)}</dt><dd>${text}</dd>`).join("")}</dl>
     <h3>מה אוטומטי ומה לא</h3>
     <ul>
       <li><b>אוטומטי, פעם ביום:</b> דירוגים, תוצאות אחרונות, תחרויות קרובות.</li>
-      <li><b>רק אחרי אישור של אדם:</b> שינוי שלב, ספורטאי/ת חדש/ה, הסרה מהרשימה, וכל נתוני המכסות.</li>
+      <li><b>רק אחרי בדיקה ידנית:</b> שינוי שלב, ספורטאי/ת חדש/ה, הסרה מהרשימה, וכל נתוני המכסות.</li>
     </ul>
     <h3>תיקונים</h3>
     <p>כל דיווח נבדק מול מקור לפני שהוא מתפרסם.${typeof fixLogLive === "function" && fixLogLive() ? ` כל תיקון נרשם ב<a href="#corrections">יומן התיקונים</a>.` : ""} אין לנו גישה למידע שאינו פומבי.</p>
@@ -992,7 +1016,7 @@ function route(){
   const h = currentRoute();
   renderedDay = today();
   let html, nav;
-  if (S.failed && !S.loaded) html = `<div class="empty" role="alert"><h1 tabindex="-1">לא הצלחנו לטעון את הנתונים</h1><p>ייתכן שמדובר בתקלה זמנית. אפשר לנסות שוב בעוד רגע.</p><p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
+  if (S.failed && !S.loaded) html = `<div class="empty" role="alert">${loadFailure(S.failed)}<p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
   else if (!S.loaded) html = `<div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div>`, nav = "home";
   else if (h === "home") html = viewHome(), nav = "home";
   else if (h === "sports") html = viewSports(), nav = "sports";
@@ -1161,6 +1185,9 @@ function cutoffOf(c){
   if (!c || typeof c !== "object" || !Number.isInteger(c.rank) || c.rank < 1 || !str(c.list).trim() || !safeUrl(c.url) || !isDate(c.final)) return null;
   return {rank: c.rank, list: str(c.list), url: c.url, final: c.final, opens: isDate(c.opens) ? c.opens : ""};
 }
+// A team event's own rank on the cutoff's list (standings.md §1: the ranked unit is the national team, not its members).
+const teamRankOf = t => t && typeof t === "object" && Number.isInteger(t.num) && t.num >= 1 && isDate(t.asOf) && safeUrl(t.source)
+  ? {num: t.num, asOf: t.asOf, source: t.source} : null;
 function applyQuotas(){
   const items = Array.isArray(quotaFile?.items) ? quotaFile.items : [];
   S.quotas = items.filter(q => q && typeof q === "object" && sportById(q.sportId) && QUOTA_STATUSES.includes(q.israelStatus)
@@ -1168,7 +1195,7 @@ function applyQuotas(){
       && (q.nextQuotaEvent == null || (typeof q.nextQuotaEvent === "object" && isDate(q.nextQuotaEvent.start))))
     .map(q => ({sportId: q.sportId, event: str(q.event), totalQuotas: q.totalQuotas ?? null, maxPerNOC: q.maxPerNOC ?? null,
       allocation: str(q.allocation), israelStatus: q.israelStatus, israelNote: str(q.israelNote), source: q.source, stakes: stakesOf(q),
-      cutoff: cutoffOf(q.cutoff),
+      cutoff: cutoffOf(q.cutoff), teamRank: teamRankOf(q.teamRank),
       checkedAt: isDate(q.checkedAt) ? q.checkedAt : "",
       earnedAt: isDate(q.earnedAt) ? q.earnedAt : "",
       nextQuotaEvent: q.nextQuotaEvent ? {name: str(q.nextQuotaEvent.name), start: q.nextQuotaEvent.start,
@@ -1179,22 +1206,51 @@ function applyQuotas(){
 
 async function loadQuotas(){
   try {
-    const r = await fetch("quotas.json", {cache: "no-cache"});
+    const r = await withDeadline(fetch("quotas.json", {cache: "no-cache"}));
     // 404 = not published yet (an empty list); anything else unusable is an error.
     quotaFile = r.status === 404 ? {items: []} : r.ok ? await r.json() : null;
   } catch { quotaFile = null; }
 }
 
+// A host that never answers must end in the error view, not an endless skeleton.
+const LOAD_TIMEOUT_MS = 15e3;
+const withDeadline = p => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error("timeout")), LOAD_TIMEOUT_MS))]);
+// The export, not some other JSON the host answered with (e.g. {"error": "forbidden"}): applying that would blank the site.
+// generatedAt may be empty (no check time is a supported state), but the export always writes it.
+const isExport = d => Array.isArray(d?.athletes) && typeof d.generatedAt === "string";
+// Why data.json didn't load. "access": 401/403, HTML where JSON should be (a sign-in page) or JSON that isn't the
+// export, i.e. the artifact isn't open to this visitor (launch-day.md, sharing); not a temporary fault.
+function loadFailure(kind){
+  const [h, p] = kind === "access" ? ["האתר לא זמין עבורך כרגע",
+      `ייתכן שהאתר עוד לא נפתח לציבור, או שהקישור דורש התחברות לחשבון. אם קיבלתם את הקישור מאיתנו, כתבו לנו: <span dir="ltr">${esc(CONTACT_EMAIL)}</span>`]
+    : kind === "timeout" ? ["הטעינה נמשכת יותר מדי", "הנתונים לא הגיעו בזמן. אפשר לנסות שוב בעוד רגע."]
+    : ["לא הצלחנו לטעון את הנתונים", "ייתכן שמדובר בתקלה זמנית. אפשר לנסות שוב בעוד רגע."];
+  return `<h1 tabindex="-1">${h}</h1><p>${p}</p>`;
+}
+
 let publicSnapshot = null;
 async function loadPublic(){
   const quotas = loadQuotas();   // in parallel; never delays or fails the data.json render
-  try {
+  const load = (async () => {
     const r = await fetch("data.json", {cache: "no-cache"});
-    if (!r.ok) throw new Error(r.status);
-    publicSnapshot = await r.json();
+    if (r.status === 401 || r.status === 403) throw new Error("access");
+    if (!r.ok) throw new Error(String(r.status));
+    let d;
+    try { d = await r.json(); } catch { throw new Error("access"); }
+    if (!isExport(d)) throw new Error("access");
+    return d;
+  })();
+  try {
+    publicSnapshot = await withDeadline(load);
     if (!S.live) { applySnapshot(publicSnapshot); navigate(); }
-  } catch {
-    if (!S.loaded) { S.failed = true; route(); }
+  } catch (e) {
+    if (!S.loaded) { S.failed = ["access", "timeout"].includes(e?.message) ? e.message : "error"; route(); }
+    // The deadline only stops the waiting: an answer that still arrives replaces the timeout alert (Gil on #304).
+    if (e?.message === "timeout") load.then(d => {
+      if (S.loaded || S.live) return;
+      publicSnapshot = d; S.failed = false;
+      applySnapshot(d); navigate();
+    }, () => {});
   }
   await quotas;
   applyQuotas();
@@ -1275,7 +1331,7 @@ async function checkForUpdate(){
     const quotasChanged = JSON.stringify(quotaFile) !== prevJson;
     if (quotasChanged) applyQuotas();
     const d = r.ok ? await r.json() : null;
-    if (S.live || !d || (str(d.generatedAt) === S.generatedAt && str(d.lastRun) === S.lastRun)) { if (quotasChanged) refresh(); return; }
+    if (S.live || !isExport(d) || (str(d.generatedAt) === S.generatedAt && str(d.lastRun) === S.lastRun)) { if (quotasChanged) refresh(); return; }
     publicSnapshot = d;
     applySnapshot(d);
     diffRender = true; newlyChanged = 0;
