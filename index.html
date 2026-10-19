@@ -42,7 +42,7 @@
     <p>אתר עצמאי ולא רשמי. אין לו קשר לוועד האולימפי הבין־לאומי, לוועדה המארגנת של משחקי לוס אנג׳לס 2028 או לוועד האולימפי בישראל. הנתונים נאספים ממקורות פומביים. לפני שמסתמכים על נתון, כדאי לבדוק אותו מול המקור המצורף. <a class="foot-link" href="#about">אודות ואיך הנתונים נאספים</a><span id="fixLink"></span> · דיווח על טעות: <span dir="ltr">il2la28.site@gmail.com</span></p>
   </footer>
 
-  <dialog id="dlg">
+  <dialog id="dlg" aria-labelledby="dlgTitle">
     <form id="frm">
       <h2 id="dlgTitle">ספורטאי/ת חדש/ה</h2>
       <div class="row">
@@ -79,8 +79,8 @@
           <label>מקור לתיקון<input id="fFixSrc" type="url" maxlength="400" dir="ltr" placeholder="https://"></label>
         </div>
       </fieldset>
-      <p class="warn" id="frmWarn" hidden></p>
-      <p class="err" id="frmErr" hidden></p>
+      <p class="warn" id="frmWarn" role="status" hidden></p>
+      <p class="err" id="frmErr" role="alert" hidden></p>
       <div class="actions">
         <button class="btn" id="saveBtn" type="submit">שמירה</button>
         <button class="btn ghost" type="button" id="cancelBtn">ביטול</button>

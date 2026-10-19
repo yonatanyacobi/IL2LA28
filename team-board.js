@@ -17,6 +17,8 @@
   };
   const validText = (value, max = 2000) => typeof value === 'string' && value.length <= max;
   const validDate = value => validText(value, 40) && /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value));
+  const validHeartbeat = value => validDate(value) && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value) &&
+    new Date(value).toISOString() === value.replace(/(?:\.(\d{1,3}))?Z$/, (_, fraction = '') => `.${fraction.padEnd(3, '0')}Z`);
   const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
   function validate(data) {
@@ -34,7 +36,33 @@
           !task.id || taskIds.has(task.id) || !statuses.has(task.status) || !priorities.has(task.priority) || !ids.has(task.assignee) || !validDate(task.updatedAt)) throw new Error('Invalid task');
       taskIds.add(task.id);
     }
+    if (data.runtime !== undefined) {
+      const runtime = data.runtime;
+      if (!record(runtime) || runtime.mode !== 'continuous' || !['running', 'waiting', 'blocked'].includes(runtime.state) ||
+          !validHeartbeat(runtime.heartbeatAt) ||
+          !Number.isInteger(runtime.leaseSeconds) || runtime.leaseSeconds < 1 || runtime.leaseSeconds > 300 ||
+          !validText(runtime.message) || !Array.isArray(runtime.currentTaskIds) || runtime.currentTaskIds.length > 1000 ||
+          new Set(runtime.currentTaskIds).size !== runtime.currentTaskIds.length || !runtime.currentTaskIds.every(id => taskIds.has(id))) throw new Error('Invalid runtime');
+    }
     return data;
+  }
+
+  function activity() {
+    if (!board) return;
+    const runtime = board.runtime;
+    const age = runtime ? Date.now() - Date.parse(runtime.heartbeatAt) : Infinity;
+    const fresh = runtime && age >= -30000 && age <= runtime.leaseSeconds * 1000;
+    const state = fresh ? runtime.state : 'unknown';
+    el('manager').dataset.state = state;
+    const labels = {running: 'המנהל דיווח על עבודה פעילה', waiting: 'המנהל ממתין למשימה הבאה', blocked: 'המנהל ממתין לפתרון חסימה', unknown: 'אין דיווח פעילות עדכני'};
+    el('manager').textContent = `${labels[state]}.${fresh && runtime.message ? ` ${runtime.message}` : ''}`;
+    el('heartbeat').textContent = runtime
+      ? `דיווח מנהל אחרון: ${formatter.format(new Date(runtime.heartbeatAt))}. תוקף הדיווח: ${runtime.leaseSeconds} שניות.${fresh ? '' : ' המשימות והספירות מציגות את הדיווח האחרון בלבד.'}`
+      : 'לא נשמר דיווח פעילות של המנהל. המשימות והספירות מציגות את הדיווח האחרון בלבד.';
+    el('summary').setAttribute('aria-label', fresh ? 'תמונת מצב לפי הדיווח האחרון' : 'תמונת מצב לפי דיווח שאינו עדכני');
+    el('report-note').textContent = fresh
+      ? 'מצבי המשימות והספירות הם לפי הדיווח האחרון; פעילות המנהל מאומתת לזמן מוגבל.'
+      : 'מצבי המשימות והספירות הם לפי הדיווח האחרון; אין אישור עדכני לכך שמשימות עדיין בעבודה.';
   }
 
   function connection() {
@@ -44,13 +72,16 @@
       ? 'לא ניתן לבדוק עדכונים. מוצג הדיווח האחרון שנטען, אם ישנו.'
       : board ? `${stale ? 'הדיווח לא עודכן יותר מ־24 שעות. ' : ''}בדיקת חיבור אחרונה: ${formatter.format(lastChecked)}`
         : 'טוענים את לוח המשימות…';
+    activity();
   }
 
   function render() {
     if (!board) return;
     const people = new Map(board.team.map(person => [person.id, person]));
     el('mission').textContent = board.company.mission;
-    el('schedule').textContent = `${board.company.status} ${board.company.cadence} הלוח בודק גרסה חדשה בכל 30 שניות.`;
+    el('schedule').textContent = board.runtime
+      ? 'עבודה רציפה: המנהל מקצה את המשימה הבאה מיד בסיום משימה. בדיקת התאוששות בכל דקה נועדה לחידוש עבודה שנעצרה. הלוח בודק עדכונים בכל 30 שניות.'
+      : `${board.company.status} ${board.company.cadence} הלוח בודק גרסה חדשה בכל 30 שניות.`;
     el('updated').textContent = `עדכון תוכן אחרון: ${formatter.format(new Date(board.updatedAt))}`;
     const ownerSelect = el('assignee');
     const previousOwner = ownerSelect.value;
@@ -63,12 +94,17 @@
     }
     if (people.has(previousOwner)) ownerSelect.value = previousOwner;
     const done = board.tasks.filter(task => task.status === 'done').length;
-    el('summary').replaceChildren(...[[board.tasks.length, 'משימות בלוח'], [board.tasks.filter(task => task.status === 'in_progress').length, 'משימות בעבודה'], [done, 'משימות שהושלמו'], [board.team.length, 'תפקידים בצוות']].map(([value, label]) => {
+    el('summary').replaceChildren(...[[board.tasks.length, 'משימות בלוח'], [board.tasks.filter(task => task.status === 'in_progress').length, 'בעבודה לפי הדיווח האחרון'], [done, 'משימות שהושלמו'], [board.team.length, 'תפקידים בצוות']].map(([value, label]) => {
       const stat = node('div', undefined, 'stat');
       stat.append(node('strong', String(value)), node('span', label));
       return stat;
     }));
     const visibleTasks = board.tasks.filter(task => (!ownerSelect.value || task.assignee === ownerSelect.value) && (!el('status').value || task.status === el('status').value));
+    const expanded = new Set(Array.from(el('board').querySelectorAll('details[open]'), details => details.dataset.taskId));
+    const focused = document.activeElement;
+    const focusedTask = focused?.tagName === 'SUMMARY' && el('board').contains(focused)
+      ? focused.closest('details')?.dataset.taskId : null;
+    let focusTarget = null;
     const columns = [];
     for (const [status, label] of statuses) {
       if (el('status').value && el('status').value !== status) continue;
@@ -85,7 +121,11 @@
         top.append(node('span', task.id, 'task-id'), node('span', `עדיפות ${priorities.get(task.priority)}`, 'priority'));
         card.append(top, node('h4', task.title), node('p', task.description), node('p', people.get(task.assignee).role, 'owner'));
         const details = node('details');
-        details.append(node('summary', 'תנאי קבלה וראיות'), node('p', `תנאי קבלה: ${task.acceptance}`), node('p', `ראיות: ${task.evidence || 'טרם תועדו'}`));
+        details.dataset.taskId = task.id;
+        details.open = expanded.has(task.id);
+        const summary = node('summary', 'תנאי קבלה וראיות');
+        if (task.id === focusedTask) focusTarget = summary;
+        details.append(summary, node('p', `תנאי קבלה: ${task.acceptance}`), node('p', `ראיות: ${task.evidence || 'טרם תועדו'}`));
         const time = node('time', `עודכן: ${formatter.format(new Date(task.updatedAt))}`);
         time.dateTime = task.updatedAt;
         card.append(details, time);
@@ -94,12 +134,14 @@
       columns.push(column);
     }
     el('board').replaceChildren(...columns);
+    focusTarget?.focus({preventScroll: true});
     el('empty').hidden = visibleTasks.length > 0;
     el('team').replaceChildren(...board.team.map(person => {
       const card = node('article', undefined, 'person');
       card.append(node('h3', person.role), node('strong', person.name), node('p', person.responsibility));
       return card;
     }));
+    activity();
   }
 
   async function refresh() {
@@ -131,5 +173,6 @@
   el('status').addEventListener('change', render);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
   setInterval(() => { if (!document.hidden) refresh(); }, 30000);
+  setInterval(connection, 15000);
   refresh();
 })();

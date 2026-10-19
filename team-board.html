@@ -19,8 +19,11 @@
       <div class="live"><span class="signal" id="signal" data-state="waiting"></span><p id="connection" role="status">טוענים את לוח המשימות…</p><button id="refresh" type="button">רענון עכשיו</button></div>
       <p class="muted" id="updated">עדכון תוכן אחרון: —</p>
       <p class="muted" id="schedule">תזמון העבודה טרם אושר. הלוח בודק גרסה חדשה בכל 30 שניות.</p>
+      <p class="manager" id="manager" data-state="unknown" role="status">אין דיווח פעילות עדכני.</p>
+      <p class="muted" id="heartbeat">דיווח מנהל אחרון: —</p>
     </section>
     <section id="summary" class="summary" aria-label="תמונת מצב"></section>
+    <p class="muted report-note" id="report-note">המשימות והספירות מציגות את הדיווח האחרון בלבד.</p>
     <section class="work" aria-labelledby="work-title">
       <div class="section-head"><h2 id="work-title">לוח המשימות</h2><div class="filters"><label>אחריות <select id="assignee"><option value="">כל הצוות</option></select></label><label>מצב <select id="status"><option value="">כל המצבים</option><option value="backlog">בתכנון</option><option value="in_progress">בעבודה</option><option value="review">בבדיקה</option><option value="done">הושלם</option><option value="blocked">ממתין לפתרון</option></select></label></div></div>
       <div id="board" class="board" tabindex="-1"><p class="muted">המשימות יופיעו לאחר טעינת הנתונים.</p></div>
