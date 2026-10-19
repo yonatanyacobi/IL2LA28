@@ -169,6 +169,29 @@ class ExportTest(unittest.TestCase):
         for raw, want in cases.items():
             self.assertEqual(ex.geresh(raw), want, raw)
 
+    def test_prefix_hyphen_to_maqaf(self):
+        cases = {
+            "1 בעולם ב-3000 מ' מכשולים": "1 בעולם ב־3000 מ׳ מכשולים",
+            "בדרך ל-LA28": "בדרך ל־LA28",
+            "וב-2026 ושה-OQT": "וב־2026 ושה־OQT",
+            "(ב-50 מ׳)": "(ב־50 מ׳)",
+            "U-20 European Championships": "U-20 European Championships",
+            "אליפות אירופה U-20": "אליפות אירופה U-20",
+            "קרב-רב": "קרב-רב",   # a compound, not a prefix: left for the copy check
+            "2026-10-19": "2026-10-19",
+            "ראו https://x.org/ב-2026": "ראו https://x.org/ב-2026",
+            "ב־2028": "ב־2028",
+        }
+        for raw, want in cases.items():
+            self.assertEqual(ex.geresh(raw), want, raw)
+
+    def test_prefix_hyphen_not_in_sources(self):
+        hist = [{"at": "2026-01-01", "kind": "rank", "text": "6 בעולם ב-1500", "source": "https://x.org/ב-1500"}]
+        data = self.export(athletes={"a": athlete(event="ב-50 מ'", source="https://x.org/ל-LA28", history=hist)})
+        a = data["athletes"][0]
+        self.assertEqual((a["event"], a["source"]), ("ב־50 מ׳", "https://x.org/ל-LA28"))
+        self.assertEqual((a["history"][0]["text"], a["history"][0]["source"]), ("6 בעולם ב־1500", "https://x.org/ב-1500"))
+
     def test_geresh_applied_to_display_text_only(self):
         hist = [{"at": "2026-01-01", "kind": "rank", "text": "3000 מ' מכשולים", "source": "https://x.org/a'b"}]
         data = self.export(
