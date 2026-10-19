@@ -16,14 +16,14 @@ All times are Israel time (24.10 is still summer time: Seoul − 6, Rotterdam + 
 | When | Step | Who |
 |---|---|---|
 | 22.10 | Sagiv in the elite men start list? Yes: apply the session row from `data/sessions/ofir.json` (without `notes`) and the item 34 `stakes` from #135. No: outcome D in #95, no session row | Ofir → Tamar → editor |
-| as soon as #134 has the Official PDF | Q for one or both: move the floor final from `pendingFinalBlocks` in `data/sessions/roni.json` to `sessions` (`ag-worlds-2026-20261024-mag-fx-final`, 14:00 Europe/Amsterdam, `athleteIds` = the confirmed ones, `phase` `גמר קרקע גברים`). No Q: no session, and their `next`/`nextDate` → `""` | Roni → Dana signs the session |
+| as soon as #134 has the official FIG source | Q for one or both: move the floor final from `pendingFinalBlocks` in `data/sessions/roni.json` to `sessions` (`ag-worlds-2026-20261024-mag-fx-final`, 14:00 Europe/Amsterdam, `athleteIds` = the confirmed ones, `phase` `גמר קרקע גברים`). No Q: no session, and their `next`/`nextDate` → `""` | Roni → Dana signs the session |
 | 24.10, 04:30–~05:30 | Tongyeong men's race | – |
 | from ~06:00 | Results tab on https://triathlon.org/events/2026-world-triathlon-cup-tongyeong, **final list only** (every row validated). TriathlonLIVE and news are not sources | Ofir |
 | final + 30 min | Values below → Tamar | Ofir |
 | after Tamar | Tongyeong steps 1–3 below. Item 34 (quotas.json) goes through the result-night runbook PR, not here | coordinator; owner for item 34 |
-| 24.10 morning | Floor final start list (Longines → Men's Apparatus Finals → Start List): a withdrawn Israeli comes out of `athleteIds`; a reserve (R1) can step in | Roni |
+| 24.10 morning | Floor final start list on FIG's live site (https://live.gymnastics.sport/schedule.php?idevent=17247 → Men's Apparatus Finals → Start List): a withdrawn Israeli comes out of `athleteIds`; a reserve (R1) can step in | Roni |
 | 15:00–15:30 | Men's floor final | – |
-| from ~15:30 | **Official** result: Longines → Men's Apparatus Finals → "Select file to download" → Floor Exercise Results. Live/Ranking pages and news are not sources | Roni |
+| from ~15:30 | **Official** result on FIG's live site (https://live.gymnastics.sport/schedule.php?idevent=17247): first the Results PDF, Men's Apparatus Finals → Results → Floor (`link.php?id=<N>`, a PDF titled "Men's Floor Exercise Final", footer "Official Results Provider"); fallback, the floor-final standings page there once it says OFFICIAL. Longines, Phase/Ranking pages and news are not sources. Details: [rotterdam-outcomes.md](rotterdam-outcomes.md) | Roni |
 | Official + 30 min | Values below → Tamar (values) | Roni |
 | after Tamar | Floor steps 1–3 below, **before the 25.10 run** | coordinator |
 | 25.10 run | `runs/2026-10-25`: no second Tongyeong or Rotterdam entry. A second Tongyeong entry: delete the **manual** one (the job's text is the API's) and tell Omer. A second Rotterdam entry: delete the **job's** one and tell Maya | Ofir, Roni |
