@@ -39,7 +39,7 @@ function eventStakes(c){
   return `<section class="panel" aria-labelledby="evStakesH"><h2 id="evStakesH">מה על הכף</h2>
     <ul class="qlist">${items.map(q => `<li>
       <div class="q-top"><b><bdi>${esc(q.event)}</bdi></b><span class="actions">${quotaStatusPill(q.israelStatus)}${awaitingOf(q) ? AWAIT_PILL : ""}</span></div>
-      ${q.israelStatus === "in-contention" ? stakesLine(q) : ""}</li>`).join("")}</ul>
+      ${q.israelStatus !== "in-contention" || !stakesLine(q) ? "" : israelIn(q) ? stakesLine(q) : `<p class="muted">לא ידוע על ספורטאי/ת מישראל בשלב הזה</p>`}</li>`).join("")}</ul>
     <p><a href="#sport-${esc(c.sportId)}">לכל המכסות בענף</a></p></section>`;
 }
 

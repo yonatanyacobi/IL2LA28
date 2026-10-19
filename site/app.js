@@ -231,6 +231,20 @@ const AWAIT_PILL = `<span class="pill q-awaiting">${AWAITING}</span>`;
 const awaitingLine = w => `${esc(w.name)} (${fmtRange(w.start, w.end)}). עדכון המכסות יפורסם אחרי ההודעה הרשמית.`;
 // "What it means" for Israel at the next quota event; meaningless once that event is past.
 // An earned item's stakes describe the pre-event state, so they go once it is earned.
+// Stakes tied to a day or a competition (home, #day, #c-, digest) show only where Israel competes in that item: one
+// of the item's own athletes (quotaAthletes: exact name in its text, copy-rules #307, or the same weight) has a
+// nextDate or a session inside the item's quota event. Only an item that names nobody (e.g. a team event) falls back
+// to any Israeli in the sport (sprint-7.md; the 20.10 men's team final, which Israel didn't reach, showed its stakes
+// all day; on an Abu Dhabi day a weight with no Israeli entered showed them too).
+function israelIn(q){
+  const e = q.nextQuotaEvent, end = quotaEventEnd(q);
+  if (!e || !isDate(e.start) || !end) return false;
+  const inside = d => e.start <= d && d <= end;
+  const named = quotaAthletes(q), pool = named.length ? named : athletesOf(q.sportId), ids = new Set(pool.map(a => a.id));
+  return pool.some(a => isDate(a.nextDate) && inside(a.nextDate))
+    || (typeof exportedSessions === "function" && exportedSessions().some(s => s.sportId === q.sportId && inside(s.day)
+      && s.athletes.some(a => ids.has(a.id))));
+}
 const stakesLine = (q, cls = "stakes", tag = "p") => q.stakes && nxt(q) && q.israelStatus !== "earned" ? `<${tag} class="${cls}"><b>מה זה אומר:</b> ${esc(q.stakes)}</${tag}>` : "";
 
 function quotaSection(id){
@@ -1208,19 +1222,26 @@ function loadFailure(kind){
 let publicSnapshot = null;
 async function loadPublic(){
   const quotas = loadQuotas();   // in parallel; never delays or fails the data.json render
+  const load = (async () => {
+    const r = await fetch("data.json", {cache: "no-cache"});
+    if (r.status === 401 || r.status === 403) throw new Error("access");
+    if (!r.ok) throw new Error(String(r.status));
+    let d;
+    try { d = await r.json(); } catch { throw new Error("access"); }
+    if (!isExport(d)) throw new Error("access");
+    return d;
+  })();
   try {
-    publicSnapshot = await withDeadline((async () => {
-      const r = await fetch("data.json", {cache: "no-cache"});
-      if (r.status === 401 || r.status === 403) throw new Error("access");
-      if (!r.ok) throw new Error(String(r.status));
-      let d;
-      try { d = await r.json(); } catch { throw new Error("access"); }
-      if (!isExport(d)) throw new Error("access");
-      return d;
-    })());
+    publicSnapshot = await withDeadline(load);
     if (!S.live) { applySnapshot(publicSnapshot); navigate(); }
   } catch (e) {
     if (!S.loaded) { S.failed = ["access", "timeout"].includes(e?.message) ? e.message : "error"; route(); }
+    // The deadline only stops the waiting: an answer that still arrives replaces the timeout alert (Gil on #304).
+    if (e?.message === "timeout") load.then(d => {
+      if (S.loaded || S.live) return;
+      publicSnapshot = d; S.failed = false;
+      applySnapshot(d); navigate();
+    }, () => {});
   }
   await quotas;
   applyQuotas();

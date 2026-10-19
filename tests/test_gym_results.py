@@ -126,27 +126,44 @@ class GymResultsTest(unittest.TestCase):
         self.assertEqual(subprocess.run([sys.executable, script, "plan", "/no/such/dir"], capture_output=True).returncode, 1)
 
 
-def cid_pdf(cmaps, content):
-    """A minimal PDF with ToUnicode CMaps and one content stream, as FIG's results books are built."""
-    streams = [b"/CIDInit /ProcSet findresource begin begincmap\n" + c + b"\nendcmap" for c in cmaps] + [content]
-    return b"%PDF-1.7\n" + b"".join(b"1 0 obj <<>> stream\n" + zlib.compress(s) + b"endstream\n" for s in streams)
+def stream(data, extra=b""):
+    return b"<< /Filter /FlateDecode" + extra + b" >>\nstream\n" + zlib.compress(data) + b"\nendstream"
+
+
+def cmap(body):
+    return stream(b"/CIDInit /ProcSet findresource begin begincmap\n" + body + b"\nendcmap")
+
+
+def pdf(objs):
+    return b"%PDF-1.7\n" + b"".join(b"%d 0 obj\n%s\nendobj\n" % (n, body) for n, body in objs.items())
 
 
 class PdfCidTest(unittest.TestCase):
     # Glyph = character - 29, as in fidb_23893; "]" (0x5D) is the code for "z".
-    CMAP = b"1 beginbfrange\n<0003><0003><0020>\nendbfrange\n1 beginbfrange\n<0024><005d><0041>\nendbfrange"
+    PLUS29 = b"1 beginbfrange\n<0003><0003><0020>\nendbfrange\n1 beginbfrange\n<0024><005d><0041>\nendbfrange"
+    OTHER = b"1 beginbfchar\n<0024><0058>\nendbfchar"   # code 0x24 is "A" in PLUS29 and "X" here
+    enc = staticmethod(lambda s: b"".join(b"\x00" + bytes([ord(ch) - 29]) for ch in s))
 
-    def test_two_byte_strings_through_tounicode(self):
-        enc = lambda s: b"".join(b"\x00" + bytes([ord(ch) - 29]) for ch in s)
-        z = enc("HRIBAR Anze")   # holds a raw "]" byte: the TJ array must not end there
+    def test_each_string_through_its_own_font(self):
+        z = self.enc("HRIBAR Anze")   # holds a raw "]" byte: the TJ array must not end there
         self.assertIn(b"]", z)
-        content = (b"BT [(" + enc("SHAMAY") + b")-300(" + enc("Roni") + b")] TJ T* [(" + z + b")] TJ ET "
-                   b"BT (\\000\\053\\000\\053) Tj ET")   # octal escapes: two "H"
-        self.assertEqual(gr.pdf_text(cid_pdf([self.CMAP], content)), "SHAMAY Roni\nHRIBAR Anze\nHH")
+        content = (b"BT /F1 9 Tf [(" + self.enc("SHAMAY") + b")-300(" + self.enc("Roni") + b")] TJ T* [(" + z + b")] TJ ET "
+                   b"BT /F1 9 Tf (\\000\\053\\000\\053) Tj ET "   # octal escapes: two "H"
+                   b"BT /F2 9 Tf <0024> Tj ET /X1 Do")                 # hex string; a form with no resources of its own
+        doc = pdf({1: b"<< /Type /Catalog /Pages 2 0 R >>", 2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+                   3: b"<< /Type /Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >>"
+                      b" /XObject << /X1 9 0 R >> >> >>",
+                   4: stream(content), 5: b"<< /Type /Font /Subtype /Type0 /ToUnicode 7 0 R >>",
+                   6: b"<< /Type /Font /Subtype /Type0 /ToUnicode 8 0 R >>", 7: cmap(self.PLUS29), 8: cmap(self.OTHER),
+                   9: stream(b"BT /F2 9 Tf (\x00\x24) Tj ET", b" /Type /XObject /Subtype /Form")})
+        self.assertEqual(gr.pdf_text(doc), "SHAMAY Roni\nHRIBAR Anze\nHH\nX\nX", "0x24 is A in F1, X in F2")
 
-    def test_disagreeing_cmaps_read_as_nothing(self):
-        other = b"1 beginbfchar\n<0024><0058>\nendbfchar"   # code 0x24 is "A" in one font, "X" in the other
-        self.assertEqual(gr.pdf_text(cid_pdf([self.CMAP, other], b"BT [(\x00\x24)] TJ ET")), "")
+    def test_without_a_page_tree(self):
+        flat = lambda *bodies: pdf({n + 1: b for n, b in enumerate(bodies)})
+        self.assertEqual(gr.pdf_text(flat(cmap(self.PLUS29), stream(b"BT [(" + self.enc("Roni") + b")] TJ ET"))), "Roni",
+                         "one map from every CMap in the file")
+        self.assertEqual(gr.pdf_text(flat(cmap(self.PLUS29), cmap(self.OTHER), stream(b"BT [(\x00\x24)] TJ ET"))), "",
+                         "maps that disagree: nothing rather than a guess")
 
 
 BOOK = os.path.join(FIX, "fig-paris-wcc-2026-results-book.txt")   # pdf_text() of fidb_23893, FIG WCC Paris 2026
@@ -244,6 +261,84 @@ class GymPlanTest(unittest.TestCase):
             raise OSError("timed out")
         out = gr.plan({"athletes": [], "competitions": [PARIS], "sessions": []}, down, date(2026, 9, 29))
         self.assertEqual((out["updates"], out["warnings"]), ([], ["תוצאות התעמלות: גביע העולם פריז 2026 (2026-09-27): FIG לא זמין (OSError); לבדוק ידנית"]))
+
+
+# Nanjing 2026 (FIG 18189) is timed by Longines like Paris and Rotterdam, so its book should follow the same template.
+# No Longines trampoline book is public yet: this text copies the Paris layout with trampoline tables. Names other than
+# the Israelis are placeholders. Replace it with the real book's text after 8.11.
+NANJING_PAGE = "https://www.gymnastics.sport/site/events/detail.php?id=18189"
+NANJING = {"id": "tra-worlds-2026", "sportId": "trampoline", "name": "אליפות העולם בטרמפולינה 2026",
+           "start": "2026-11-04", "end": "2026-11-08", "source": NANJING_PAGE}
+TRA_BOOK = """Official Results Provider
+THU 5 NOV 2026
+2026 Trampoline Gymnastics World Championships
+Nanjing (CHN), 4-8 November 2026
+Men's Trampoline Qualification
+Results
+Rank NameBib
+NOC
+Code
+Total
+1 101 ATHLETE One CHN 61.230 Q
+2 102 ATHLETE Two FRA 60.110 Q
+9 109 ATHLETE Nine GBR 58.900 R1
+14 140 NANADZE Benyamin ISR 57.410
+Men's Synchronised Trampoline Qualification
+Results
+3 70 NANADZE Benyamin ISR 49.200 Q
+Men's Trampoline Qualification 1
+Results
+5 140 NANADZE Benyamin ISR 29.100
+Women's Trampoline Qualification
+Results
+1 201 ATHLETE Three CHN 55.300 Q
+6 250 TESTER Noa ISR 53.100 Q
+SAT 7 NOV 2026
+Women's Trampoline Final
+Results
+1 250 TESTER Noa ISR 56.000
+Men's Trampoline Final
+Results
+5 140 NANADZE Benyamin ISR 58.700"""
+
+
+class TrampolineTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        with open(os.path.join(HERE, "fixtures", "data.json"), encoding="utf-8") as f:
+            cls.athletes = json.load(f)["athletes"] + [{"id": "noa-tester", "name": "נועה טסטר", "name_en": "Noa Tester",
+                                                         "sportId": "trampoline", "notes": "", "history": []}]
+
+    def run_plan(self):
+        page = b'<a href="../../asset.php?id=fidb_90001">Results Book</a>'
+        get = lambda url: page if url == NANJING_PAGE else b"%PDF"
+        data = {"athletes": copy.deepcopy(self.athletes), "competitions": [NANJING], "sessions": []}
+        with mock.patch.object(gr, "pdf_text", return_value=TRA_BOOK):
+            return gr.plan(data, get, date(2026, 11, 10))
+
+    def test_parse_individual_tables_only(self):
+        rows = [(r["name"], r["apparatus"], r["phase"], r["rank"], r["qualified"], r["reserve"])
+                for r in gr.parse_results_book(TRA_BOOK) if r["noc"] == "ISR"]
+        self.assertEqual(rows, [("NANADZE Benyamin", "trampoline", "qual", 14, False, None),
+                                ("TESTER Noa", "trampoline", "qual", 6, True, None),
+                                ("TESTER Noa", "trampoline", "final", 1, None, None),
+                                ("NANADZE Benyamin", "trampoline", "final", 5, None, None)],
+                         "synchronised and the single-routine Q1 table stay closed")
+
+    def test_nanadze_plan_and_text_forms(self):
+        import athlete_patch
+        out = self.run_plan()
+        self.assertEqual(out["warnings"], [])
+        texts = [(u["athleteId"], u["result"]["at"], u["result"]["text"]) for u in out["updates"]]
+        self.assertEqual(texts, [
+            ("ben-nanadze", "2026-11-05", "מקום 14 במוקדמות אליפות העולם בטרמפולינה 2026 (5 בנוב׳ 2026), לא עלה לגמר"),
+            ("noa-tester", "2026-11-05", "מקום 6 במוקדמות אליפות העולם בטרמפולינה 2026 (5 בנוב׳ 2026), עלתה לגמר"),
+            ("noa-tester", "2026-11-07", "זהב בגמר אליפות העולם בטרמפולינה 2026 (7 בנוב׳ 2026)"),
+            ("ben-nanadze", "2026-11-07", "מקום 5 בגמר אליפות העולם בטרמפולינה 2026 (7 בנוב׳ 2026)")])
+        for u in out["updates"]:   # what the job sends through athlete_patch.py
+            self.assertEqual(athlete_patch.result_entry(u["result"])["kind"], "result")
+        self.assertEqual([p["doc"]["patch"]["notes"] for p in out["proposals"]], ["זהב באליפות העולם בטרמפולינה 2026"])
+        self.assertEqual(gr.session_text(14, "trampoline", False, gender="m"), "מקום 14, לא עלה לגמר")
 
 
 if __name__ == "__main__":

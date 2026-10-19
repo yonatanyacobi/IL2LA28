@@ -64,7 +64,11 @@ function digestText(t = today()){
       // An editor's change about an athlete whose result is already logged above would repeat it.
       // The near-live status "…מתקיימת עכשיו" from before the event is stale under its results (Gil's rehearsal). Only
       // that phrase: any other text, a result included, stays. Dropped notes stay used, so they don't resurface below.
-      const about = fromJob.filter(x => !loggedBy.some(a => a.id === x.athleteId) && !/מתקיימ(ת|ים|ות) עכשיו/.test(str(x.text)));
+      // A line without athleteId (hand-written, #301's per-athlete lines) repeats a result when it names that athlete and
+      // is dated the result's day or the morning after, when the job writes it.
+      const repeats = x => loggedBy.some(a => x.athleteId ? x.athleteId === a.id
+        : waText(x.text).includes(waText(a.name)) && resultsOf(a).some(h => day(x) === h.at || day(x) === addDays(h.at, 1)));
+      const about = fromJob.filter(x => !repeats(x) && !/מתקיימ(ת|ים|ות) עכשיו/.test(str(x.text)));
       const lines = [...logged, ...about.map(x => waCut(`  – ${waText(x.text)}`))];
       return [waCut(`• ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))})`),
         ...(who.length ? waList("  ישראלים: ", names(who)) : []),
@@ -95,7 +99,7 @@ function digestText(t = today()){
   const quotas = [...byEvent.keys()].sort().map(key => {
     const list = byEvent.get(key).sort((a, b) => heCmp(a.event, b.event)), q = list[0], e = q.nextQuotaEvent, last = quotaEventEnd(q);
     const who = S.athletes.filter(a => a.sportId === q.sportId && isDate(a.nextDate) && e.start <= a.nextDate && a.nextDate <= last);
-    const stakes = commonStakes(list);
+    const stakes = israelIn(q) ? commonStakes(list) : "";
     return [
       waCut(`• ${fmtShort(e.start)} · ${waText(sportName(q.sportId))}${list.length === 1 ? `, ${waText(q.event)}` : ""}: ${waText(e.name)}`),
       ...(list.length > 1 ? waList("  מקצים: ", list.map(x => waText(x.event))) : []),
