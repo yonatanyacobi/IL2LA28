@@ -263,7 +263,7 @@ test("empty states (S5): p.muted lines, each table row's way on, no \"במאגר
   const b = await boot({data: far, now: "2026-10-19T09:00:00Z"});
   const a0 = far.athletes[0], page = b.view(`a-${a0.id}`);
   assert.ok(page.includes(`<p class="muted">אין תחרויות קרובות ידועות בענף. <a href="#calendar-${a0.sportId}">לוח התחרויות</a></p>`), "athlete row");
-  assert.ok(page.includes('<p class="muted">עוד אין אירועים מתועדים.</p>'), "athlete history: no way on");
+  assert.ok(page.includes('<p class="muted">עוד אין רשומות בהיסטוריה.</p>'), "athlete history: no way on");
   // Israelis only today: the week says "after today" instead of "no competitions" (S4), linking the calendar when
   // no later day is known.
   far.athletes[0].nextDate = "2026-10-19";
@@ -954,7 +954,7 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   noIsraelis.athletes = noIsraelis.athletes.filter(a => a.sportId !== "shooting" || a.id === "sergey-richter");
   const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z", {data: noIsraelis})).out;
   assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת ברשימה בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
-  assert.ok(doha.includes('id="evStakesH"') && doha.includes("ההופעות של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
+  assert.ok(doha.includes('id="evStakesH"') && doha.includes("עוד אין הופעות ידועות של ישראלים בתחרות הזו."), "Doha stakes, no sessions yet");
   const dohaItems = doha.split('id="evStakesH"')[1].split("</section>")[0].split("<li>").slice(1);
   for (const li of dohaItems) assert.ok(li.includes("q-in-contention") || !li.includes("מה זה אומר"), "stakes only for in-contention items");
   const withSess = {...JSON.parse(JSON.stringify(FIXTURE)), sessions: [{competitionId: DOHA, date: "2026-11-03", startUtc: "2026-11-03T06:30:00Z",
@@ -1419,7 +1419,7 @@ test("#admin readiness: verified X/N, starts without a session, M3 per result ni
     && nights[1].includes("1 עדיין בלי תוצאה, 1 מהן יותר מ־24 שעות") && nights[1].includes('<span class="pill bad">מעל 24 שעות</span>'), "19.10: > 24 h");
 
   // §3: the last 2 runs, each with published and errors, linking the runs log.
-  const runRows = rowsOf(panel.split('id="readyRuns"')[1]);
+  const runRows = rowsOf(panel.split('id="readyRuns"')[1]).slice(1);   // [0] is the 26 h health row (its own test)
   assert.ok(runRows[0].includes("ריצה 21 באוק׳ 2026: פורסמה") && runRows[0].includes("אין שגיאות") && num(runRows[0]) === "0");
   assert.ok(runRows[1].includes("לא פורסמה") && runRows[1].includes("שגיאה אחת") && num(runRows[1]) === "1");
   assert.ok(runRows.every(r => r.includes('href="#admin-runs"')) && b.view("admin-runs").includes("<h1 tabindex=\"-1\">יומן הריצות היומיות</h1>"));
@@ -1430,6 +1430,29 @@ test("#admin readiness: verified X/N, starts without a session, M3 per result ni
   none.run(runs([]));
   none.view("admin");
   assert.ok(none.view("admin").split('id="readyRuns"')[1].includes("אין ריצות יומיות מתועדות"));
+});
+
+// Sprint 8 item 11: no run published in 26 h → a red row with the last run and "Run now", counted in readiness.
+test("#admin daily-task health: fresh, stale and empty run logs", async () => {
+  const at = async (docs) => {
+    const b = await boot({quotas: QUOTAS, now: "2026-10-21T08:00:00Z"});
+    b.run(`S.isAdmin = true; S.live = true; S.db = {collection: () => ({orderBy: () => ({limit: () => ({
+      onSnapshot: ok => ok({docs: ${JSON.stringify(docs)}.map(d => ({id: d.id, data: () => d}))})})})})}`);
+    b.view("admin");
+    const panel = b.view("admin").split('id="launch"')[1].split("</section>")[0];
+    return {row: panel.split('id="readyRuns"')[1].split("<li>")[1], panel};
+  };
+  const run = (id, started, published, extra = {}) => ({id, status: published ? "done" : "failed", started, ended: started.replace("04:13", "04:40"), published, ...extra});
+  const fresh = await at([run("2026-10-21", "2026-10-21T04:13:00Z", true), run("2026-10-20", "2026-10-20T04:13:00Z", true)]);
+  assert.ok(fresh.row.includes("פרסום אחרון של הריצה היומית") && fresh.row.includes("3 ש׳") && !fresh.row.includes("adm-bad") && !fresh.row.includes("Run now"), "fresh: no red row");
+  // Stale: today's run failed, the last publish was 27 h ago.
+  const stale = await at([run("2026-10-21", "2026-10-21T04:13:00Z", false), run("2026-10-20", "2026-10-20T04:13:00Z", true)]);
+  assert.ok(stale.row.includes("לא פורסמה ריצה יומית ב־26 השעות האחרונות") && stale.row.includes("adm-bad") && stale.row.includes("27 ש׳")
+    && stale.row.includes("הריצה האחרונה:") && stale.row.includes("נכשלה") && stale.row.includes("(Run now)") && stale.row.includes('<span class="pill bad">'), "stale: red, last run, the fix");
+  const empty = await at([]);
+  assert.ok(empty.row.includes("לא פורסמה ריצה יומית") && empty.row.includes("אין ריצות מתועדות") && empty.row.includes("(Run now)"), "empty: red row");
+  const opens = p => Number((p.match(/(\d+) נושאים פתוחים/) || [])[1] || (p.includes("נושא פתוח אחד") ? 1 : 0));
+  assert.strictEqual(opens(stale.panel), opens(fresh.panel) + 2, "readiness counts the red row (plus the failed run's own row)");
 });
 
 test("#admin result night: picks quota events ending today/yesterday, links the runbook, keeps ticks", async () => {
@@ -1719,15 +1742,24 @@ test("#digest: this week's results group ended competitions with their changes",
   assert.ok(judo.includes("גרנד סלאם אבו דאבי (ג׳ודו)\n") && judo.includes("  ישראלים: ") && judo.includes("התוצאות עוד לא עודכנו באתר."), judo);
 });
 
-test("#digest: athletes in a competition under way are listed under it", async () => {
-  // 20 Oct: day 4 of the gymnastics Worlds; the gymnasts' nextDate (18–19 Oct) has passed.
-  const {text} = await digestOf({now: "2026-10-20T09:00:00Z"});
-  const competing = digestSection(text, "ישראלים מתחרים השבוע");
-  const bullets = competing.split("\n• ");
-  const gym = bullets.find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026"));
-  assert.ok(gym && gym.includes("עד 25 באוק׳") && gym.includes("(התעמלות מכשירים), בעיצומה"), competing);
-  for (const n of ["ארטיום דולגופיאט", "ליהיא רז", "יהלי שושני"]) assert.strictEqual(count(competing, n), 1, n);
-  assert.ok(competing.includes("שחר שגיב"), "upcoming athletes still listed");
+test("#digest: a competition under way lists only athletes still to compete (nextDate ≥ today)", async () => {
+  const data = JSON.parse(JSON.stringify(FIXTURE));
+  const g = id => data.athletes.find(a => a.id === id);
+  g("artem-dolgopyat").nextDate = "2026-10-24";   // floor final
+  g("yali-shoshani").nextDate = "2026-10-25";     // a day-2 final
+  g("lihie-raz").nextDate = "2026-10-19";         // done after qualification
+  const gymOf = async now => digestSection((await digestOf({data, now})).text, "ישראלים מתחרים השבוע")
+    .split("\n• ").find(b => b.includes("אליפות העולם בהתעמלות מכשירים 2026")) || "";
+  // 20 Oct, day 4 of the Worlds: Raz is done; Dolgopyat and Shoshani still compete.
+  const d20 = await gymOf("2026-10-20T09:00:00Z");
+  assert.ok(d20.includes("עד 25 באוק׳") && d20.includes("(התעמלות מכשירים), בעיצומה"), d20);
+  assert.ok(d20.includes("ארטיום דולגופיאט") && d20.includes("יהלי שושני") && !d20.includes("ליהיא רז"), d20);
+  // 25 Oct, last day: only Shoshani; Dolgopyat's final was yesterday.
+  const d25 = await gymOf("2026-10-25T09:00:00Z");
+  assert.ok(d25.includes("יהלי שושני") && !d25.includes("ארטיום דולגופיאט") && d25.includes("יום אחרון"), d25);
+  // Nobody left: no Rotterdam line at all.
+  g("yali-shoshani").nextDate = "2026-10-24";
+  assert.strictEqual(await gymOf("2026-10-25T09:00:00Z"), "", "no one still to compete: no line");
 });
 
 test("#digest: no relative time for running competitions (one-day: date only; last day: יום אחרון)", async () => {
@@ -2390,7 +2422,7 @@ test("#day: today's states, a result on another day, #day alone, impossible date
   assert.ok(view("home").includes('<h2 id="todayH"><a class="hlink" href="#today">היום, '), "home h2 → #today, a.hlink");
   const quiet = run(`(() => { for (let d = "2026-11-15"; d < "2027-06-01"; d = addDays(d, 1)) if (!daySessions(d).length) return d; })()`);
   const empty = view("day-" + quiet);
-  assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
+  assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
 });
 
 // #day on data.json.sessions (docs/design/sessions-contract.md); the fallback stays for empty sessions.
@@ -2774,6 +2806,29 @@ test("S4 week: normal week, \"הבא בתור\" day left out, followed names, qu
   assert.deepStrictEqual(weekDays(weekOf(h22)), ["2026-10-25", "2026-10-29"]);
 });
 
+// Sprint 8: "חדש" since the viewer's last visit on #c- and the week panel, as on athlete cards.
+test("since last visit: #c- rows and week-panel days mark athletes updated after la28.seen", async () => {
+  const data = clone();
+  data.athletes.find(a => a.id === "raz-hershko").updatedAt = "2026-10-27T09:00:00Z";
+  const seen = {"la28.seen": JSON.stringify("2026-10-26T00:00:00Z")};
+  const stale = data.athletes.filter(a => a.id !== "raz-hershko" && String(a.updatedAt || "") > "2026-10-26T00:00:00Z");
+  stale.forEach(a => { a.updatedAt = "2026-10-20T00:00:00Z"; });   // precondition: only Raz changed since the visit
+  const b = await boot({data, storage: seen, now: "2026-10-28T08:00:00Z"});
+  const ev = b.view("c-judo-gs-abu-dhabi-2026").split('id="evAthH"')[1].split("</section>")[0];
+  const rowOf = (html, id) => html.split("<li>").find(r => r.includes(`href="#a-${id}"`)) || "";
+  assert.ok(rowOf(ev, "raz-hershko").includes('<span class="new">חדש</span>'), "#c-: Raz marked");
+  assert.ok(!rowOf(ev, "gefen-primo").includes('class="new"'), "#c-: an unchanged athlete isn't");
+  const week = b.view("home").split('aria-labelledby="weekH"')[1].split("</section>")[0];
+  const day = d => week.split("<li>").find(r => r.includes(`href="#day-${d}"`)) || "";
+  assert.ok(day("2026-10-31").includes('<span class="new">חדש</span>') && !day("2026-10-30").includes('class="new"'), "week: only Raz's day");
+  // A first visit has no baseline, so nothing is marked; storage that throws behaves the same.
+  const first = await boot({data, now: "2026-10-28T08:00:00Z"});
+  assert.ok(!first.view("c-judo-gs-abu-dhabi-2026").includes('class="new"') && !first.view("home").split('aria-labelledby="weekH"')[1].includes('class="new"'));
+  const blocked = await boot({data, now: "2026-10-28T08:00:00Z"});
+  blocked.ctx.localStorage.getItem = () => { throw new Error("SecurityError"); };
+  assert.strictEqual(blocked.run(`store.get("la28.seen", null)`), null, "store.get survives blocked storage");
+});
+
 test("S4 week: today only, empty week (hidden or calendar line), result night and its end", async () => {
   const on = async now => (await boot({quotas: SITE_QUOTAS, now})).view("home");
   const todayOnly = weekOf(await on("2026-11-17T08:00:00Z"));
@@ -3093,6 +3148,15 @@ test("fencing standings: the team event ranks the national team, never its fence
   const b = await boot({data, quotas: FENCING_Q(), now: "2027-05-10T08:00:00Z"});
   assert.ok(!b.view(`a-${fencer.id}`).includes("מול קו המכסה"), "no team standing on a fencer's page");
   assert.ok(b.run(`teamRankOf({num: 0, asOf: "2027-05-01", source: "${src}"})`) === null && b.run(`teamRankOf({num: 2, asOf: "x", source: "${src}"})`) === null, "invalid teamRank dropped");
+});
+
+// tests/livecheck.js: Gil's v55 live check §3/§4 (docs/qa/live-check-v55.md) on the fixture, so a regression it
+// would catch on the live site fails the PR instead.
+test("live check v55 §3/§4 on the fixture: every check passes", async () => {
+  const {livecheck} = require("./livecheck.js");
+  const results = await livecheck({data: FIXTURE, quotas: JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"))});
+  assert.ok(results.length >= 36, `only ${results.length} checks`);
+  assert.deepStrictEqual(results.filter(([, ok]) => !ok).map(([id, , note]) => id + (note ? ` (${note})` : "")), []);
 });
 
 // tests/preview_at.js reuses boot() to render real data on a chosen date.

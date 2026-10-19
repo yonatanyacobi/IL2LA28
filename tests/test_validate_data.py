@@ -317,5 +317,42 @@ class CrossRecordTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0)
         self.assertIn("WARN: athletes[88](shachar-sagiv).nextDate:", r.stdout)
 
+
+class CopyRulesTest(unittest.TestCase):
+    """copy_warnings(): copy-rules §1/§5 slips in Hebrew strings (LA28, dashed scores, ASCII ' and ")."""
+
+    def warn(self, text, key="notes"):
+        return validate_data.copy_warnings({"athletes": [{"id": "x", key: text}]})
+
+    def test_fixture_slips(self):
+        """The 19.10 fixture predates the DB fixes of 19.10, so it still carries them."""
+        with open(FIXTURE, encoding="utf-8") as f:
+            w = validate_data.copy_warnings(json.load(f))
+        hits = sorted({x.split(":")[0] for x in w})
+        self.assertIn("athletes[44](israel-lacrosse-men-sixes).notes", hits)
+        self.assertIn("athletes[67](nimrod-krivitsky).notes", hits)
+        self.assertIn("competitions[28](issf-wch-doha-2026).notes", hits)
+        self.assertIn("sports[29](trampoline).window.summary", hits)   # 'מאי 2027' in ASCII quotes
+        self.assertEqual(sum("LA28" in x for x in w), 10)
+
+    def test_flags(self):
+        for text in ("בדרך ל-LA28", "בדרך ל־LA 28", "9-8 על איטליה", "ניצחון 78–65", "(0-2 לברקאי)", "90-54",
+                     "ארה\"ב", "צ'לנג'", "\"מכסה הושגה\""):
+            self.assertTrue(self.warn(text + " עברית"), text)
+
+    def test_allows(self):
+        for text in ("ניצחון 78:65 על פולין", "סאלו, 10–18.11.2026", "7–12.9", "14:30–16:00", "14:30 – 16:00",
+                     "17–25 באוקטובר", "2026-10-19", "ב־2028", "ארה״ב", "„מכסה הושגה”", "2:06:00 / 2:23:20",
+                     "מרוץ 4x100", "Hlavní 9-8"):
+            self.assertEqual(self.warn(text if "Hlav" in text else text + " עברית"), [], text)
+        self.assertEqual(self.warn("ל-LA28 עברית", key="source"), [], "sources are URLs, not copy")
+
+    def test_cli_prints_them_and_stays_ok(self):
+        r = subprocess.run([sys.executable, os.path.join(HERE, "..", "job", "validate_data.py"), FIXTURE],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("WARN: athletes[67](nimrod-krivitsky).notes: a dash between numbers", r.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

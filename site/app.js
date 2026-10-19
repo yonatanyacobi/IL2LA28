@@ -134,6 +134,7 @@ const quotasOf = sid => (IDX.quotasBySport().get(sid) || []).slice();
 const upcoming = () => { const t = today(); return S.comps.filter(c => (c.end || c.start) >= t).sort((a, b) => a.start.localeCompare(b.start)); };
 const upcomingIn = sid => upcoming().filter(c => c.sportId === sid);
 const isNew = a => !!S.seenBefore && str(a.updatedAt) > S.seenBefore;
+const NEW_MARK = ` <span class="new">חדש</span>`;   // changed since this viewer's last visit (cards, #c-, the week)
 // Per-viewer follows: athletes in S.follows, sports in S.followSports (following.js; absent before it loads).
 const followsSport = id => !!S.followSports?.has(id);
 // Compared as instants: the job and the page write ISO strings with different precision.
@@ -321,7 +322,7 @@ const STAR = `<span class="star-on" aria-hidden="true">★</span><span class="sr
 function athleteCard(a, status = ""){
   const s = stageOf(a), fav = S.follows.has(a.id);
   return `<a class="card" href="#a-${esc(a.id)}">
-    <span class="nm">${fav ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : ""}${esc(a.name)}${isNew(a) ? ` <span class="new">חדש</span>` : ""}</span>
+    <span class="nm">${fav ? `<span class="star-on" aria-label="במעקב שלך">★</span> ` : ""}${esc(a.name)}${isNew(a) ? NEW_MARK : ""}</span>
     ${a.event ? `<span class="ev">${esc(a.event)}</span>` : ""}
     <span><span class="pill st${s}">${STAGES[s]}</span> ${trustChip(a, "card")}</span>
     ${a.rank ? `<span class="ln"><span>דירוג או הישג: </span>${esc(a.rank)}</span>` : ""}
@@ -332,7 +333,7 @@ function athleteCard(a, status = ""){
 
 // components.md §6: a row for side columns or more than 4 athletes, in <ul class="rows">; the status is the last cell.
 function athleteRow(a, status = ""){
-  return `<li><span class="d"></span><span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${
+  return `<li><span class="d"></span><span class="t">${S.follows.has(a.id) ? STAR + " " : ""}<a href="#a-${esc(a.id)}">${esc(a.name)}</a>${isNew(a) ? NEW_MARK : ""}${
     a.event ? `<small><bdi>${esc(a.event)}</bdi></small>` : ""}</span><span>${status}</span></li>`;
 }
 
@@ -643,7 +644,7 @@ function viewAthlete(id){
     <h2>היסטוריה</h2>
     ${hist.length ? `<ol class="timeline">${hist.map(h => `<li class="k-${esc(h.kind)}"><span class="d">${fmt(h.at)}</span>
       <span>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}${(k => rowMark(k, k))(`hist|${id}|${h.at}|${h.kind}|${h.text}`)}</span></li>`).join("")}</ol>`
-      : emptyLine("עוד אין אירועים מתועדים.")}
+      : emptyLine("עוד אין רשומות בהיסטוריה.")}
   </section>
   <section class="stack">
     <h2>תחרויות קרובות בענף</h2>
@@ -1222,7 +1223,7 @@ const isExport = d => Array.isArray(d?.athletes) && typeof d.generatedAt === "st
 function loadFailure(kind){
   const [h, p] = kind === "access" ? ["האתר לא זמין עבורך כרגע",
       `ייתכן שהאתר עוד לא נפתח לציבור, או שהקישור דורש התחברות לחשבון. אם קיבלתם את הקישור מאיתנו, כתבו לנו: <span dir="ltr">${esc(CONTACT_EMAIL)}</span>`]
-    : kind === "timeout" ? ["הטעינה נמשכת יותר מדי", "ייתכן שהחיבור איטי או שהשרת לא עונה. אפשר לנסות שוב בעוד רגע."]
+    : kind === "timeout" ? ["הטעינה נמשכת יותר מדי", "הנתונים לא הגיעו בזמן. אפשר לנסות שוב בעוד רגע."]
     : ["לא הצלחנו לטעון את הנתונים", "ייתכן שמדובר בתקלה זמנית. אפשר לנסות שוב בעוד רגע."];
   return `<h1 tabindex="-1">${h}</h1><p>${p}</p>`;
 }

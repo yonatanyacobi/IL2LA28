@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T14:25:51Z",
+ "updatedAt": "2026-10-18T16:00:41Z",
  "items": [
   {
    "sportId": "judo",
@@ -355,22 +355,22 @@
    "maxPerNOC": 1,
    "allocation": "3 הנבחרות המובילות בגמר הקבוצתי של אליפות העולם 2026, ועוד 9 נבחרות במוקדמות אליפות העולם 2027 (5 מתעמלים לנבחרת).",
    "israelStatus": "in-contention",
-   "israelNote": "ישראל התחרתה במוקדמות ברוטרדם ב־18 באוק׳ 2026; העלייה לגמר הקבוצתי (8 הראשונות, 20 באוק׳ 2026) טרם אומתה בתוצאות רשמיות של FIG",
+   "israelNote": "נבחרת הגברים סיימה במקום 20 במוקדמות ברוטרדם (18 באוק׳ 2026) ולא עלתה לגמר הקבוצתי; ב־2027 יחולקו עוד 9 מכסות לנבחרות",
    "nextQuotaEvent": {
-    "name": "אליפות העולם רוטרדם – גמר קבוצתי גברים",
-    "start": "2026-10-20",
-    "end": "2026-10-20"
+    "name": "אליפות העולם 2027",
+    "start": "2027-09-28",
+    "end": "2027-10-06"
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
-   "stakes": "גמר קבוצתי ב־20 באוק׳ 2026: רק 3 הנבחרות הראשונות זוכות במכסת נבחרת (5 מתעמלים) לאולימפיאדת לוס אנג׳לס 2028",
-   "checkedAt": "2026-10-18"
+   "stakes": "באליפות העולם 2027 יחולקו עוד 9 מכסות לנבחרות ו־8 מכסות אישיות בקרב־רב (אחת למדינה). מסלולים נוספים: מכשירים וגביעי העולם 2028",
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "artistic-gymnastics",
-   "event": "אישי גברים (קרב-רב ומכשירים)",
+   "event": "אישי גברים (קרב־רב ומכשירים)",
    "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "למדינות בלי נבחרת: 3 לנבחרות הבאות במוקדמות 2027, 8 בקרב-רב ו־6 במכשירים באליפות העולם 2027, 12 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארח ואוניברסלי.",
+   "allocation": "למדינות בלי נבחרת: 3 לנבחרות הבאות במוקדמות 2027, 8 בקרב־רב ו־6 במכשירים באליפות העולם 2027, 12 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארח ואוניברסלי.",
    "israelStatus": "in-contention",
    "israelNote": "ארטיום דולגופיאט (זהב בקרקע, אירופה 2026); זמין רק אם הנבחרת לא תעפיל",
    "nextQuotaEvent": {
@@ -378,14 +378,14 @@
     "start": "2027-09-28"
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "artistic-gymnastics",
-   "event": "אישי נשים (קרב-רב ומכשירים)",
+   "event": "אישי נשים (קרב־רב ומכשירים)",
    "totalQuotas": 36,
    "maxPerNOC": 3,
-   "allocation": "3 לנבחרות הבאות במוקדמות 2027, 14 בקרב-רב ו־4 במכשירים באליפות העולם 2027 (אחת לכל מדינה בקרב-רב), 8 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארחת ואוניברסלית.",
+   "allocation": "3 לנבחרות הבאות במוקדמות 2027, 14 בקרב־רב ו־4 במכשירים באליפות העולם 2027 (אחת לכל מדינה בקרב־רב), 8 בגביעי העולם במכשירים 2028, 5 ביבשתיות 2028, ועוד מארחת ואוניברסלית.",
    "israelStatus": "unknown",
    "israelNote": "ליהיא רז, רוני שמאי ויהלי שושני; אין נבחרת נשים ישראלית ברוטרדם",
    "nextQuotaEvent": {
@@ -393,11 +393,11 @@
     "start": "2027-09-28"
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "rhythmic-gymnastics",
-   "event": "אישי – קרב-רב",
+   "event": "אישי – קרב־רב",
    "totalQuotas": 24,
    "maxPerNOC": 2,
    "allocation": "3 בגמר אליפות העולם 2026, 2 דרך סדרת גביעי העולם 2026–27, 12 באליפות העולם 2027 בבאקו, 5 באליפויות יבשתיות 2028.",
@@ -408,11 +408,11 @@
     "start": "2027-09-15"
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "rhythmic-gymnastics",
-   "event": "קבוצתי – קרב-רב",
+   "event": "קבוצתי – קרב־רב",
    "totalQuotas": 14,
    "maxPerNOC": 1,
    "allocation": "3 באליפות העולם 2026, מובילת סדרת גביעי העולם 2026–27, 4 באליפות העולם 2027 (פתוחה ל־24 הראשונות מ־2026), 5 יבשתיות ומארחת.",
@@ -423,7 +423,7 @@
     "start": "2027-09-15"
    },
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "trampoline",
@@ -551,10 +551,10 @@
    "maxPerNOC": null,
    "allocation": "שיטת ההעפלה של World Athletics לאולימפיאדת לוס אנג׳לס 2028 טרם פורסמה.",
    "israelStatus": "unknown",
-   "israelNote": "סלאמוויט באיולין-טפרי מקום 11 ומאור טיורי מקום 12 באליפות אירופה 2026",
+   "israelNote": "סלאמוויט באיולין טפרי מקום 11 ומאור טיורי מקום 12 באליפות אירופה 2026",
    "nextQuotaEvent": null,
    "source": "https://olympic.ca/how-team-canada-can-qualify-for-la-2028-part-1-sports-a-to-c/",
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "cycling",
@@ -565,11 +565,11 @@
    "israelStatus": "unknown",
    "israelNote": "איינהורן וגפינוביץ השתתפו בפריז; מיקום ישראל בדירוג האומות לא אומת",
    "nextQuotaEvent": {
-    "name": "אליפות העולם המאוחדת באופניים UCI, הוט-סבואה",
+    "name": "אליפות העולם המאוחדת באופניים UCI, הוט־סבואה",
     "start": "2027-08-24"
    },
    "source": "https://cdn.nocnsf.nl/media/fonnjcqq/crd-la28-qualification-system.pdf",
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "cycling",
@@ -595,11 +595,11 @@
    "israelStatus": "unknown",
    "israelNote": "זלצמן השתתף בפריז; מיקום ישראל בדירוג לא אומת",
    "nextQuotaEvent": {
-    "name": "אליפות העולם המאוחדת באופניים UCI, הוט-סבואה",
+    "name": "אליפות העולם המאוחדת באופניים UCI, הוט־סבואה",
     "start": "2027-08-24"
    },
    "source": "https://cdn.nocnsf.nl/media/i1vehl3t/mtb-la28-qualification-system.pdf",
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "triathlon",
@@ -861,15 +861,15 @@
    "event": "גברים",
    "totalQuotas": 12,
    "maxPerNOC": 1,
-   "allocation": "ארה״ב מארחת (בכפוף להחלטת FIBA ב־2027); 7 ישירות במונדיאל 2027 (2 מאירופה); 4 זוכות בטורנירי OQT 2028, שאליהם עולים דרך טורנירי טרום-מוקדמות (אוגוסט 2027) או המונדיאל.",
+   "allocation": "ארה״ב מארחת (בכפוף להחלטת FIBA ב־2027); 7 ישירות במונדיאל 2027 (2 מאירופה); 4 זוכות בטורנירי OQT 2028, שאליהם עולים דרך טורנירי טרום־מוקדמות (אוגוסט 2027) או המונדיאל.",
    "israelStatus": "in-contention",
-   "israelNote": "מקום 6 (אחרון) בבית K, מאזן 2-6, במוקדמות מונדיאל 2027 אחרי חלון אוגוסט 2026",
+   "israelNote": "מקום 6 (אחרון) בבית K, מאזן 2:6, במוקדמות מונדיאל 2027 אחרי חלון אוגוסט 2026",
    "nextQuotaEvent": {
-    "name": "טורנירי טרום-מוקדמות אולימפיים FIBA",
+    "name": "טורנירי טרום־מוקדמות אולימפיים FIBA",
     "start": "2027-08-14"
    },
    "source": "https://cdn.nocnsf.nl/media/kcgkdtvi/bkb-la28-qualification-system.pdf",
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "basketball",
@@ -934,10 +934,10 @@
    "maxPerNOC": 1,
    "allocation": "ארה״ב; 2 מהאמריקות ב־WBC 2026; 1 מאסיה ו־1 מאירופה/אוקיאניה בפרמייר 12 (2027); 1 בטורניר אחרון שאליו עולות 2 הראשונות באליפות אירופה 2027.",
    "israelStatus": "in-contention",
-   "israelNote": "מאזן 2-2 ב-WBC 2026; הדרך עוברת באליפות אירופה 2027 (תאריכים טרם פורסמו)",
+   "israelNote": "מאזן 2:2 ב־WBC 2026; הדרך עוברת באליפות אירופה 2027 (תאריכים טרם פורסמו)",
    "nextQuotaEvent": null,
    "source": "https://www.worldbaseball.com/news/2027-european-championship-groups-revealed-mu6trz2s",
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "water-polo",
