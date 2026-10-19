@@ -34,7 +34,7 @@ Moritz).
 |---|---|---|
 | by 28.10 | Each judoka's `nextDate` = their actual day (29.10: Ashpiz, G. Primo, Nelson Levy, Kokolayev, Simkhaev; 30.10: Elbaz, Moritz, Goshen; 31.10: Simin, Sivan, Hershko; already so in the DB on 19.10) | Roni |
 | 28.10, 12:00 | Online draw (judotv.com). Re-check entries on https://www.ijf.org/competition/3157/judoka_athletes. A withdrawal: no history entry, out of the session's `athleteIds`, and outcome (ד) on 1.11 | Roni |
-| 28.10, after the draw | The prelims are 9 signed sessions, one per category (`judo-gs-abu-dhabi-2026-<day>-<category>-prelims`), with no time yet. Fill each `timeLocal` from the IJF/judobase schedule (the Outlines say "TBC"); Dana re-signs, and they load through `job/load_sessions.py` | Roni → Dana → coordinator |
+| 28.10, after the draw | The prelims are 9 signed sessions, one per category (`judo-gs-abu-dhabi-2026-<day>-<category>-prelims`), with no time yet. Fill each `timeLocal` from the IJF/judobase schedule (the Outlines say "TBC"); Dana re-signs, and they load through `job/load_sessions.py`. Step by step: the draw-day checklist in [abu-dhabi-outcomes.md](abu-dhabi-outcomes.md#יום-ההגרלה-28102026-שעות-ההתחלה-של-סשני-המוקדמות). No time published: keep `timeLocal` `""` | Roni → Dana → coordinator |
 | each day, prelims (time per the draw) | Watch https://www.ijf.org/competition/3157/results. That page only; no news, no judobase live | Roni |
 | an Israeli reaches the final block (semi-final or repechage) | Move that day's block from `pendingFinalBlocks` to `sessions` (17:00 Asia/Dubai = 15:00 Israel) with their `athleteIds`; Dana signs | Roni → Dana → coordinator |
 | each day, 15:00 → end of the final block | Final block | – |

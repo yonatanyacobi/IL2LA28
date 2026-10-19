@@ -114,7 +114,7 @@ Nav highlights "ענפים"; crumb `← כל הענפים`; h1 `תמונת המ�
 2. `אירועי המכסה הקרובים`: the next 5 future `nextQuotaEvent`s (date · name · sport link · event · status pill).
 3. One panel per non-empty status, h2 = status pill + count; rows = sport link · event · `israelNote` · next date.
 
-States: error → `נתוני המכסות לא נטענו כרגע. שאר האתר מעודכן.`; loading → `טוען נתוני מכסות…`;
+States: error → `נתוני המכסות לא נטענו כרגע. אפשר לרענן את הדף בעוד רגע.`; loading → `טוען נתוני מכסות…`;
 no items → `עוד לא נאספו נתוני מכסות.`
 
 ## 2. Home — event-day strip "ישראלים מתחרים היום" (as built: `todayRows()` / `todayStrip()`)

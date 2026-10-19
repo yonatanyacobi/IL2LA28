@@ -1,8 +1,9 @@
 // docs/qa/live-check-v55.md §3 (routes) and §4 (regressions since v52) as render checks, by Gil; smoke.test.js runs
 // them on the fixture, so a PR that breaks one fails CI. Run on real data before a publish:
 //   node tests/livecheck.js [data.json] [quotas.json]   (defaults: the fixture and site/quotas.json; exits 1 on a FAIL)
-// The clock is 20.10.2026 10:00 Israel, the v55 check's time; §3's data checks (Simin 7, Goshen 35, Rotterdam's
-// floor final) read the 19.10 export, so a fixture refresh that changes them needs this file updated with it.
+// The clock is 20.10.2026 10:00 Israel, the v55 check's time. §3's data checks take their expectations from the data
+// (who is ranked on each judo line, who competes at Rotterdam), so a fixture refresh doesn't need this file edited;
+// they fail only if the data has nothing left to check (e.g. no judoka above a line).
 "use strict";
 const fs = require("fs");
 const path = require("path");
@@ -30,14 +31,27 @@ async function livecheck({data, quotas}){
   check("§3 #c- Abu Dhabi: 3 day headings link to #day-", (ab.match(/<div class="sess-day"><h3><a [^>]*href="#day-2026-10-(29|30|31)"/g) || []).length === 3,
     `${(ab.match(/href="#day-2026-10-(29|30|31)"/g) || []).length} day links`);
   const ag = v("c-ag-worlds-2026");
-  check("§3 #c- Rotterdam: Dolgopyat and Berkovich", ag.includes("#a-artem-dolgopyat") && ag.includes("#a-noam-berkovich"));
+  // Rotterdam: everyone the data puts there (a session, or a nextDate inside the competition).
+  const worlds = data.competitions.find(c => c.id === "ag-worlds-2026") || {};
+  const atWorlds = [...new Set([...(data.sessions || []).filter(s => s.competitionId === "ag-worlds-2026").flatMap(s => s.athleteIds),
+    ...data.athletes.filter(a => a.sportId === worlds.sportId && a.nextDate >= worlds.start && a.nextDate <= (worlds.end || worlds.start)).map(a => a.id)])];
+  check("§3 #c- Rotterdam: every Israeli the data puts there", atWorlds.length && atWorlds.every(id => ag.includes(`#a-${id}`)), atWorlds.join(","));
+  // Judo lines: each judoka ranked on an open line's own list sits on the right side of it (rank vs. the line).
   const judo = v("sport-judo"), panel = (judo.split('id="standH"')[1] || "").split("</section>")[0];
-  const b100 = (panel.split("100- ק״ג גברים")[1] || "").split("<h3>")[0], b70 = (panel.split("70- ק״ג נשים")[1] || "").split("<h3>")[0];
-  check("§3 #sport-judo: 100- Simin 7 above the line", b100.indexOf("יוסיף סימין") > -1 && b100.indexOf("יוסיף סימין") < b100.indexOf("cutline"));
-  check("§3 #sport-judo: 70- line above Goshen 35", b70.indexOf("cutline") > -1 && b70.indexOf("cutline") < b70.indexOf("מאיה גושן"));
+  const lines = JSON.parse(b.run(`JSON.stringify(quotasOf("judo").filter(q => q.cutoff && !(q.cutoff.opens > today())).map(q =>
+    ({event: q.event, rank: q.cutoff.rank, list: q.cutoff.list, ids: quotaAthletes(q).map(a => a.id)})))`));
+  const placed = lines.flatMap(l => data.athletes.filter(a => l.ids.includes(a.id)).flatMap(a => [["olympicRank", a.olympicRankNum, a.olympicRankList], ["rank", a.rankNum, a.rankList]]
+    .filter(([, n, list]) => Number.isInteger(n) && list === l.list).slice(0, 1).map(([, n]) => ({l, a, n}))));
+  const side = ({l, a, n}) => { const blk = (panel.split(`<bdi>${l.event}</bdi></h3>`)[1] || "").split("<h3>")[0], i = blk.indexOf(`#a-${a.id}"`), c = blk.indexOf("cutline");
+    return i > -1 && c > -1 && (n <= l.rank ? i < c : c < i); };
+  const above = placed.filter(p => p.n <= p.l.rank), below = placed.filter(p => p.n > p.l.rank);
+  check("§3 #sport-judo: judoka within a line are above it", above.length && above.every(side), above.map(p => `${p.a.id} ${p.n}/${p.l.rank}`).join(","));
+  check("§3 #sport-judo: judoka outside a line are below it", below.length && below.every(side), below.map(p => `${p.a.id} ${p.n}/${p.l.rank}`).join(","));
   check("§3 #sport-fencing: not-open line only", v("sport-fencing").includes("תקופת הדירוג להעפלה נפתחת ב־1 באפר׳ 2027."));
-  const sim = v("a-iosif-simin");
-  check("§3 #a-iosif-simin: Olympic rank + line facts + game log", /<dt>דירוג ההעפלה[^<]*<\/dt>/.test(sim) && sim.includes("<dt>מול קו המכסה</dt>") && sim.includes('id="logH"'));
+  const olympian = placed.find(p => Number.isInteger(p.a.olympicRankNum) && p.a.olympicRankList === p.l.list);
+  const page = olympian ? v(`a-${olympian.a.id}`) : "";
+  check("§3 athlete with an Olympic rank on a line: rank + line facts + game log", /<dt>דירוג ההעפלה[^<]*<\/dt>/.test(page)
+    && page.includes("<dt>מול קו המכסה</dt>") && page.includes('id="logH"'), olympian ? olympian.a.id : "none in the data");
   for (const r of ["quotas", "calendar", "updates", "digest", "about", "about-trust", "following", "following-sports"]) check(`§3 #${r} renders`, !v(r).includes(NF));
   check("§3 digest < 3,500", b.run("digestText().length") < 3500, String(b.run("digestText().length")));
   for (const r of ["nope", "a-nope", "day-2026-02-30"]) check(`§3 #${r} → not found`, v(r).includes(NF));
