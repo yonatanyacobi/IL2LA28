@@ -882,10 +882,12 @@
    "israelStatus": "in-contention",
    "israelNote": "מקום 6 (אחרון) בבית K, מאזן 2:6, במוקדמות מונדיאל 2027 אחרי חלון אוגוסט 2026",
    "nextQuotaEvent": {
-    "name": "טורנירי טרום־מוקדמות אולימפיים FIBA",
-    "start": "2027-08-14"
+    "name": "מוקדמות מונדיאל 2027 – חלון 5",
+    "start": "2026-11-26",
+    "end": "2026-11-30"
    },
    "source": "https://cdn.nocnsf.nl/media/kcgkdtvi/bkb-la28-qualification-system.pdf",
+   "stakes": "חלון 5 במוקדמות המונדיאל (26–30 בנוב׳ 2026): 3 הראשונות בבית K עולות למונדיאל 2027; אחרת הדרך עוברת בטרום־מוקדמות באוג׳ 2027",
    "checkedAt": "2026-10-19"
   },
   {
@@ -897,11 +899,13 @@
    "israelStatus": "in-contention",
    "israelNote": "בבית I במוקדמות יורובאסקט 2027 עם טורקיה, מונטנגרו ופולין",
    "nextQuotaEvent": {
-    "name": "יורובאסקט נשים 2027",
-    "start": "2027-06-16"
+    "name": "מוקדמות יורובאסקט נשים 2027 – חלון נובמבר",
+    "start": "2026-11-11",
+    "end": "2026-11-17"
    },
    "source": "https://about.fiba.basketball/en/our-sport/basketball/national-team-competition-systems/olympic-womens-basketball-tournaments",
-   "checkedAt": "2026-10-18"
+   "stakes": "חלון נובמבר במוקדמות (11–17 בנוב׳ 2026): שתי הראשונות בבית I עולות ליורובאסקט 2027, ו־6 הראשונות בו לטורנירי ההעפלה",
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "basketball-3x3",
