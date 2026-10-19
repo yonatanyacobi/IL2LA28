@@ -3,7 +3,7 @@
 
 function viewQuotas(){
   const head = `<p class="crumb"><a href="#sports"><span aria-hidden="true">→</span>&nbsp;כל הענפים</a></p><h1 tabindex="-1">תמונת המכסות</h1>`;
-  if (S.quotasError) return head + `<p class="muted">נתוני המכסות לא נטענו כרגע. שאר האתר מעודכן.</p>`;
+  if (S.quotasError) return head + `<p class="muted">נתוני המכסות לא נטענו כרגע. אפשר לרענן את הדף בעוד רגע.</p>`;
   if (!S.quotasLoaded) return head + `<p class="muted">טוען נתוני מכסות…</p>`;
   const list = S.quotas.slice().sort((a, b) => heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
   if (!list.length) return head + `<p class="muted">עוד לא נאספו נתוני מכסות.</p>`;

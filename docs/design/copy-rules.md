@@ -81,7 +81,9 @@ name itself is wrong, fix the record first (an editor's DB change), then the tex
 - **Status is never colour alone**, and every pill has words. New colours need the contrast table (AA 4.5:1, or 3:1 for borders).
 
 ## Self-check before opening a PR
-1. `grep -nE "[א-ת]-[א-ת0-9]|[א-ת]'|[א-ת]\"[א-ת]|LA28|[^0-9-][0-9]{1,3}[-–][0-9]{1,3}[^0-9-]"` on your changed strings;
-   fix anything not in a URL, code or a date. The last pattern finds hyphenated scores.
+1. `grep -nE "[א-ת]-[א-ת0-9]|[א-ת]'|[א-ת]\"[א-ת]|LA28"` and, for dashed scores,
+   `grep -nE "(^|[^0-9-])[0-9]{1,3}[-–][0-9]{1,3}([^0-9-]|$)" | grep -vE "[0-9]:[0-9]{2} ?[-–] ?[0-9]|[-–][0-9]{1,2}\.[0-9]|[-–] ?[0-9]{1,2} ב?(ינו|פבר|מר|אפר|מאי|יונ|יול|אוג|ספט|אוק|נוב|דצמ)"`
+   on your changed strings (the second grep drops time and date ranges, which are fine; it drops the whole line, so read
+   such lines yourself). Fix anything not in a URL or code. For data.json, `validate_data.py` prints the same checks as WARN lines.
 2. Every `${n}` next to a noun → `plural()`.
 3. Read each new string aloud at count 1, at count 2, for a team, and the next day. Is it still true?

@@ -1,3 +1,48 @@
 {
- "items": []
+ "items": [
+  {
+   "sportId": "artistic-gymnastics",
+   "event": "אישי גברים (קרב-רב ומכשירים)",
+   "reason": "rename: hyphen→maqaf",
+   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
+   "review": {
+    "status": "fixed",
+    "by": "dana+tamar",
+    "at": "2026-10-19"
+   }
+  },
+  {
+   "sportId": "artistic-gymnastics",
+   "event": "אישי נשים (קרב-רב ומכשירים)",
+   "reason": "rename: hyphen→maqaf",
+   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.1%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Artistic.pdf",
+   "review": {
+    "status": "fixed",
+    "by": "dana+tamar",
+    "at": "2026-10-19"
+   }
+  },
+  {
+   "sportId": "rhythmic-gymnastics",
+   "event": "אישי – קרב-רב",
+   "reason": "rename: hyphen→maqaf",
+   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
+   "review": {
+    "status": "fixed",
+    "by": "dana+tamar",
+    "at": "2026-10-19"
+   }
+  },
+  {
+   "sportId": "rhythmic-gymnastics",
+   "event": "קבוצתי – קרב-רב",
+   "reason": "rename: hyphen→maqaf",
+   "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.2%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Rhythmic.pdf",
+   "review": {
+    "status": "fixed",
+    "by": "dana+tamar",
+    "at": "2026-10-19"
+   }
+  }
+ ]
 }
