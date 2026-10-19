@@ -50,8 +50,9 @@ A `STOP` item is left out by the build, so it would silently not go live. No out
 For an `earned` item, the athletes' stage-2 proposals have been approved in the page (result-night.md, step 4).
 On the branch, before asking for review, the author runs steps 2 and 4 below and commits `site/quotas.json`.
 
-`earned` is approved by Dana and Tamar together (result-night.md step 3). `check_signoff.py` says STOP on an `earned`
-item unless `review.by` is `"dana+tamar"`.
+Every quota item a PR adds or changes is approved by Dana and Tamar together (team charter, docs/product/team.md;
+for `earned`, result-night.md step 3). `check_signoff.py` says STOP on such an item unless `review.by` is
+`"dana+tamar"`.
 
 ### 1. Merge (lead)
 
