@@ -1230,6 +1230,19 @@ test("data.json not available: access, timeout and error each end in a Hebrew me
   hang.run("S.failed = false; loadPublic()");
   await new Promise(r => setTimeout(r, 20));
   assert.strictEqual(h1(hang.view("home")), "הטעינה נמשכת יותר מדי");
+  // A late answer still renders the site in place of the timeout alert, without a retry (Gil on #304).
+  let answer;
+  const late = await boot({fetchImpl: async url => url === "data.json" ? new Promise(r => { answer = r; })
+    : ({ok: false, status: 404, json: async () => { throw new Error("404"); }})});
+  const ms2 = late.run("LOAD_TIMEOUT_MS"), real2 = late.ctx.setTimeout;
+  late.ctx.setTimeout = (f, t, ...a) => t === ms2 ? real2(f, 0, ...a) : real2(f, t, ...a);
+  late.run("S.failed = false; loadPublic()");
+  await new Promise(r => setTimeout(r, 20));
+  assert.strictEqual(h1(late.view("home")), "הטעינה נמשכת יותר מדי", "the alert first");
+  answer({ok: true, status: 200, json: async () => clone()});
+  await new Promise(r => setTimeout(r, 20));
+  const after = late.view("home");
+  assert.ok(after.includes('id="todayH"') && !after.includes('role="alert"') && late.run("S.failed") === false, "then the site, with no retry");
   // Quotas that never answer don't hold the page: it renders and quota panels end in their error state.
   const slowQ = await boot({fetchImpl: async url => url === "quotas.json" ? new Promise(() => {}) : ({ok: true, status: 200, json: async () => clone()})});
   assert.ok(slowQ.view("home").includes('id="todayH"'), "the page renders without quotas.json");
