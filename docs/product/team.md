@@ -1,6 +1,6 @@
 # Team charter (2026-10-19)
 
-One page: who does what. Detailed duties are in `docs/company/roles.md`; where it differs, this page wins.
+One page: who does what. Standing duties and each researcher's sports are in `docs/company/roles.md`.
 
 ## Roles and ownership
 

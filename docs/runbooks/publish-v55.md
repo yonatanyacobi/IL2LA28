@@ -90,7 +90,7 @@ Artifact publish with `url` = https://claude.ai/artifact/RyYBeRXq6pYwKdXujvTWvT 
 
 ```
 [ ] list scope files: 16 files (page, 12 scripts, styles.css, quotas.json, data.json); data.json bytes unchanged
-[ ] Live check per publishing.md step 6: 400px, light and dark, signed out; #home, #today, #c-ag-worlds-2026,
+[ ] Live check per publishing.md step 6: 400px, light and dark, as the test viewer (launch-day.md); #home, #today, #c-ag-worlds-2026,
     an athlete page with results (game log), #sport-judo (standings), #digest
 [ ] Browser console: no errors
 ```

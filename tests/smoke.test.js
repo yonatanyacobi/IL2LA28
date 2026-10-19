@@ -1230,6 +1230,19 @@ test("data.json not available: access, timeout and error each end in a Hebrew me
   hang.run("S.failed = false; loadPublic()");
   await new Promise(r => setTimeout(r, 20));
   assert.strictEqual(h1(hang.view("home")), "הטעינה נמשכת יותר מדי");
+  // A late answer still renders the site in place of the timeout alert, without a retry (Gil on #304).
+  let answer;
+  const late = await boot({fetchImpl: async url => url === "data.json" ? new Promise(r => { answer = r; })
+    : ({ok: false, status: 404, json: async () => { throw new Error("404"); }})});
+  const ms2 = late.run("LOAD_TIMEOUT_MS"), real2 = late.ctx.setTimeout;
+  late.ctx.setTimeout = (f, t, ...a) => t === ms2 ? real2(f, 0, ...a) : real2(f, t, ...a);
+  late.run("S.failed = false; loadPublic()");
+  await new Promise(r => setTimeout(r, 20));
+  assert.strictEqual(h1(late.view("home")), "הטעינה נמשכת יותר מדי", "the alert first");
+  answer({ok: true, status: 200, json: async () => clone()});
+  await new Promise(r => setTimeout(r, 20));
+  const after = late.view("home");
+  assert.ok(after.includes('id="todayH"') && !after.includes('role="alert"') && late.run("S.failed") === false, "then the site, with no retry");
   // Quotas that never answer don't hold the page: it renders and quota panels end in their error state.
   const slowQ = await boot({fetchImpl: async url => url === "quotas.json" ? new Promise(() => {}) : ({ok: true, status: 200, json: async () => clone()})});
   assert.ok(slowQ.view("home").includes('id="todayH"'), "the page renders without quotas.json");
@@ -2002,6 +2015,23 @@ test("home order (#176): hero, today, results, follows, then search; chances pan
   const one = (await boot({quotas: few, now: "2026-10-18T08:00:00Z"})).view("home").split('id="closeH"')[1].split("</section>")[0];
   assert.ok(!one.includes("sm-only"), "≤ 3 groups: no suffix");
 });
+// The home's panel order, as docs/product/ownership.md lists it. Change that file (and the spec) to reorder.
+test("home panel order: hero, today, recent results, השבוע, following, search, chances, KPI, מה התעדכן", async () => {
+  const {view} = await boot({quotas: SITE_QUOTAS, now: "2026-10-18T08:00:00Z", follows: ["raz-hershko"]});
+  const home = view("home");
+  const marks = [['<section class="hero">', "hero"], ['id="todayH"', "היום"], ['id="homeResH"', "תוצאות אחרונות"],
+    ['id="weekH"', "השבוע"], ["<h2>במעקב שלי</h2>", "במעקב שלי"], ['id="q"', "search"], ['id="closeH"', "chances"],
+    ['aria-label="התקדמות בהעפלה"', "KPI"], ["<h2>מה התעדכן</h2>", "מה התעדכן"]];
+  const at = marks.map(([m, name]) => { const i = home.indexOf(m); assert.ok(i >= 0, `missing: ${name}`); return [i, name]; });
+  assert.deepStrictEqual(at.slice().sort((x, y) => x[0] - y[0]).map(([, n]) => n), marks.map(([, n]) => n));
+  // With a quota earned this week the won panel leads (PM on #171); the rest keeps its order.
+  const q = JSON.parse(JSON.stringify(SITE_QUOTAS));
+  Object.assign(q.items.find(i => i.sportId === "judo"), {israelStatus: "earned", earnedAt: "2026-10-17"});
+  const won = (await boot({quotas: q, now: "2026-10-18T08:00:00Z", follows: ["raz-hershko"]})).view("home");
+  const order = ['<section class="hero">', 'class="panel won"', 'id="todayH"', 'id="homeResH"', 'id="weekH"'].map(m => won.indexOf(m));
+  assert.ok(order.every((x, i) => x >= 0 && x > (order[i - 1] ?? -1)), "won first: " + order);
+});
+
 // Editor form "תיקון טעות" fieldset (corrections-log.md §1.1): one athlete update + one corrections doc.
 async function bootEditor({failCorrection = 0} = {}){
   const b = await boot({now: "2026-10-24T09:10:00Z"});

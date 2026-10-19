@@ -12,7 +12,7 @@ state or a11y defect with a workaround; P2 = cosmetic.
 | When | **24.10 from 22:00** (open the tabs, §5), **25.10 10:00–12:00** (the site-publish freeze ends at 10:00) |
 | Data | The 25.10 daily run (07:00–07:13) has published `data.json` with the 24.10 results (`docs/runbooks/result-night-2410.md`) |
 | Clock | **25.10 is the first day of winter time (UTC+2).** Every time on the site is Israel time; an export at 05:00Z reads 07:00 |
-| Viewer | Signed out (a private window, not signed in to claude.ai). If the page asks to sign in, stop: that's a P0 for launch |
+| Viewer | The **test viewer** (`docs/runbooks/launch-day.md`, "Test viewer"): signed in with the view-only test account, not an editor. The site isn't open to signed-out visitors before launch. Stop if the page shows "מצב עריכה" or edit controls (wrong account), or "האתר לא זמין עבורך כרגע" (the test share is missing): either is a setup fail, not a site fail |
 | Sizes | 400×800 and 1280×800, each in light and dark (the OS setting; the page follows `prefers-color-scheme`) |
 | Tools | DevTools console (preserve log) and the Network tab filtered to `data.json`; VoiceOver for §2 and §7 |
 
