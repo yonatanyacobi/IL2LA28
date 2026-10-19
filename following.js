@@ -32,13 +32,14 @@ const followedAthletes = () => S.athletes.filter(a => S.follows.has(a.id) || S.f
 // "הפרטים עודכנו" row, dated by updatedAt.
 function followFeed(since){
   if (!since) return [];
-  const day = since.slice(0, 10);
+  const day = IL_DAY.format(new Date(since));
   return followedAthletes().flatMap(a => {
     const items = (Array.isArray(a.history) ? a.history : [])
       .filter(h => h && typeof h === "object" && !Array.isArray(h) && isDate(h.at)
         && (h.at > day || (h.at === day && str(a.updatedAt) > since))).map(h => ({a, h}));
-    const at = str(a.updatedAt).slice(0, 10), was = shownAtLoad[a.id];
-    const changed = str(a.updatedAt) > since && isDate(at) && was !== undefined && was !== shownOf(a);
+    const updatedAt = str(a.updatedAt), was = shownAtLoad[a.id];
+    const at = Number.isFinite(Date.parse(updatedAt)) ? IL_DAY.format(new Date(updatedAt)) : "";
+    const changed = updatedAt > since && isDate(at) && was !== undefined && was !== shownOf(a);
     return items.length || !changed ? items : [{a, h: {at, text: "הפרטים עודכנו"}}];
   }).sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(x.a.name, y.a.name)).slice(0, FEED_MAX);
 }

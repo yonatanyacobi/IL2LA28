@@ -175,5 +175,5 @@ const followedIn = s => s.athletes.some(a => S.follows.has(a.id));
 // Followed first, then by start time (untimed last), then by name.
 // Start time ascending, untimed last (explicit: localeCompare would put a "~" placeholder before digits).
 const byStart = (a, b) => !a === !b ? (a ? Date.parse(a) - Date.parse(b) : 0) : a ? -1 : 1;
-const sessionOrder = (x, y) => followedIn(y) - followedIn(x) || byStart(x.startUtc, y.startUtc)
+const sessionOrder = (x, y) => (followsSport(y.sportId) || followedIn(y)) - (followsSport(x.sportId) || followedIn(x)) || byStart(x.startUtc, y.startUtc)
   || heCmp(x.athletes[0].name, y.athletes[0].name);

@@ -699,6 +699,7 @@ function viewCalendar(sportFilter = ""){
     <select id="cSport" aria-label="סינון לפי ענף"><option value="">כל הענפים</option>${used.map(s => `<option value="${esc(s.id)}" ${s.id === sport ? "selected" : ""}>${esc(s.he)}</option>`).join("")}</select>
     <label class="chk"><input type="checkbox" id="cQual" ${qual ? "checked" : ""}> רק תחרויות העפלה</label>
     <label class="chk"><input type="checkbox" id="cPast" ${past ? "checked" : ""}> כולל תחרויות שהסתיימו</label>
+    <button class="btn ghost small" type="button" id="cReset" data-calendar-reset ${sport || qual || past ? "" : "hidden"}>איפוס הסינון</button>
   </div>
   <div id="calResults" class="cal-results">${calendarResults()}</div>
   <section class="panel">
@@ -1120,11 +1121,23 @@ document.addEventListener("input", e => {
   if (e.target.id === "cSport") { S.cal.sport = e.target.value; history.replaceState(null, "", S.cal.sport ? "#calendar-" + S.cal.sport : "#calendar"); }
   if (e.target.id === "cQual") S.cal.qual = e.target.checked;
   if (e.target.id === "cPast") S.cal.past = e.target.checked;
-  if (/^c(Sport|Qual|Past)$/.test(e.target.id) && $("calResults")) $("calResults").innerHTML = calendarResults();
+  if (/^c(Sport|Qual|Past)$/.test(e.target.id) && $("calResults")) {
+    $("calResults").innerHTML = calendarResults();
+    if ($("cReset")) $("cReset").hidden = !(S.cal.sport || S.cal.qual || S.cal.past);
+  }
 });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry]");
+  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset]");
   if (!t) return;
+  if ("calendarReset" in t.dataset) {
+    S.cal = {sport: "", qual: false, past: false};
+    history.replaceState(null, "", "#calendar");
+    $("cSport").value = "";
+    $("cQual").checked = false; $("cPast").checked = false;
+    $("cReset").hidden = true;
+    $("calResults").innerHTML = calendarResults();
+    return $("cSport").focus({preventScroll: true});
+  }
   if (t.dataset.edit) return openForm(S.athletes.find(a => a.id === t.dataset.edit));
   if (t.dataset.add) return openForm(null, t.dataset.add);
   if (t.dataset.verify) { t.disabled = true; return markVerified(t.dataset.verify, t); }

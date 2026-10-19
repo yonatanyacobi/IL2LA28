@@ -30,11 +30,16 @@ function eventStatus(c, sessions){
     ? `<span class="pill s-wait"><span aria-hidden="true">◷</span> הסתיימה · בהמתנה לתוצאות</span>` : `<span class="pill ended">הסתיימה</span>`;
 }
 
-// Quota items decided here: their next quota event starts inside the competition (the strip's rule), including
-// ones now awaiting results. Earned items show "מכסה הושגה" and never their pre-event stakes.
+// A quota event must identify one competition; overlapping dates alone don't establish its stakes.
+// Earned items show "מכסה הושגה" and never their pre-event stakes.
 function eventStakes(c){
-  const end = c.end || c.start;
-  const items = quotasOf(c.sportId).filter(q => q.nextQuotaEvent && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= end);
+  const items = quotasOf(c.sportId).filter(q => {
+    const event = q.nextQuotaEvent;
+    if (!event) return false;
+    const matches = S.comps.filter(comp => comp.sportId === q.sportId && comp.start <= event.start && event.start <= (comp.end || comp.start)
+      && str(comp.name).trim() === str(event.name).trim());
+    return matches.length === 1 && matches[0].id === c.id;
+  });
   if (!items.length) return "";
   return `<section class="panel" aria-labelledby="evStakesH"><h2 id="evStakesH">מה על הכף</h2>
     <ul class="qlist">${items.map(q => `<li>
