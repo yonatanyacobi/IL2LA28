@@ -64,6 +64,12 @@ The job follows the same rule (`job/SKILL.md`, #85). The export normalises `data
 | stage 0 | `לפני חלון ההעפלה` | `במעקב` |
 | on the site's list | `ברשימה`: `110 ספורטאים ונבחרות ברשימה`, `3 ברשימה בענף` | `במעקב`, `שבמעקב` |
 
+**Athlete names in free text match the athlete record exactly.** `quotaAthletes()` links an athlete to a quota item
+by finding the record's `name` inside `israelNote` and `stakes`, so a different spelling silently drops the link.
+Copy the name from the **live** record, character for character, including maqaf and geresh (`שם־טוב עמיאל`,
+`בנימין ננדזה`). Don't copy it from memory or from the test fixture, which can lag behind a rename (D10). If the
+name itself is wrong, fix the record first (an editor's DB change), then the text.
+
 ## 6. Markup that carries meaning
 - **`<bdi>`** around any mixed or LTR fragment inside Hebrew: event names (`60- ק״ג`), hosts (`מקור: <bdi>ijf.org</bdi>`), list names.
   In WhatsApp text, put a URL on its own line.
