@@ -9,6 +9,8 @@
   let loading = false;
   let lastChecked = null;
   let failed = false;
+  let connectionHealth = 'waiting';
+  let requestSequence = 0;
   const node = (tag, text, className) => {
     const result = document.createElement(tag);
     if (text !== undefined) result.textContent = text;
@@ -53,9 +55,10 @@
     const age = runtime ? Date.now() - Date.parse(runtime.heartbeatAt) : Infinity;
     const fresh = runtime && age >= -30000 && age <= runtime.leaseSeconds * 1000;
     const state = fresh ? runtime.state : 'unknown';
-    el('manager').dataset.state = state;
+    if (el('manager').dataset.state !== state) el('manager').dataset.state = state;
     const labels = {running: 'המנהל דיווח על עבודה פעילה', waiting: 'המנהל ממתין למשימה הבאה', blocked: 'המנהל ממתין לפתרון חסימה', unknown: 'אין דיווח פעילות עדכני'};
-    el('manager').textContent = `${labels[state]}.${fresh && runtime.message ? ` ${runtime.message}` : ''}`;
+    const managerText = `${labels[state]}.${fresh && runtime.message ? ` ${runtime.message}` : ''}`;
+    if (el('manager').textContent !== managerText) el('manager').textContent = managerText;
     el('heartbeat').textContent = runtime
       ? `דיווח מנהל אחרון: ${formatter.format(new Date(runtime.heartbeatAt))}. תוקף הדיווח: ${runtime.leaseSeconds} שניות.${fresh ? '' : ' המשימות והספירות מציגות את הדיווח האחרון בלבד.'}`
       : 'לא נשמר דיווח פעילות של המנהל. המשימות והספירות מציגות את הדיווח האחרון בלבד.';
@@ -67,11 +70,16 @@
 
   function connection() {
     const stale = board && Date.now() - Date.parse(board.updatedAt) > 24 * 60 * 60 * 1000;
+    const health = failed ? 'error' : stale ? 'stale' : board ? 'connected' : 'waiting';
     el('signal').dataset.state = failed ? 'error' : stale ? 'waiting' : board ? 'connected' : 'waiting';
-    el('connection').textContent = failed
-      ? 'לא ניתן לבדוק עדכונים. מוצג הדיווח האחרון שנטען, אם ישנו.'
-      : board ? `${stale ? 'הדיווח לא עודכן יותר מ־24 שעות. ' : ''}בדיקת חיבור אחרונה: ${formatter.format(lastChecked)}`
-        : 'טוענים את לוח המשימות…';
+    if (health !== connectionHealth) {
+      const labels = {error: 'לא ניתן לבדוק עדכונים. מוצג הדיווח האחרון שנטען, אם ישנו.',
+        stale: 'החיבור ללוח תקין. הדיווח לא עודכן יותר מ־24 שעות.',
+        connected: 'החיבור ללוח המשימות תקין.', waiting: 'טוענים את לוח המשימות…'};
+      el('connection').textContent = labels[health];
+      connectionHealth = health;
+    }
+    el('last-checked').textContent = `בדיקת חיבור אחרונה: ${lastChecked ? formatter.format(lastChecked) : '—'}`;
     activity();
   }
 
@@ -151,7 +159,7 @@
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     try {
-      const response = await fetch('team-board.json', {cache: 'no-store', credentials: 'same-origin', signal: controller.signal});
+      const response = await fetch(`team-board.json?check=${Date.now()}-${++requestSequence}`, {cache: 'no-store', credentials: 'same-origin', signal: controller.signal});
       if (!response.ok) throw new Error('Board unavailable');
       const next = validate(await response.json());
       const changed = JSON.stringify(next) !== JSON.stringify(board);
