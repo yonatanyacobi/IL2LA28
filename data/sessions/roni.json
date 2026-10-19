@@ -312,8 +312,8 @@
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
    "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12). שמחייב (66-) נוסף ב־19.10: רשום ברשימת IJF (SIMKHAEV Tom, -66, IJF id 82113), https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-19.",
    "review": {
-    "status": "unchecked",
-    "by": "roni",
+    "status": "ok",
+    "by": "tamar",
     "at": "2026-10-19"
    }
   },
