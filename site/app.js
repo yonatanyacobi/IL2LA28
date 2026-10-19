@@ -75,7 +75,15 @@ function rowMark(key, sig){
   return at ? `<span class="pill chg"><span class="sr"> · </span>השתנה ב־<time datetime="${esc(at)}">${ilTime(at)}</time></span>` : "";
 }
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
-const host = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "מקור"; } };
+// Every source label goes through host(). A long host (a CDN, a news subdomain) is cut to its registrable domain:
+// the last 2 labels, or 3 under a .co.il-style second level ("sports.walla.co.il" → "walla.co.il").
+// 17 keeps "ifsc.results.info", where the subdomain is the federation.
+const HOST_MAX = 17, SECOND_LEVEL = /^(co|org|ac|gov|net|muni|k12)$/;
+const shortHost = h => {
+  const l = h.split("."), keep = l.length > 2 && l.at(-1).length === 2 && SECOND_LEVEL.test(l.at(-2)) ? 3 : 2;
+  return h.length > HOST_MAX && l.length > keep ? l.slice(-keep).join(".") : h;
+};
+const host = u => { try { return shortHost(new URL(u).hostname.replace(/^www\./, "")); } catch { return "מקור"; } };
 // Match key for search: keyboards type ' and " where the data has ׳ and ״ (and vice versa).
 const searchKey = s => str(s).normalize("NFD").replace(/[֑-ׇֽֿׁׂׅׄ]/g, "")
   .replace(/[׳'`’‘]/g, "'").replace(/[״"“”]/g, '"').replace(/\s+/g, " ").trim().toLowerCase();
