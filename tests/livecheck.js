@@ -61,7 +61,9 @@ async function livecheck({data, quotas}){
   check("§4.3 no 'השעה תפורסם'", !all.includes("השעה תפורסם"));
   check("§4.4 no .now", !/class="now"/.test(all));
   const closest = (home.split("ההזדמנויות הקרובות למכסה")[1] || "").split("</section>")[0];
-  check("§4.5 home 'השבוע'/closest names link to #c-", /href="#c-/.test(closest) && (!home.includes('id="weekH"') || /id="weekH"[\s\S]*?href="#c-/.test(home)));
+  // The week's own section: an unscoped regex from weekH would also match the closest panel's links further down.
+  const week = (home.split('id="weekH"')[1] || "").split("</section>")[0];
+  check("§4.5 home 'השבוע'/closest names link to #c-", /href="#c-/.test(closest) && (!home.includes('id="weekH"') || /href="#c-/.test(week)));
   check("§4.6 no repeated competition name", !/מכשירים, רוטרדם · <a href="#c-ag-worlds-2026"/.test(all + closest));
   check("§4.7 home 'היום' heading is hlink", /<h2 id="todayH"><a class="hlink"/.test(home));
   const bs = await boot({data, quotas, now: NOW, storage: {"la28.followSports": JSON.stringify(["judo"])}});
