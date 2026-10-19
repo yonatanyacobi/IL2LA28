@@ -1,13 +1,14 @@
 """Gymnastics results-assist (#168): plan the daily job's writes from FIG's official results book. Writes nothing.
 
 Usage: python3 gym_results.py plan <db_dump_dir> [--today YYYY-MM-DD] [--days N]
-  Artistic gymnastics competitions in the DB that ended in the last N days (default 4) and whose `source` is the FIG
+  Artistic gymnastics and trampoline competitions in the DB that ended in the last N days (default 4) and whose `source` is the FIG
   event page (gymnastics.sport/site/events/detail.php?id=<event>). Once that page lists the "Results Book" (FIG
   publishes one per event when it ends), every ISR row is matched to an athlete by name_en and becomes a history
   result with result_text(), sourced to the book. Prints the same JSON plan as tri_results.py:
   {"warnings": [...], "updates": [{"athleteId", "result": {at, text, source}}], "proposals": [{"id", "doc"}]}
   A podium in a final also proposes a notes line. Never a stage or quota change (the quota proposal kind waits for
-  owner decision D-R2). Rhythmic and trampoline books aren't parsed yet: their competitions get a warning.
+  owner decision D-R2). Rhythmic books aren't parsed yet: their competitions get a warning. Trampoline reads the
+  individual Qualification and Final tables of the Longines book template (as artistic); synchronised is left out.
 
 Feasibility (checked 2026-10-18, see #168):
 - gym.longinestiming.com answers plain HTTP in 1-3 s, but only to non-browser user agents: a browser-like User-Agent
@@ -40,6 +41,9 @@ FINAL_NAME = {"floor": "הקרקע", "pommelhorse": "סוס הסמוכות", "ri
               "allaround": "הקרב־רב"}
 # The apparatus in the short session text (#173): "במקבילים", not "במקבילים מדורגים".
 SHORT_NAME = {"unevenbars": "מקבילים"}
+# One-apparatus sports: the competition name already says it ("אליפות העולם בטרמפולינה"), so the text names no
+# apparatus: "מקום 12 במוקדמות …", "זהב בגמר …".
+SINGLE_EVENT = {"trampoline"}
 VERBS = {None: {"in": "עלה/תה", "out": "לא עלה/תה", "reserve": "מחליף/ה"},
          "f": {"in": "עלתה", "out": "לא עלתה", "reserve": "מחליפה"},
          "m": {"in": "עלה", "out": "לא עלה", "reserve": "מחליף"}}
@@ -129,63 +133,190 @@ def _unescape(s):
                   else _ESC.get(m.group(1), m.group(1)), s, flags=re.S)
 
 
+def _cmap(c):
+    """code -> text from one ToUnicode CMap stream (bfchar, bfrange, and bfrange with an array)."""
+    out = {}
+    for blk in re.findall(rb"beginbfchar(.*?)endbfchar", c or b"", re.S):
+        for a, u in re.findall(rb"<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]*)>", blk):
+            out[int(a, 16)] = bytes.fromhex(u.decode()).decode("utf-16-be", "replace")
+    for blk in re.findall(rb"beginbfrange(.*?)endbfrange", c or b"", re.S):
+        for a, b, u, arr in re.findall(rb"<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*(?:<([0-9a-fA-F]+)>|\[([^\]]*)\])", blk):
+            lo, hi = int(a, 16), int(b, 16)
+            if u:   # the last UTF-16 unit counts up (a multi-unit target is a ligature or a surrogate pair)
+                base = bytes.fromhex(u.decode()).decode("utf-16-be", "replace") or "\ufffd"
+                for k in range(lo, min(hi, lo + 65535) + 1):
+                    if ord(base[-1]) + k - lo < 0x110000:
+                        out[k] = base[:-1] + chr(ord(base[-1]) + k - lo)
+            else:
+                for k, x in zip(range(lo, hi + 1), re.findall(rb"<([0-9a-fA-F]*)>", arr)):
+                    out[k] = bytes.fromhex(x.decode()).decode("utf-16-be", "replace")
+    return out
+
+
 def _cmaps(streams):
-    """One code -> text map from every ToUnicode CMap in the file, or None when two fonts map a code differently
-    (then the font of each string would matter, and we don't resolve fonts)."""
+    """One map from every CMap in the file, or None when two fonts map a code differently. The fallback for files
+    whose pages can't be resolved (pdf_text)."""
     out = {}
     for c in streams:
-        if b"begincmap" not in c:
+        if b"begincmap" in c:
+            for k, v in _cmap(c).items():
+                if out.setdefault(k, v) != v:
+                    return None
+    return out
+
+
+def _stream(body):
+    """The decoded data of a stream object's body (Flate or unfiltered), else None."""
+    i = body.find(b"stream")
+    m = re.compile(rb"stream(?:\r\n|\n|\r)").match(body, i) if i >= 0 else None   # CR alone: some writers
+    if not m:
+        return None
+    raw, head = body[m.end():], body[:i]
+    raw = raw[:raw.rfind(b"endstream")] if b"endstream" in raw else raw
+    if b"/FlateDecode" in head:
+        try:   # a decompressobj ignores the EOL before "endstream", which some writers omit
+            return zlib.decompressobj().decompress(raw)
+        except zlib.error:
+            return None
+    return None if b"/Filter" in head else raw
+
+
+def _objects(data):
+    """{number: body} for every object, including those packed in object streams (PDF 1.5+)."""
+    objs = {int(n): b for n, b in re.findall(rb"(?<!\d)(\d+)\s+\d+\s+obj\b(.*?)\bendobj", data, re.S)}
+    for body in list(objs.values()):
+        head = body.split(b"stream", 1)[0]
+        if not re.search(rb"/Type\s*/ObjStm", head) or not (raw := _stream(body)):
             continue
-        pairs = [(int(a, 16), bytes.fromhex(u.decode()).decode("utf-16-be", "replace"))
-                 for blk in re.findall(rb"beginbfchar(.*?)endbfchar", c, re.S)
-                 for a, u in re.findall(rb"<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>", blk)]
-        for blk in re.findall(rb"beginbfrange(.*?)endbfrange", c, re.S):
-            for a, b, u in re.findall(rb"<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>", blk):
-                pairs += [(k, chr(int(u, 16) + k - int(a, 16))) for k in range(int(a, 16), int(b, 16) + 1)]
-        for k, v in pairs:
-            if out.setdefault(k, v) != v:
-                return None
+        first = int(re.search(rb"/First\s+(\d+)", head).group(1))
+        nums = [int(x) for x in raw[:first].split()]
+        pairs = list(zip(nums[::2], nums[1::2]))
+        for k, (num, off) in enumerate(pairs):
+            end = pairs[k + 1][1] if k + 1 < len(pairs) else len(raw) - first
+            objs.setdefault(num, raw[first + off:first + end])
+    return objs
+
+
+def _value(objs, body, key):
+    """The dict body of /key in `body`: an inline << >> dict, or the object a reference points to."""
+    m = re.search(rb"/" + key + rb"\s*(?:(\d+)\s+\d+\s+R|<<)", body or b"")
+    if not m:
+        return b""
+    if m.group(1):
+        return objs.get(int(m.group(1)), b"")
+    depth, j = 1, m.end()
+    while depth and j < len(body):
+        depth += 1 if body.startswith(b"<<", j) else -1 if body.startswith(b">>", j) else 0
+        j += 2 if body[j:j + 2] in (b"<<", b">>") else 1
+    return body[m.end():j - 2]
+
+
+_NAME_REF = re.compile(rb"/([^\s/<>\[\]()]+)\s+(\d+)\s+\d+\s+R")
+# Text operators, in order: font change, TJ array (a "]" inside a string is data: 0x5D is "z" in FIG's 2-byte fonts),
+# Tj string (literal or hex), line breaks (a new text block or a move), and a Form XObject drawn with Do.
+_OPS = re.compile(rb"/([^\s/<>\[\]()]+)\s+[-\d.]+\s+Tf|\[((?:\((?:\\.|[^\\)])*\)|<[0-9A-Fa-f\s]*>|[^\]()<])*)\]\s*TJ"
+                  rb"|\(((?:\\.|[^\\)])*)\)\s*Tj|<([0-9A-Fa-f\s]*)>\s*Tj|(\bBT\b|T\*|Td|TD|')|/([^\s/<>\[\]()]+)\s+Do\b", re.S)
+_PIECES = re.compile(rb"\(((?:\\.|[^\\)])*)\)|<([0-9A-Fa-f\s]*)>|(-?\d+(?:\.\d+)?)", re.S)
+
+
+def _resources(objs, body):
+    """({font name: (cmap, two_byte)}, {xobject name: body}) of a page (inheriting from its parents) or a form."""
+    res, seen = _value(objs, body, b"Resources"), set()
+    while not res and (p := re.search(rb"/Parent\s+(\d+)\s+\d+\s+R", body or b"")) and p.group(1) not in seen:
+        seen.add(p.group(1))
+        body = objs.get(int(p.group(1)), b"")
+        res = _value(objs, body, b"Resources")
+    fonts = {}
+    for name, ref in _NAME_REF.findall(_value(objs, res, b"Font")):
+        f = objs.get(int(ref), b"")
+        tu = re.search(rb"/ToUnicode\s+(\d+)\s+\d+\s+R", f)
+        fonts[name] = (_cmap(_stream(objs.get(int(tu.group(1)), b""))) if tu else None, b"/Type0" in f)
+    return fonts, {n: objs.get(int(r), b"") for n, r in _NAME_REF.findall(_value(objs, res, b"XObject"))}
+
+
+def _show(raw, font):
+    cmap, two = font or (None, False)
+    codes = [raw[i] << 8 | raw[i + 1] for i in range(0, len(raw) - 1, 2)] if two else list(raw)
+    if cmap:
+        return "".join(cmap.get(c, "�") for c in codes)
+    return "�" * len(codes) if two else raw.decode("cp1252", "replace")
+
+
+def _hex(h):
+    h = re.sub(rb"\s", b"", h)
+    return bytes.fromhex((h + b"0" * (len(h) % 2)).decode())   # an odd last digit is followed by 0 (PDF spec)
+
+
+def _page_text(objs, content, body, pieces, depth=0, default=None, inherited=None):
+    """Append the text of one content stream (and the forms it draws) to pieces, decoding each string by its font.
+    default: the font for strings whose Tf font isn't in the resources (the no-page-tree fallback).
+    inherited: the drawing page's resources, for a form without its own (older writers)."""
+    has_own = bool(_value(objs, body.split(b"stream", 1)[0], b"Resources")) or not inherited
+    fonts, xobjects = _resources(objs, body) if has_own else inherited
+    font = default
+    for op in _OPS.finditer(content or b""):
+        f, arr, lit, hexs, move, form = op.groups()
+        if f is not None:
+            font = fonts.get(f, default)
+        elif move:
+            pieces.append("\n")
+        elif form is not None:
+            x = xobjects.get(form, b"")
+            if depth < 5 and re.search(rb"/Subtype\s*/Form", x.split(b"stream", 1)[0]):
+                _page_text(objs, _stream(x), x, pieces, depth + 1, inherited=(fonts, xobjects))
+        else:
+            parts = [(lit, None, None)] if lit is not None else [(None, hexs, None)] if hexs is not None else _PIECES.findall(arr)
+            for s, h, kern in parts:
+                if s:
+                    pieces.append(_show(_unescape(s), font))
+                elif h:
+                    pieces.append(_show(_hex(h), font))
+                elif kern and float(kern) < -200:   # a wide negative kern is a word gap
+                    pieces.append(" ")
+
+
+def _pages(objs):
+    """Page bodies in document order, from the root /Pages tree."""
+    kids_of = lambda b: [int(r) for r in re.findall(rb"(\d+)\s+\d+\s+R", (re.search(rb"/Kids\s*\[([^\]]*)\]", b) or [b"", b""])[1])]
+    roots = [n for n, b in objs.items() if re.search(rb"/Type\s*/Pages\b", b) and not re.search(rb"/Parent\s", b)]
+    out, stack, seen = [], [r for r in reversed(roots)], set()
+    while stack:
+        n = stack.pop()
+        if n in seen:
+            continue
+        seen.add(n)
+        b = objs.get(n, b"")
+        if re.search(rb"/Type\s*/Pages\b", b):
+            stack += reversed(kids_of(b))
+        elif re.search(rb"/Type\s*/Page\b", b):
+            out.append(b)
     return out
 
 
 def pdf_text(data):
-    """Text of a PDF, stdlib only: inflate the streams, join the Tj/TJ string pieces per line. Simple (WinAnsi) fonts
-    are read as cp1252; 2-byte (CID) strings through the file's ToUnicode CMaps (FIG results books, checked on
-    fidb_23893). Returns "" when it can't read the text (CMaps that disagree), and the caller then warns rather than guesses."""
-    streams = []
-    for s in re.findall(rb"stream\r?\n(.*?)endstream", data, re.S):
-        try:   # a decompressobj ignores the EOL before "endstream", which some writers omit
-            streams.append(zlib.decompressobj().decompress(s))
-        except zlib.error:
-            continue
-    cmap = _cmaps(streams)
-    if cmap is None:
-        return ""
-
-    def decode(raw):
-        codes = [raw[i] << 8 | raw[i + 1] for i in range(0, len(raw) - 1, 2)]
-        if cmap and len(raw) % 2 == 0 and codes and all(c in cmap for c in codes):
-            return "".join(cmap[c] for c in codes)
-        return raw.decode("cp1252", "replace")
-
-    lines = []
-    for content in streams:
-        for block in re.findall(rb"BT(.*?)ET", content, re.S):
-            pieces = []
-            # A "]" inside a string is data (0x5D is "z" in FIG's 2-byte fonts), so the TJ array skips over strings.
-            for op in re.finditer(rb"\[((?:\((?:\\.|[^\\)])*\)|[^\]()])*)\]\s*TJ|\(((?:\\.|[^\\)])*)\)\s*Tj|(T\*|Td|TD|')",
-                                  block, re.S):
-                if op.group(3):
-                    pieces.append("\n")
-                    continue
-                arr = op.group(1) if op.group(1) is not None else b"(" + op.group(2) + b")"
-                for strpart, kern in re.findall(rb"\(((?:\\.|[^\\)])*)\)|(-?\d+(?:\.\d+)?)", arr, re.S):
-                    if strpart:
-                        pieces.append(decode(_unescape(strpart)))
-                    elif kern and float(kern) < -200:   # a wide negative kern is a word gap
-                        pieces.append(" ")
-            lines += [re.sub(r"\s+", " ", l).strip() for l in "".join(pieces).split("\n") if l.strip()]
-    return "\n".join(lines)
+    """Text of a PDF, stdlib only: page by page, each Tj/TJ string decoded with its own font's ToUnicode CMap (2-byte for
+    Type0 fonts), simple fonts without one as cp1252; one line per text move. FIG's results books come from several
+    writers (Ghostscript, Acrobat, others), and their fonts' CMaps disagree, so a string's font matters. Unreadable
+    glyphs come out as U+FFFD, so the caller's row patterns fail and it warns rather than guesses. Files without a page
+    tree fall back to one map from every CMap in the file ("" if they disagree)."""
+    objs = _objects(data)
+    pieces = []
+    for page in _pages(objs):
+        refs = re.search(rb"/Contents\s*(?:(\d+)\s+\d+\s+R|\[([^\]]*)\])", page)
+        nums = [int(refs.group(1))] if refs and refs.group(1) else [int(r) for r in re.findall(rb"(\d+)\s+\d+\s+R", refs.group(2))] if refs else []
+        for n in nums:
+            pieces.append("\n")
+            _page_text(objs, _stream(objs.get(n, b"")), page, pieces)
+    if not pieces:
+        streams = [s for s in (_stream(b) for b in objs.values()) if s]
+        cmap = _cmaps(streams)
+        if cmap is None:
+            return ""
+        for s in streams:
+            for block in re.findall(rb"BT(.*?)ET", s, re.S):
+                pieces.append("\n")
+                _page_text({}, block, b"", pieces, default=(cmap, True) if cmap else None)
+    return "\n".join(l for l in (re.sub(r"\s+", " ", l).strip() for l in "".join(pieces).split("\n")) if l)
 
 
 def _qual_outcome(qualified, reserve, gender):
@@ -206,24 +337,25 @@ def result_text(phase, place, apparatus, comp, day_he, qualified=None, reserve=N
     phase: "qual" or "final"; apparatus: a Longines key (APPARATUS) or Hebrew; day_he: site date style.
     reserve: n for a qualification reserve (Longines R<n>), never written as "not qualified".
     gender: "f" / "m", or None for the neutral form (עלה/תה). Matches the result-night runbook #173 exactly."""
-    app = APPARATUS.get(apparatus, apparatus)
+    app = "" if apparatus in SINGLE_EVENT else APPARATUS.get(apparatus, apparatus)
     if phase == "final":
         if reserve is not None:
             raise ValueError("reserve applies to a qualification result")
         _qual_outcome(None, None, gender)   # validates gender
-        return f"{MEDAL.get(place, f'מקום {place}')} בגמר {app} ב{comp} ({day_he})"
+        # "בגמר קרקע באליפות …", but with no apparatus the construct form, as in qualification: "בגמר אליפות …"
+        return f"{MEDAL.get(place, f'מקום {place}')} בגמר {f'{app} ב' if app else ''}{comp} ({day_he})"
     if phase == "qual":
         verb, _ = _qual_outcome(qualified, reserve, gender)
         final = FINAL_NAME.get(apparatus, "")
         tail = f", {verb} לגמר" + (f" {final}" if final else "") if verb else ""
-        return f"מקום {place} ב{app} במוקדמות {comp} ({day_he}){tail}"
+        return f"מקום {place}{f' ב{app}' if app else ''} במוקדמות {comp} ({day_he}){tail}"
     raise ValueError(f"phase must be qual or final, got {phase!r}")
 
 
 def session_text(place, apparatus, qualified=None, reserve=None, gender=None):
     """The short form for a session's `result` on #day (#173): "מקום 12 במקבילים, עלתה לגמר" / ", מחליפה 2"."""
     verb, res = _qual_outcome(qualified, reserve, gender)
-    short = f"מקום {place} ב{SHORT_NAME.get(apparatus, APPARATUS.get(apparatus, apparatus))}"
+    short = f"מקום {place}" if apparatus in SINGLE_EVENT else f"מקום {place} ב{SHORT_NAME.get(apparatus, APPARATUS.get(apparatus, apparatus))}"
     if verb is None:
         return short
     return f"{short}, {verb}" if res is not None else f"{short}, {verb} לגמר"
@@ -232,7 +364,9 @@ def session_text(place, apparatus, qualified=None, reserve=None, gender=None):
 # ---- the official results book (FIG "Results Book" PDF) ----
 BOOK_APPARATUS = {"floor exercise": "floor", "pommel horse": "pommelhorse", "rings": "rings", "vault": "vault",
                   "parallel bars": "parallelbars", "horizontal bar": "horizontalbar", "uneven bars": "unevenbars",
-                  "balance beam": "balancebeam", "all-around": "allaround", "individual all-around": "allaround"}
+                  "balance beam": "balancebeam", "all-around": "allaround", "individual all-around": "allaround",
+                  # Synchronised, double mini and tumbling stay closed, as team tables do.
+                  "trampoline": "trampoline", "individual trampoline": "trampoline"}
 _DAY = re.compile(r"(?:MON|TUE|WED|THU|FRI|SAT|SUN) (\d{1,2}) (JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC) (\d{4})")
 _MONTHS = "JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC".split()
 _HEAD = re.compile(r"(Men's|Women's) (.+) (Qualification|Final)")
@@ -275,6 +409,7 @@ def parse_results_book(text):
 
 
 GYM_SPORTS = {"artistic-gymnastics", "rhythmic-gymnastics", "trampoline"}
+BOOK_SPORTS = {"artistic-gymnastics", "trampoline"}   # whose results books parse_results_book() reads
 FIG_EVENT = re.compile(r"^https://(?:www\.)?gymnastics\.sport/site/events/detail\.php\?id=(\d+)$")
 
 
@@ -296,7 +431,7 @@ def plan(data, get, today, days=4):
         if comp.get("sportId") not in GYM_SPORTS or not end or not first <= end < today:
             continue
         tag = f"{comp.get('name')} ({end})"
-        if comp["sportId"] != "artistic-gymnastics":
+        if comp["sportId"] not in BOOK_SPORTS:
             warn(f"{tag}: ספר תוצאות של {comp['sportId']} עוד לא נקרא אוטומטית; להזין ידנית")
             continue
         m = FIG_EVENT.match(str(comp.get("source") or ""))
@@ -338,7 +473,8 @@ def plan(data, get, today, days=4):
                 continue
             out["updates"].append({"athleteId": a["id"], "result": {"at": r["day"], "text": text, "source": book}})
             # Podium in a final: the notes line is a judgment call, so a person approves it (as tri_results.py).
-            note = f"{MEDAL.get(r['rank'])} ב{APPARATUS[r['apparatus']]} ב{comp['name']}"
+            app = "" if r["apparatus"] in SINGLE_EVENT else f" ב{APPARATUS[r['apparatus']]}"
+            note = f"{MEDAL.get(r['rank'])}{app} ב{comp['name']}"
             notes = str(a.get("notes") or "").strip()
             if r["phase"] == "final" and r["rank"] in MEDAL and note not in notes:
                 out["proposals"].append({"id": f"{a['id']}-{r['day'].replace('-', '')}-{r['apparatus']}-result", "doc": {
