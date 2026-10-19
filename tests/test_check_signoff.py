@@ -35,6 +35,9 @@ class CheckSignoffTest(unittest.TestCase):
         self.assertEqual(lines, ['OK   judo y {"status": "ok", "by": "dana+tamar", "at": "2026-10-19"}', "REMOVED judo x"],
                          "unchanged items aren't re-checked; a removal doesn't fail")
 
+    # publish-v55.md step 4 runs the tests on a `git archive`, which has no .git to `git show` from.
+    @unittest.skipUnless(subprocess.run(["git", "rev-parse", "--git-dir"], cwd=HERE, capture_output=True).returncode == 0,
+                         "not a git checkout")
     def test_cli_against_head(self):
         root = os.path.join(HERE, "..")
         r = subprocess.run([sys.executable, os.path.join(root, "job", "check_signoff.py"), "HEAD"], cwd=root,
