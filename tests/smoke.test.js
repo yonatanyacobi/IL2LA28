@@ -597,7 +597,12 @@ test("#corrections: months newest first, diffs, labels, speed, escaping, invalid
   assert.ok(!out.includes("בוצעו תוך 48 שעות"), "stat hidden below 5 timed entries");
   // #112 review: audit label, month count read out, check link, date values formatted, intro count.
   assert.ok(out.includes('<span class="pill by-audit">בדיקה ידנית</span>'));
-  assert.ok(out.includes('<span class="sr"> תיקונים</span>') && out.includes('<a href="#about-trust">איך אנחנו בודקים</a>'));
+  assert.ok(out.includes('<a href="#about-trust">איך אנחנו בודקים</a>'));
+  // Month count: the number is hidden from screen readers, which hear plural() instead ("1 תיקונים" before).
+  const heads = [...out.matchAll(/<span aria-hidden="true">(\d+)<\/span><span class="sr">, ([^<]+)<\/span><\/h2>/g)];
+  assert.ok(heads.length >= 2 && heads.every(([, n, sr]) => sr === (n === "1" ? "תיקון אחד" : `${n} תיקונים`)), "month count read out");
+  const single = (await bootFixes(CORRECTIONS.slice(0, 1))).view("corrections");
+  assert.ok(single.includes('<span aria-hidden="true">1</span><span class="sr">, תיקון אחד</span></h2>'), "one correction: singular");
   assert.ok(out.includes("בבדיקה מול המקורות לפני ההשקה תיקנו פרטים אצל 25 ספורטאים ונבחרות."));
   const dated = (await bootFixes([fix({at: "2026-10-24T09:10:00Z"}, [{field: "nextDate", wrong: "2026-10-29", right: "2026-10-30"}])])).view("corrections");
   assert.ok(dated.includes("<del>29 באוק׳ 2026</del>") && !dated.includes("2026-10-29"), "nextDate through fmt()");
