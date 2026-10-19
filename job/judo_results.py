@@ -2,7 +2,8 @@
 
 Usage: python3 judo_results.py plan <db_dump_dir> [--today YYYY-MM-DD] [--days N]
        python3 judo_results.py text <place 1|2|3|5|7, or "out"> <competition name> <category, e.g. -66> <YYYY-MM-DD>
-                                    <m|f> [<round, for "out">]
+                                    <m|f> [<round, for "out">] [bye]
+       ("bye": the IJF draw shows no bout for them in column 1; only with "בסיבוב השני")
 plan: judo competitions in the DB that ended in the last N days (default 4) and whose `source` is the IJF competition
 page (ijf.org/competition/<id>). It reads that competition's results page, the one official page that lists places
 1-7 per category, and matches the rows to athletes by the IJF judoka id in their `source`. Each place becomes a history
@@ -18,8 +19,12 @@ from datetime import timedelta
 MEDAL = {1: "זהב", 2: "כסף", 3: "ארד"}
 PLACES = {1, 2, 3, 5, 7}   # an IJF results page lists 1, 2, 3, 3, 5, 5, 7, 7
 OUT = {"m": "הודח", "f": "הודחה"}
-# Rounds as abu-dhabi-outcomes.md names them. A quarter-final loser goes to the repechage, so ends on a place.
-ROUNDS = {"בסיבוב הראשון", "בסיבוב השני", "בסיבוב השלישי", "בסיבוב הרביעי", "ברבע הגמר"}
+# Rounds before the quarter-final, as abu-dhabi-outcomes.md names them. A quarter-final loser goes to the repechage
+# and ends on a place (5 or 7), so there is no "ברבע הגמר" (Itai on #381).
+ROUNDS = {"בסיבוב הראשון", "בסיבוב השני", "בסיבוב השלישי", "בסיבוב הרביעי"}
+# After a bye (no bout in column 1 of the IJF draw) the first bout is in round two: "הודח בקרב הפתיחה בסיבוב השני"
+# (Shira on #381). Only that round can follow a bye.
+BYE_ROUND = "בסיבוב השני"
 IJF_COMP = re.compile(r"^https://(?:www\.)?ijf\.org/competition/(\d+)")
 JUDOKA = re.compile(r"ijf\.org/judoka/(\d+)")
 
@@ -32,23 +37,26 @@ def weight(category):
     return f"{m.group(2)}{m.group(1)} ק״ג"
 
 
-def outcome(place, gender, round_=None):
-    """The outcome words, shared by the history text and the session `result`: זהב, מקום 5, הודח בסיבוב השני …"""
+def outcome(place, gender, round_=None, bye=False):
+    """The outcome words, shared by the history text and the session `result`: זהב, מקום 5, הודח בסיבוב השני,
+    הודחה בקרב הפתיחה בסיבוב השני (bye=True: the draw shows no bout for them in column 1)."""
     if gender not in OUT:
         raise ValueError(f"gender must be m or f, got {gender!r}")
     if place == "out":
         if round_ not in ROUNDS:
             raise ValueError(f"round must be one of {sorted(ROUNDS)}, got {round_!r}")
-        return f"{OUT[gender]} {round_}"
-    if round_ is not None or place not in PLACES:
+        if bye and round_ != BYE_ROUND:
+            raise ValueError(f"after a bye the first bout is {BYE_ROUND}, got {round_!r}")
+        return f"{OUT[gender]} {'בקרב הפתיחה ' if bye else ''}{round_}"
+    if round_ is not None or bye or place not in PLACES:
         raise ValueError(f"place must be one of {sorted(PLACES)} (or \"out\" with a round), got {place!r}")
     return MEDAL.get(place, f"מקום {place}")
 
 
-def result_text(place, comp, category, day, gender, round_=None):
+def result_text(place, comp, category, day, gender, round_=None, bye=False):
     """The history text (result-night-abu-dhabi.md): "<outcome> ב<comp>, <weight> (<D> ב<month׳> <YYYY>)"."""
     from tri_results import he_date
-    return f"{outcome(place, gender, round_)} ב{comp}, {weight(category)} ({he_date(day)})"
+    return f"{outcome(place, gender, round_, bye)} ב{comp}, {weight(category)} ({he_date(day)})"
 
 
 def join_session(pairs):
@@ -129,7 +137,13 @@ def plan(data, get, today, days=4):
                 warn(f"{tag}: {a['id']}: רשום כבר \"{logged[0].get('text')}\", ובדף התוצאות עכשיו \"{text}\"; לבדוק, לא נכתב דבר")
                 continue
             out["updates"].append({"athleteId": a["id"], "result": {"at": day, "text": text, "source": page}})
+        by_id = {a["id"]: a for a in judoka.values()}
         for aid in sorted(entrants - placed):
+            a = by_id.get(aid, {})
+            day = days_of.get(aid) or a.get("nextDate")
+            if any(isinstance(h, dict) and h.get("kind", "result") == "result" and h.get("at") == day
+                   and comp["name"] in str(h.get("text")) for h in a.get("history") or []):
+                continue   # the result night already entered it (Itai on #381)
             warn(f"{tag}: {aid} לא במקומות 1–7; אם הודח/ה, להזין לפי result-night-abu-dhabi.md (`judo_results.py text … out <round>`)")
     return out
 
@@ -144,10 +158,13 @@ def db_data(dump_dir):
 def main(argv):
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     args = argv[1:]
+    bye = args[-1:] == ["bye"]
+    if bye:
+        args = args[:-1]
     if args[:1] == ["text"] and len(args) in (6, 7):
         place = "out" if args[1] == "out" else int(args[1]) if args[1].isdigit() else args[1]
         try:
-            print(result_text(place, args[2], args[3], args[4], args[5], args[6] if len(args) == 7 else None))
+            print(result_text(place, args[2], args[3], args[4], args[5], args[6] if len(args) == 7 else None, bye))
             return 0
         except ValueError as e:
             print(f"error: {e}", file=sys.stderr)
