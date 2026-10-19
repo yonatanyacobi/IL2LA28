@@ -308,6 +308,25 @@
    "checkedAt": "2026-10-19"
   },
   {
+   "sportId": "fencing",
+   "event": "דקר אישי גברים",
+   "totalQuotas": null,
+   "maxPerNOC": 1,
+   "allocation": "למדינות בלי קבוצה: 10 מכסות – 2 לפי דירוג אישי מותאם, 4 לפי דירוג אזורי (אחד לכל אזור) ו־4 בטורנירים אזוריים באפריל 2028.",
+   "israelStatus": "unknown",
+   "israelNote": "יובל פרייליך מדורג 262 בעולם (FIE, אוק׳ 2026); תקופת הדירוג נפתחת ב־1 באפר׳ 2027",
+   "nextQuotaEvent": null,
+   "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
+   "cutoff": {
+    "rank": 2,
+    "list": "FIE Senior Individual Adjusted Official Ranking (AOR)",
+    "url": "https://fie.org/athletes/detailed-ranking?season=2027&weapon=E&gender=M&category=S&type=I",
+    "final": "2028-04-01",
+    "opens": "2027-04-01"
+   },
+   "checkedAt": "2026-10-19"
+  },
+  {
    "sportId": "weightlifting",
    "event": "נשים (קטגוריה ורישום לא אומתו)",
    "totalQuotas": 10,
@@ -1003,5 +1022,5 @@
    "checkedAt": "2026-10-18"
   }
  ],
- "unpublished": 5
+ "unpublished": 4
 }
