@@ -10,7 +10,11 @@ The job sends each update's {"result": …} through athlete_patch.py, and create
 exist yet.
 Never a stage or quota change: a result goes into history directly, and anything it implies for the record is a
 proposal for a person. A World Cup awards no quota (docs/research/2026-10-18-ofir-triathlon.md, #95).
-Only a final list counts, meaning every row has validated=true. Otherwise there's a warning and nothing to write.
+Only a published list counts: the program's "results" flag in /events/{id}/programs, the day after the race at the
+earliest (the window starts then). The per-row "validated" flag isn't a finality mark: months later it is still mixed
+(Asuncion 2026: 24 of 64 rows, Sagiv's 5th not among them; checked 19.10.2026). Otherwise a warning and nothing to
+write. Every tracked triathlete is matched against the ISR rows (profile id, else exact name), not only those whose
+nextDate is in the event: a later run in the window may find nextDate already moved to the next race.
 """
 import json, re, sys
 from datetime import date, timedelta
@@ -43,11 +47,15 @@ def entrants(data, comp):
             and as_date(a.get("nextDate")) and start <= as_date(a["nextDate"]) <= end]
 
 
+def tracked(data):
+    return [a for a in data.get("athletes") or [] if a.get("sportId") == "triathlon" and not a.get("archived")]
+
+
 def due_competitions(data, today, days):
     first = today - timedelta(days=days)
     for c in data.get("competitions") or []:
         end = as_date(c.get("end")) or as_date(c.get("start"))
-        if c.get("sportId") == "triathlon" and end and first <= end < today and entrants(data, c):
+        if c.get("sportId") == "triathlon" and end and first <= end < today and tracked(data):
             yield c
 
 
@@ -95,27 +103,34 @@ def plan(data, fetch, today, days=4, propose=True):
         for p in progs:
             res = fetch(f"/events/{event['event_id']}/programs/{p['prog_id']}/results").get("data") or {}
             prog_rows = res.get("results") if isinstance(res.get("results"), list) else []
-            if not prog_rows or not all(r.get("validated") is True for r in prog_rows):
+            if p.get("results") is not True or not prog_rows:
                 pending += 1
-                out["warnings"].append(f"תוצאות טריאתלון: {tag} · {p.get('prog_name')}: הרשימה עוד לא סופית; לא נכתב דבר")
+                out["warnings"].append(f"תוצאות טריאתלון: {tag} · {p.get('prog_name')}: התוצאות עוד לא פורסמו; לא נכתב דבר")
                 continue
             final += 1
             rows += [(r, res.get("prog_distance_category"), res.get("prog_date") or comp["start"])
                      for r in prog_rows if r.get("athlete_noc") == "ISR"]
         if not progs:
             out["warnings"].append(f"תוצאות טריאתלון: אין מקצי עלית ב־API עבור {tag}")
-        for a in entrants(data, comp):
+        expected = {a["id"] for a in entrants(data, comp)}
+        for a in tracked(data):
             hit = next(((r, dist, day) for r, dist, day in rows if matches(a, r)), None)
             if not hit:
-                if final and not pending:  # all lists final and no row: a DNS, or a name/id mismatch to check
+                if a["id"] in expected and final and not pending:  # all lists out, no row: a DNS or a name/id mismatch
                     out["warnings"].append(f"תוצאות טריאתלון: {a.get('name') or a['id']} לא נמצא/ה בתוצאות של {tag}")
                 continue
             r, dist, day = hit
             pos, text = result_text(r, comp["name"], dist, day)
             if not text:
                 continue
-            if any(h.get("at") == day and h.get("text") == text for h in a.get("history") or [] if isinstance(h, dict)):
+            same_day = [h for h in a.get("history") or [] if isinstance(h, dict) and h.get("kind", "result") == "result"
+                        and h.get("at") == day and comp["name"] in str(h.get("text"))]
+            if any(h.get("text") == text for h in same_day):
                 continue  # already logged on an earlier run
+            if same_day:   # a different result for this race is logged (a protest, or a hand entry): a person decides
+                out["warnings"].append(f"תוצאות טריאתלון: {a.get('name') or a['id']}: ב־{tag} רשום כבר \"{same_day[0].get('text')}\","
+                                       f" ובתוצאות עכשיו \"{text}\"; לבדוק, לא נכתב דבר")
+                continue
             out["updates"].append({"athleteId": a["id"], "result": {"at": day, "text": text, "source": page}})
             note = f"מקום {pos} ב{comp['name']} {day[:4]}"
             notes = str(a.get("notes") or "").strip()
