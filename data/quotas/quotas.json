@@ -344,7 +344,7 @@
    "cutoff": {
     "rank": 4,
     "list": "FIE Senior Team Ranking",
-    "url": "https://fie.org/athletes",
+    "url": "https://fie.org/athletes/detailed-ranking?season=2027&weapon=E&gender=M&category=S&type=E",
     "final": "2028-04-01",
     "opens": "2027-04-01"
    },
@@ -372,14 +372,14 @@
    "cutoff": {
     "rank": 2,
     "list": "FIE Senior Individual Adjusted Official Ranking (AOR)",
-    "url": "https://fie.org/athletes",
+    "url": "https://fie.org/athletes/detailed-ranking?season=2027&weapon=E&gender=M&category=S&type=I",
     "final": "2028-04-01",
     "opens": "2027-04-01"
    },
    "review": {
-    "status": "ok",
-    "by": "dana",
-    "at": "2026-10-18"
+    "status": "unchecked",
+    "by": "itai",
+    "at": "2026-10-19"
    }
   },
   {
