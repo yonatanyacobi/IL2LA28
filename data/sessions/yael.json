@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T17:35:50Z",
+ "updatedAt": "2026-10-19T09:30:00Z",
  "sessions": [
   {
    "id": "issf-wch-doha-2026-20261103-arm-q",
@@ -75,15 +75,15 @@
     "israel-lacrosse-women-sixes"
    ],
    "phase": "שלב הבתים",
-   "source": "https://www.lacrosse.co.il/about/updates/kara-mupo-israel-womens-sixes-head-coach/",
+   "source": "https://worldlacrosse.sport/2026-european-sixes-lacrosse-championships/",
    "result": "",
    "resultSource": "",
    "resultAt": "",
-   "notes": "HOLD: apply only once the ELF/World Lacrosse game schedule is published. Israel's participation is confirmed by the Israel Lacrosse Association (team to Salou, 2-9.11.2026), but no group or game times are out as of 2026-10-18. Then set date to Israel's first game day, timeLocal as printed and tz Europe/Madrid, and add one session per game day. Recheck 2026-10-26.",
+   "notes": "HOLD: apply only once the official game schedule is published. World Lacrosse's event page lists Israel in the women's field (2-9.11.2026; pools of 5, 5, 4 and 4, top two to the quarterfinals), but its Schedule still reads 'Coming soon' on 2026-10-19, and the ELF event page has none. Israel may not play on 2.11. Then set date to Israel's first game day, timeLocal as printed and tz Europe/Madrid, and add one session per game day. Recheck 2026-10-26.",
    "review": {
     "status": "unchecked",
     "by": "yael",
-    "at": "2026-10-18"
+    "at": "2026-10-19"
    }
   },
   {
