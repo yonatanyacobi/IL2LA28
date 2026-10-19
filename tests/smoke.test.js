@@ -2487,11 +2487,18 @@ test("near-live: awaiting fresh, checked (per-session checkedAt only) and long",
   for (const r of [fresh, checked, runOnly, long]) noLiveClaims(r, "awaiting");
 });
 
-test("source hosts: a CDN host is shortened to its last two labels; ordinary hosts are untouched", async () => {
+test("source hosts: a long host is cut to its registrable domain (3 labels under .co.il), in every source link", async () => {
   const {run} = await boot();
-  assert.strictEqual(run(`shortHost("78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com")`), "rackcdn.com");
-  assert.strictEqual(run(`shortHost("results.fie.org")`), "results.fie.org");
-  assert.strictEqual(run(`shortHost("ijf.org")`), "ijf.org");
+  const h = u => run(`host(${JSON.stringify(u)})`);
+  assert.strictEqual(h("https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/x.pdf"), "rackcdn.com");
+  assert.strictEqual(h("https://sports.walla.co.il/item/1"), "walla.co.il", "not co.il");
+  assert.strictEqual(h("https://www.sport5.co.il/x"), "sport5.co.il");
+  assert.strictEqual(h("https://results.fie.org/x"), "results.fie.org", "short hosts stay as they are");
+  assert.strictEqual(h("https://ifsc.results.info/x"), "ifsc.results.info", "17 characters: the subdomain is the brand");
+  assert.strictEqual(h("https://www.ijf.org/x"), "ijf.org");
+  assert.strictEqual(h("https://live.olympic-committee.org.il/x"), "olympic-committee.org.il");
+  // The game log and the other linkOut() labels use the same helper as hostLink().
+  assert.ok(run(`linkOut("https://sports.walla.co.il/r", "מקור: " + host("https://sports.walla.co.il/r"))`).includes(">מקור: walla.co.il<"));
   assert.ok(run(`hostLink("https://a1b2.ssl.cf3.rackcdn.com/x.pdf", "לוח הזמנים")`).includes("לוח הזמנים: <bdi>rackcdn.com</bdi>"));
 });
 

@@ -231,7 +231,7 @@ class GymPlanTest(unittest.TestCase):
         out, _ = self.run_plan()
         done = copy.deepcopy(self.athletes)
         for a in done:
-            a["history"] = (a.get("history") or []) + [u["result"] for u in out["updates"] if u["athleteId"] == a["id"]]
+            a["history"] = (a.get("history") or []) + [{**u["result"], "kind": "result"} for u in out["updates"] if u["athleteId"] == a["id"]]
         again, _ = self.run_plan(athletes=done)
         self.assertEqual((again["updates"], again["warnings"]), ([], []), "a later run (or a manual entry with result_text) finds them logged")
 
@@ -434,11 +434,21 @@ class RotterdamFloorFinalTest(unittest.TestCase):
         self.assertEqual(next(u for u in out["updates"] if u["athleteId"] == "ron-ortal")["result"]["text"],
                          "מקום 67 בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (18 באוק׳ 2026), לא עלה לגמר הקרקע")
 
-    def test_a_qualification_table_dated_17_10_would_duplicate(self):
-        # Men's qualification ran 17-18.10. If the book dates the floor table 17.10, the entries made on the night
-        # (18.10) don't match, and the plan adds second ones: check the book's date before the job runs (26.10).
+    def test_a_qualification_table_dated_17_10_matches_the_night_entries(self):
+        # Men's qualification ran 17-18.10, and the night's entries say 18.10. A book that dates the table 17.10 is
+        # the same result: matched by event and phase, not by date (same_result).
         out = self.run_plan(book=ROTTERDAM_BOOK.replace("SUN 18 OCT 2026\n54th", "SAT 17 OCT 2026\n54th", 1))
-        self.assertIn(("artem-dolgopyat", "2026-10-17"), [(u["athleteId"], u["result"]["at"]) for u in out["updates"]])
+        self.assertEqual(sorted((u["athleteId"], u["result"]["at"]) for u in out["updates"]),
+                         [("artem-dolgopyat", "2026-10-24"), ("noam-berkovich", "2026-10-24"), ("ron-ortal", "2026-10-17")])
+
+    def test_same_result(self):
+        t = "מקום 3 בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (17 באוק׳ 2026), עלה לגמר הקרקע"
+        night = {"at": "2026-10-18", "kind": "result", "text": t.replace("17 באוק׳", "18 באוק׳"), "source": "https://x.org"}
+        self.assertTrue(gr.same_result(night, t, "2026-10-17", "2026-10-25"))
+        for other in ({**night, "text": night["text"].replace("מקום 3", "מקום 4")},   # a different place is news
+                      {**night, "at": "2025-10-18"},                                   # outside the competition
+                      {**night, "kind": "note"}, "not a dict"):
+            self.assertFalse(gr.same_result(other, t, "2026-10-17", "2026-10-25"), other)
 
     def test_only_after_the_worlds_end(self):
         for today in ("2026-10-24", "2026-10-25", "2026-10-30"):   # running, last day, more than 4 days after

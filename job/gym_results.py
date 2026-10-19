@@ -419,6 +419,21 @@ def name_key(name):
     return tuple(sorted(re.findall(r"[a-z]+", unicodedata.normalize("NFKD", str(name)).encode("ascii", "ignore").decode().lower())))
 
 
+_DAY_HE = re.compile(r" \(\d{1,2} \S+ \d{4}\)")
+
+
+def undated(text):
+    """A result text without its "(18 באוק׳ 2026)": competition, phase, apparatus, place and outcome stay."""
+    return _DAY_HE.sub("", str(text))
+
+
+def same_result(h, text, start, end):
+    """Is history entry h this result already? Matched by event and phase, not by date: a qualification over two
+    days (Rotterdam men 17-18.10) may carry a different day in the book than the one entered on result night."""
+    return (isinstance(h, dict) and h.get("kind") == "result" and isinstance(h.get("at"), str)
+            and start <= h["at"] <= end and undated(h.get("text")) == undated(text))
+
+
 def plan(data, get, today, days=4):
     """data: {"athletes", "competitions", "sessions"} as the DB has them; get(url) -> bytes."""
     from datetime import timedelta
@@ -468,8 +483,8 @@ def plan(data, get, today, days=4):
                 continue
             text = result_text(r["phase"], r["rank"], r["apparatus"], comp["name"], he_date(r["day"]),
                                r["qualified"], r["reserve"], r["gender"])
-            logged = [h for h in a.get("history") or [] if isinstance(h, dict) and h.get("at") == r["day"] and h.get("text") == text]
-            if logged or any(u["athleteId"] == a["id"] and u["result"]["text"] == text for u in out["updates"]):
+            if any(same_result(h, text, comp["start"], str(end)) for h in a.get("history") or []) or any(
+                    u["athleteId"] == a["id"] and undated(u["result"]["text"]) == undated(text) for u in out["updates"]):
                 continue
             out["updates"].append({"athleteId": a["id"], "result": {"at": r["day"], "text": text, "source": book}})
             # Podium in a final: the notes line is a judgment call, so a person approves it (as tri_results.py).
