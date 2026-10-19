@@ -2464,6 +2464,14 @@ test("near-live: awaiting fresh, checked (per-session checkedAt only) and long",
   for (const r of [fresh, checked, runOnly, long]) noLiveClaims(r, "awaiting");
 });
 
+test("source hosts: a CDN host is shortened to its last two labels; ordinary hosts are untouched", async () => {
+  const {run} = await boot();
+  assert.strictEqual(run(`shortHost("78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com")`), "rackcdn.com");
+  assert.strictEqual(run(`shortHost("results.fie.org")`), "results.fie.org");
+  assert.strictEqual(run(`shortHost("ijf.org")`), "ijf.org");
+  assert.ok(run(`hostLink("https://a1b2.ssl.cf3.rackcdn.com/x.pdf", "לוח הזמנים")`).includes("לוח הזמנים: <bdi>rackcdn.com</bdi>"));
+});
+
 test("near-live: result stamp today and on another day, source host in <bdi>, every time in <time datetime>", async () => {
   const res = {result: "מקום 12", resultSource: "https://www.issf-sports.org/r", resultAt: "2026-11-03T08:40:00Z"};
   const today = await nlRow("2026-11-03T12:00:00Z", res);
