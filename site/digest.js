@@ -77,9 +77,10 @@ function digestText(t = today()){
   const changes = weekChanges.filter(c => !used.has(c))
     .sort((a, b) => day(b).localeCompare(day(a)))
     .map(c => waCut(`• ${waText(c.text)}`));
-  // Competitions already under way: their athletes' nextDate may be past, so they are listed per competition.
+  // Competitions already under way, listed per competition with the athletes still to compete in it (nextDate from
+  // today to its end): a finalist from yesterday isn't "competing this week" (PL on #351).
   const running = S.comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS)
-    .map(c => ({c, list: S.athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && c.start <= a.nextDate && a.nextDate <= end(c))}))
+    .map(c => ({c, list: S.athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && a.nextDate >= t && c.start <= a.nextDate && a.nextDate <= end(c))}))
     .filter(r => r.list.length);
   const inRunning = new Set(running.flatMap(r => r.list.map(a => a.id)));
   const competing = [

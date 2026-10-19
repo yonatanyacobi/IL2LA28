@@ -2,6 +2,13 @@
 
 One page: who does what. Standing duties and each researcher's sports are in `docs/company/roles.md`.
 
+## Token economy (owner, 19.10)
+Supersedes "no idle workers", the board keeper and the rollover/board crons.
+- Dormant by default. Core: coordinator (merges, dispatch, board rows on status change only), Omer (publish), Dana (checks). Roni, Tamar and Maya wake only for a ticket; everyone else stays dormant.
+- Work starts only from a ticket: a backlog item, event or failure with an owner and a done-when. No filler sweeps.
+- A fresh agent per ticket with a brief of at most ~2k tokens; never resume a long-running agent. Cheaper models for publishing, data checks and board edits.
+- One review per PR, by the coordinator. One checker per change; two only where the sign-off policy below requires it.
+
 ## Roles and ownership
 
 | Role | Owns |

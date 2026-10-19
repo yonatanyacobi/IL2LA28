@@ -131,7 +131,8 @@ function weekPanel(){
   const rows = [
     waiting.length ? weekRow(`<a href="#day-${y}">אתמול</a>`, weekComps(waiting),
       waiting.length === 1 ? "הופעה אחת ממתינה לתוצאה" : `${waiting.length} הופעות ממתינות לתוצאה`, WEEK_WAIT_PILL) : "",
-    ...days.map(([d, list]) => weekRow(`<a href="#day-${d}">${homeDayTitle(d)}</a>`, weekComps(list), weekWho(list),
+    ...days.map(([d, list]) => weekRow(`<a href="#day-${d}">${homeDayTitle(d)}</a>`,
+      weekComps(list) + (list.some(s => s.athletes.some(isNew)) ? NEW_MARK : ""), weekWho(list),
       weekQuotaDay(list, d, t) ? WEEK_QUOTA_PILL : ""))].filter(Boolean);
   let empty = "";
   if (!days.length) {

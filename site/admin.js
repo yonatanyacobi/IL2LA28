@@ -2,7 +2,7 @@
 // Loaded after app.js and relies on its globals (S, esc, route helpers); the router only calls it when S.isAdmin && S.live.
 "use strict";
 
-const RUN_MAX_AGE_H = 36, RUN_SOURCES_SHOWN = 8;
+const RUN_MAX_AGE_H = 36, RUN_SOURCES_SHOWN = 8, RUN_PUBLISH_H = 26;
 const ADM = {runs: [], runsState: "idle"};   // idle | loading | ready | error
 
 const CHECKS = {
@@ -183,9 +183,19 @@ function launchPanel(){
   });
   // readiness-2210.md §3: the last 2 daily runs published with no errors.
   const runLink = `<a href="#admin-runs">ליומן הריצות</a>`;
+  // Sprint 8 item 11: some run published in the last 26 h, else a red row with the last run and the fix.
+  const health = () => {
+    const pub = ADM.runs.find(r => r.published === true), at = pub ? Date.parse(pub.ended) || Date.parse(pub.started) : NaN;
+    const ago = (Date.now() - at) / 36e5, ok = ago <= RUN_PUBLISH_H, last = ADM.runs[0];
+    const lastRun = last ? `הריצה האחרונה: ${fmtTs(last.started)} · ${esc(RUN_STATUS[last.status] || last.status || "—")}` : "אין ריצות מתועדות";
+    return {num: isNaN(ago) ? "—" : `${Math.round(ago)} ש׳`, open: !ok,
+      label: ok ? `פרסום אחרון של הריצה היומית: ${fmtTs(new Date(at).toISOString())}` : `לא פורסמה ריצה יומית ב־${RUN_PUBLISH_H} השעות האחרונות`,
+      fix: [!ok && lastRun, !ok && `התיקון: להריץ עכשיו את המשימה המתוזמנת <span dir="ltr">la28-israel-daily-update</span> (Run now)`, runLink].filter(Boolean).join(" · "),
+      pill: ok ? "" : `<span class="pill bad">דורש הרצה</span>`};
+  };
   const runs = ADM.runsState === "error" ? [{num: "?", open: true, label: "לא הצלחנו לקרוא את יומן הריצות", fix: runLink}]
     : ADM.runsState !== "ready" ? [{num: "…", label: "טוען את יומן הריצות", fix: runLink}]
-    : [...ADM.runs.slice(0, 2).map(r => { const e = errList(r.errors).length; return {num: e, open: r.published !== true || e > 0,
+    : [health(), ...ADM.runs.slice(0, 2).map(r => { const e = errList(r.errors).length; return {num: e, open: r.published !== true || e > 0,
         label: `ריצה ${isDate(r.id) ? fmt(r.id) : esc(r.id)}: ${r.published === true ? "פורסמה" : "לא פורסמה"}`,
         fix: `${e ? (e === 1 ? "שגיאה אחת" : `${e} שגיאות`) : "אין שגיאות"} · ${runLink}`}; }),
       ...(ADM.runs.length < 2 ? [{num: ADM.runs.length, open: true, label: ADM.runs.length ? "תועדה ריצה יומית אחת בלבד" : "אין ריצות יומיות מתועדות", fix: runLink}] : [])];
@@ -243,16 +253,43 @@ const rnAthletes = sid => {
 };
 const rnKey = q => `la28.rn.${q.sportId}|${q.event}|${q.nextQuotaEvent.start}`;
 
-// Quota events whose last day was yesterday or is today: the window in which results need handling.
+// Yesterday's and today's sessions past their window with no result yet, in the order their windows ended (the order
+// results come in), each with its official link: the session's source, else its competition's. Ended sessions
+// without a result count as "await*" in sessions.js (near-live §2).
+function rnSessions(t = today()){
+  if (typeof daySessions !== "function") return [];
+  return [addDays(t, -1), t].flatMap(d => daySessions(d).map(s => ({s, d, state: sessionState(s, d)})))
+    .filter(x => isAwait(x.state))
+    .sort((x, z) => windowEnd(x.s, x.d) - windowEnd(z.s, z.d) || heCmp(x.s.athletes[0].name, z.s.athletes[0].name));
+}
+
+function rnSessionsBlock(t){
+  const list = rnSessions(t);
+  if (!list.length) return `<p class="muted">אין הופעות שממתינות לתוצאה מאתמול או מהיום.</p>`;
+  const row = ({s, d, state}) => { const src = s.source || s.comp?.source;
+    return `<li><span class="d">${s.startUtc ? whenIL(s.startUtc) : `<a href="#day-${d}">${fmtShort(d)}</a>`}</span>
+      <span class="t">${s.athletes.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}
+        <small>${[s.comp ? compLink(s.comp, esc(s.comp.name)) : esc(sportName(s.sportId)),
+          safeUrl(src) ? hostLink(src, "מקור") : `<span class="adm-bad">אין קישור למקור</span>`].join(" · ")}</small></span>
+      <span>${statusChip(state)}</span></li>`; };
+  return `<h3>${list.length === 1 ? "הופעה אחת ממתינה לתוצאה" : `${list.length} הופעות ממתינות לתוצאה`}</h3>
+    <ul class="rows sess">${list.map(row).join("")}</ul>`;
+}
+
+// Quota events whose last day was yesterday or is today: the window in which results need handling. Above them,
+// the sessions still awaiting a result.
 function resultNightPanel(){
   const t = today(), y = addDays(t, -1);
   const items = S.quotas.filter(q => q.nextQuotaEvent && [y, t].includes(quotaEventEnd(q)))
     .sort((a, b) => quotaEventEnd(a).localeCompare(quotaEventEnd(b)) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
   const runbook = linkOut(RUNBOOK_URL, "מדריך ליל התוצאות");
+  const sessions = rnSessionsBlock(t);
   if (!items.length) return `<section class="panel" id="resultNight"><div class="sec-head"><h2>ליל תוצאות</h2>${runbook}</div>
+    ${sessions}
     <p class="muted">אין אירועי מכסה שמסתיימים היום או אתמול.</p></section>`;
   return `<section class="panel adm-rn" id="resultNight">
     <div class="sec-head"><h2>ליל תוצאות (${items.length})</h2>${runbook}</div>
+    ${sessions}
     <p class="foot">אין מכסה פומבית בלי מקור רשמי. „הושגה” עולה רק אחרי ששלב הספורטאים פורסם (שלב 4 לפני שלב 6).</p>
     ${items.map(q => { const done = store.get(rnKey(q), []); return `<details class="rn-item" ${done.length < RN_STEPS.length ? "open" : ""}>
       <summary>${esc(sportName(q.sportId))} · ${esc(q.event)} ${quotaStatusPill(q.israelStatus)}

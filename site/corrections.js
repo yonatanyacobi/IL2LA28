@@ -54,7 +54,7 @@ function viewCorrections(id = ""){
     const n = months[m].length, open = shown < FIX_SHOWN || S.fixOpen.has(m);
     if (shown < FIX_SHOWN) shown += n;
     return `<section class="month" aria-labelledby="m-${m}">
-      <h2 id="m-${m}" tabindex="-1">${monthName(m)} <span>${n}<span class="sr"> תיקונים</span></span></h2>
+      <h2 id="m-${m}" tabindex="-1">${monthName(m)} <span aria-hidden="true">${n}</span><span class="sr">, ${plural(n, "תיקון אחד", "תיקונים")}</span></h2>
       ${open ? months[m].map(fixEntry).join("")
         : `<p><button class="btn ghost small" data-fix-month="${m}">${n === 1 ? "הצגת התיקון" : `הצגת ${n} התיקונים`} מ${monthName(m)}</button></p>`}</section>`;
   }).join("")

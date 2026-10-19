@@ -237,5 +237,122 @@ class ValidateTest(unittest.TestCase):
             self.assertIn(needle.strip(), "\n".join(errors), needle)
 
 
+
+class CrossRecordTest(unittest.TestCase):
+    """xref_warnings(): gaps across collections, warnings only, on the real fixture (export of 19.10)."""
+    @classmethod
+    def setUpClass(cls):
+        with open(FIXTURE, encoding="utf-8") as f:
+            cls.good = json.load(f)
+
+    def warn(self, mutate=None):
+        d = copy.deepcopy(self.good)
+        if mutate:
+            mutate(d)
+        return validate_data.xref_warnings(d)
+
+    def athlete(self, d, aid):
+        return next(a for a in d["athletes"] if a["id"] == aid)
+
+    def test_fixture_gaps(self):
+        """The 19.10 export: the starts Yael's sweep found, plus the two lacrosse teams."""
+        gaps = [w.split("(")[1].split(")")[0] for w in self.warn() if ".nextDate:" in w]
+        self.assertEqual(sorted(gaps), ["artem-dolgopyat", "israel-lacrosse-men-sixes", "israel-lacrosse-women-sixes",
+                                        "noam-berkovich", "shachar-sagiv"])
+        self.assertIn("athletes[88](shachar-sagiv).nextDate: 2026-10-24 is in tri-world-cup-tongyeong-2026 but no session"
+                      " lists them that day", self.warn())
+        self.assertEqual(validate_data.validate(self.good), [], "warnings never make the file invalid")
+
+    def test_session_on_the_israel_day_covers(self):
+        def add(start):
+            def m(d):
+                d["sessions"].append({"id": "x", "competitionId": "tri-world-cup-tongyeong-2026", "date": "2026-10-24",
+                                      "startUtc": start, "athleteIds": ["shachar-sagiv"], "phase": "x", "source": "https://x.org",
+                                      "result": "", "resultSource": "", "resultAt": ""})
+            return m
+        sagiv = lambda w: any("(shachar-sagiv).nextDate" in x for x in w)
+        self.assertFalse(sagiv(self.warn(add("2026-10-24T02:00:00Z"))), "05:00 in Israel on the 24th")
+        self.assertFalse(sagiv(self.warn(add(None))), "untimed: its date")
+        self.assertTrue(sagiv(self.warn(add("2026-10-23T20:00:00Z"))), "23:00 on the 23rd in Israel doesn't cover the 24th")
+
+    def test_only_upcoming_and_known_competitions(self):
+        past = lambda d: self.athlete(d, "shachar-sagiv").__setitem__("nextDate", "2026-10-01")
+        self.assertFalse(any("shachar-sagiv" in w for w in self.warn(past)), "a past nextDate isn't this check's job")
+        nowhere = lambda d: self.athlete(d, "shachar-sagiv").__setitem__("nextDate", "2026-12-30")
+        self.assertFalse(any("shachar-sagiv" in w for w in self.warn(nowhere)), "no competition that day: nothing to match")
+        def series(d):
+            for c in d["competitions"]:
+                if c["id"] == "tri-world-cup-tongyeong-2026":
+                    c["start"], c["end"] = "2026-09-01", "2026-12-31"   # longer than 31 days: a series
+        self.assertFalse(any("shachar-sagiv" in w for w in self.warn(series)))
+
+    def test_qualifying_needs_a_source(self):
+        def strip(d):
+            d["competitions"][0].update(qualifying=True, source="")
+        w = self.warn(strip)
+        cid = self.good["competitions"][0]["id"]
+        self.assertIn(f"competitions[0]({cid}).source: a qualifying competition needs its official source", w)
+        self.assertFalse(any(".source:" in x for x in self.warn()), "every qualifying competition has one today")
+
+    def test_rank_as_of_after_export(self):
+        def future(d):
+            self.athlete(d, "raz-hershko").update(rankAsOf="2026-10-25", olympicRankNum=2, olympicRankList="IJF Olympic Ranking List",
+                                                   olympicRankAsOf="2026-11-01")
+        w = [x for x in self.warn(future) if "raz-hershko" in x]
+        self.assertEqual(len(w), 2, w)
+        self.assertTrue(all("is after the export (2026-10-19)" in x for x in w), w)
+        same = lambda d: self.athlete(d, "raz-hershko").update(rankAsOf="2026-10-19")
+        self.assertFalse(any("raz-hershko" in x for x in self.warn(same)), "the export day itself is warnings()'s case")
+
+    def test_session_links_are_errors_already(self):
+        """Check 1 (a session's competition and athletes exist) is validate()'s, as an error."""
+        def bad(d):
+            d["sessions"][0] = {**d["sessions"][0], "competitionId": "nope"}
+        d = copy.deepcopy(self.good)
+        bad(d)
+        self.assertTrue(any("unknown competition" in e for e in validate_data.validate(d)))
+
+    def test_cli_prints_them_and_stays_ok(self):
+        r = subprocess.run([sys.executable, os.path.join(HERE, "..", "job", "validate_data.py"), FIXTURE], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("WARN: athletes[88](shachar-sagiv).nextDate:", r.stdout)
+
+
+class CopyRulesTest(unittest.TestCase):
+    """copy_warnings(): copy-rules §1/§5 slips in Hebrew strings (LA28, dashed scores, ASCII ' and ")."""
+
+    def warn(self, text, key="notes"):
+        return validate_data.copy_warnings({"athletes": [{"id": "x", key: text}]})
+
+    def test_fixture_slips(self):
+        """The 19.10 fixture predates the DB fixes of 19.10, so it still carries them."""
+        with open(FIXTURE, encoding="utf-8") as f:
+            w = validate_data.copy_warnings(json.load(f))
+        hits = sorted({x.split(":")[0] for x in w})
+        self.assertIn("athletes[44](israel-lacrosse-men-sixes).notes", hits)
+        self.assertIn("athletes[67](nimrod-krivitsky).notes", hits)
+        self.assertIn("competitions[28](issf-wch-doha-2026).notes", hits)
+        self.assertIn("sports[29](trampoline).window.summary", hits)   # 'מאי 2027' in ASCII quotes
+        self.assertEqual(sum("LA28" in x for x in w), 10)
+
+    def test_flags(self):
+        for text in ("בדרך ל-LA28", "בדרך ל־LA 28", "9-8 על איטליה", "ניצחון 78–65", "(0-2 לברקאי)", "90-54", "מקומות 5-24", "מקומות 1–5; ניצחון 78–65",
+                     "ארה\"ב", "צ'לנג'", "\"מכסה הושגה\""):
+            self.assertTrue(self.warn(text + " עברית"), text)
+
+    def test_allows(self):
+        for text in ("ניצחון 78:65 על פולין", "סאלו, 10–18.11.2026", "7–12.9", "14:30–16:00", "14:30 – 16:00",
+                     "17–25 באוקטובר", "מקומות 5–24", "מקומות 1–5 ארבעה רוכבים, 6–10 שלושה, 11–20 שניים", "מדינות 1–8 שני רוכבים, 9–16 אחד", "2026-10-19", "ב־2028", "ארה״ב", "„מכסה הושגה”", "2:06:00 / 2:23:20",
+                     "מרוץ 4x100", "Hlavní 9-8"):
+            self.assertEqual(self.warn(text if "Hlav" in text else text + " עברית"), [], text)
+        self.assertEqual(self.warn("ל-LA28 עברית", key="source"), [], "sources are URLs, not copy")
+
+    def test_cli_prints_them_and_stays_ok(self):
+        r = subprocess.run([sys.executable, os.path.join(HERE, "..", "job", "validate_data.py"), FIXTURE],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("WARN: athletes[67](nimrod-krivitsky).notes: a dash between numbers", r.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

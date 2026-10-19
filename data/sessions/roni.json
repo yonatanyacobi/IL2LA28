@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-18T19:30:00Z",
+ "updatedAt": "2026-10-19T14:30:00Z",
  "sessions": [
   {
    "id": "ag-worlds-2026-20261019-wag-q-sub7",
@@ -69,7 +69,8 @@
    "timeLocal": "",
    "tz": "",
    "athleteIds": [
-    "matan-kokolayev"
+    "matan-kokolayev",
+    "tom-simkhaev"
    ],
    "phase": "מוקדמות, יום 1: גברים עד 66 ק״ג",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
@@ -304,15 +305,16 @@
    "timeLocal": "",
    "tz": "",
    "athleteIds": [
-    "matan-kokolayev"
+    "matan-kokolayev",
+    "tom-simkhaev"
    ],
    "phase": "מוקדמות, יום 2: גברים עד 66 ק״ג",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/10/Tokyo_GS_2026_Outlines_version-1792323247.pdf",
-   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12).",
+   "notes": "Outlines סעיף 8 (גרסה 16.10.2026): מוקדמות TBC וגם בלוק הגמרים TBC; לכן timeLocal/tz ריקים (אז: tz Asia/Tokyo). רישום: https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-18 (58 רשומים); הרישום נסגר 20.11.2026 – לבדוק שוב אחריו ואחרי ההגרלה (4.12). שמחייב (66-) נוסף ב־19.10: רשום ברשימת IJF (SIMKHAEV Tom, -66, IJF id 82113), https://www.ijf.org/competition/3160/judoka_athletes, נבדק 2026-10-19.",
    "review": {
     "status": "ok",
-    "by": "dana",
-    "at": "2026-10-18"
+    "by": "tamar",
+    "at": "2026-10-19"
    }
   },
   {
@@ -405,6 +407,28 @@
     "by": "dana",
     "at": "2026-10-18"
    }
+  },
+  {
+   "id": "ag-worlds-2026-20261024-mag-fx-final",
+   "competitionId": "ag-worlds-2026",
+   "date": "2026-10-24",
+   "timeLocal": "14:00",
+   "tz": "Europe/Amsterdam",
+   "athleteIds": [
+    "artem-dolgopyat",
+    "noam-berkovich"
+   ],
+   "phase": "גמר קרקע גברים",
+   "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
+   "notes": "FIG MAG Work Plan (fidb_23944), Appendix 3 (02.10.2026): גמרי מכשירים, יום 1, 14:00–18:00 שעון רוטרדם; הקרקע הוא המכשיר הראשון בבלוק. עלו לגמר לפי תוצאות FIG הרשמיות: דולגופיאט 3 (14.300), ברקוביץ׳ 7 (14.033) – https://live.gymnastics.sport/live/17247/mensqual.php?app=fx",
+   "result": "",
+   "resultSource": "",
+   "resultAt": "",
+   "review": {
+    "status": "fixed",
+    "by": "tamar",
+    "at": "2026-10-19"
+   }
   }
  ],
  "pendingFinalBlocks": [
@@ -434,19 +458,6 @@
    "phase": "בלוק הגמרים, יום 3",
    "source": "https://78884ca60822a34fb0e6-082b8fd5551e97bc65e327988b444396.ssl.cf3.rackcdn.com/up/2026/09/Abu_Dhabi_GS_2026_Outlines_ver-1788517403.pdf",
    "addWhen": "ישראלי/ת מאותו יום עולה לבלוק הגמרים (חצי גמר/תקומה), לפי תוצאות IJF"
-  },
-  {
-   "competitionId": "ag-worlds-2026",
-   "date": "2026-10-24",
-   "timeLocal": "14:00",
-   "tz": "Europe/Amsterdam",
-   "phase": "גמר קרקע גברים",
-   "source": "https://www.gymnastics.sport/asset.php?id=fidb_23944",
-   "athleteIds": [
-    "artem-dolgopyat",
-    "noam-berkovich"
-   ],
-   "addWhen": "כשתוצאות המוקדמות הרשמיות של FIG/Longines (סטטוס Official) מאשרות את העלייה של דולגופיאט וברקוביץ (#134)"
   },
   {
    "competitionId": "ag-worlds-2026",
