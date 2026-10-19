@@ -59,9 +59,16 @@ def _geresh_word(m):
     return opener + word + tail
 
 
+# A word made only of prefix letters (ב, ל, ה, ו, מ, ש, כ; up to three, as in וב- or שה-), a typed hyphen, then a
+# digit or Latin letter: ב-3000, ל-LA28 -> maqaf (copy-rules §1). Hebrew after the hyphen (קרב-רב) is left alone.
+PREFIX_HYPHEN = re.compile(r"(?<![\w־'\"-])([בלהומשכ]{1,3})-(?=[0-9A-Za-z])")
+
+
 def geresh(s):
-    """Typed ' and " attached to Hebrew letters -> ׳ and ״. Latin text and URLs are left alone."""
-    return re.sub(r"\S+", lambda m: m.group() if "://" in m.group() else HEB_WORD.sub(_geresh_word, m.group()), s)
+    """Typed ' and " attached to Hebrew letters -> ׳ and ״, and a prefix's hyphen -> maqaf. Latin text and URLs are
+    left alone."""
+    return re.sub(r"\S+", lambda m: m.group() if "://" in m.group()
+                  else PREFIX_HYPHEN.sub(r"\1־", HEB_WORD.sub(_geresh_word, m.group())), s)
 
 
 def text(v, limit=600):

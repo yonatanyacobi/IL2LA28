@@ -211,7 +211,10 @@ COPY_SKIP_KEYS = {"source", "url"}
 SCORE = re.compile(r"(?:^|[^0-9-])([0-9]{1,3}[-–][0-9]{1,3})(?:[^0-9-]|$)")
 RANGE_OK = re.compile(r"\d{1,2}:\d{2} ?[-–] ?\d{1,2}:\d{2}"                              # 14:30–16:00
                       r"|\d{1,2}(?:\.\d{1,2}(?:\.\d{2,4})?)?[-–]\d{1,2}\.\d{1,2}(?:\.\d{2,4})?"   # 10–18.11.2026
-                      r"|\d{1,2} ?[-–] ?\d{1,2} ב?(?:ינו|פבר|מר|אפר|מאי|יונ|יול|אוג|ספט|אוק|נוב|דצמ)")   # 17–25 באוקטובר
+                      r"|\d{1,2} ?[-–] ?\d{1,2} ב?(?:ינו|פבר|מר|אפר|מאי|יונ|יול|אוג|ספט|אוק|נוב|דצמ)"   # 17–25 באוקטובר
+                      # Place ranges, with the list that follows in the same clause: מקומות 1–5 …, 6–10 …
+                      # (quota allocations). En dash only, so a hyphen still warns.
+                      r"|(?:מקומות|מדינות) \d{1,3}–\d{1,3}(?:[^;.]*?, \d{1,3}–\d{1,3})*")
 COPY_RULES = (
     (re.compile(r"LA ?28"), "LA28 in public text; write אולימפיאדת לוס אנג׳לס 2028"),
     (SCORE, "a dash between numbers; a score takes a colon, higher first (78:65)"),
