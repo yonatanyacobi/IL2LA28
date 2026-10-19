@@ -4,6 +4,9 @@
 
 const DAY_STRIP = 3;                 // chips on each side of the selected date
 const DAY_LOOKAHEAD = 120;           // empty-state search limit in each direction
+let dayFollowingOnly = false;
+let dayDateChoice = null;
+const DAY_DATE_ERROR = "יש לבחור תאריך תקין כדי לעבור ליום אחר.";
 
 // "Real" date: rejects 2026-02-30, which JS would roll over to 2 March.
 const realDate = d => isDate(d) && !isNaN(asDate(d)) && addDays(d, 0) === d;
@@ -39,8 +42,10 @@ function compBlock(comp, sessions, sid, d){
 
 function viewDay(d){
   if (!realDate(d)) return notFound();
+  if (dayDateChoice?.day !== d) dayDateChoice = {day: d, value: d, invalid: false};
   const t = today(), isToday = d === t, prev = addDays(d, -1), next = addDays(d, 1);
-  const sessions = daySessions(d);
+  const fullSessions = daySessions(d);
+  const sessions = dayFollowingOnly ? fullSessions.filter(s => followsSport(s.sportId) || followedIn(s)) : fullSessions;
   // Group: sport → competition. Sports: followed, then with a followed athlete, then by name.
   // Competitions inside a sport: by their first session's start time.
   const bySport = new Map();
@@ -56,7 +61,7 @@ function viewDay(d){
   const athleteCount = new Set(sessions.flatMap(s => s.athletes.map(a => a.id))).size;
   const firstStart = c => c.list.map(s => s.startUtc).sort(byStart)[0] || null;
   let before = "", after = "";
-  if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && (!before || !after); i++) {
+  if (!fullSessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && (!before || !after); i++) {
     if (!before && hasIsraelis(addDays(d, -i))) before = addDays(d, -i);
     if (!after && hasIsraelis(addDays(d, i))) after = addDays(d, i);
   }
@@ -70,10 +75,52 @@ function viewDay(d){
   <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = hasIsraelis(x);
     return `<a href="#day-${x}" class="${has ? "has" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}<span class="sr"> · ${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}</span></a>`; }).join("")}
     ${isToday ? "" : `<a href="#today">היום</a>`}</nav>
+  <form class="toolbar" id="dayDateForm" novalidate>
+    <label for="dayDate">בחירת תאריך</label>
+    <input type="date" id="dayDate" value="${esc(dayDateChoice.value)}" aria-describedby="dayDateError"${dayDateChoice.invalid ? ` aria-invalid="true"` : ""}>
+    <button class="btn ghost small" type="submit">מעבר לתאריך</button>
+    <p class="err" id="dayDateError" role="alert"${dayDateChoice.invalid ? "" : " hidden"}>${dayDateChoice.invalid ? DAY_DATE_ERROR : ""}</p>
+  </form>
+  <div class="toolbar"><label class="chk"><input type="checkbox" id="dayFollowOnly" ${dayFollowingOnly ? "checked" : ""}> רק המעקב שלי</label>
+    ${dayFollowingOnly ? `<button class="btn ghost small" type="button" data-day-show-all>הצגת כל ההופעות</button>` : ""}</div>
+  ${dayFollowingOnly ? `<p class="muted">מציגים ${sessions.length} מתוך ${fullSessions.length} הופעות</p>${!S.follows.size && !S.followSports.size ? `<p class="muted">עוד אין ספורטאים או ענפים במעקב שלך. <a href="#sports">לבחירת ענפים למעקב</a></p>` : ""}` : ""}
   ${sessions.length ? `<p class="kpi day-summary">${plural(sessions.length, "הופעה אחת", "הופעות")} · ${plural(athleteCount, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות")} · ${plural(sports.length, "ענף אחד", "ענפים")}</p>` : ""}
   ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
       <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a class="hlink" href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
-    : `<div class="empty"><p>אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה.</p>${before ? `<p><a href="#day-${before}">לתחרות הקודמת: ${fmt(before)}</a></p>` : ""}${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
+    : `<div class="empty"><p>${dayFollowingOnly && fullSessions.length ? "אין הופעות שמתאימות למעקב שלך ביום הזה." : "אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה."}</p>${before ? `<p><a href="#day-${before}">לתחרות הקודמת: ${fmt(before)}</a></p>` : ""}${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}`;
 }
+
+function submitDayDate(e){
+  if (e.target?.id !== "dayDateForm") return;
+  e.preventDefault();
+  const input = $("dayDate"), error = $("dayDateError"), value = input.value;
+  dayDateChoice.value = value;
+  dayDateChoice.invalid = !realDate(value);
+  if (dayDateChoice.invalid) {
+    input.setAttribute("aria-invalid", "true");
+    error.textContent = DAY_DATE_ERROR; error.hidden = false;
+    input.focus({preventScroll: true});
+    return;
+  }
+  input.removeAttribute("aria-invalid");
+  error.textContent = ""; error.hidden = true;
+  location.hash = `#day-${value}`;
+}
+document.addEventListener("submit", submitDayDate);
+document.addEventListener("input", e => {
+  if (e.target?.id === "dayDate" && dayDateChoice) dayDateChoice.value = e.target.value;
+});
+
+document.addEventListener("change", e => {
+  if (e.target?.id !== "dayFollowOnly") return;
+  dayFollowingOnly = e.target.checked;
+  refresh();
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest?.("[data-day-show-all]")) return;
+  dayFollowingOnly = false;
+  refresh();
+  $("dayFollowOnly")?.focus({preventScroll: true});
+});

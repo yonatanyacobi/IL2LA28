@@ -38,7 +38,7 @@ function followFeed(since){
     const at = Date.parse(s.resultAt);
     return s.result && at > sinceAt && at <= now;
   });
-  return followedAthletes().flatMap(a => {
+  const athleteItems = followedAthletes().flatMap(a => {
     const sessionItems = results.filter(s => s.athletes.includes(a)).map(s => ({a, session: true,
       h: {kind: "result", at: s.day, text: s.result, source: s.resultSource}}));
     const resultDays = new Set(sessionItems.map(item => item.h.at));
@@ -51,11 +51,34 @@ function followFeed(since){
     const at = Number.isFinite(Date.parse(updatedAt)) ? IL_DAY.format(new Date(updatedAt)) : "";
     const changed = updatedAt > since && isDate(at) && was !== undefined && was !== shownOf(a);
     return items.length || !changed ? items : [{a, h: {at, text: "הפרטים עודכנו"}}];
-  }).sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(x.a.name, y.a.name)).slice(0, FEED_MAX);
+  });
+  const quotas = new Map(), t = today();
+  for (const q of S.quotas || []) {
+    if (!S.followSports.has(q.sportId) || !safeUrl(q.source)) continue;
+    const kind = q.israelStatus === "earned" ? "earned" : "awaiting";
+    const waiting = kind === "awaiting" ? awaitingOf(q) : null;
+    const at = kind === "earned" ? q.earnedAt : waiting ? addDays(waiting.end, 1) : "";
+    if (!isDate(at) || at <= day || at > t) continue;
+    const key = JSON.stringify([q.sportId, q.event, kind]);
+    if (quotas.has(key) && quotas.get(key).h.at >= at) continue;
+    quotas.set(key, {type: "quota", q, h: {at, text: kind === "earned" ? "מכסה הושגה" : "בהמתנה לתוצאות", source: q.source}});
+  }
+  const name = item => item.type === "quota" ? `${sportName(item.q.sportId)} · ${item.q.event}` : item.a.name;
+  return [...athleteItems, ...quotas.values()]
+    .sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(name(x), name(y))).slice(0, FEED_MAX);
 }
 
 // Athletes followed only through their sport have no star, so their feed rows say why they're there.
 const viaSport = a => S.follows.has(a.id) ? "" : `<small>ענף במעקב: ${esc(sportName(a.sportId))}</small>`;
+
+function followingFeedRow({type, q, a, h, session}){
+  const quota = type === "quota";
+  const href = quota ? `#sport-${esc(q.sportId)}` : session ? `#day-${esc(h.at)}` : `#a-${esc(a.id)}`;
+  const label = quota ? sportName(q.sportId) : a.name;
+  const text = quota ? `<bdi>${esc(q.event)}</bdi>: ${esc(h.text)}` : esc(h.text);
+  const key = quota ? `feed|quota|${JSON.stringify([q.sportId, q.event, h.at, h.text])}` : `feed|${a.id}|${h.at}|${h.text}`;
+  return `<li><span class="d">${fmt(h.at)}</span><span class="t"><a href="${href}">${esc(label)}</a><small>${text}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small>${quota ? "" : viaSport(a)}${rowMark(key, key)}</span><span></span></li>`;
+}
 
 const compLinkOr = c => typeof compLink === "function" ? compLink(c, esc(c.name)) : esc(c.name);
 
@@ -113,8 +136,7 @@ function viewFollowing(tab = ""){
   return `${head}
   <section class="panel" aria-labelledby="feedH">
     <h2 id="feedH">מאז הביקור הקודם (${feed.length})</h2>
-    ${feed.length ? `<ul class="rows">${feed.map(({a, h, session}) => `<li><span class="d">${fmt(h.at)}</span>
-      <span class="t"><a href="${session ? `#day-${esc(h.at)}` : `#a-${esc(a.id)}`}">${esc(a.name)}</a><small>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small>${viaSport(a)}${(k => rowMark(k, k))(`feed|${a.id}|${h.at}|${h.text}`)}</span><span></span></li>`).join("")}</ul>`
+    ${feed.length ? `<ul class="rows">${feed.map(followingFeedRow).join("")}</ul>`
       : `<p class="muted">${followSeenAtLoad ? "אין עדכונים חדשים מאז הביקור הקודם." : "עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."}</p>`}
   </section>
   ${next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>

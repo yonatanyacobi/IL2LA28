@@ -515,7 +515,7 @@ function viewHome(){
       <div class="sec-head"><h2>במעקב שלי</h2>${mineNew ? `<span class="new">${mineNew} עודכנו מאז הביקור הקודם</span>` : ""}</div>
       ${mineSports.length ? `<div class="chips" role="group" aria-labelledby="mineSportsL"><span class="chips-lbl" id="mineSportsL">ענפים במעקב:</span>${mineSports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
       ${mine.length ? `<div class="cards">${mine.map(athleteCard).join("")}</div>` : ""}</section>` : ""}
-  <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת או ענף" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
+  <input class="search" id="q" type="search" placeholder="חיפוש ספורטאי/ת, נבחרת, ענף או תחרות" aria-label="חיפוש" aria-describedby="qCount" value="${esc(S.q)}">
   <p class="sr" id="qCount" aria-live="polite"></p>
   <div id="results"></div>
   ${wonFirst ? "" : wonPanel()}
@@ -545,11 +545,18 @@ function renderResults(){
   const sportKey = s => [s.id, s.he, s.en].map(str).join(" ");
   const sports = S.sports.filter(s => searchKey(sportKey(s)).includes(q));
   const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportKey(sportById(a.sportId) || {id: a.sportId})].map(str).join(" ")).includes(q));
-  $("qCount").textContent = `נמצאו ${hits.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${hits.length} ספורטאים ונבחרות`} ${sports.length === 1 ? "וענף אחד" : `ו־${sports.length} ענפים`}`;
+  const t = today(), end = c => c.end || c.start;
+  const competitions = S.comps.filter(c => searchKey([c.name, c.location, sportKey(sportById(c.sportId) || {id: c.sportId})].map(str).join(" ")).includes(q))
+    .sort((a, b) => (end(a) < t) - (end(b) < t)
+      || (end(a) < t ? end(b).localeCompare(end(a)) : a.start.localeCompare(b.start)) || heCmp(a.name, b.name));
+  $("qCount").textContent = `נמצאו ${hits.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${hits.length} ספורטאים ונבחרות`} ${sports.length === 1 ? "וענף אחד" : `ו־${sports.length} ענפים`} ${competitions.length === 1 ? "ותחרות אחת" : `ו־${competitions.length} תחרויות`}`;
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
     ${hits.length ? `<div class="cards">${hits.slice(0, SEARCH_MAX).map(athleteCard).join("")}</div>
-    ${hits.length > SEARCH_MAX ? `<p class="muted">מציג ${SEARCH_MAX} מתוך ${hits.length}. אפשר לצמצם את החיפוש.</p>` : ""}` : emptyLine("לא נמצאו ספורטאים או נבחרות שמתאימים לחיפוש.", "#sports", "כל הענפים")}
+    ${hits.length > SEARCH_MAX ? `<p class="muted">מציג ${SEARCH_MAX} מתוך ${hits.length}. אפשר לצמצם את החיפוש.</p>` : ""}` : ""}
+    ${competitions.length ? `<h3>תחרויות (${competitions.length})</h3>${competitions.slice(0, SEARCH_MAX).map(c => compRow(c, true)).join("")}
+      ${competitions.length > SEARCH_MAX ? `<p class="muted">מציג ${SEARCH_MAX} מתוך ${competitions.length} תחרויות. אפשר לצמצם את החיפוש.</p>` : ""}` : ""}
+    ${!hits.length && !sports.length && !competitions.length ? emptyLine("לא נמצאו ספורטאים, נבחרות, ענפים או תחרויות שמתאימים לחיפוש.", "#calendar", "לוח התחרויות") : ""}
   </section>`;
 }
 
@@ -641,6 +648,7 @@ function viewAthlete(id){
     </dl>
     ${a.notes ? `<p>${esc(a.notes)}</p>` : ""}
   </section>
+  ${typeof athleteUpcomingSection === "function" ? athleteUpcomingSection(a) : ""}
   ${typeof gameLogSection === "function" ? gameLogSection(a) : ""}
   <section class="panel">
     <h2>היסטוריה</h2>
@@ -1167,6 +1175,10 @@ function clockStatusSignature(h = currentRoute()){
     const d = h === "today" || h === "day" ? today() : h.slice(4);
     if (!realDate(d)) return "";
     sessions = daySessions(d).map(s => [s, d]);
+  } else if (h.startsWith("a-") && typeof athleteUpcomingSessions === "function") {
+    const a = S.athletes.find(a => a.id === h.slice(2));
+    if (!a) return "";
+    return JSON.stringify(athleteUpcomingSessions(a).map(s => [s.day, s.startUtc, s.phase, athleteStatus(s, s.day, a)]));
   } else if (h.startsWith("c-")) {
     const c = S.comps.find(c => c.id === h.slice(2));
     if (!c) return "";
