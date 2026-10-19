@@ -8,6 +8,7 @@ All times are Israel time (24.10 is still summer time: Seoul − 6, Rotterdam + 
 | Athlete | id | Event | Start | Plan |
 |---|---|---|---|---|
 | שחר שגיב | `shachar-sagiv` | World Cup Tongyeong, elite men, sprint | 04:30 | Ofir |
+| איתמר לבנון | `itamar-levanon` | same race (added 19.10, same session row) | 04:30 | Ofir |
 | ארטיום דולגופיאט | `artem-dolgopyat` | Worlds Rotterdam, men's floor final | 15:00 | Roni, **only if #134 confirms Q** |
 | נועם ברקוביץ | `noam-berkovich` | same | 15:00 | same |
 
@@ -36,6 +37,8 @@ No final/Official list by the 25.10 run: wait. Nothing is recorded from another 
    `if_version`. One write per athlete, `result.at` = `"2026-10-24"`:
    - Tongyeong: `"result": {"at": "2026-10-24", "text": …, "source": "https://triathlon.org/events/2026-world-triathlon-cup-tongyeong"}`,
      plus `next` = WTCS Abu Dhabi / `nextDate` = `2026-11-13` only if his entry there is shown, and `notes` on a podium.
+     Sagiv: entered for Abu Dhabi on WT's entry list (19.10), so set it. Levanon: `next`/`nextDate` → `""`; he is only
+     wait-listed (54th) for the Hong Kong World Cup (7.11), which has no competition record.
    - Floor: `"result": {"at": "2026-10-24", "text": …, "source": <Official PDF>}`, plus `rank` per the table,
      and `next` = `""`, `nextDate` = `""` in every case.
 2. **Session**: `result` from the table, `resultSource` (Tongyeong: the results tab URL as it is on the night;
@@ -51,6 +54,8 @@ Sagiv's rank waits for the first Olympic qualification ranking list dated after 
 ## Values: Tongyeong (`<N>` = his place)
 
 `result.text` must match `tri_results.result_text()` character for character, or the 25.10 run adds a second entry.
+The same table applies to Levanon. The distance is ספרינט (WT event data: 'Events Specification' Sprint).
+The session row lists both athletes, so its `result` is `שחר שגיב: <result> · איתמר לבנון: <result>`.
 
 | Outcome | `result.text` | session `result` | `notes` |
 |---|---|---|---|
@@ -58,6 +63,7 @@ Sagiv's rank waits for the first Olympic qualification ranking list dated after 
 | Podium (1–3) | same text | `מקום <N>` | append `מקום <N> בגביע העולם בטריאתלון טונגיונג 2026` |
 | DNF | `לא סיים/ה את גביע העולם בטריאתלון טונגיונג (24 באוק׳ 2026)` | `לא סיים` | no change |
 | DSQ | `נפסל/ה בגביע העולם בטריאתלון טונגיונג (24 באוק׳ 2026)` | `נפסל` | no change |
+| Lapped (LAP) | `הוקף ולא סיים את גביע העולם בטריאתלון טונגיונג (24 באוק׳ 2026)`. Manual only: `tri_results` writes nothing for LAP, so this can't duplicate | `הוקף` | no change |
 | DNS / not on the list | no entry, no session row | – | no change |
 
 ## Values: floor final (`<N>` = 4–8, from the Official list)
