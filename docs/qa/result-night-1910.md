@@ -9,7 +9,7 @@
 - a `result` history entry per athlete;
 - a line in `changes`.
 
-**Run:** after the publish that carries the results, signed out (visitor view), at 400px light and 1280px dark.
+**Run:** after the publish that carries the results, as the test viewer (launch-day.md), at 400px light and 1280px dark.
 **Baseline:** v44 (checked 18.10 against the published files). Before the results, #day-2026-10-19 shows 17:00 Shoshani and 22:10 Raz + Shamay. The status pill reads "לפני התחרות", then "מתחרה היום" from the start until +3 h, then "◷ בהמתנה לתוצאה".
 
 ## 1. Before publishing (data)
