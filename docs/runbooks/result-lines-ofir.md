@@ -6,14 +6,14 @@ Ofir's sports, in the same form as `result-lines-yael.md`. The rules there apply
 - gendered forms (the slash form only when the gender isn't known);
 - `<P>` / `<POS>` / `<MED>` / `<COMP>` as defined there.
 
-**Sources are drafted by Yael and wait for Ofir's check** (marked "to confirm" below).
+Sources checked by Ofir (19.10, #328):
 
 | Sport | Official source | Not a source |
 |---|---|---|
-| Marathon and road | The race's official results (the results link on the race site, e.g. https://www.frankfurt-marathon.com) or the race's World Athletics results page. To confirm: which of the two is final first | Live tracking, splits, news |
+| Marathon and road | The race's own official results (the results link on the race site; e.g. https://www.frankfurt-marathon.com/en/information/results/). It is final first. The race's World Athletics results page comes later (not up a day after Amsterdam). The World Athletics race report counts for the places it lists. Sporthive pages are browser-only (D11) | Live tracking and timing feeds (e.g. UltimateLIVE), splits, news |
 | Triathlon | The results tab on the triathlon.org event page, **final list only** (this is what `job/tri_results.py` reads) | TriathlonLIVE, news |
-| Sailing | The event's official results page as linked from sailing.org (World Sailing events); for class worlds, the class association's official results link. To confirm per event | Tracking apps, news |
-| Surfing | WSL: the event's heat and results pages on worldsurfleague.com. ISA: the event's results on isasurf.org (the fetcher gets a 403, so it needs a browser). To confirm | Live heat scores before the heat is final, news |
+| Sailing | World Sailing events: the results linked from the event page on sailing.org. Class worlds: the class's results link (Formula Kite: IKA at fir.com.pl/results/IKA; iQFoil: iqfoilclassofficial.org). Fallback for a final place: the athlete's World Sailing ranking breakdown (assets.sailing.org/ranking_results/…) | Tracking apps, news |
+| Surfing | WSL: the event's results and heat pages on worldsurfleague.com. ISA: the event's results on isasurf.org, **browser-only** (403 to our tools) | Live heat scores before the heat is final, news |
 
 ## Marathon and road (World Athletics)
 `<TIME>` is the official net time as listed, e.g. `2:07:22`. Add `, שיא אישי` or `, שיא ישראלי` after the time only
