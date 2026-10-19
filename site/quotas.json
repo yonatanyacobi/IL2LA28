@@ -290,17 +290,22 @@
    "maxPerNOC": 1,
    "allocation": "דירוג הקבוצות של FIE ב־1 באפר׳ 2028 (תחרויות 1 באפר׳ 2027–1 באפר׳ 2028): 4 הראשונות + הקבוצה הטובה מכל אחד מ־4 האזורים בין מקומות 5–24. 3 סייפים לקבוצה, וכולם עולים גם לאישי.",
    "israelStatus": "unknown",
-   "israelNote": "תקופת הדירוג טרם נפתחה (מתחילה ב־1 באפר׳ 2027)",
+   "israelNote": "תקופת הדירוג טרם נפתחה (מתחילה ב־1 באפר׳ 2027). FIE אינו מציג תאריך לדירוג, ולכן תאריך המקום העשירי הוא של התחרות האחרונה שנספרת בו: אליפות העולם בהונג קונג, 29.7.2026",
    "nextQuotaEvent": null,
    "source": "https://cdn.nocnsf.nl/media/3xyjpnpr/fen-la28-qualification-system.pdf",
    "cutoff": {
     "rank": 4,
     "list": "FIE Senior Team Ranking",
-    "url": "https://fie.org/athletes",
+    "url": "https://fie.org/athletes/detailed-ranking?season=2027&weapon=E&gender=M&category=S&type=E",
     "final": "2028-04-01",
     "opens": "2027-04-01"
    },
-   "checkedAt": "2026-10-18"
+   "teamRank": {
+    "num": 10,
+    "asOf": "2026-07-29",
+    "source": "https://fie.org/athletes/detailed-ranking?season=2027&weapon=E&gender=M&category=S&type=E"
+   },
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "fencing",
@@ -315,11 +320,11 @@
    "cutoff": {
     "rank": 2,
     "list": "FIE Senior Individual Adjusted Official Ranking (AOR)",
-    "url": "https://fie.org/athletes",
+    "url": "https://fie.org/athletes/detailed-ranking?season=2027&weapon=E&gender=M&category=S&type=I",
     "final": "2028-04-01",
     "opens": "2027-04-01"
    },
-   "checkedAt": "2026-10-18"
+   "checkedAt": "2026-10-19"
   },
   {
    "sportId": "weightlifting",
