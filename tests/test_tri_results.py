@@ -26,8 +26,8 @@ def row(pos, athlete_id=41870, title="Shachar Sagiv", noc="ISR", validated=True)
 class FakeApi:
     """Shapes as returned by api.triathlon.org/v1 (checked on 2025 World Cup Rome); no key involved."""
 
-    def __init__(self, men_rows, women_rows=(), event=True):
-        self.calls, self.men, self.women, self.event = [], list(men_rows), list(women_rows), event
+    def __init__(self, men_rows, women_rows=(), event=True, published=True):
+        self.calls, self.men, self.women, self.event, self.published = [], list(men_rows), list(women_rows), event, published
 
     def __call__(self, path, params=None):
         self.calls.append(path)
@@ -36,9 +36,10 @@ class FakeApi:
                     + ([{"event_id": 195162, "event_slug": "2026-world-triathlon-cup-tongyeong", "event_listing": PAGE}]
                        if self.event else [])}
         if path == "/events/195162/programs":
-            return {"data": [{"prog_id": 10, "prog_name": "Elite Men", "is_race": True},
-                             {"prog_id": 11, "prog_name": "Elite Women", "is_race": True},
-                             {"prog_id": 12, "prog_name": "Elite Coaches", "is_race": False}]}
+            # "results": the list is published (checked on 2026 Beijing and Asuncion, 19.10.2026)
+            return {"data": [{"prog_id": 10, "prog_name": "Elite Men", "is_race": True, "results": self.published},
+                             {"prog_id": 11, "prog_name": "Elite Women", "is_race": True, "results": self.published},
+                             {"prog_id": 12, "prog_name": "Elite Coaches", "is_race": False, "results": False}]}
         rows = {"/events/195162/programs/10/results": self.men, "/events/195162/programs/11/results": self.women}[path]
         return {"data": {"prog_distance_category": "sprint", "prog_date": "2026-10-24",
                          "results": [row(1, 1, "Winner", "BEL")] + rows}}
@@ -80,11 +81,37 @@ class TriResultsTest(unittest.TestCase):
             self.assertEqual((out["updates"], out["proposals"]), ([], []))
         self.assertTrue(any("לא נמצא/ה בתוצאות" in w for w in run(FakeApi([]))["warnings"]))
 
-    def test_unvalidated_list_writes_nothing(self):
-        out = run(FakeApi([row(2, validated=False)]))
+    def test_unpublished_list_writes_nothing(self):
+        out = run(FakeApi([row(2)], published=False))
         self.assertEqual((out["updates"], out["proposals"]), ([], []))
-        self.assertTrue(any("לא סופית" in w for w in out["warnings"]))
+        self.assertTrue(any("התוצאות עוד לא פורסמו" in w for w in out["warnings"]))
         self.assertFalse(any("לא נמצא/ה" in w for w in out["warnings"]), "no 'missing' warning while a list is pending")
+
+    def test_row_validated_flag_is_not_finality(self):
+        # Asuncion 2026, two months on: Sagiv's 5th still had validated=false while other rows were true.
+        out = run(FakeApi([row(5, validated=False), row(29, 133130, "Shachar Agur", validated=True)]))
+        self.assertEqual([u["result"]["text"] for u in out["updates"]],
+                         ["מקום 5 בגביע העולם בטריאתלון טונגיונג (ספרינט, 24 באוק׳ 2026)"], "untracked Israelis are skipped")
+
+    def test_found_after_next_date_moved_on(self):
+        # A later run in the window: the record already points at his next race (Abu Dhabi, 13.11).
+        moved = {**SAGIV, "nextDate": "2026-11-13"}
+        out = run(FakeApi([row("DNF")]), "2026-10-27", data={**DATA, "athletes": [moved, OTHER]})
+        self.assertEqual([(u["athleteId"], u["result"]["text"]) for u in out["updates"]],
+                         [("shachar-sagiv", "לא סיים/ה את גביע העולם בטריאתלון טונגיונג (24 באוק׳ 2026)")])
+        self.assertEqual(out["warnings"], [], "no 'missing' warning for a triathlete not entered here")
+
+    def test_profile_id_is_enough(self):
+        out = run(FakeApi([row(8, 41870, "SAGIV Shahar")]))   # another spelling: the profile id decides
+        self.assertEqual([u["athleteId"] for u in out["updates"]], ["shachar-sagiv"])
+        for u in out["updates"]:
+            self.assertEqual(athlete_patch.result_entry(u["result"])["kind"], "result")
+
+    def test_a_different_logged_result_warns(self):
+        hand = {"at": "2026-10-24", "kind": "result", "text": "מקום 6 בגביע העולם בטריאתלון טונגיונג (ספרינט, 24 באוק׳ 2026)"}
+        out = run(FakeApi([row(5)]), data={**DATA, "athletes": [{**SAGIV, "history": [hand]}]})
+        self.assertEqual(out["updates"], [])
+        self.assertTrue(any("רשום כבר" in w and "מקום 6" in w and "מקום 5" in w for w in out["warnings"]), out["warnings"])
 
     def test_only_isr_rows_and_name_fallback(self):
         no_profile = {**SAGIV, "source": ""}
@@ -98,8 +125,8 @@ class TriResultsTest(unittest.TestCase):
             self.assertEqual(run(api, today)["updates"], [], today)
             self.assertEqual(api.calls, [], f"{today}: no API call outside the window")
         api = FakeApi([row(2)])
-        self.assertEqual(run(api, data={**DATA, "athletes": [OTHER]})["updates"], [])
-        self.assertEqual(api.calls, [], "no Israeli entrant: no API call")
+        self.assertEqual(run(api, data={**DATA, "athletes": []})["updates"], [])
+        self.assertEqual(api.calls, [], "no tracked triathlete: no API call")
         self.assertEqual(len(run(FakeApi([row(2)]), "2026-10-28")["updates"]), 1)
 
     def test_event_not_found_warns(self):
