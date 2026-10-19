@@ -80,8 +80,11 @@ function viewEvent(id){
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
   const schedule = !flat.length
     ? calEmpty(t <= (c.end || c.start) ? "עוד אין הופעות ידועות של ישראלים בתחרות הזו." : "לא תועדו הופעות של ישראלים בתחרות הזו.", c.sportId)
-    : [...groups].filter(([, list]) => list.length).map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k, dateOnly(list))}
-        <ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list))).join("")}</ul></div>`).join("")
+    : [...groups].filter(([, list]) => list.length).sort(([x], [y]) => series ? x.localeCompare(y) : 0)
+      .map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k, dateOnly(list))}
+        <ul class="rows sess">${list.slice().sort((x, y) => (series ? x.day.localeCompare(y.day) : 0) || sessionOrder(x, y))
+          .map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list), series
+            ? `<small><a class="hlink" href="#day-${esc(s.day)}">${esc(dayTitle(s.day))}</a></small>` : "")).join("")}</ul></div>`).join("")
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועות הופעות של ישראלים.</p>` : "")(
         series ? 0 : [...groups].filter(([, list]) => !list.length).length));
   return `<p class="crumb"><a href="#sport-${esc(c.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sportName(c.sportId))}</a></p>
@@ -103,7 +106,8 @@ function viewEvent(id){
     <div class="stack">
       ${stakes}
       ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH">הישראלים בתחרות (${athletes.length})</h2>
-        <ul class="rows">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a)), last = mine[mine.length - 1];
+        <ul class="rows">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a))
+          .sort(([x, xd], [y, yd]) => xd.localeCompare(yd) || byStart(x.startUtc, y.startUtc)), last = mine[mine.length - 1];
           const st = last ? athleteStatus(last[0], last[1], a) : "";
           // A result is shown only in the schedule row, next to its source; components.md §6 row.
           return athleteRow(a, isResult(st) ? `<span class="muted">תוצאה בלוח הזמנים</span>` : statusChip(st)); }).join("")}</ul></section>` : ""}

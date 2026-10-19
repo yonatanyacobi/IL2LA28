@@ -41,11 +41,12 @@ function homeToday(){
   const running = S.comps.filter(c => c.start <= t && t <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS
     && athletesOf(c.sportId).length && !withComp.has(c.id)).sort((x, y) => heCmp(x.name, y.name));
   const next = sessions.length ? "" : homeNextDay(t);
-  const shown = sessions.slice(0, TODAY_MAX), nextList = next ? daySessions(next).sort(sessionOrder).slice(0, HOME_NEXT_ROWS) : [];
+  const shown = sessions.slice(0, TODAY_MAX), nextSessions = next ? daySessions(next).sort(sessionOrder) : [];
+  const nextList = nextSessions.slice(0, HOME_NEXT_ROWS), nextMore = nextSessions.length - nextList.length;
   // PM on #171: an empty day shows the next session day's first rows, so the home still opens on sessions.
   const nextBlock = () => `<h3>הבא בתור: ${homeDayTitle(next)}${dateOnly(nextList) ? DATE_ONLY : ""}</h3>
     ${homeRows(nextList, next)}
-    <p><a href="#day-${next}">לכל ההופעות ב־${fmtShort(next)}</a></p>`;
+    <p>${nextMore > 0 ? `${nextMore === 1 ? "ועוד הופעה אחת" : `ועוד ${nextMore} הופעות`} · ` : ""}<a href="#day-${next}">לכל ההופעות ב־${fmtShort(next)}</a></p>`;
   return `<section class="panel" aria-labelledby="todayH">
     <h2 id="todayH"><a class="hlink" href="#today">היום, ${homeDayTitle(t)}</a>${dateOnly(shown) ? DATE_ONLY : ""}</h2>
     ${sessions.length ? homeRows(shown, t) : `<p class="muted">אין היום הופעות ידועות של ספורטאים או נבחרות מישראל.</p>`}
@@ -79,7 +80,7 @@ function recentResults(){
 function resultGroups(list){
   const days = new Map();
   for (const s of list) days.set(s.day, [...(days.get(s.day) || []), s]);
-  return [...days].map(([d, g]) => `<h3>${homeDayTitle(d)}${dateOnly(g) ? DATE_ONLY : ""}</h3>${homeRows(g, d)}`).join("");
+  return [...days].map(([d, g]) => `<h3><a class="hlink" href="#day-${esc(d)}">${esc(homeDayTitle(d))}</a>${dateOnly(g) ? DATE_ONLY : ""}</h3>${homeRows(g, d)}`).join("");
 }
 
 function homeResults(){

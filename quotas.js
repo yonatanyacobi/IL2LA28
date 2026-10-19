@@ -8,8 +8,20 @@ function viewQuotas(){
   const list = S.quotas.slice().sort((a, b) => heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
   if (!list.length) return head + `<p class="muted">עוד לא נאספו נתוני מכסות.</p>`;
   const n = quotaCounts(list);
-  const next = list.filter(q => nxt(q))
-    .sort((a, b) => a.nextQuotaEvent.start.localeCompare(b.nextQuotaEvent.start)).slice(0, 5);
+  const upcoming = new Map();
+  for (const q of list.filter(q => nxt(q))) {
+    const key = JSON.stringify([q.sportId, q.nextQuotaEvent.start, q.nextQuotaEvent.name]);
+    if (!upcoming.has(key)) upcoming.set(key, []);
+    upcoming.get(key).push(q);
+  }
+  const next = [...upcoming.values()]
+    .sort((a, b) => a[0].nextQuotaEvent.start.localeCompare(b[0].nextQuotaEvent.start)).slice(0, 5);
+  const eventLink = q => {
+    const event = q.nextQuotaEvent;
+    const matches = S.comps.filter(c => c.sportId === q.sportId && c.start <= event.start && event.start <= (c.end || c.start)
+      && str(c.name).trim() === str(event.name).trim());
+    return matches.length === 1 ? compLink(matches[0], esc(event.name)) : esc(event.name);
+  };
   const waiting = list.map(q => [q, awaitingOf(q)]).filter(([, w]) => w).sort(([, x], [, y]) => y.end.localeCompare(x.end));
   const row = q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
     <span class="t"><bdi>${esc(q.event)}</bdi>${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
@@ -28,9 +40,11 @@ function viewQuotas(){
   </section>` : ""}
   ${next.length ? `<section class="panel" aria-labelledby="qNextH">
     <h2 id="qNextH">אירועי המכסה הקרובים</h2>
-    <ul class="rows">${next.map(q => `<li><span class="d">${fmt(q.nextQuotaEvent.start)}</span>
-      <span class="t">${typeof compOn === "function" ? compLink(compOn(q.sportId, q.nextQuotaEvent.start), esc(q.nextQuotaEvent.name)) : esc(q.nextQuotaEvent.name)}<small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · <bdi>${esc(q.event)}</bdi></small>${stakesLine(q, "stakes", "small")}</span>
-      <span>${quotaStatusPill(q.israelStatus)}</span></li>`).join("")}</ul>
+    <ul class="qlist">${next.map(items => { const q = items[0]; return `<li>
+      <div class="q-top"><b>${eventLink(q)}</b><span>${fmt(q.nextQuotaEvent.start)}</span></div>
+      <small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></small>
+      <ul class="qlist">${items.map(item => `<li><div class="q-top"><b><bdi>${esc(item.event)}</bdi></b><span>${quotaStatusPill(item.israelStatus)}</span></div>${stakesLine(item, "stakes", "small")}</li>`).join("")}</ul>
+    </li>`; }).join("")}</ul>
   </section>` : ""}
   ${QUOTA_STATUSES.filter(k => n[k]).map(k => `<section class="panel" aria-labelledby="qH-${k}">
     <h2 id="qH-${k}">${quotaStatusPill(k)} <span class="muted">${n[k]}</span></h2>

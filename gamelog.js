@@ -61,7 +61,7 @@ function gameLogRow({comp, entries, first, last}, id){
   keys.forEach(k => rowMark(k, k));
   const latest = keys.filter(k => changedRows.has(k)).sort((x, y) => changedRows.get(y).localeCompare(changedRows.get(x)))[0];
   return `<li><span class="d">${logDays(first, last)}</span>
-    <span class="t">${comp ? compLink(comp, esc(comp.name)) : `<span class="muted">תחרות שאינה ברשימה</span>`}${entries.map((e, i) =>
+    <span class="t">${comp ? compLink(comp, esc(comp.name)) : `<span class="muted">תחרות שאינה ברשימה</span> · <a href="#day-${esc(first)}">ליום התוצאה</a>`}${entries.map((e, i) =>
       `<span class="res">${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${isUtc(e.resultAt) ? ` · עודכן ב־${whenIL(e.resultAt)}` : ""}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${latest && i === entries.length - 1 ? rowMark(latest, latest) : ""}</span>`).join("")}</span></li>`;
 }
 

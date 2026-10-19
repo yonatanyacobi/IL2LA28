@@ -10,7 +10,11 @@ const FIX_SHOWN = 100;
 // Pre-launch source audit (PM decision on #89); fixed history, not entries, so it's not derived from data.
 const PRE_LAUNCH_FIXES = 25;
 
-const fixHours = c => isNaN(Date.parse(c.reportedAt)) ? NaN : (Date.parse(c.at) - Date.parse(c.reportedAt)) / 36e5;
+const fixHours = c => {
+  const hours = (Date.parse(c.at) - Date.parse(c.reportedAt)) / 36e5;
+  return Number.isFinite(hours) && hours >= 0 ? hours : NaN;
+};
+const fixDate = c => isUtc(c.at) ? ilDate(c.at) : c.at.slice(0, 10);
 // No verb: the foot already starts with "תוקן ב־". Slow fixes are shown too; hiding them would defeat the page.
 const fixSpeed = c => { const h = fixHours(c); return isNaN(h) ? "" : h < 24 ? "תוך פחות מיום" : h <= 48 ? "תוך יומיים" : `אחרי ${Math.ceil(h / 24)} ימים`; };
 
@@ -34,7 +38,7 @@ function fixEntry(c){
   return `<article class="fix">
     <div class="fix-head">${fixTarget(c.target)}<span class="pill by-${c.by}">${FIX_BY[c.by]}</span></div>
     <dl class="fix-diff">${rows}</dl>
-    <p class="foot">${[`תוקן ב־${fmt(c.at.slice(0, 10))}`, fixSpeed(c), linkOut(c.source, host(c.source))].filter(Boolean).join(" · ")}</p>
+    <p class="foot">${[`תוקן ב־${fmt(fixDate(c))}`, fixSpeed(c), linkOut(c.source, host(c.source))].filter(Boolean).join(" · ")}</p>
   </article>`;
 }
 
@@ -46,7 +50,7 @@ function viewCorrections(id = ""){
   if (id && !list.length) return notFound();   // a record with no entries has no log page (and no link to one)
   const name = id && (S.athletes.find(a => a.id === id)?.name || list[0].target.name);
   const months = {};
-  list.forEach(c => (months[c.at.slice(0, 7)] ??= []).push(c));
+  list.forEach(c => (months[fixDate(c).slice(0, 7)] ??= []).push(c));
   const mail = `<span dir="ltr">${esc(CONTACT_EMAIL)}</span>`;
   let shown = 0;
   const monthName = m => new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"});

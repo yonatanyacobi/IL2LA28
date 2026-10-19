@@ -54,7 +54,8 @@ function digestText(t = today()){
       // Results written straight into athlete history (results-assist, e.g. tri_results.py) count too; such an
       // athlete's nextDate has usually moved on to the next event already, so they are matched by the entry's date.
       const inComp = d => isDate(d) && c.start <= d && d <= end(c);
-      const resultsOf = a => (Array.isArray(a.history) ? a.history : []).filter(h => h && h.kind === "result" && inComp(h.at));
+      const resultsOf = a => (Array.isArray(a.history) ? a.history : []).filter(h => h && h.kind === "result" && inComp(h.at)
+        && str(h.text).trim() && safeUrl(h.source));
       const who = S.athletes.filter(a => a.sportId === c.sportId && (inComp(a.nextDate) || resultsOf(a).length));
       const loggedBy = who.filter(a => resultsOf(a).length);
       const logged = loggedBy.flatMap(a => resultsOf(a).map(h => [h.at, waCut(`  – ${waText(a.name)}: ${waText(h.text)}`)]))

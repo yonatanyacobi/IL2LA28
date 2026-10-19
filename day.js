@@ -47,6 +47,7 @@ function viewDay(d){
   }
   const rank = sid => followsSport(sid) ? 0 : [...bySport.get(sid).values()].some(c => c.list.some(followedIn)) ? 1 : 2;
   const sports = [...bySport.keys()].sort((x, y) => rank(x) - rank(y) || heCmp(sportName(x), sportName(y)));
+  const athleteCount = new Set(sessions.flatMap(s => s.athletes.map(a => a.id))).size;
   const firstStart = c => c.list.map(s => s.startUtc).sort(byStart)[0] || null;
   let before = "", after = "";
   if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && (!before || !after); i++) {
@@ -63,6 +64,7 @@ function viewDay(d){
   <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = hasIsraelis(x);
     return `<a href="#day-${x}" class="${has ? "has" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}<span class="sr"> · ${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}</span></a>`; }).join("")}
     ${isToday ? "" : `<a href="#today">היום</a>`}</nav>
+  ${sessions.length ? `<p class="kpi day-summary">${plural(sessions.length, "הופעה אחת", "הופעות")} · ${plural(athleteCount, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות")} · ${plural(sports.length, "ענף אחד", "ענפים")}</p>` : ""}
   ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
       <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a class="hlink" href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}

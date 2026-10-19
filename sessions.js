@@ -45,7 +45,8 @@ function buildExportedSessions(){
 
 // The job records results in athletes' history (#137). Never a source-less result (near-live.md §4).
 const historyResult = (a, d) => (Array.isArray(a.history) ? a.history : [])
-  .find(h => h.kind === "result" && h.at === d && str(h.text).trim() && safeUrl(h.source));
+  .find(h => h && typeof h === "object" && !Array.isArray(h) && h.kind === "result"
+    && h.at === d && str(h.text).trim() && safeUrl(h.source));
 
 // Fallback pseudo-sessions for day d, one per athlete (deduped by athlete + day; a recorded result wins).
 // Athletes with a nextDate or a result on a day, in S.athletes order: the empty-day look-ahead asks for 120 days.
