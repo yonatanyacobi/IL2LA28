@@ -536,13 +536,13 @@
    "maxPerNOC": 4,
    "allocation": "8 לכל מגדר בגמר אליפות העולם נוב׳ 2027, דירוג גביעי העולם מאי 2027–אפר׳ 2028 (3 מתוך 6), ומקום יבשתי ב־2028. עד 2 לכל מגדר (רק ל־3 מדינות).",
    "israelStatus": "unknown",
-   "israelNote": "בנימין ננדזה ושם־טוב עמיאל; לא נמצאו תוצאות",
+   "israelNote": "בנימין ננדזה ושם־טוב עמיאל; ההעפלה מתחילה בגביעי העולם במאי 2027",
    "nextQuotaEvent": null,
    "source": "https://www.gymnastics.sport/publicdir/rules/files/en_1.3%20-%20Olympic%20Qualification%20System%20Los%20Angeles%202028%20Trampoline.pdf",
    "review": {
-    "status": "unchecked",
-    "by": "yael",
-    "at": "2026-10-18"
+    "status": "fixed",
+    "by": "dana",
+    "at": "2026-10-19"
    }
   },
   {
