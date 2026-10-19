@@ -24,6 +24,7 @@ builds, which the job then skips (same `at` and `text`).
 | 11.11 | Start list: Sagiv on it? No: outcome DNS, no session, `next`/`nextDate` → `""` | Ofir |
 | 11.11 | If the record's name changed since 18.10, regenerate the strings: `python3 -c "import sys; sys.path.insert(0,'job'); import tri_results as t; print(t.result_text({'position': 7}, '<record name>', 'sprint', '2026-11-13')[1])"` (and `'DNF'`, `'DSQ'`) | Ofir → Tamar |
 | 11.11 | Item 34 after Abu Dhabi: `stakes` and `nextQuotaEvent` for the next event (not in Ofir's plan yet) | Ofir |
+| 12.11 | Mixed relay (14.11, 16:15 Abu Dhabi time): "Team I Israel" is entered (team 126834), with no members named as of 19.10. Check the members on https://triathlon.org/events/api/startlist/195143/676642 (the data behind the Mixed Relay start list). No tracked athlete in it: nothing to do. A tracked athlete in it: add a relay session for Dana, and watch for risk 2 below. Untracked athletes only: note them for the coordinator; the team decides whether to track the relay | Ofir |
 
 ## 13.11
 
