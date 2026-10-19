@@ -14,6 +14,7 @@ IJF WRL PDF.
 | 29.10 | גפן פרימו | `gefen-primo` | 52- ק״ג (נשים) |
 | 29.10 | תמנע נלסון לוי | `timna-nelson-levy` | 57- ק״ג (נשים) |
 | 29.10 | מתן קוקולייב | `matan-kokolayev` | 66- ק״ג (גברים) |
+| 29.10 | טום שמחייב | `tom-simkhaev` | 66- ק״ג (גברים) |
 | 30.10 | יהונתן אלבז | `yonatan-elbaz` | 73- ק״ג (גברים) |
 | 30.10 | אוהד מוריץ | `ohad-moritz` | 73- ק״ג (גברים) |
 | 30.10 | מאיה גושן | `maya-goshen` | 70- ק״ג (נשים) |
@@ -21,16 +22,17 @@ IJF WRL PDF.
 | 31.10 | רוי סיון | `roy-sivan` | 90- ק״ג (גברים) |
 | 31.10 | רז הרשקו | `raz-hershko` | 78+ ק״ג (נשים) |
 
-Not entered (IJF list, 18.10): כרם פרימו (63-), ענבר לניר (78-). Goshen, Simin, Kokolayev, Moritz and Sivan were
-added to the DB after abu-dhabi-outcomes.md; their entries, like everyone's, are re-checked after the draw. Quota
+Not entered (IJF list, 18.10): כרם פרימו (63-), ענבר לניר (78-). Goshen, Simin, Kokolayev, Simkhaev, Moritz and
+Sivan were added to the DB after abu-dhabi-outcomes.md; their entries, like everyone's, are re-checked after the draw. Quota
 items exist for 70- and 100- (9 judo items on 19.10) but not for 66- or 90-, so the 1.11 quotas PR doesn't change
-for Kokolayev or Sivan. Elbaz and Moritz share 73-: one item, two judoka.
+for Kokolayev, Simkhaev or Sivan. Two categories hold two judoka each: 66- (Kokolayev, Simkhaev) and 73- (Elbaz,
+Moritz).
 
 ## Sequence
 
 | When | Step | Who |
 |---|---|---|
-| by 28.10 | Each judoka's `nextDate` = their actual day (29.10: Ashpiz, G. Primo, Nelson Levy, Kokolayev; 30.10: Elbaz, Moritz, Goshen; 31.10: Simin, Sivan, Hershko; already so in the DB on 19.10) | Roni |
+| by 28.10 | Each judoka's `nextDate` = their actual day (29.10: Ashpiz, G. Primo, Nelson Levy, Kokolayev, Simkhaev; 30.10: Elbaz, Moritz, Goshen; 31.10: Simin, Sivan, Hershko; already so in the DB on 19.10) | Roni |
 | 28.10, 12:00 | Online draw (judotv.com). Re-check entries on https://www.ijf.org/competition/3157/judoka_athletes. A withdrawal: no history entry, out of the session's `athleteIds`, and outcome (ד) on 1.11 | Roni |
 | 28.10, after the draw | The prelims are 9 signed sessions, one per category (`judo-gs-abu-dhabi-2026-<day>-<category>-prelims`), with no time yet. Fill each `timeLocal` from the IJF/judobase schedule (the Outlines say "TBC"); Dana re-signs, and they load through `job/load_sessions.py` | Roni → Dana → coordinator |
 | each day, prelims (time per the draw) | Watch https://www.ijf.org/competition/3157/results. That page only; no news, no judobase live | Roni |
@@ -47,8 +49,8 @@ for Kokolayev or Sivan. Elbaz and Moritz share 73-: one item, two judoka.
    `if_version`: `"result": {"at": "<YYYY-MM-DD of their day>", "text": <history text>, "source": "https://www.ijf.org/competition/3157/results"}`.
    `rank` and `rankNum` don't change; `next`/`nextDate` per Values.
 2. **Session**: `result`, `resultSource` = https://www.ijf.org/competition/3157/results, `resultAt` =
-   `date -u +%Y-%m-%dT%H:%M:%SZ`; all three, or the export blanks the result. Each category has its own session; 73- (30.10) holds Elbaz and
-   Moritz: join as `<name>: <result> · <name>: <result>`. A final-block session gets only the judoka in it.
+   `date -u +%Y-%m-%dT%H:%M:%SZ`; all three, or the export blanks the result. Each category has its own session; 66- (29.10) holds Kokolayev and
+   Simkhaev, 73- (30.10) Elbaz and Moritz: join as `<name>: <result> · <name>: <result>`. A final-block session gets only the judoka in it.
 3. **"מה התעדכן"**: medals only. Prepend `{"at": "<their day>", "text": "ג׳ודו: <name> <זכה/זכתה> ב<זהב/כסף/ארד> בגרנד סלאם אבו דאבי, <weight>", "athleteId": …}`
    (the finals template in result-night.md: gendered verb, no date, since it's in `at`, no trailing period)
    to `meta/status` `changes`, `if_version` from your read, keep 30. The digest shows it once (publishing.md D3).
@@ -62,7 +64,7 @@ History text (publishing.md):
 - `<weight>` = the category without the bracket, e.g. `57- ק״ג`; `<DD>` = 29, 30 or 31. The date is in the job's
   style, so the job doesn't record it twice.
 - `<ROUND>` as in abu-dhabi-outcomes.md, e.g. `בסיבוב הראשון`, `ברבע הגמר`.
-- Gender: הודח for Ashpiz, Kokolayev, Elbaz, Moritz, Simin and Sivan; הודחה for G. Primo, Nelson Levy, Goshen and Hershko.
+- Gender: הודח for Ashpiz, Kokolayev, Simkhaev, Elbaz, Moritz, Simin and Sivan; הודחה for G. Primo, Nelson Levy, Goshen and Hershko.
 - Session `result`: the same outcome words (`זהב`, `כסף`, `ארד`, `מקום 5`, `מקום 7`, `הודח <ROUND>` / `הודחה <ROUND>`),
   in the athlete's own form as above, never the slash.
 - Didn't fight (withdrew, DNS): no entry.
