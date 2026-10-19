@@ -40,7 +40,7 @@ Moritz).
 | each day, 15:00 → end of the final block | Final block | – |
 | each evening, once IJF shows the day's results | Values below → Dana | Roni |
 | after Dana, **before the next morning's 07:13 daily run** | Steps 1–3 below | coordinator |
-| next morning | `runs/<next day>`: no second Abu Dhabi entry for that athlete. There is no judo results script, so the job's wording can differ; if it wrote one, delete the job's entry and tell Maya | Roni |
+| next morning | `runs/<next day>`: no second Abu Dhabi entry for that athlete. The job (`judo_results.py`, SKILL 2g) writes only places 1–7 from the IJF results page, in the same words as step 1 below, so a place entered on the night is skipped; a different one is a warning, not a second entry. Eliminations are only ever entered on the night | Roni |
 | 1.11 | One quotas.json PR for all 9 judo items (`stakes`, `nextQuotaEvent`) per abu-dhabi-outcomes.md, through result-night.md. Until it is live the items show "◷ בהמתנה לתוצאות" | Roni → Dana → lead |
 
 ## Coordinator steps (per judoka, on their day)
@@ -61,9 +61,18 @@ History text (publishing.md):
 
 `<זהב|כסף|ארד|מקום 5|מקום 7|הודח/ה <ROUND>> בגרנד סלאם אבו דאבי, <weight> (<DD> באוק׳ 2026)`
 
+Build it with the job's own function, so the morning run matches it:
+`python3 job/judo_results.py text <1|2|3|5|7|out> "גרנד סלאם אבו דאבי" <-66> <2026-10-29> <m|f> ["<ROUND>"] [bye]`.
+The round is required with `out` and must be one of the forms in `judo_results.ROUNDS` (before the quarter-final: a
+quarter-final loser goes to the repechage and gets a place). Read it from the IJF draw page for the category
+(`/competition/3157/draw?id_weight=…`): the bracket column of their last bout. The results page lists places only.
+**Bye** (Shira, #381): when the draw shows no bout for them in column 1, add `bye`. Only with `בסיבוב השני`, it gives
+`הודח בקרב הפתיחה בסיבוב השני` / `הודחה בקרב הפתיחה בסיבוב השני`. For the shared session (66-, 73-),
+`judo_results.join_session` builds `<name>: <result> · <name>: <result>`.
+
 - `<weight>` = the category without the bracket, e.g. `57- ק״ג`; `<DD>` = 29, 30 or 31. The date is in the job's
   style, so the job doesn't record it twice.
-- `<ROUND>` as in abu-dhabi-outcomes.md, e.g. `בסיבוב הראשון`, `ברבע הגמר`.
+- `<ROUND>` as in abu-dhabi-outcomes.md, e.g. `בסיבוב הראשון`, `בסיבוב השני` (never `ברבע הגמר`; see above).
 - Gender: הודח for Ashpiz, Kokolayev, Simkhaev, Elbaz, Moritz, Simin and Sivan; הודחה for G. Primo, Nelson Levy, Goshen and Hershko.
 - Session `result`: the same outcome words (`זהב`, `כסף`, `ארד`, `מקום 5`, `מקום 7`, `הודח <ROUND>` / `הודחה <ROUND>`),
   in the athlete's own form as above, never the slash.
