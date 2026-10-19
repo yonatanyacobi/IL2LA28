@@ -26,7 +26,7 @@ result night. Of the dates before Abu Dhabi, 26–28.10 fit.
 | Result nights | ⬜ | The first one is tonight, 19.10; table below |
 | Open bugs | 🟢 | None blocking. 23 PRs merged since 19.10 00:00 (#303–#334), including stakes only where Israel competes (#322), the late-data render (#308) and both-checker quota sign-off (#330) |
 | Legal and disclaimer | 🟢 | Every item checked in the code; professional review is the owner's call |
-| Your decisions | 🟡 ⏳ OWNER | D1 (date), D-R2 (quota proposals, by 25.10), D11 (Teferi), the view-only test account for QA. D10 is done |
+| Your decisions | 🟡 ⏳ OWNER | D1 (date), D-R2 (quota proposals, by 25.10), D11 (browser checks: Maru Teferi, two taekwondo ranks, the weightlifting start book), the view-only test account for QA. D10 is done |
 
 ## 1. Data coverage
 | Check | How | 18.10 / now | Green when |
@@ -80,7 +80,7 @@ From [owner-decisions.md](../product/owner-decisions.md).
 | D9 | No English, no Paralympics until mid-2027 | 25.10 | Treated as confirmed |
 | D-R2 | Daily job proposes quota updates; options and costs in [d-r2-options.md](../product/d-r2-options.md) (#350) | 25.10 | B: fully manual. **⏳ OWNER** |
 | D10 | Trampoline athletes' Hebrew names | – | **Done:** the federation's spelling (#298, #303); both records checked |
-| D11 | Browser check: Teferi's Sporthive result (lpga.com optional) | before launch | Teferi's result stays on hold. **⏳ OWNER, 19.10: no answer yet**; the owner checks by hand (the Browser verifier trial ended) |
+| D11 | Checks in the owner's browser, [owner-decisions.md](../product/owner-decisions.md#d11-checks-in-the-owners-browser): (1) **Maru** Teferi's Amsterdam result on Sporthive (20th, 2:07:22 by a secondary read), required; (2) WT ranks for Bayech and Dan; (3) the IWF Start Book for Ningbo, by 26.10; (4) lpga.com for Beck, optional. **Not part of D11 any more:** **Selamawit** Teferi's Amsterdam result (9th, 2:22:58), which Dana verified from World Athletics' race report on 19.10 | before launch; (3) by 26.10 | Maru Teferi's result stays on hold; Bayech and Dan keep their list date open; Celia Gold has no session. **⏳ OWNER, 19.10: no answer yet**; the coordinator collects the reply (sprint 8, item 20) |
 | – | **Public link** for signed-out visitors (launch-day.md, Sharing settings) | before D1 | No public launch. **⏳ OWNER: check the site's Share menu now, not on launch day** |
 | – | **View-only test account** for pre-launch QA (launch-day.md, Test viewer) | 20.10 09:10 (v55 check 8) | QA runs as an editor with "צפייה כגולש/ת", which is weaker. **⏳ OWNER** |
 | – | **Daily task fires at 07:13** (§3) | 20.10 07:13 | Hand exports by the coordinator. **⏳ OWNER** |
