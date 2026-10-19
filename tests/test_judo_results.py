@@ -42,10 +42,21 @@ class JudoTextTest(unittest.TestCase):
                              f"{words} בגרנד סלאם אבו דאבי, 78+ ק״ג (31 באוק׳ 2026)")
         self.assertEqual(jr.result_text("out", "גרנד סלאם אבו דאבי", "-66", "2026-10-29", "m", "בסיבוב השני"),
                          "הודח בסיבוב השני בגרנד סלאם אבו דאבי, 66- ק״ג (29 באוק׳ 2026)")
-        self.assertEqual(jr.outcome("out", "f", "ברבע הגמר"), "הודחה ברבע הגמר", "the athlete's own form, never הודח/ה")
+        self.assertEqual(jr.outcome("out", "f", "בסיבוב השלישי"), "הודחה בסיבוב השלישי", "the athlete's own form, never הודח/ה")
+
+    def test_bye_wording_per_gender(self):
+        # Shira on #381: after a bye (no bout in column 1 of the draw) the first bout is in round two.
+        self.assertEqual(jr.result_text("out", "גרנד סלאם אבו דאבי", "-66", "2026-10-29", "m", "בסיבוב השני", bye=True),
+                         "הודח בקרב הפתיחה בסיבוב השני בגרנד סלאם אבו דאבי, 66- ק״ג (29 באוק׳ 2026)")
+        self.assertEqual(jr.result_text("out", "גרנד סלאם אבו דאבי", "-57", "2026-10-29", "f", "בסיבוב השני", bye=True),
+                         "הודחה בקרב הפתיחה בסיבוב השני בגרנד סלאם אבו דאבי, 57- ק״ג (29 באוק׳ 2026)")
+        for args in [("out", "m", "בסיבוב השלישי"), ("out", "m", "בסיבוב הראשון"), (5, "m", None)]:
+            with self.assertRaises(ValueError, msg=args):
+                jr.outcome(*args, bye=True)
 
     def test_refuses_what_the_runbook_doesnt_allow(self):
-        for args in [(4, "m"), (5, "x"), ("out", "m", None), ("out", "m", "בשלב הבתים"), (5, "m", "בסיבוב הראשון")]:
+        for args in [(4, "m"), (5, "x"), ("out", "m", None), ("out", "m", "בשלב הבתים"), (5, "m", "בסיבוב הראשון"),
+                     ("out", "m", "ברבע הגמר")]:   # a quarter-final loser goes to the repechage and gets a place
             with self.assertRaises(ValueError, msg=args):
                 jr.outcome(*args)
         with self.assertRaises(ValueError):
@@ -109,6 +120,15 @@ class JudoPlanTest(unittest.TestCase):
         self.assertNotIn("yonatan-elbaz", [u["athleteId"] for u in out["updates"]])
         self.assertTrue(any("yonatan-elbaz: רשום כבר" in w for w in out["warnings"]))
 
+    def test_no_warning_once_the_night_entered_it(self):
+        # Itai on #381: Ashpiz eliminated, entered on the night; the morning run doesn't ask for it again.
+        night = {"at": "2026-10-29", "kind": "result", "source": RESULTS,
+                 "text": "הודח בקרב הפתיחה בסיבוב השני בגרנד סלאם אבו דאבי, 60- ק״ג (29 באוק׳ 2026)"}
+        entered = [{**a, "history": [night]} if a["id"] == "izhak-ashpiz" else a for a in ATHLETES]
+        out, _ = self.run_plan(athletes=entered)
+        self.assertFalse(any("izhak-ashpiz" in w for w in out["warnings"]))
+        self.assertTrue(any("matan-kokolayev לא במקומות 1–7" in w for w in out["warnings"]), "others still warned")
+
     def test_warnings_instead_of_writes(self):
         out, calls = self.run_plan(comps=[{**ABU_DHABI, "source": "https://allsportdb.com/Sports/Judo"}])
         self.assertEqual((out["updates"], calls), ([], []))
@@ -132,6 +152,9 @@ class JudoPlanTest(unittest.TestCase):
         r = subprocess.run([sys.executable, script, "text", "out", "גרנד סלאם אבו דאבי", "-66", "2026-10-29", "m", "בסיבוב הראשון"],
                            capture_output=True, text=True)
         self.assertEqual((r.returncode, r.stdout.strip()), (0, "הודח בסיבוב הראשון בגרנד סלאם אבו דאבי, 66- ק״ג (29 באוק׳ 2026)"))
+        r = subprocess.run([sys.executable, script, "text", "out", "גרנד סלאם אבו דאבי", "-57", "2026-10-29", "f", "בסיבוב השני", "bye"],
+                           capture_output=True, text=True)
+        self.assertEqual(r.stdout.strip(), "הודחה בקרב הפתיחה בסיבוב השני בגרנד סלאם אבו דאבי, 57- ק״ג (29 באוק׳ 2026)")
         self.assertEqual(subprocess.run([sys.executable, script, "text", "4", "x", "-66", "2026-10-29", "m"],
                                         capture_output=True).returncode, 1)
         self.assertEqual(subprocess.run([sys.executable, script, "plan", "/no/such/dir"], capture_output=True).returncode, 1)
