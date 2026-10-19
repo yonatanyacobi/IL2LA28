@@ -1254,6 +1254,34 @@ test("data.json not available: access, timeout and error each end in a Hebrew me
   assert.ok(slowQ.view("home").includes('id="todayH"'), "the page renders without quotas.json");
 });
 
+// Omer on #301: per-athlete "מה התעדכן" lines next to the same athlete's logged result (digest-2026-10-25.md scenario).
+test("digest: a change line repeating a logged result is skipped, with or without athleteId", async () => {
+  const build = withIds => {
+    const d = clone(), A = id => d.athletes.find(a => a.id === id);
+    const res = (id, at, text) => { A(id).history = [...(A(id).history || []), {at, kind: "result", text, source: "https://www.gymnastics.sport/r"}]; };
+    res("shachar-sagiv", "2026-10-24", "מקום 12 בגביע העולם בטריאתלון טונגיונג (ספרינט, 24 באוק׳ 2026)");
+    res("artem-dolgopyat", "2026-10-24", "מקום 2 בגמר הקרקע");
+    const ch = (at, text, athleteId) => ({at, text, ...(withIds && athleteId ? {athleteId} : {})});
+    d.changes = [ch("2026-10-25", "טריאתלון: שחר שגיב סיים במקום 12 בגביע העולם בטונגיונג", "shachar-sagiv"),
+      ch("2026-10-24", "התעמלות מכשירים: ארטיום דולגופיאט זכה בכסף בגמר הקרקע באליפות העולם", "artem-dolgopyat"),
+      ch("2026-10-20", "התעמלות מכשירים: נבחרת הגברים סיימה במקום 20 במוקדמות ולא עלתה לגמר הקבוצתי"),
+      ch("2026-10-21", "התעמלות מכשירים: ארטיום דולגופיאט עלה לגמר הקרקע", "artem-dolgopyat"), ...d.changes];
+    return d;
+  };
+  for (const withIds of [true, false]) {
+    const b = await boot({data: build(withIds)}), label = withIds ? "with athleteId" : "without athleteId";
+    const results = t => b.run(`digestText("${t}")`).split("*תוצאות השבוע*")[1].split("*ישראלים")[0];
+    const r25 = results("2026-10-25");
+    assert.strictEqual(count(r25, "שחר שגיב: מקום 12"), 1, `25.10 ${label}: Sagiv's result`);
+    assert.ok(!r25.includes("שחר שגיב סיים במקום 12"), `25.10 ${label}: his change line (the morning after) is skipped`);
+    const r1 = results("2026-11-01");
+    assert.ok(r1.includes("ארטיום דולגופיאט: מקום 2 בגמר הקרקע") && !r1.includes("זכה בכסף בגמר הקרקע"), `1.11 ${label}: the same-day line is skipped`);
+    assert.ok(r1.includes("נבחרת הגברים סיימה במקום 20"), `1.11 ${label}: a team line stays`);
+    // Without athleteId, a line naming him on another day isn't his result; with it, any line about him goes (as before).
+    assert.strictEqual(r1.includes("ארטיום דולגופיאט עלה לגמר הקרקע"), !withIds, `1.11 ${label}: the qualification line`);
+  }
+});
+
 test("auto-refresh ignores JSON that isn't the export: the site stays as it was", async () => {
   const {ctx, run, view} = await boot({now: "2026-10-29T08:00:00Z"});
   const before = view("home");
