@@ -105,6 +105,36 @@ function followUpcoming(){
   return [...appearances, ...athletes, ...comps].sort((x, y) => x.d.localeCompare(y.d)).slice(0, 5);
 }
 
+let renderedFollowingUpcoming = "";
+const followingUpcomingMarks = new Map();
+
+function followingUpcomingContent(clockOnly = false){
+  const next = followUpcoming();
+  return next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
+    <ul class="rows">${next.map(x => {
+      const mark = clockOnly ? followingUpcomingMarks.get(x.k) || "" : rowMark(x.k, x.d + x.html);
+      if (!clockOnly) followingUpcomingMarks.set(x.k, mark);
+      return `<li><span class="d">${fmtShort(x.d)}</span><span class="t">${x.html}${mark}</span><span>${x.chip}</span></li>`;
+    }).join("")}</ul></section>` : "";
+}
+
+function refreshFollowingUpcoming(){
+  const panel = $("followingUpcoming");
+  if (!panel) return;
+  const html = followingUpcomingContent(true);
+  if (html === renderedFollowingUpcoming) return;
+  const active = document.activeElement, key = panel.contains?.(active) ? focusKey(active) : null, y = window.scrollY;
+  if (key?.sel) key.idx = Math.max(0, [...panel.querySelectorAll(key.sel)].indexOf(active));
+  panel.innerHTML = html;
+  renderedFollowingUpcoming = html;
+  if (key) {
+    const matches = key.sel ? [...panel.querySelectorAll(key.sel)] : [];
+    const again = key.id ? $(key.id) : matches[key.idx] || matches[0];
+    (again || panel).focus({preventScroll: true});
+  }
+  if (typeof y === "number") scrollTo({top: y, behavior: "auto"});
+}
+
 function viewFollowing(tab = ""){
   if (tab && tab !== "sports") return notFound();
   // Opening the page is the "visit": the badge clears, and the feed keeps showing what was new on arrival.
@@ -132,15 +162,16 @@ function viewFollowing(tab = ""){
     return `${head}${empty}
     ${picks.length ? `<section class="panel"><h2>הצעות למעקב</h2><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}`;
   }
-  const feed = followFeed(followSeenAtLoad), next = followUpcoming();
+  const feed = followFeed(followSeenAtLoad);
+  followingUpcomingMarks.clear();
+  renderedFollowingUpcoming = followingUpcomingContent();
   return `${head}
   <section class="panel" aria-labelledby="feedH">
     <h2 id="feedH">מאז הביקור הקודם (${feed.length})</h2>
     ${feed.length ? `<ul class="rows">${feed.map(followingFeedRow).join("")}</ul>`
       : `<p class="muted">${followSeenAtLoad ? "אין עדכונים חדשים מאז הביקור הקודם." : "עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."}</p>`}
   </section>
-  ${next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
-    <ul class="rows">${next.map(x => `<li><span class="d">${fmtShort(x.d)}</span><span class="t">${x.html}${rowMark(x.k, x.d + x.html)}</span><span>${x.chip}</span></li>`).join("")}</ul></section>` : ""}
+  <div id="followingUpcoming" tabindex="-1">${renderedFollowingUpcoming}</div>
   ${tab ? (sports.length ? `<ul class="sports">${sports.map(s => { const ws = winStatus(s.window); return `<li><a class="sport" href="#sport-${esc(s.id)}">
       <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</span>${stageBar(athletesOf(s.id), true).html}
       ${quotaCardSummary(s.id)}<span class="meta">${athletesOf(s.id).length} ברשימה</span></a></li>`; }).join("")}</ul>`

@@ -1192,6 +1192,11 @@ function clockStatusSignature(h = currentRoute()){
 function refreshClockStatuses(){
   if (document.hidden || !S.loaded) return;
   // Reopening Following marks its feed read; the clock must not count as a visit.
+  if (/^following(-|$)/.test(currentRoute()) && typeof refreshFollowingUpcoming === "function") {
+    refreshFollowingUpcoming();
+    const d = $("days"); if (d) d.textContent = daysLeft();
+    return;
+  }
   if (today() !== renderedDay && !/^following(-|$)/.test(currentRoute())) return refresh();
   const signature = clockStatusSignature();
   if (signature && signature !== renderedClock) return refresh();

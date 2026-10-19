@@ -42,7 +42,13 @@ function compBlock(comp, sessions, sid, d){
 
 function viewDay(d){
   if (!realDate(d)) return notFound();
-  if (dayDateChoice?.day !== d) dayDateChoice = {day: d, value: d, invalid: false};
+  // Today aliases advance at midnight without an explicit navigation.
+  const route = currentRoute(), choiceRoute = route === "today" || route === "day" ? route : `day-${d}`;
+  if (dayDateChoice?.route !== choiceRoute) dayDateChoice = {route: choiceRoute, day: d, value: d, invalid: false, edited: false};
+  else if (dayDateChoice.day !== d) {
+    dayDateChoice.day = d;
+    if (!dayDateChoice.edited) dayDateChoice.value = d;
+  }
   const t = today(), isToday = d === t, prev = addDays(d, -1), next = addDays(d, 1);
   const fullSessions = daySessions(d);
   const sessions = dayFollowingOnly ? fullSessions.filter(s => followsSport(s.sportId) || followedIn(s)) : fullSessions;
@@ -97,6 +103,7 @@ function submitDayDate(e){
   e.preventDefault();
   const input = $("dayDate"), error = $("dayDateError"), value = input.value;
   dayDateChoice.value = value;
+  dayDateChoice.edited = true;
   dayDateChoice.invalid = !realDate(value);
   if (dayDateChoice.invalid) {
     input.setAttribute("aria-invalid", "true");
@@ -110,7 +117,10 @@ function submitDayDate(e){
 }
 document.addEventListener("submit", submitDayDate);
 document.addEventListener("input", e => {
-  if (e.target?.id === "dayDate" && dayDateChoice) dayDateChoice.value = e.target.value;
+  if (e.target?.id === "dayDate" && dayDateChoice) {
+    dayDateChoice.value = e.target.value;
+    dayDateChoice.edited = true;
+  }
 });
 
 document.addEventListener("change", e => {
