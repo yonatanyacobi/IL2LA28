@@ -64,7 +64,11 @@ function digestText(t = today()){
       // An editor's change about an athlete whose result is already logged above would repeat it.
       // The near-live status "…מתקיימת עכשיו" from before the event is stale under its results (Gil's rehearsal). Only
       // that phrase: any other text, a result included, stays. Dropped notes stay used, so they don't resurface below.
-      const about = fromJob.filter(x => !loggedBy.some(a => a.id === x.athleteId) && !/מתקיימ(ת|ים|ות) עכשיו/.test(str(x.text)));
+      // A line without athleteId (hand-written, #301's per-athlete lines) repeats a result when it names that athlete and
+      // is dated the result's day or the morning after, when the job writes it.
+      const repeats = x => loggedBy.some(a => x.athleteId ? x.athleteId === a.id
+        : waText(x.text).includes(waText(a.name)) && resultsOf(a).some(h => day(x) === h.at || day(x) === addDays(h.at, 1)));
+      const about = fromJob.filter(x => !repeats(x) && !/מתקיימ(ת|ים|ות) עכשיו/.test(str(x.text)));
       const lines = [...logged, ...about.map(x => waCut(`  – ${waText(x.text)}`))];
       return [waCut(`• ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))})`),
         ...(who.length ? waList("  ישראלים: ", names(who)) : []),
