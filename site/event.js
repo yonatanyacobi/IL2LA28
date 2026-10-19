@@ -78,7 +78,7 @@ function viewEvent(id){
   const dayHead = (d, only) => `<h3><a class="hlink" href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span>${only ? DATE_ONLY : ""}</h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
   const schedule = !flat.length
-    ? calEmpty(t <= (c.end || c.start) ? "ההופעות של הישראלים יפורסמו לפי לוח הזמנים הרשמי." : "לא תועדו הופעות של ישראלים בתחרות הזו.", c.sportId)
+    ? calEmpty(t <= (c.end || c.start) ? "עוד אין הופעות ידועות של ישראלים בתחרות הזו." : "לא תועדו הופעות של ישראלים בתחרות הזו.", c.sportId)
     : [...groups].filter(([, list]) => list.length).map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k, dateOnly(list))}
         <ul class="rows sess">${list.sort(sessionOrder).map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list))).join("")}</ul></div>`).join("")
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועות הופעות של ישראלים.</p>` : "")(

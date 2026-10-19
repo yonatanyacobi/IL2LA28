@@ -263,7 +263,7 @@ test("empty states (S5): p.muted lines, each table row's way on, no \"במאגר
   const b = await boot({data: far, now: "2026-10-19T09:00:00Z"});
   const a0 = far.athletes[0], page = b.view(`a-${a0.id}`);
   assert.ok(page.includes(`<p class="muted">אין תחרויות קרובות ידועות בענף. <a href="#calendar-${a0.sportId}">לוח התחרויות</a></p>`), "athlete row");
-  assert.ok(page.includes('<p class="muted">עוד אין אירועים מתועדים.</p>'), "athlete history: no way on");
+  assert.ok(page.includes('<p class="muted">עוד אין רשומות בהיסטוריה.</p>'), "athlete history: no way on");
   // Israelis only today: the week says "after today" instead of "no competitions" (S4), linking the calendar when
   // no later day is known.
   far.athletes[0].nextDate = "2026-10-19";
@@ -954,7 +954,7 @@ test("#c- status by date, escaped results, earned items, series, Doha with no kn
   noIsraelis.athletes = noIsraelis.athletes.filter(a => a.sportId !== "shooting" || a.id === "sergey-richter");
   const doha = (await eventAt(DOHA, "2026-11-02T08:00:00Z", {data: noIsraelis})).out;
   assert.ok(doha.includes("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.") && doha.includes("ספורטאי/ת או נבחרת אחת ברשימה בענף</a>") && !doha.includes('id="evAthH"'), "never claims they compete");
-  assert.ok(doha.includes('id="evStakesH"') && doha.includes("ההופעות של הישראלים יפורסמו לפי לוח הזמנים הרשמי."), "Doha stakes, no sessions yet");
+  assert.ok(doha.includes('id="evStakesH"') && doha.includes("עוד אין הופעות ידועות של ישראלים בתחרות הזו."), "Doha stakes, no sessions yet");
   const dohaItems = doha.split('id="evStakesH"')[1].split("</section>")[0].split("<li>").slice(1);
   for (const li of dohaItems) assert.ok(li.includes("q-in-contention") || !li.includes("מה זה אומר"), "stakes only for in-contention items");
   const withSess = {...JSON.parse(JSON.stringify(FIXTURE)), sessions: [{competitionId: DOHA, date: "2026-11-03", startUtc: "2026-11-03T06:30:00Z",
@@ -2413,7 +2413,7 @@ test("#day: today's states, a result on another day, #day alone, impossible date
   assert.ok(view("home").includes('<h2 id="todayH"><a class="hlink" href="#today">היום, '), "home h2 → #today, a.hlink");
   const quiet = run(`(() => { for (let d = "2026-11-15"; d < "2027-06-01"; d = addDays(d, 1)) if (!daySessions(d).length) return d; })()`);
   const empty = view("day-" + quiet);
-  assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
+  assert.ok(empty.includes("אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה.") && /href="#day-\d{4}-\d\d-\d\d">לתחרות הבאה: /.test(empty));
 });
 
 // #day on data.json.sessions (docs/design/sessions-contract.md); the fallback stays for empty sessions.

@@ -135,7 +135,7 @@ Dedupe by athlete + day. The page states "תאריך בלבד" for times (see th
   `יום ה׳, 29 באוק׳ 2026`.
 
 ### Empty and invalid
-- **Empty day:** `<div class="empty"><p>אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.</p><p>לתחרות הבאה: <a href="#day-{d}">{fmt(d)}</a></p></div>`.
+- **Empty day:** `<div class="empty"><p>אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה.</p><p>לתחרות הבאה: <a href="#day-{d}">{fmt(d)}</a></p></div>`.
   The second line is omitted when there's no later session.
 - **Invalid date** (`#day-2026-13-40`, or not a real calendar day): `notFound()`.
 
@@ -250,7 +250,7 @@ The strip dot is decorative; the aria-label carries "יש תחרויות".
 | result | `תוצאה: {text} · עודכן ב־{HH:MM}`; past day `עודכן ב־{d}, {HH:MM}` |
 | no time | `תאריך בלבד` (components.md §1) |
 | data note | `נכון ל־{date}, {HH:MM} · ` + `CADENCE` |
-| empty day | `אין תחרויות ידועות של ספורטאים ונבחרות מישראל ביום הזה.` + `לתחרות הבאה: {date}` |
+| empty day | `אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה.` + `לתחרות הבאה: {date}` |
 | home link | `לכל התחרויות היום` |
 | follow athlete | `☆ מעקב אחרי {name}` / `★ במעקב שלך` |
 | follow sport | `☆ מעקב אחרי הענף` / `★ הענף במעקב שלך` |
