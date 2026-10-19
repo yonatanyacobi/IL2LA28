@@ -92,6 +92,7 @@ const linkOut = (u, label = "מקור") => safeUrl(u) ? `<a href="${esc(u)}" tar
 // Per-viewer conveniences only; the page must work when storage is blocked.
 const store = {
   get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  getArray(k){ const v = this.get(k, []); return Array.isArray(v) ? v : []; },
   set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
 
@@ -105,7 +106,7 @@ const S = {
   cal: {sport: "", qual: false, past: false},
   fixOpen: new Set(),   // #corrections: older months the viewer expanded; reset on navigation
   q: "",
-  follows: new Set(store.get("la28.follows", [])),
+  follows: new Set(store.getArray("la28.follows")),
   // Previous visit; a first visit sets the baseline silently, so nothing is marked new.
   seenBefore: store.get("la28.seen", null),
 };

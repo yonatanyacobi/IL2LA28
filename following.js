@@ -12,7 +12,7 @@ const SHOWN_FIELDS = ["name", "event", "stage", "rank", "next", "nextDate"];
 const shownOf = a => SHOWN_FIELDS.map(k => str(a[k])).join("\u241f");
 const shownAtLoad = store.get("la28.followingShown", {});
 let badgeSince = followSeenAtLoad;
-S.followSports = new Set(store.get("la28.followSports", []));
+S.followSports = new Set(store.getArray("la28.followSports"));
 
 function toggleFollowSport(id){
   S.followSports.has(id) ? S.followSports.delete(id) : S.followSports.add(id);
