@@ -2826,7 +2826,7 @@ test("standings UX QA: caveat once per panel, no cut line without placed athlete
 
 // sprint-7.md: stakes only where Israel competes (an Israeli in the sport has a session or nextDate in the event).
 test("stakes only where Israel competes: Rotterdam men's team final hidden, Abu Dhabi 29.10 shown", async () => {
-  const TEAM = "גמר קבוצתי ב־20 באוק׳ 2026", NOTE = "ישראל לא משתתפת בשלב הזה";
+  const TEAM = "גמר קבוצתי ב־20 באוק׳ 2026", NOTE = "לא ידוע על ספורטאי/ת מישראל בשלב הזה";
   // 20.10: Israel isn't in the men's team final (no session or nextDate that day).
   const r = await boot({quotas: SITE_QUOTAS, now: "2026-10-20T09:00:00Z"});
   const home = r.view("home");
@@ -2860,7 +2860,7 @@ test("stakes check is item-level: a judo weight with no Israeli entered stays qu
   const a = await boot({data, quotas: SITE_QUOTAS, now: "2026-10-29T08:00:00Z"});
   const ev = a.view("c-judo-gs-abu-dhabi-2026").split('id="evStakesH"')[1].split("</section>")[0];
   const li = e => ev.split("<li>").find(x => x.includes(`<bdi>${e}</bdi>`)) || "";
-  assert.ok(li("63- ק״ג נשים") && !li("63- ק״ג נשים").includes("<b>מה זה אומר:</b>"), "63-: no stakes");
+  assert.ok(li("63- ק״ג נשים").includes('<p class="muted">לא ידוע על ספורטאי/ת מישראל בשלב הזה</p>') && !li("63- ק״ג נשים").includes("<b>מה זה אומר:</b>"), "63-: no stakes, the cautious note");
   assert.ok(li("60- ק״ג גברים").includes("<b>מה זה אומר:</b>"), "60- (Ashpiz, 29.10): stakes");
   const stakes63 = SITE_QUOTAS.items.find(i => i.sportId === "judo" && i.event === "63- ק״ג נשים").stakes;
   for (const page of ["home", "day-2026-10-29", "digest"]) assert.ok(!a.view(page).includes(a.run(`esc(${JSON.stringify(stakes63)})`)), `${page}: no 63- stakes`);
