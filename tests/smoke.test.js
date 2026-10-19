@@ -3118,6 +3118,15 @@ test("fencing standings: the team event ranks the national team, never its fence
   assert.ok(b.run(`teamRankOf({num: 0, asOf: "2027-05-01", source: "${src}"})`) === null && b.run(`teamRankOf({num: 2, asOf: "x", source: "${src}"})`) === null, "invalid teamRank dropped");
 });
 
+// tests/livecheck.js: Gil's v55 live check §3/§4 (docs/qa/live-check-v55.md) on the fixture, so a regression it
+// would catch on the live site fails the PR instead.
+test("live check v55 §3/§4 on the fixture: every check passes", async () => {
+  const {livecheck} = require("./livecheck.js");
+  const results = await livecheck({data: FIXTURE, quotas: JSON.parse(fs.readFileSync(path.join(ROOT, "site/quotas.json"), "utf8"))});
+  assert.ok(results.length >= 36, `only ${results.length} checks`);
+  assert.deepStrictEqual(results.filter(([, ok]) => !ok).map(([id, , note]) => id + (note ? ` (${note})` : "")), []);
+});
+
 // tests/preview_at.js reuses boot() to render real data on a chosen date.
 module.exports = {boot};
 if (require.main === module) (async () => {
