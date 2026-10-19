@@ -10,28 +10,32 @@ The numbers for §1–§3 are on one screen: `#admin` → "מוכנות להשק
 **22.10 is not a result night**, but the 24.10 result day comes two days later. Launch dates to avoid: 24–25.10,
 29.10–1.11 and 3–4.11 (release plan on #238).
 
-## Draft report to the owner (as of Sun 18.10, 21:45; re-checked on 22.10)
+## Draft report to the owner (as of Mon 19.10, 09:55; re-checked on 22.10)
 
-**Recommendation (draft): ready once the 19.10 result night has gone out cleanly from an Official source, and the
-Abu Dhabi sessions are in the public data (ETA 27.10).** Launch on a day that isn't a result night. Of the dates
-before Abu Dhabi, 26–28.10 fit.
+Items marked **⏳ OWNER** wait on the owner; nothing the team does can turn them green.
+
+**Recommendation (draft): ready once (1) the daily task runs on schedule again, (2) the public link question is
+answered, and (3) the 19.10 result night has gone out cleanly from an Official source.** Launch on a day that isn't a
+result night. Of the dates before Abu Dhabi, 26–28.10 fit.
 
 | Area | Status | In one line |
 |---|---|---|
-| Data coverage | 🟡 | 113/117 records hand-checked (97%), but only 3 of 14 Israeli starts in the next two weeks have a session on the site |
-| Result nights | ⬜ | The first one is 19.10; table below |
-| Open bugs | 🟢 | None blocking; 146/146 smoke tests, unit tests and the live-job sync all pass on main 9bbdfcb |
-| Legal and disclaimer | 🟢 | Every item below checked in the code; professional review is the owner's call |
-| Your decisions | 🟡 | D1 (the date) is yours; D10 keeps 2 records unchecked, and D11 holds one result |
+| Daily task | 🔴 ⏳ OWNER | The 07:13 run missed again on 19.10: the scheduler shows 0 runs ever, and the DB `runs` log is empty. Today's data is a hand export (19.10, 09:28) |
+| Public link | 🔴 ⏳ OWNER | A signed-out link must exist for a public launch (launch-day.md). The org's share menu, as seen on the team board, offers only "the organization" or "specific users". Owner to check the site's Share menu and ask the admin if needed |
+| Data coverage | 🟢 | 113/113 records in the public export hand-checked and unchanged since. Sessions for 14 of 18 starts in the next 14 days |
+| Result nights | ⬜ | The first one is tonight, 19.10; table below |
+| Open bugs | 🟢 | None blocking. 23 PRs merged since 19.10 00:00 (#303–#334), including stakes only where Israel competes (#322), the late-data render (#308) and both-checker quota sign-off (#330) |
+| Legal and disclaimer | 🟢 | Every item checked in the code; professional review is the owner's call |
+| Your decisions | 🟡 ⏳ OWNER | D1 (date), D11 (Teferi), the view-only test account for QA. D10 is done |
 
 ## 1. Data coverage
 | Check | How | 18.10 / now | Green when |
 |---|---|---|---|
-| Verified records (M2) | DB `athletes.verifiedAt` vs `updatedAt` (the "נבדק ידנית" chip), or the About trust tiles | 🟢 **113/117** in the DB (coordinator, 18.10 evening). The public export of 18.10 20:16 shows 108/110; the 2 unchecked there are the trampoline pair (D10) | ≥ 90%, and the remaining records are listed with an owner |
+| Verified records (M2) | `#admin` "מוכנות להשקה" (`noverified`), and `verifiedAt` ≥ `updatedAt` | 🟢 **113/113** in the export of 19.10 09:28 (0 never checked, 0 changed since their check). The trampoline pair is checked after D10 (#298, #303) | ≥ 90%, and the remaining records are listed with an owner |
 | No ❓ record shown as checked (G2) | Drive log: every marked record has a ✅ row | 🟢 18.10 | still true |
 | Audit corrections live (G1) | 3 top-harm records in the published data.json (flag football, Shoshani, basketball men) | 🟢 18.10 | still true |
-| Quota items | `site/quotas.json` | 🟡 59 published (28 in contention, 31 unknown), 4 held back. One unknown item has its event before 1.11: weightlifting women, category not verified (Worlds 27.10) | none held back without sources (G4); unknown items with an event before 1.11 have an owner (weightlifting: owner named at the 22.10 check, sourced before 27.10) |
-| Sessions 14 days ahead (#175) | Public `data.json`: athletes with a `nextDate` from 19.10 to 2.11 vs sessions | 🟡 **3/14** (the 19.10 gymnasts). Missing: Abu Dhabi judo ×7 (signed in #255, not yet exported), Tongyeong (Sagiv, submitted), the 24.10 floor final (Dolgopyat, Berkovich; only after a Q, #134), lacrosse 2.11 | every known Israeli start in that window has a session or a dated `nextDate` (it does: all 14 have one). Green at ≥ 12/14 sessions, by 27.10 (sprint 7 item 1) |
+| Quota items | live `quotas.json` (the v55 publish on 20.10 brings 61) | 🟡 59 published (28 in contention, 31 unknown), 4 held back. One unknown item has its event before 1.11: weightlifting women, category not verified (Worlds 27.10) | none held back without sources (G4); unknown items with an event before 1.11 have an owner (weightlifting: owner named at the 22.10 check, sourced before 27.10) |
+| Sessions 14 days ahead (#175) | `#admin` `nosession` rule (#294; `job/session_gaps.py` agrees) on the export of 19.10 09:28 | 🟢 **14/18** have a session (33 sessions in all; Abu Dhabi judo is in). Missing: the 24.10 floor final (Dolgopyat, Berkovich: only after a Q), Tongyeong 24.10 (Sagiv, until the start list on 22.10), lacrosse 2.11 | every known Israeli start in that window has a session or a dated `nextDate` (it does: all 14 have one). Green at ≥ 12/14 sessions, by 27.10 (sprint 7 item 1) |
 
 ## 2. Result-night track record
 One row per night. M3 = Official result → public `data.json`. Source: the PR or thread for that night, and `runs/`.
@@ -52,7 +56,7 @@ One correction made through the corrections log counts as yellow, not red.
 - [ ] Gil's 10:00 live QA (G6): no open P0 or P1, at 400px and 1280px, light and dark, as the test viewer (launch-day.md).
 - [x] No open regression PRs or issues (18.10: the only open PR is #134, a quotas outcome; open issues are roadmap items).
 - [x] Smoke (146/146) and unit tests pass on main 9bbdfcb, and `check_live_sync.py` prints OK (18.10, 21:45).
-- [ ] The last 2 daily runs published with no errors in `#admin` (G7).
+- [ ] 🔴 ⏳ OWNER: The last 2 daily runs published with no errors in `#admin` (G7). **19.10, 09:55: no run has fired.** `la28-israel-daily-update` is enabled (07:13 daily, next 20.10) but lists 0 runs, and `runs` in the DB is empty. The likely cause is that a local scheduled task needs the owner's Claude app running and the machine awake at 07:13; the owner checks that, or presses Run now each morning until it fires on its own. Until then the coordinator exports by hand.
 - [ ] The live page has every `<script src>` from `site/index.html` (publishing.md step 5, fixed in #253).
 
 ## 4. Legal and disclaimer text
@@ -75,8 +79,11 @@ From [owner-decisions.md](../product/owner-decisions.md).
 | D8 | Digest-copy counter | 25.10 | B: no counter |
 | D9 | No English, no Paralympics until mid-2027 | 25.10 | Treated as confirmed |
 | D-R2 | Daily job proposes quota updates | 25.10 | B: fully manual |
-| D10 | Trampoline athletes' Hebrew names | before launch | A: the DB spelling; both records stay unverified. **Status 18.10: asked, no answer yet** |
-| D11 | Browser check: Teferi's Sporthive result (lpga.com optional) | before launch | Teferi's result stays on hold. **Status 18.10: asked, no answer yet** |
+| D10 | Trampoline athletes' Hebrew names | – | **Done:** the federation's spelling (#298, #303); both records checked |
+| D11 | Browser check: Teferi's Sporthive result (lpga.com optional) | before launch | Teferi's result stays on hold. **⏳ OWNER, 19.10: no answer yet**; the Browser verifier is on hold |
+| – | **Public link** for signed-out visitors (launch-day.md, Sharing settings) | before D1 | No public launch. **⏳ OWNER: check the site's Share menu now, not on launch day** |
+| – | **View-only test account** for pre-launch QA (launch-day.md, Test viewer) | 20.10 09:10 (v55 check 8) | QA runs as an editor with "צפייה כגולש/ת", which is weaker. **⏳ OWNER** |
+| – | **Daily task fires at 07:13** (§3) | 20.10 07:13 | Hand exports by the coordinator. **⏳ OWNER** |
 
 ## Report to the owner (12:30)
 One screen: one line per section above (🟢/🟡/🔴 + source), the decisions table, and the recommendation: "ready", or
