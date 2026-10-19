@@ -253,16 +253,43 @@ const rnAthletes = sid => {
 };
 const rnKey = q => `la28.rn.${q.sportId}|${q.event}|${q.nextQuotaEvent.start}`;
 
-// Quota events whose last day was yesterday or is today: the window in which results need handling.
+// Yesterday's and today's sessions past their window with no result yet, in the order their windows ended (the order
+// results come in), each with its official link: the session's source, else its competition's. Ended sessions
+// without a result count as "await*" in sessions.js (near-live §2).
+function rnSessions(t = today()){
+  if (typeof daySessions !== "function") return [];
+  return [addDays(t, -1), t].flatMap(d => daySessions(d).map(s => ({s, d, state: sessionState(s, d)})))
+    .filter(x => isAwait(x.state))
+    .sort((x, z) => windowEnd(x.s, x.d) - windowEnd(z.s, z.d) || heCmp(x.s.athletes[0].name, z.s.athletes[0].name));
+}
+
+function rnSessionsBlock(t){
+  const list = rnSessions(t);
+  if (!list.length) return `<p class="muted">אין הופעות שממתינות לתוצאה מאתמול או מהיום.</p>`;
+  const row = ({s, d, state}) => { const src = s.source || s.comp?.source;
+    return `<li><span class="d">${s.startUtc ? whenIL(s.startUtc) : `<a href="#day-${d}">${fmtShort(d)}</a>`}</span>
+      <span class="t">${s.athletes.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}
+        <small>${[s.comp ? compLink(s.comp, esc(s.comp.name)) : esc(sportName(s.sportId)),
+          safeUrl(src) ? hostLink(src, "מקור") : `<span class="adm-bad">אין קישור למקור</span>`].join(" · ")}</small></span>
+      <span>${statusChip(state)}</span></li>`; };
+  return `<h3>${list.length === 1 ? "הופעה אחת ממתינה לתוצאה" : `${list.length} הופעות ממתינות לתוצאה`}</h3>
+    <ul class="rows sess">${list.map(row).join("")}</ul>`;
+}
+
+// Quota events whose last day was yesterday or is today: the window in which results need handling. Above them,
+// the sessions still awaiting a result.
 function resultNightPanel(){
   const t = today(), y = addDays(t, -1);
   const items = S.quotas.filter(q => q.nextQuotaEvent && [y, t].includes(quotaEventEnd(q)))
     .sort((a, b) => quotaEventEnd(a).localeCompare(quotaEventEnd(b)) || heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
   const runbook = linkOut(RUNBOOK_URL, "מדריך ליל התוצאות");
+  const sessions = rnSessionsBlock(t);
   if (!items.length) return `<section class="panel" id="resultNight"><div class="sec-head"><h2>ליל תוצאות</h2>${runbook}</div>
+    ${sessions}
     <p class="muted">אין אירועי מכסה שמסתיימים היום או אתמול.</p></section>`;
   return `<section class="panel adm-rn" id="resultNight">
     <div class="sec-head"><h2>ליל תוצאות (${items.length})</h2>${runbook}</div>
+    ${sessions}
     <p class="foot">אין מכסה פומבית בלי מקור רשמי. „הושגה” עולה רק אחרי ששלב הספורטאים פורסם (שלב 4 לפני שלב 6).</p>
     ${items.map(q => { const done = store.get(rnKey(q), []); return `<details class="rn-item" ${done.length < RN_STEPS.length ? "open" : ""}>
       <summary>${esc(sportName(q.sportId))} · ${esc(q.event)} ${quotaStatusPill(q.israelStatus)}
