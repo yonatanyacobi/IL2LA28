@@ -341,5 +341,109 @@ class TrampolineTest(unittest.TestCase):
         self.assertEqual(gr.session_text(14, "trampoline", False, gender="m"), "מקום 14, לא עלה לגמר")
 
 
+ROTTERDAM_PAGE = "https://www.gymnastics.sport/site/events/detail.php?id=17247"
+ROTTERDAM = {"id": "ag-worlds-2026", "sportId": "artistic-gymnastics", "name": "אליפות העולם בהתעמלות מכשירים 2026",
+             "start": "2026-10-17", "end": "2026-10-25", "source": ROTTERDAM_PAGE}
+# Rotterdam's book will come from Longines, as Paris did: this copies the Paris layout. Qualification ranks are the real
+# ones from the Longines ranking (18.10). The final ranks are made up, only to cover a medal, a place and a tie.
+ROTTERDAM_BOOK = """Official Results Provider
+SUN 18 OCT 2026
+54th Artistic Gymnastics World Championships
+Rotterdam (NED), 17-25 October 2026
+Men's Floor Exercise Qualification
+Results
+Rank NameBib
+NOC
+Code
+TotalPen.
+D
+Score
+E
+Score
+1 101 ATHLETE One JPN 14.600 Q6.100 8.500
+3 225 DOLGOPYAT Artem ISR 14.300 Q6.200 8.100
+7 224 BERKOVICH Noam ISR 14.033 Q5.800 8.233
+9 110 ATHLETE Ten GBR 13.966 R15.700 8.266
+67 228 ORTAL Ron ISR 12.8004.900 7.900
+Men's Individual All-Around Qualification
+Results
+1 101 ATHLETE One JPN 86.100 Q
+37 224 BERKOVICH Noam ISR 79.398
+Men's Team Qualification
+Results
+14 1 ISRAEL ISR 240.000
+GARM1APFX-------------QUAL--------_73I 1.0 Report Created SUN 18 OCT 2026 21:40 Page 1/1
+Official Results Provider
+SAT 24 OCT 2026
+54th Artistic Gymnastics World Championships
+Rotterdam (NED), 17-25 October 2026
+Men's Floor Exercise Final
+Results
+Rank NameBib
+NOC
+Code
+TotalPen.
+D
+Score
+E
+Score
+Qualification
+Rank
+Start
+Order
+1 225 DOLGOPYAT Artem ISR 14.766 6.200 8.566 3 5
+2 101 ATHLETE One JPN 14.700 6.100 8.600 1 8
+4 224 BERKOVICH Noam ISR 14.100 5.800 8.300 7 2
+4 102 ATHLETE Two CHN 14.100 5.900 8.200 2 1"""
+
+
+class RotterdamFloorFinalTest(unittest.TestCase):
+    """The plan after the Worlds (26-29.10) on the floor final of 24.10, next to the result-night entries of 18.10."""
+
+    @classmethod
+    def setUpClass(cls):
+        with open(os.path.join(HERE, "fixtures", "data.json"), encoding="utf-8") as f:
+            cls.athletes = json.load(f)["athletes"]
+
+    def run_plan(self, book=ROTTERDAM_BOOK, today="2026-10-26"):
+        page = b'<a href="../../asset.php?id=fidb_99247">Results book (Media)</a>'
+        get = lambda url: page if url == ROTTERDAM_PAGE else b"%PDF"
+        data = {"athletes": copy.deepcopy(self.athletes), "competitions": [ROTTERDAM], "sessions": []}
+        with mock.patch.object(gr, "pdf_text", return_value=book):
+            return gr.plan(data, get, date.fromisoformat(today))
+
+    def test_floor_final_wording_passes_result_entry(self):
+        import athlete_patch
+        out = self.run_plan()
+        finals = {u["athleteId"]: u["result"] for u in out["updates"] if u["result"]["at"] == "2026-10-24"}
+        self.assertEqual({k: v["text"] for k, v in finals.items()}, {
+            "artem-dolgopyat": "זהב בגמר קרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)",
+            "noam-berkovich": "מקום 4 בגמר קרקע באליפות העולם בהתעמלות מכשירים 2026 (24 באוק׳ 2026)"}, "a tie keeps the shared rank")
+        for r in finals.values():
+            self.assertEqual(r["source"], "https://www.gymnastics.sport/asset.php?id=fidb_99247")
+            self.assertEqual(athlete_patch.result_entry(r), {**r, "kind": "result"})
+        self.assertEqual([p["doc"]["patch"]["notes"].rsplit(". ", 1)[-1] for p in out["proposals"]],
+                         ["זהב בקרקע באליפות העולם בהתעמלות מכשירים 2026"], "medal only")
+
+    def test_result_night_entries_are_not_repeated(self):
+        out = self.run_plan()
+        self.assertEqual(out["warnings"], [])
+        self.assertEqual(sorted((u["athleteId"], u["result"]["at"]) for u in out["updates"]),
+                         [("artem-dolgopyat", "2026-10-24"), ("noam-berkovich", "2026-10-24"), ("ron-ortal", "2026-10-18")],
+                         "18.10 floor and all-around entries (entered on the night with result_text) already match")
+        self.assertEqual(next(u for u in out["updates"] if u["athleteId"] == "ron-ortal")["result"]["text"],
+                         "מקום 67 בקרקע במוקדמות אליפות העולם בהתעמלות מכשירים 2026 (18 באוק׳ 2026), לא עלה לגמר הקרקע")
+
+    def test_a_qualification_table_dated_17_10_would_duplicate(self):
+        # Men's qualification ran 17-18.10. If the book dates the floor table 17.10, the entries made on the night
+        # (18.10) don't match, and the plan adds second ones: check the book's date before the job runs (26.10).
+        out = self.run_plan(book=ROTTERDAM_BOOK.replace("SUN 18 OCT 2026\n54th", "SAT 17 OCT 2026\n54th", 1))
+        self.assertIn(("artem-dolgopyat", "2026-10-17"), [(u["athleteId"], u["result"]["at"]) for u in out["updates"]])
+
+    def test_only_after_the_worlds_end(self):
+        for today in ("2026-10-24", "2026-10-25", "2026-10-30"):   # running, last day, more than 4 days after
+            self.assertEqual(self.run_plan(today=today)["updates"], [], today)
+
+
 if __name__ == "__main__":
     unittest.main()
