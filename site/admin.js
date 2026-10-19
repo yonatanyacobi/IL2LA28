@@ -2,7 +2,7 @@
 // Loaded after app.js and relies on its globals (S, esc, route helpers); the router only calls it when S.isAdmin && S.live.
 "use strict";
 
-const RUN_MAX_AGE_H = 36, RUN_SOURCES_SHOWN = 8;
+const RUN_MAX_AGE_H = 36, RUN_SOURCES_SHOWN = 8, RUN_PUBLISH_H = 26;
 const ADM = {runs: [], runsState: "idle"};   // idle | loading | ready | error
 
 const CHECKS = {
@@ -183,9 +183,19 @@ function launchPanel(){
   });
   // readiness-2210.md §3: the last 2 daily runs published with no errors.
   const runLink = `<a href="#admin-runs">ליומן הריצות</a>`;
+  // Sprint 8 item 11: some run published in the last 26 h, else a red row with the last run and the fix.
+  const health = () => {
+    const pub = ADM.runs.find(r => r.published === true), at = pub ? Date.parse(pub.ended) || Date.parse(pub.started) : NaN;
+    const ago = (Date.now() - at) / 36e5, ok = ago <= RUN_PUBLISH_H, last = ADM.runs[0];
+    const lastRun = last ? `הריצה האחרונה: ${fmtTs(last.started)} · ${esc(RUN_STATUS[last.status] || last.status || "—")}` : "אין ריצות מתועדות";
+    return {num: isNaN(ago) ? "—" : `${Math.round(ago)} ש׳`, open: !ok,
+      label: ok ? `פרסום אחרון של הריצה היומית: ${fmtTs(new Date(at).toISOString())}` : `לא פורסמה ריצה יומית ב־${RUN_PUBLISH_H} השעות האחרונות`,
+      fix: [!ok && lastRun, !ok && `התיקון: להריץ עכשיו את המשימה המתוזמנת <span dir="ltr">la28-israel-daily-update</span> (Run now)`, runLink].filter(Boolean).join(" · "),
+      pill: ok ? "" : `<span class="pill bad">דורש הרצה</span>`};
+  };
   const runs = ADM.runsState === "error" ? [{num: "?", open: true, label: "לא הצלחנו לקרוא את יומן הריצות", fix: runLink}]
     : ADM.runsState !== "ready" ? [{num: "…", label: "טוען את יומן הריצות", fix: runLink}]
-    : [...ADM.runs.slice(0, 2).map(r => { const e = errList(r.errors).length; return {num: e, open: r.published !== true || e > 0,
+    : [health(), ...ADM.runs.slice(0, 2).map(r => { const e = errList(r.errors).length; return {num: e, open: r.published !== true || e > 0,
         label: `ריצה ${isDate(r.id) ? fmt(r.id) : esc(r.id)}: ${r.published === true ? "פורסמה" : "לא פורסמה"}`,
         fix: `${e ? (e === 1 ? "שגיאה אחת" : `${e} שגיאות`) : "אין שגיאות"} · ${runLink}`}; }),
       ...(ADM.runs.length < 2 ? [{num: ADM.runs.length, open: true, label: ADM.runs.length ? "תועדה ריצה יומית אחת בלבד" : "אין ריצות יומיות מתועדות", fix: runLink}] : [])];
