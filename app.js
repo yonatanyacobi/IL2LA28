@@ -874,7 +874,7 @@ function viewCalendar(sportFilter = ""){
   if (sportFilter && !sportById(sportFilter)) return notFound();
   S.cal.sport = sportFilter;
   const {sport, qual, past} = S.cal;
-  const used = [...new Set(S.comps.map(c => c.sportId))].map(sportById).filter(Boolean).sort((a, b) => heCmp(a.he, b.he));
+  const used = [...new Set([...S.comps.map(c => c.sportId), ...(sport ? [sport] : [])])].map(sportById).filter(Boolean).sort((a, b) => heCmp(a.he, b.he));
   const wins = S.sports.filter(s => s.window && isDate(s.window.from)).sort((a, b) => a.window.from.localeCompare(b.window.from));
   return `
   <h1 tabindex="-1">לוח תחרויות</h1>
