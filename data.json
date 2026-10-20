@@ -630,6 +630,18 @@
       "verifiedAt": "2026-10-18T19:01:00Z",
       "history": [
         {
+          "at": "2026-02-21",
+          "kind": "result",
+          "text": "גביע העולם בקוטבוס 2026, גמר קרקע גברים: מקום 1 עם 14.500 נקודות.",
+          "source": "https://www.gymnastics.sport/asset.php?id=fidb_21495"
+        },
+        {
+          "at": "2026-04-11",
+          "kind": "result",
+          "text": "גביע העולם באוסייק 2026, גמר קרקע גברים: מקום 1 עם 14.500 נקודות.",
+          "source": "https://www.gymnastics.sport/asset.php?id=fidb_22099"
+        },
+        {
           "at": "2026-10-18",
           "kind": "start",
           "text": "נכנס/ה למעקב · בחלון ההעפלה · זהב בקרקע, אליפות אירופה 2026 (זאגרב); מקום 9 בקרב־רב (מיקום, לא דירוג)",
@@ -2464,6 +2476,18 @@
       "stage": 1,
       "verifiedAt": "2026-10-18T19:01:00Z",
       "history": [
+        {
+          "at": "2026-02-21",
+          "kind": "result",
+          "text": "גביע העולם בקוטבוס 2026, גמר קרקע גברים: מקום 6 עם 13.166 נקודות.",
+          "source": "https://www.gymnastics.sport/asset.php?id=fidb_21495"
+        },
+        {
+          "at": "2026-04-11",
+          "kind": "result",
+          "text": "גביע העולם באוסייק 2026, גמר קרקע גברים: מקום 3 עם 14.000 נקודות.",
+          "source": "https://www.gymnastics.sport/asset.php?id=fidb_22099"
+        },
         {
           "at": "2026-10-18",
           "kind": "start",
@@ -5269,6 +5293,28 @@
       "end": "2026-04-26",
       "notes": "תחרות עונה בסדרת גביע העולם באופני מסלול לפני חלון ההעפלה האולימפי. השתתפות ספורטאים מישראל ותוצאותיהם בתחרות זו לא אומתו; אין כאן קביעה על מכסה.",
       "source": "https://www.uci.org/article/uci-track-world-cup-2026-series-returns-with-three-rounds/1dTOq80YKRa6tYq1matRXQ",
+      "qualifying": false
+    },
+    {
+      "id": "ag-world-cup-osijek-2026",
+      "sportId": "artistic-gymnastics",
+      "name": "גביע העולם בהתעמלות מכשירים — אוסייק 2026",
+      "location": "אוסייק, קרואטיה",
+      "start": "2026-04-09",
+      "end": "2026-04-12",
+      "notes": "תחרות עונה לפני חלון ההעפלה האולימפי בענף. אין כאן קביעה על מכסה או שינוי בשלב ההעפלה.",
+      "source": "https://www.gymnastics.sport/asset.php?id=fidb_22099",
+      "qualifying": false
+    },
+    {
+      "id": "ag-world-cup-cottbus-2026",
+      "sportId": "artistic-gymnastics",
+      "name": "גביע העולם בהתעמלות מכשירים — קוטבוס 2026",
+      "location": "קוטבוס, גרמניה",
+      "start": "2026-02-19",
+      "end": "2026-02-22",
+      "notes": "תחרות עונה לפני חלון ההעפלה האולימפי בענף. אין כאן קביעה על מכסה או שינוי בשלב ההעפלה.",
+      "source": "https://www.gymnastics.sport/asset.php?id=fidb_21495",
       "qualifying": false
     }
   ],

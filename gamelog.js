@@ -47,17 +47,50 @@ function sportRecentResultsSection(id){
   </section>`;
 }
 
-function viewResults(){
-  const rows = documentedResults(), more = rows.slice(10);
+let resultsSearchQuery = "";
+
+function resultsSearchContent(preserveOverflow = false){
+  const all = documentedResults(), query = searchKey(resultsSearchQuery);
+  const rows = all.filter(r => !query || searchKey([
+    ...r.athletes.flatMap(a => [a.name, a.name_en]), sportById(r.sportId)?.he, sportById(r.sportId)?.en,
+    r.comp?.name, r.result
+  ].map(str).join(" ")).includes(query)), more = rows.slice(10);
+  const open = preserveOverflow && $("resultsOverflow")?.open;
   const row = r => documentedResultRow(r).replace(/<\/span><\/li>$/, `<small><a href="#sport-${esc(r.sportId)}">${esc(sportName(r.sportId))}</a></small></span></li>`);
+  return `<p class="muted" id="resultsSearchCount" role="status">נמצאו ${rows.length} מתוך ${all.length} שורות תוצאה מתועדות באתר.</p>
+    ${rows.length ? `<ul class="rows">${rows.slice(0, 10).map(row).join("")}</ul>
+      ${more.length ? `<details id="resultsOverflow"${open ? " open" : ""}><summary id="resultsMore">${more.length === 1 ? "עוד שורת תוצאה מתועדת אחת" : `עוד ${more.length} שורות תוצאה מתועדות`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}`
+      : all.length ? `<div class="empty"><p>אין תוצאות מתועדות שמתאימות לחיפוש. אפשר לאפס את החיפוש כדי להציג את כל התוצאות המתועדות.</p></div>`
+      : `<div class="empty"><p>עוד לא תועדו תוצאות באתר.</p><p><a href="#sports">לענפים באתר</a> · <a href="#calendar">ללוח התחרויות</a></p></div>`}`;
+}
+
+function viewResults(){
   return `<p class="crumb"><a href="#home"><span aria-hidden="true">→</span>&nbsp;לדף הראשי</a></p>
     <h1 tabindex="-1">כל התוצאות המתועדות</h1>
     <p>תוצאות שפורסמו באתר, עם מקור לכל תוצאה. הכיסוי עשוי להיות חלקי ואינו כולל בהכרח את כל תוצאות ישראל בעונה.</p>
-    <p class="muted" role="status">${plural(rows.length, "שורת תוצאה מתועדת אחת", "שורות תוצאה מתועדות")} באתר.</p>
-    ${rows.length ? `<ul class="rows">${rows.slice(0, 10).map(row).join("")}</ul>
-      ${more.length ? `<details id="resultsOverflow"><summary id="resultsMore">${more.length === 1 ? "עוד שורת תוצאה מתועדת אחת" : `עוד ${more.length} שורות תוצאה מתועדות`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}`
-      : `<div class="empty"><p>עוד לא תועדו תוצאות באתר.</p><p><a href="#sports">לענפים באתר</a> · <a href="#calendar">ללוח התחרויות</a></p></div>`}`;
+    <label for="resultsSearch">חיפוש בתוצאות המתועדות</label>
+    <div class="toolbar"><input type="search" id="resultsSearch" value="${esc(resultsSearchQuery)}" class="search" aria-describedby="resultsSearchCount"><button class="btn ghost" id="resultsSearchReset" type="button" data-results-search-reset>איפוס החיפוש</button></div>
+    <div id="resultsSearchContent">${resultsSearchContent(true)}</div>`;
 }
+
+function updateResultsSearch(){
+  const y = window.scrollY;
+  $("resultsSearchContent").innerHTML = resultsSearchContent();
+  if (typeof y === "number") scrollTo({top: y, behavior: "auto"});
+}
+
+document.addEventListener("input", e => {
+  if (e.target?.id !== "resultsSearch" || currentRoute() !== "results") return;
+  resultsSearchQuery = e.target.value;
+  updateResultsSearch();
+});
+document.addEventListener("click", e => {
+  if (currentRoute() !== "results" || !e.target.closest?.("[data-results-search-reset]")) return;
+  resultsSearchQuery = "";
+  $("resultsSearch").value = "";
+  updateResultsSearch();
+  $("resultsSearch")?.focus({preventScroll: true});
+});
 
 function athleteUpcomingSessions(a){
   const t = today(), through = addDays(t, 13);
