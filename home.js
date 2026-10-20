@@ -120,6 +120,7 @@ function homeResults(){
       ${resultGroups(rows.slice(HOME_RESULTS_MAX))}</details>` : ""}
     <p class="foot">ב־48 השעות האחרונות · ${CADENCE} · <a href="#updates">לכל העדכונים באתר</a></p>
     ${!rows.length ? homeArchivedResults() : ""}
+    <p><a href="#results">לכל התוצאות המתועדות</a></p>
   </section>`;
 }
 

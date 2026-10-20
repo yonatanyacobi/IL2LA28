@@ -47,6 +47,18 @@ function sportRecentResultsSection(id){
   </section>`;
 }
 
+function viewResults(){
+  const rows = documentedResults(), more = rows.slice(10);
+  const row = r => documentedResultRow(r).replace(/<\/span><\/li>$/, `<small><a href="#sport-${esc(r.sportId)}">${esc(sportName(r.sportId))}</a></small></span></li>`);
+  return `<p class="crumb"><a href="#home"><span aria-hidden="true">→</span>&nbsp;לדף הראשי</a></p>
+    <h1 tabindex="-1">כל התוצאות המתועדות</h1>
+    <p>תוצאות שפורסמו באתר, עם מקור לכל תוצאה. הכיסוי עשוי להיות חלקי ואינו כולל בהכרח את כל תוצאות ישראל בעונה.</p>
+    <p class="muted" role="status">${plural(rows.length, "שורת תוצאה מתועדת אחת", "שורות תוצאה מתועדות")} באתר.</p>
+    ${rows.length ? `<ul class="rows">${rows.slice(0, 10).map(row).join("")}</ul>
+      ${more.length ? `<details id="resultsOverflow"><summary id="resultsMore">${more.length === 1 ? "עוד שורת תוצאה מתועדת אחת" : `עוד ${more.length} שורות תוצאה מתועדות`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}`
+      : `<div class="empty"><p>עוד לא תועדו תוצאות באתר.</p><p><a href="#sports">לענפים באתר</a> · <a href="#calendar">ללוח התחרויות</a></p></div>`}`;
+}
+
 function athleteUpcomingSessions(a){
   const t = today(), through = addDays(t, 13);
   return exportedSessions().filter(s => s.athletes.includes(a) && t <= s.day && s.day <= through

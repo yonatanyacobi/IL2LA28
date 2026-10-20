@@ -873,6 +873,7 @@ function viewCalendar(sportFilter = ""){
 
 function viewUpdates(){
   return `<h1 tabindex="-1">מה התעדכן</h1>
+  <p>עדכוני האתר מוצגים כאן. <a href="#results">לכל התוצאות המתועדות</a></p>
   ${typeof viewDigest === "function" ? `<p><a href="#digest">תקציר שבועי לשיתוף</a></p>` : ""}
   <section class="panel">${S.changes.length ? `<ul class="rows">${S.changes.map(changeRow).join("")}</ul>` : calEmpty("עוד אין עדכונים.")}</section>
   <p class="foot">העדכונים נאספים ממקורות רשמיים ומכלי תקשורת. תוצאות ותחרויות עשויות להתווסף גם אחרי בדיקת מקור רשמי בידי הצוות. שינוי שלב (מכסה או בחירה לנבחרת) מתפרסם רק אחרי בדיקה ידנית.</p>`;
@@ -1187,6 +1188,7 @@ function route(){
   else if (h === "calendar") html = viewCalendar(), nav = "calendar";
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
+  else if (h === "results" && typeof viewResults === "function") html = viewResults(), nav = "updates";
   else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
   else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") {
     const d = h === "today" || h === "day" ? today() : h.slice(4);

@@ -68,7 +68,9 @@ function viewEvent(id){
   scrollToTodayOnArrival(id);
   const t = today(), {series, groups} = eventSessions(c);
   const flat = [...groups].flatMap(([d, list]) => list.map(s => [s, series ? s.day : d]));
-  const nextDay = flat.map(([, d]) => d).filter(d => isDate(d) && d >= t).sort()[0];
+  const nextDay = flat.filter(([s, d]) => isDate(d) && d >= t
+    && s.athletes.some(a => ["before", "competing"].includes(athleteStatus(s, d, a))))
+    .map(([, d]) => d).sort()[0];
   const athletes = [...new Map(flat.flatMap(([s]) => s.athletes.map(a => [a.id, a]))).values()]
     .sort((x, y) => S.follows.has(y.id) - S.follows.has(x.id) || heCmp(x.name, y.name));
   let participant = eventParticipantFilters.get(id) || "";
