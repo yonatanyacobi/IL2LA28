@@ -136,7 +136,8 @@ function viewEvent(id){
   <section class="panel" aria-labelledby="evShareH"><h2 id="evShareH">שיתוף</h2>
     <div class="share"><input id="evShare" readonly value="${esc(link)}" dir="ltr" aria-label="קישור לתחרות"><button class="btn ghost small" data-copy="evShare" data-copy-msg="evShareMsg">העתקה</button></div>
     <p class="foot" id="evShareMsg" aria-live="polite"></p>
-  </section>`;
+  </section>
+  ${reportBox(`טעות בדף תחרות: ${c.name}`, link)}`;
 }
 
 document.addEventListener("change", e => {

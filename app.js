@@ -519,6 +519,7 @@ function viewHome(){
       <p class="muted hero-sub">מעקב אחרי מסלול ההעפלה של ספורטאיות, ספורטאים ונבחרות מישראל לאולימפיאדת לוס אנג׳לס, 14–30 ביולי 2028.</p>
       ${hub ? heroFresh(inToday.size > 0, verified) : freshness()}
       ${nextUpLine(rows)}
+      <button class="btn ghost small" type="button" data-home-search aria-controls="q">חיפוש באתר</button>
     </div>
     <div class="count"><b class="digits" id="days">${daysLeft()}</b><span>ימים לטקס הפתיחה</span></div>
   </section>
@@ -621,12 +622,15 @@ function sportUpcomingSection(id){
 }
 
 const sportRosterQueries = new Map();
+const sportRosterStages = new Map();
 function viewSport(id){
   const s = sportById(id);
   if (!s) return notFound();
   const list = athletesOf(id).sort((a, b) => stageOf(b) - stageOf(a) || heCmp(a.event, b.event) || heCmp(a.name, b.name));
   const value = sportRosterQueries.get(id) || "", query = searchKey(value);
-  const matches = query ? list.filter(a => searchKey([a.name, a.name_en, a.event].map(str).join(" ")).includes(query)) : list;
+  const stage = sportRosterStages.get(id) ?? "";
+  const matches = list.filter(a => (stage === "" || stageOf(a) === Number(stage))
+    && (!query || searchKey([a.name, a.name_en, a.event].map(str).join(" ")).includes(query)));
   const ws = winStatus(s.window), w = s.window;
   const comps = upcomingIn(id);
   return `
@@ -644,10 +648,11 @@ function viewSport(id){
   <section class="stack" id="sportRoster" aria-labelledby="sportRosterH">
     <h2 id="sportRosterH">${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
     <div class="toolbar"><label for="sportRosterSearch">חיפוש בספורטאים ובמקצים בענף</label><input type="search" id="sportRosterSearch" value="${esc(value)}" aria-describedby="sportRosterCount">
-      <button class="btn ghost small" type="button" id="sportRosterReset" data-sport-roster-reset ${value ? "" : "hidden"}>איפוס החיפוש</button></div>
+      <label for="sportRosterStage">שלב בסגל הענף</label><select id="sportRosterStage" aria-describedby="sportRosterCount"><option value="">כל השלבים</option>${STAGES.map((label, i) => `<option value="${i}" ${stage === String(i) ? "selected" : ""}>${esc(label)} (${list.filter(a => stageOf(a) === i).length})</option>`).join("")}</select>
+      <button class="btn ghost small" type="button" id="sportRosterReset" data-sport-roster-reset ${value || stage !== "" ? "" : "hidden"}>איפוס סינון הסגל</button></div>
     <p class="muted" id="sportRosterCount" role="status">מציגים ${matches.length} מתוך ${list.length} ספורטאים ונבחרות</p>
-    ${matches.length ? `<div class="cards">${matches.map(athleteCard).join("")}</div>` : query && list.length
-      ? `<div class="empty"><p>לא נמצאו ספורטאים או מקצים שמתאימים לחיפוש בענף.</p></div>`
+    ${matches.length ? `<div class="cards">${matches.map(athleteCard).join("")}</div>` : (query || stage !== "") && list.length
+      ? `<div class="empty"><p>${stage !== "" ? "לא נמצאו ספורטאים או מקצים שמתאימים למסננים בענף. אפשר לאפס את סינון הסגל." : "לא נמצאו ספורטאים או מקצים שמתאימים לחיפוש בענף."}</p></div>`
       : calEmpty("אין כרגע ספורטאים או נבחרות מישראל ברשימה בענף הזה.", id)}
   </section>
   <section class="stack">
@@ -1194,6 +1199,15 @@ document.addEventListener("input", e => {
     sportRosterQueries.set(currentRoute().slice(6), e.target.value);
     refresh();
   }
+  if (e.target.id === "sportRosterStage" && currentRoute().startsWith("sport-")) {
+    const id = currentRoute().slice(6);
+    if (!["", "0", "1", "2", "3"].includes(e.target.value)) {
+      e.target.value = sportRosterStages.get(id) ?? "";
+      return;
+    }
+    sportRosterStages.set(id, e.target.value);
+    refresh();
+  }
   if (e.target.id === "cSport") { S.cal.sport = e.target.value; history.replaceState(null, "", S.cal.sport ? "#calendar-" + S.cal.sport : "#calendar"); }
   if (e.target.id === "cQual") S.cal.qual = e.target.checked;
   if (e.target.id === "cPast") S.cal.past = e.target.checked;
@@ -1214,10 +1228,22 @@ document.addEventListener("input", e => {
   }
 });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-sport-roster-reset]");
+  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-sport-roster-reset],[data-home-search]");
   if (!t) return;
+  if ("homeSearch" in t.dataset) {
+    const input = $("q");
+    if (!input) return;
+    let selection;
+    try {
+      if (typeof input.selectionStart === "number") selection = [input.selectionStart, input.selectionEnd, input.selectionDirection];
+    } catch {}
+    input.focus({preventScroll: true});
+    if (selection) try { input.setSelectionRange(...selection); } catch {}
+    return input.scrollIntoView({block: "center", behavior: "auto"});
+  }
   if ("sportRosterReset" in t.dataset && currentRoute().startsWith("sport-")) {
     sportRosterQueries.delete(currentRoute().slice(6));
+    sportRosterStages.delete(currentRoute().slice(6));
     refresh();
     return $("sportRosterSearch")?.focus({preventScroll: true});
   }
