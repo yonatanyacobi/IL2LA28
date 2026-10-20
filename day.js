@@ -75,7 +75,8 @@ function viewDay(d){
   }
   const t = today(), isToday = d === t, prev = addDays(d, -1), next = addDays(d, 1);
   const fullSessions = daySessions(d);
-  const sessions = dayFollowingOnly ? fullSessions.filter(s => followsSport(s.sportId) || followedIn(s)) : fullSessions;
+  const inFollowing = s => followsSport(s.sportId) || followedIn(s);
+  const sessions = dayFollowingOnly ? fullSessions.filter(inFollowing) : fullSessions;
   // Group: sport → competition. Sports: followed, then with a followed athlete, then by name.
   // Competitions inside a sport: by their first session's start time.
   const bySport = new Map();
@@ -91,9 +92,10 @@ function viewDay(d){
   const athleteCount = new Set(sessions.flatMap(s => s.athletes.map(a => a.id))).size;
   const firstStart = c => c.list.map(s => s.startUtc).sort(byStart)[0] || null;
   let before = "", after = "";
-  if (!fullSessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && (!before || !after); i++) {
-    if (!before && hasIsraelis(addDays(d, -i))) before = addDays(d, -i);
-    if (!after && hasIsraelis(addDays(d, i))) after = addDays(d, i);
+  const hasRelevantDay = date => dayFollowingOnly ? daySessions(date).some(inFollowing) : hasIsraelis(date);
+  if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && (!before || !after); i++) {
+    if (!before && hasRelevantDay(addDays(d, -i))) before = addDays(d, -i);
+    if (!after && hasRelevantDay(addDays(d, i))) after = addDays(d, i);
   }
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
   const watchPlan = dayWatchPlanText(d);
@@ -120,7 +122,7 @@ function viewDay(d){
       <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a class="hlink" href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
-    : `<div class="empty"><p>${dayFollowingOnly && fullSessions.length ? "אין הופעות שמתאימות למעקב שלך ביום הזה." : "אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה."}</p>${before ? `<p><a href="#day-${before}">לתחרות הקודמת: ${fmt(before)}</a></p>` : ""}${after ? `<p><a href="#day-${after}">לתחרות הבאה: ${fmt(after)}</a></p>` : ""}</div>`}
+    : `<div class="empty"><p>${dayFollowingOnly && fullSessions.length ? "אין הופעות שמתאימות למעקב שלך ביום הזה." : "אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה."}</p>${before ? `<p><a href="#day-${before}">${dayFollowingOnly ? "להופעות הקודמות במעקב שלך" : "לתחרות הקודמת"}: ${fmt(before)}</a></p>` : ""}${after ? `<p><a href="#day-${after}">${dayFollowingOnly ? "להופעות הבאות במעקב שלך" : "לתחרות הבאה"}: ${fmt(after)}</a></p>` : ""}</div>`}
   <section class="panel" aria-labelledby="dayShareH"><h2 id="dayShareH">שיתוף היום</h2>
     <div class="share"><input id="dayShare" readonly value="${esc(SITE_URL + "#day-" + d)}" dir="ltr" aria-label="קישור ליום התחרויות"><button class="btn ghost small" type="button" data-copy="dayShare" data-copy-msg="dayShareMsg">העתקת הקישור</button></div>
     <p class="foot" id="dayShareMsg" aria-live="polite"></p>

@@ -30,7 +30,7 @@ const followedAthletes = () => S.athletes.filter(a => S.follows.has(a.id) || S.f
 // only when the athlete record changed after that visit.
 // A record that changed without a new history entry (most daily updates, until results land) still gets one
 // "הפרטים עודכנו" row, dated by updatedAt.
-function followFeed(since){
+function allFollowFeed(since){
   if (!since) return [];
   const day = IL_DAY.format(new Date(since));
   const sinceAt = Date.parse(since), now = Date.now();
@@ -65,8 +65,9 @@ function followFeed(since){
   }
   const name = item => item.type === "quota" ? `${sportName(item.q.sportId)} · ${item.q.event}` : item.a.name;
   return [...athleteItems, ...quotas.values()]
-    .sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(name(x), name(y))).slice(0, FEED_MAX);
+    .sort((x, y) => y.h.at.localeCompare(x.h.at) || heCmp(name(x), name(y)));
 }
+const followFeed = since => allFollowFeed(since).slice(0, FEED_MAX);
 
 // Athletes followed only through their sport have no star, so their feed rows say why they're there.
 const viaSport = a => S.follows.has(a.id) ? "" : `<small>ענף במעקב: ${esc(sportName(a.sportId))}</small>`;
@@ -182,13 +183,14 @@ function viewFollowing(tab = ""){
     return `${head}${management}${empty}
     ${picks.length ? `<section class="panel"><h2>הצעות למעקב</h2><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}`;
   }
-  const feed = followFeed(followSeenAtLoad);
+  const feed = allFollowFeed(followSeenAtLoad), moreFeed = feed.slice(FEED_MAX);
   followingUpcomingMarks.clear();
   renderedFollowingUpcoming = followingUpcomingContent();
   return `${head}${management}
   <section class="panel" aria-labelledby="feedH">
     <h2 id="feedH">מאז הביקור הקודם (${feed.length})</h2>
-    ${feed.length ? `<ul class="rows">${feed.map(followingFeedRow).join("")}</ul>`
+    ${feed.length ? `<ul class="rows">${feed.slice(0, FEED_MAX).map(followingFeedRow).join("")}</ul>
+      ${moreFeed.length ? `<details><summary id="followingFeedMore">${moreFeed.length === 1 ? "עוד עדכון אחד" : `עוד ${moreFeed.length} עדכונים`}</summary><ul class="rows">${moreFeed.map(followingFeedRow).join("")}</ul></details>` : ""}`
       : `<p class="muted">${followSeenAtLoad ? "אין עדכונים חדשים מאז הביקור הקודם." : "עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."}</p>`}
   </section>
   <div id="followingUpcoming" tabindex="-1">${renderedFollowingUpcoming}</div>
@@ -210,7 +212,7 @@ function followingDecorate(h, html){
   }
   if (h === "home") html = html.replace("<h2>במעקב שלי</h2>", `<h2>במעקב שלי</h2><a href="#following">לדף המעקב</a>`);
   // The visible badge is aria-hidden; screen readers get "מעקב, N עדכונים חדשים" from the link text.
-  const n = followFeed(badgeSince).length, badge = $("followBadge"), sr = $("followBadgeSr");
+  const n = allFollowFeed(badgeSince).length, badge = $("followBadge"), sr = $("followBadgeSr");
   if (badge) { badge.hidden = !n; badge.textContent = n > 9 ? "9+" : String(n); }
   if (sr) sr.textContent = !n ? "" : n === 1 ? ", עדכון חדש אחד" : `, ${n} עדכונים חדשים`;
   return html;
