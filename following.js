@@ -142,14 +142,27 @@ function refreshFollowingUpcoming(){
   if (typeof y === "number") scrollTo({top: y, behavior: "auto"});
 }
 
+const explicitFollowing = sports => (sports ? S.sports.filter(s => S.followSports.has(s.id)) : S.athletes.filter(a => S.follows.has(a.id)))
+  .sort((a, b) => heCmp(sports ? a.he : a.name, sports ? b.he : b.name));
+const followingRemoveId = (sports, id) => `followingRemove-${sports ? "sport" : "athlete"}-${id}`;
+function followingManagement(sports, items){
+  return `<details class="panel" id="followingManage"><summary id="followingManageSummary">ניהול המעקב</summary>
+    ${items.length ? `<ul class="rows">${items.map(item => {
+      const name = sports ? item.he : item.name;
+      return `<li><span class="d"></span><span class="t"><a href="#${sports ? "sport" : "a"}-${esc(item.id)}">${esc(name)}</a></span>
+        <span><button class="btn ghost small" type="button" id="${esc(followingRemoveId(sports, item.id))}" data-remove-follow="${esc(item.id)}" data-remove-follow-kind="${sports ? "sport" : "athlete"}" aria-label="הסרה מהמעקב שלי: ${esc(name)}">הסרה מהמעקב שלי</button></span></li>`;
+    }).join("")}</ul>` : emptyLine(sports ? "עוד אין ענפים במעקב שלך." : "עוד אין ספורטאים או נבחרות במעקב שלך.", sports ? "#sports" : "#home", sports ? "לבחירת ענפים למעקב" : "לבחירת ספורטאים ונבחרות למעקב")}
+  </details>`;
+}
+
 function viewFollowing(tab = ""){
   if (tab && tab !== "sports") return notFound();
   // Opening the page is the "visit": the badge clears, and the feed keeps showing what was new on arrival.
   badgeSince = new Date().toISOString();
   store.set("la28.followingSeen", badgeSince);
   store.set("la28.followingShown", Object.fromEntries(followedAthletes().map(a => [a.id, shownOf(a)])));
-  const athletes = S.athletes.filter(a => S.follows.has(a.id)).sort((a, b) => heCmp(a.name, b.name));
-  const sports = S.sports.filter(s => S.followSports.has(s.id)).sort((a, b) => heCmp(a.he, b.he));
+  const athletes = explicitFollowing(false), sports = explicitFollowing(true);
+  const management = followingManagement(!!tab, tab ? sports : athletes);
   const head = `<h1 tabindex="-1">במעקב שלי</h1>
   <nav class="chips" aria-label="סוג המעקב">
     <a href="#following" ${tab ? "" : `aria-current="page"`}>ספורטאים ונבחרות (${athletes.length})</a>
@@ -166,13 +179,13 @@ function viewFollowing(tab = ""){
   if (!athletes.length && !sports.length) {
     const t = today(), seen = new Set(), picks = [];
     for (const g of closestGroups(todayRows(), t)) for (const {as} of g.items) for (const a of as) if (!seen.has(a.id) && picks.length < 3) { seen.add(a.id); picks.push(a); }
-    return `${head}${empty}
+    return `${head}${management}${empty}
     ${picks.length ? `<section class="panel"><h2>הצעות למעקב</h2><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}`;
   }
   const feed = followFeed(followSeenAtLoad);
   followingUpcomingMarks.clear();
   renderedFollowingUpcoming = followingUpcomingContent();
-  return `${head}
+  return `${head}${management}
   <section class="panel" aria-labelledby="feedH">
     <h2 id="feedH">מאז הביקור הקודם (${feed.length})</h2>
     ${feed.length ? `<ul class="rows">${feed.map(followingFeedRow).join("")}</ul>`
@@ -204,6 +217,20 @@ function followingDecorate(h, html){
 }
 
 document.addEventListener("click", e => {
+  const remove = e.target.closest?.("[data-remove-follow]");
+  if (remove && "removeFollow" in remove.dataset) {
+    const route = currentRoute(), sports = remove.dataset.removeFollowKind === "sport";
+    if (route !== (sports ? "following-sports" : "following") || !["sport", "athlete"].includes(remove.dataset.removeFollowKind)) return;
+    const items = explicitFollowing(sports), index = items.findIndex(item => item.id === remove.dataset.removeFollow);
+    if (index < 0) return;
+    const next = items[index + 1] || items[index - 1], open = $("followingManage")?.open;
+    if (sports) toggleFollowSport(items[index].id);
+    else toggleFollow(items[index].id);
+    refresh();
+    if (open) $("followingManage").open = true;
+    $(next ? followingRemoveId(sports, next.id) : "followingManageSummary")?.focus({preventScroll: true});
+    return;
+  }
   const t = e.target.closest?.("[data-follow-sport]");
   if (!t) return;
   toggleFollowSport(t.dataset.followSport);

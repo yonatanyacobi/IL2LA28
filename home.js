@@ -18,7 +18,13 @@ function todayStakes(sessions, t){
   const cmp = (x, y) => x.k[0] - y.k[0] || x.k[1] - y.k[1] || (x.k[2] - y.k[2] || 0) || x.i - y.i;   // || 0: Infinity - Infinity
   const picks = S.comps.filter(c => c.start <= t && t <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS)
     .map(c => quotasOf(c.sportId).map((q, i) => ({c, q, i, k: key(q)}))
-      .filter(({q}) => stakesLine(q) && israelIn(q) && c.start <= q.nextQuotaEvent.start && q.nextQuotaEvent.start <= (c.end || c.start)).sort(cmp)[0])
+      .filter(({q}) => {
+        if (!stakesLine(q) || !israelIn(q)) return false;
+        const event = q.nextQuotaEvent;
+        const matches = S.comps.filter(comp => comp.sportId === q.sportId && comp.start <= event.start && event.start <= (comp.end || comp.start)
+          && str(comp.name).trim() === str(event.name).trim());
+        return matches.length === 1 && matches[0].id === c.id;
+      }).sort(cmp)[0])
     .filter(Boolean).sort(cmp).slice(0, HOME_STAKES_MAX);
   // The quota event, not the competition: the stakes text already opens with the competition (UX on #171).
   return picks.map(({q}) => `<p class="stakes"><b>על הכף היום · <bdi>${esc(q.event)}</bdi>:</b> ${esc(q.stakes)}</p>`).join("");
