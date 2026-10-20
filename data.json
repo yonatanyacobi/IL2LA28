@@ -5139,6 +5139,17 @@
       "notes": "תחרות עונה — הגרלה ראשית לנשים לפי WTA; השתתפות ספורטאיות מישראל ותוצאותיהן לא אומתו. אין כאן אישור להעפלה אולימפית.",
       "source": "https://www.wtatennis.com/tournaments/905/us-open/2026",
       "qualifying": false
+    },
+    {
+      "id": "equestrian-jumping-wc-final-2026",
+      "sportId": "equestrian",
+      "name": "גמר גביע העולם בקפיצות 2026 — ימי התחרות",
+      "location": "פורט וורת׳, ארצות הברית",
+      "start": "2026-04-09",
+      "end": "2026-04-12",
+      "notes": "תחרות עונה לפני פתיחת חלון ההעפלה המתועד בענף; הטווח הוא ימי הגמר בקפיצות בלבד. השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://www.fei.org/events/fei-world-cup-finals-2026/discipline/jumping",
+      "qualifying": false
     }
   ],
   "changes": [
