@@ -3,7 +3,7 @@
 "use strict";
 
 const DAY_STRIP = 3;                 // chips on each side of the selected date
-const DAY_LOOKAHEAD = 120;           // empty-state search limit in each direction
+const DAY_LOOKAHEAD = 120;           // known-day search limit in each direction
 let dayFollowingOnly = false;
 let dayDateChoice = null;
 const DAY_DATE_ERROR = "יש לבחור תאריך תקין כדי לעבור ליום אחר.";
@@ -125,7 +125,12 @@ function viewDay(d){
     if (!dayDateChoice.edited) dayDateChoice.value = d;
   }
   const t = today(), isToday = d === t, prev = addDays(d, -1), next = addDays(d, 1);
-  const fullSessions = daySessions(d);
+  const days = new Map();
+  const sessionsOn = date => {
+    if (!days.has(date)) days.set(date, daySessions(date));
+    return days.get(date);
+  };
+  const fullSessions = sessionsOn(d);
   const inFollowing = s => followsSport(s.sportId) || followedIn(s);
   const sessions = dayFollowingOnly ? fullSessions.filter(inFollowing) : fullSessions;
   // Group: sport → competition. Sports: followed, then with a followed athlete, then by name.
@@ -143,20 +148,25 @@ function viewDay(d){
   const athleteCount = new Set(sessions.flatMap(s => s.athletes.map(a => a.id))).size;
   const firstStart = c => c.list.map(s => s.startUtc).sort(byStart)[0] || null;
   let before = "", after = "";
-  const hasRelevantDay = date => dayFollowingOnly ? daySessions(date).some(inFollowing) : hasIsraelis(date);
-  if (!sessions.length) for (let i = 1; i <= DAY_LOOKAHEAD && (!before || !after); i++) {
+  const hasRelevantDay = date => dayFollowingOnly ? sessionsOn(date).some(inFollowing) : sessionsOn(date).length > 0;
+  for (let i = 1; i <= DAY_LOOKAHEAD && (!before || !after); i++) {
     if (!before && hasRelevantDay(addDays(d, -i))) before = addDays(d, -i);
     if (!after && hasRelevantDay(addDays(d, i))) after = addDays(d, i);
   }
+  const neighbourLabel = direction => `יום ${direction} עם הופעות ${dayFollowingOnly ? "במעקב שלי" : "ידועות"}`;
+  const neighbours = [[before, prev, "קודם"], [after, next, "הבא"]]
+    .filter(([date, adjacent]) => date && date !== adjacent)
+    .map(([date, , direction]) => `<a href="#day-${date}">${neighbourLabel(direction)}: ${fmt(date)}</a>`);
+  const neighbourNav = neighbours.length ? `<nav class="toolbar" aria-label="מעבר לימי הופעות ${dayFollowingOnly ? "במעקב שלי" : "ידועים"}">${neighbours.join("")}</nav>` : "";
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
   const watchPlan = dayWatchPlanText(d), resultsText = dayResultsShareText(d, fullSessions);
   return `<div class="day-nav">
       <h1 tabindex="-1">${isToday ? `היום, ${dayTitle(d)}` : dayTitle(d)}</h1>
-      <a class="day-prev" href="#day-${prev}"><span aria-hidden="true">→</span>&nbsp;${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
-      <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"}<span class="sr">, ${chipName(next)}</span>&nbsp;<span aria-hidden="true">←</span></a>
+      <a class="day-prev" href="#day-${prev}"><span aria-hidden="true">→</span>&nbsp;${isToday ? "אתמול" : "היום הקודם"}${before === prev ? ` · ${neighbourLabel("קודם")}: ${fmt(prev)}` : ""}<span class="sr">, ${chipName(prev)}</span></a>
+      <a href="#day-${next}">${isToday ? "מחר" : "היום הבא"}${after === next ? ` · ${neighbourLabel("הבא")}: ${fmt(next)}` : ""}<span class="sr">, ${chipName(next)}</span>&nbsp;<span aria-hidden="true">←</span></a>
     </div>
   ${freshLine(isToday && sessions.length > 0)}
-  <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = hasIsraelis(x);
+  <nav class="daystrip" aria-label="בחירת יום">${chips.map(x => { const has = sessionsOn(x).length > 0;
     return `<a href="#day-${x}" class="${has ? "has" : ""}"${x === d ? ` aria-current="date"` : ""}>${chipText(x)}<span class="sr"> · ${chipName(x)}${has ? " · יש תחרויות של ישראלים" : ""}</span></a>`; }).join("")}
     ${isToday ? "" : `<a href="#today">היום</a>`}</nav>
   <form class="toolbar" id="dayDateForm" novalidate>
@@ -168,12 +178,13 @@ function viewDay(d){
   <div class="toolbar"><label class="chk"><input type="checkbox" id="dayFollowOnly" ${dayFollowingOnly ? "checked" : ""}> רק המעקב שלי</label>
     ${dayFollowingOnly ? `<button class="btn ghost small" type="button" data-day-show-all>הצגת כל ההופעות</button>` : ""}</div>
   ${dayFollowingOnly ? `<p class="muted">מציגים ${sessions.length} מתוך ${fullSessions.length} הופעות</p>${!S.follows.size && !S.followSports.size ? `<p class="muted">עוד אין ספורטאים או ענפים במעקב שלך. <a href="#sports">לבחירת ענפים למעקב</a></p>` : ""}` : ""}
+  ${sessions.length ? neighbourNav : ""}
   ${sessions.length ? `<p class="kpi day-summary">${plural(sessions.length, "הופעה אחת", "הופעות")} · ${plural(athleteCount, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות")} · ${plural(sports.length, "ענף אחד", "ענפים")}</p>` : ""}
   ${sessions.length ? sports.map(sid => `<section class="panel day-sport" aria-labelledby="ds-${esc(sid)}">
       <h2 id="ds-${esc(sid)}">${followsSport(sid) ? STAR + " " : ""}<a class="hlink" href="#sport-${esc(sid)}">${esc(sportName(sid))}</a></h2>
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
-    : `<div class="empty"><p>${dayFollowingOnly && fullSessions.length ? "אין הופעות שמתאימות למעקב שלך ביום הזה." : "אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה."}</p>${before ? `<p><a href="#day-${before}">${dayFollowingOnly ? "להופעות הקודמות במעקב שלך" : "לתחרות הקודמת"}: ${fmt(before)}</a></p>` : ""}${after ? `<p><a href="#day-${after}">${dayFollowingOnly ? "להופעות הבאות במעקב שלך" : "לתחרות הבאה"}: ${fmt(after)}</a></p>` : ""}</div>`}
+    : `<div class="empty"><p>${dayFollowingOnly && fullSessions.length ? "אין הופעות שמתאימות למעקב שלך ביום הזה." : "אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה."}</p>${neighbourNav}</div>`}
   <section class="panel" aria-labelledby="dayShareH"><h2 id="dayShareH">שיתוף היום</h2>
     <div class="share"><input id="dayShare" readonly value="${esc(SITE_URL + "#day-" + d)}" dir="ltr" aria-label="קישור ליום התחרויות"><button class="btn ghost small" type="button" data-copy="dayShare" data-copy-msg="dayShareMsg">העתקת הקישור</button></div>
     <p class="foot" id="dayShareMsg" aria-live="polite"></p>

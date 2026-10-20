@@ -105,7 +105,7 @@ function homeArchivedResults(){
     <ul class="rows">${rows.map(r => `<li><span class="d"><a href="#day-${esc(r.day)}">${esc(fmt(r.day))}</a>${r.startUtc ? `<br>${timeTag(r.startUtc, hhmm(r.startUtc))}` : ""}</span>
       <span class="t">${r.athletes.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(" · ")}
         ${r.comp ? `<small>${compLink(r.comp, esc(r.comp.name))}</small>` : ""}${r.phase ? `<small><bdi>${esc(r.phase)}</bdi></small>` : ""}
-        <span class="res">${esc(r.result)} · ${hostLink(r.source, "מקור")}</span><small>${sportLink(r.sportId)}</small></span></li>`).join("")}</ul>
+        <span class="res">${esc(r.result)} · ${resultSourceLink(r.source, `${r.athletes.length > 1 ? "תוצאה משותפת: " : ""}${r.athletes.map(a => a.name).join(" · ")} · ${r.day} · ${r.result}`)}</span><small>${sportLink(r.sportId)}</small></span></li>`).join("")}</ul>
   </section>`;
 }
 

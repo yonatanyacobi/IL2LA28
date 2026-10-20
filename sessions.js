@@ -100,8 +100,9 @@ const timeTag = (iso, text) => `<time datetime="${esc(new Date(iso).toISOString(
 const whenIL = iso => timeTag(iso, `${ilDate(iso) === today() ? "" : fmtShortY(ilDate(iso)) + ", "}${hhmm(iso)}`);
 
 // "{label}: {host}"; <bdi> keeps the host's dots in order inside RTL text (#156).
-const hostLink = (u, label) => safeUrl(u)
-  ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}: <bdi>${esc(host(u))}</bdi><span class="sr"> (נפתח בחלון חדש)</span></a>` : "";
+const hostLink = (u, label, context = "") => safeUrl(u)
+  ? `<a href="${esc(u)}"${context ? ` aria-label="${esc(`${label}: ${host(u)} · ${context} (נפתח בחלון חדש)`)}"` : ""} target="_blank" rel="noopener">${esc(label)}: <bdi>${esc(host(u))}</bdi><span class="sr"> (נפתח בחלון חדש)</span></a>` : "";
+const resultSourceLink = (source, context = "") => hostLink(source, "מקור", context);
 
 // End of the session's window: start + 3h, or the end of Israel day d when untimed.
 function windowEnd(s, d){
@@ -132,11 +133,13 @@ function statusChip(state){
 
 function sessionDetail(s, state){
   const line = html => `<span class="res">${html}</span>`;
-  const src = hostLink(s.resultSource, "מקור");
+  const context = text => s.athletes.length === 1 ? `${s.athletes[0].name} · ${text}`
+    : s.resultAt ? `תוצאה משותפת: ${s.athletes.map(a => a.name).join(" · ")} · ${text}` : `תוצאה מתועדת: ${text}`;
+  const src = resultSourceLink(s.resultSource, context(s.result));
   if (state === "result") return line(`<b>תוצאה:</b> ${esc(s.result)} · עודכן ב־${whenIL(s.resultAt)} · ${src}`);
   if (state === "resultDate" && s.athletes.length === 1 && Array.isArray(s.historyResults)) {
     const results = s.historyResults.filter(h => h && str(h.text).trim() && safeUrl(h.source));
-    if (results.length > 1) return results.map(h => line(`<b>תוצאה:</b> ${esc(h.text)} · ${hostLink(h.source, "מקור")}`)).join("");
+    if (results.length > 1) return results.map(h => line(`<b>תוצאה:</b> ${esc(h.text)} · ${resultSourceLink(h.source, context(h.text))}`)).join("");
   }
   if (state === "resultDate") return line(`<b>תוצאה:</b> ${esc(s.result)} · ${src}`);
   if (state === "awaitFresh") return line(NEXT_CHECK);

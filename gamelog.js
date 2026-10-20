@@ -35,7 +35,7 @@ function documentedResultRow(r){
   return `<li><span class="d"><a href="#day-${esc(r.day)}">${esc(fmtShortY(r.day))}</a>${r.startUtc ? `<br>${timeTag(r.startUtc, hhmm(r.startUtc))}` : ""}</span>
     <span class="t">${r.athletes.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(" · ")}
       ${r.comp ? `<small>${compLink(r.comp, esc(r.comp.name))}</small>` : ""}${r.phase ? `<small><bdi>${esc(r.phase)}</bdi></small>` : ""}
-      <span class="res">${esc(r.result)} · ${linkOut(r.source, `מקור: ${host(r.source)}`)}</span></span></li>`;
+      <span class="res">${esc(r.result)} · ${resultSourceLink(r.source, `${r.athletes.length > 1 ? "תוצאה משותפת: " : ""}${r.athletes.map(a => a.name).join(" · ")} · ${r.day} · ${r.result}`)}</span></span></li>`;
 }
 
 function sportRecentResultsSection(id){
@@ -118,7 +118,9 @@ function gameLogRow({comp, entries, first, last}, id){
   // One source for the whole row is shown once, on its last entry.
   const shared = entries.every(e => e.source === entries[0].source);
   const multipleDays = new Set(entries.map(e => e.date)).size > 1;
-  const src = e => linkOut(e.source, `מקור: ${host(e.source)}`);
+  const owner = athleteById(id)?.name;
+  const src = e => resultSourceLink(e.source, [owner, shared && entries.length > 1 ? "קבוצת תוצאות" : "",
+    ...(shared ? entries : [e]).map(entry => `${entry.date} · ${entry.result}`)].filter(Boolean).join(" · "));
   // Each entry is tracked for "השתנה ב־", but the row shows one mark (the latest): the marks sit out of the flow,
   // so two in one row would overlap (Gil on #268).
   const keys = entries.map(e => `log|${id}|${e.date}|${e.phase}|${e.result}`);

@@ -260,6 +260,18 @@ function viewFollowing(tab = ""){
   return followingContent(tab);
 }
 
+function followingDocumentedResultsSection(){
+  if (!S.follows.size && !S.followSports.size) return "";
+  const rows = documentedResults().filter(r => S.followSports.has(r.sportId) || r.athletes.some(a => S.follows.has(a.id)));
+  const more = rows.slice(5);
+  return `<section class="panel" aria-labelledby="followingResultsH"><h2 id="followingResultsH">תוצאות מתועדות אחרונות במעקב שלי</h2>
+    <p class="muted">מידע היסטורי שתועד באתר, בנפרד מעדכונים מאז הביקור הקודם.</p>
+    ${rows.length ? `<ul class="rows">${rows.slice(0, 5).map(documentedResultRow).join("")}</ul>
+      ${more.length ? `<details id="followingResultsOverflow"><summary id="followingResultsMore">${more.length === 1 ? "עוד תוצאה אחת במעקב שלי" : `עוד ${more.length} תוצאות במעקב שלי`}</summary><ul class="rows">${more.map(documentedResultRow).join("")}</ul></details>` : ""}`
+      : `<p class="muted">לא תועדו תוצאות במעקב שלי. <a href="#sports">לענפים ולרשומות באתר</a></p>`}
+  </section>`;
+}
+
 function followingContent(tab = "", recordMarks = true){
   const athletes = explicitFollowing(false), sports = explicitFollowing(true);
   const management = followingManagement(!!tab, tab ? sports : athletes);
@@ -293,6 +305,7 @@ function followingContent(tab = "", recordMarks = true){
       : `<p class="muted">${followSeenAtLoad ? "אין עדכונים חדשים מאז הביקור הקודם." : "עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."}</p>`}
   </section>
   <div id="followingUpcoming" tabindex="-1">${renderedFollowingUpcoming}</div>
+  ${followingDocumentedResultsSection()}
   ${tab ? (sports.length ? `<ul class="sports">${sports.map(s => { const ws = winStatus(s.window); return `<li><a class="sport" href="#sport-${esc(s.id)}">
       <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</span>${stageBar(athletesOf(s.id), true).html}
       ${quotaCardSummary(s.id)}<span class="meta">${athletesOf(s.id).length} ברשימה</span></a></li>`; }).join("")}</ul>`
