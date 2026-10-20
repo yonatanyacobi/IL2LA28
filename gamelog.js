@@ -47,30 +47,36 @@ function sportRecentResultsSection(id){
   </section>`;
 }
 
-let resultsSearchQuery = "";
+let resultsSearchQuery = "", resultsMonth = "";
+const resultsMonths = rows => [...new Set(rows.filter(r => realDate(r.day)).map(r => r.day.slice(0, 7)))].sort().reverse();
 
-function resultsSearchContent(preserveOverflow = false){
-  const all = documentedResults(), query = searchKey(resultsSearchQuery);
-  const rows = all.filter(r => !query || searchKey([
+function resultsSearchContent(preserveOverflow = false, all = documentedResults()){
+  if (resultsMonth && !resultsMonths(all).includes(resultsMonth)) resultsMonth = "";
+  const query = searchKey(resultsSearchQuery);
+  const rows = all.filter(r => (!resultsMonth || r.day.slice(0, 7) === resultsMonth) && (!query || searchKey([
     ...r.athletes.flatMap(a => [a.name, a.name_en]), sportById(r.sportId)?.he, sportById(r.sportId)?.en,
     r.comp?.name, r.result
-  ].map(str).join(" ")).includes(query)), more = rows.slice(10);
+  ].map(str).join(" ")).includes(query))), more = rows.slice(10);
   const open = preserveOverflow && $("resultsOverflow")?.open;
   const row = r => documentedResultRow(r).replace(/<\/span><\/li>$/, `<small><a href="#sport-${esc(r.sportId)}">${esc(sportName(r.sportId))}</a></small></span></li>`);
   return `<p class="muted" id="resultsSearchCount" role="status">נמצאו ${rows.length} מתוך ${all.length} שורות תוצאה מתועדות באתר.</p>
     ${rows.length ? `<ul class="rows">${rows.slice(0, 10).map(row).join("")}</ul>
       ${more.length ? `<details id="resultsOverflow"${open ? " open" : ""}><summary id="resultsMore">${more.length === 1 ? "עוד שורת תוצאה מתועדת אחת" : `עוד ${more.length} שורות תוצאה מתועדות`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}`
-      : all.length ? `<div class="empty"><p>אין תוצאות מתועדות שמתאימות לחיפוש. אפשר לאפס את החיפוש כדי להציג את כל התוצאות המתועדות.</p></div>`
+      : all.length ? `<div class="empty"><p>אין תוצאות מתועדות שמתאימות לחיפוש ולחודש שנבחרו. אפשר לאפס את הסינון כדי להציג את כל התוצאות המתועדות.</p></div>`
       : `<div class="empty"><p>עוד לא תועדו תוצאות באתר.</p><p><a href="#sports">לענפים באתר</a> · <a href="#calendar">ללוח התחרויות</a></p></div>`}`;
 }
 
 function viewResults(){
+  const all = documentedResults(), content = resultsSearchContent(true, all);
+  const months = resultsMonths(all);
   return `<p class="crumb"><a href="#home"><span aria-hidden="true">→</span>&nbsp;לדף הראשי</a></p>
     <h1 tabindex="-1">כל התוצאות המתועדות</h1>
     <p>תוצאות שפורסמו באתר, עם מקור לכל תוצאה. הכיסוי עשוי להיות חלקי ואינו כולל בהכרח את כל תוצאות ישראל בעונה.</p>
     <label for="resultsSearch">חיפוש בתוצאות המתועדות</label>
-    <div class="toolbar"><input type="search" id="resultsSearch" value="${esc(resultsSearchQuery)}" class="search" aria-describedby="resultsSearchCount"><button class="btn ghost" id="resultsSearchReset" type="button" data-results-search-reset>איפוס החיפוש</button></div>
-    <div id="resultsSearchContent">${resultsSearchContent(true)}</div>`;
+    <div class="toolbar"><input type="search" id="resultsSearch" value="${esc(resultsSearchQuery)}" class="search" aria-describedby="resultsSearchCount">
+      <label for="resultsMonth">חודש ושנה</label><select id="resultsMonth" aria-describedby="resultsSearchCount"><option value="">כל החודשים</option>${months.map(month => `<option value="${month}" ${month === resultsMonth ? "selected" : ""}>${esc(new Date(month + "-15T12:00:00Z").toLocaleDateString("he-IL", {month: "long", year: "numeric", timeZone: "Asia/Jerusalem"}))}</option>`).join("")}</select>
+      <button class="btn ghost" id="resultsSearchReset" type="button" data-results-search-reset>איפוס הסינון</button></div>
+    <div id="resultsSearchContent">${content}</div>`;
 }
 
 function updateResultsSearch(){
@@ -80,14 +86,23 @@ function updateResultsSearch(){
 }
 
 document.addEventListener("input", e => {
-  if (e.target?.id !== "resultsSearch" || currentRoute() !== "results") return;
+  if (currentRoute() !== "results") return;
+  if (e.target?.id === "resultsMonth") {
+    if (e.target.value && !resultsMonths(documentedResults()).includes(e.target.value)) { e.target.value = resultsMonth; return; }
+    resultsMonth = e.target.value;
+    updateResultsSearch();
+    return;
+  }
+  if (e.target?.id !== "resultsSearch") return;
   resultsSearchQuery = e.target.value;
   updateResultsSearch();
 });
 document.addEventListener("click", e => {
   if (currentRoute() !== "results" || !e.target.closest?.("[data-results-search-reset]")) return;
   resultsSearchQuery = "";
+  resultsMonth = "";
   $("resultsSearch").value = "";
+  $("resultsMonth").value = "";
   updateResultsSearch();
   $("resultsSearch")?.focus({preventScroll: true});
 });
