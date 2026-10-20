@@ -3011,6 +3011,12 @@
       "verifiedAt": "2026-10-18T13:19:01Z",
       "history": [
         {
+          "at": "2026-03-02",
+          "kind": "result",
+          "text": "אליפות אירופה בקליעה 10 מ׳ 2026, מוקדמות רובה אוויר גברים: מקום 42, 627.1 נקודות.",
+          "source": "https://www.issf-sports.org/competitions/3458/resultstargets/53484953524d323330343139383930313b3b333435383b41524d3b313b513b493b313b303b30"
+        },
+        {
           "at": "2026-10-18",
           "kind": "start",
           "text": "נכנס/ה למעקב · במעקב · 55 בעולם (ISSF, אוק׳ 2026)",
@@ -5180,6 +5186,17 @@
       "source": "https://img.mlbstatic.com/mlb-images/image/upload/mlb/qfgxpjy8fqpwo6mzaxpx.pdf",
       "qualifying": true,
       "qualificationSource": "https://static.wbsc.org/uploads/federations/0/documents/871506df-a39d-6ed7-5b48-dd4451d0ecf7.pdf"
+    },
+    {
+      "id": "shooting-euro-10m-yerevan-2026",
+      "sportId": "shooting",
+      "name": "אליפות אירופה בקליעה 10 מ׳ 2026",
+      "location": "ירוואן, ארמניה",
+      "start": "2026-02-27",
+      "end": "2026-03-05",
+      "notes": "תחרות עונה לפני חלון ההעפלה האולימפי. תוצאת מוקדמות אישית של סרגיי ריכטר מתועדת באתר; אין כאן קביעה על מכסה או על השתתפות ישראלים במקצים אחרים.",
+      "source": "https://www.issf-sports.org/competitions/3458/results",
+      "qualifying": false
     }
   ],
   "changes": [
