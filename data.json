@@ -2343,6 +2343,12 @@
       "verifiedAt": "2026-10-18T14:22:30Z",
       "history": [
         {
+          "at": "2026-04-19",
+          "kind": "result",
+          "text": "גביע העולם באופני מסלול בהונג קונג 2026, ספרינט גברים: מקום 17 בדירוג הסופי שפורסם ב־19 באפריל.",
+          "source": "https://prod.server.tissottiming.com/file/0003190102010106FFFFFFFFFFFFFF02"
+        },
+        {
           "at": "2026-10-18",
           "kind": "start",
           "text": "נכנס/ה למעקב · בחלון ההעפלה",
@@ -5230,6 +5236,39 @@
       "end": "2026-05-31",
       "notes": "תחרות עונה ברובה ובאקדח לפני חלון ההעפלה האולימפי. מתועדות תוצאות מוקדמות אישיות של אולגה טשצ׳ייב וסרגיי ריכטר; אין כאן אישור להשתתפות ישראלים במקצים אחרים או לזכייה במכסה.",
       "source": "https://www.issf-sports.org/competitions/3284/results",
+      "qualifying": false
+    },
+    {
+      "id": "cycling-track-world-cup-hong-kong-2026",
+      "sportId": "cycling",
+      "name": "גביע העולם באופני מסלול — הונג קונג 2026",
+      "location": "הונג קונג, סין",
+      "start": "2026-04-17",
+      "end": "2026-04-19",
+      "notes": "תחרות עונה באופני מסלול לפני חלון ההעפלה האולימפי. תוצאת הספרינט האישית של מיכאל יעקובלב מתועדת באתר; אין כאן אישור להשתתפות ישראלים במקצים אחרים או לזכייה במכסה. התאריך בתוצאה הוא מועד הדירוג הסופי שפורסם, ולא קביעה על יום המקצה האישי.",
+      "source": "https://www.uci.org/article/uci-track-world-cup-2026-series-returns-with-three-rounds/1dTOq80YKRa6tYq1matRXQ",
+      "qualifying": false
+    },
+    {
+      "id": "cycling-track-world-cup-perth-2026",
+      "sportId": "cycling",
+      "name": "גביע העולם באופני מסלול — פרת׳ 2026",
+      "location": "פרת׳, אוסטרליה",
+      "start": "2026-03-06",
+      "end": "2026-03-08",
+      "notes": "תחרות עונה בסדרת גביע העולם באופני מסלול לפני חלון ההעפלה האולימפי. השתתפות ספורטאים מישראל ותוצאותיהם בתחרות זו לא אומתו; אין כאן קביעה על מכסה.",
+      "source": "https://www.uci.org/article/uci-track-world-cup-2026-series-returns-with-three-rounds/1dTOq80YKRa6tYq1matRXQ",
+      "qualifying": false
+    },
+    {
+      "id": "cycling-track-world-cup-nilai-2026",
+      "sportId": "cycling",
+      "name": "גביע העולם באופני מסלול — נילאי 2026",
+      "location": "נילאי, מלזיה",
+      "start": "2026-04-24",
+      "end": "2026-04-26",
+      "notes": "תחרות עונה בסדרת גביע העולם באופני מסלול לפני חלון ההעפלה האולימפי. השתתפות ספורטאים מישראל ותוצאותיהם בתחרות זו לא אומתו; אין כאן קביעה על מכסה.",
+      "source": "https://www.uci.org/article/uci-track-world-cup-2026-series-returns-with-three-rounds/1dTOq80YKRa6tYq1matRXQ",
       "qualifying": false
     }
   ],
