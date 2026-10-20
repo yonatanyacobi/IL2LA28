@@ -46,6 +46,8 @@ function digestText(t = today()){
   // daily job writes.
   const resFrom = addDays(t, -7);
   const resChanges = S.changes.filter(c => isDate(day(c)) && day(c) <= t);
+  const sessionResults = exportedSessions().filter(s => s.result && safeUrl(s.resultSource) && isUtc(s.resultAt)
+    && s.day <= t && ilDate(s.resultAt) <= t && Date.parse(s.resultAt) <= Date.now());
   const changeSport = c => S.athletes.find(a => a.id === c.athleteId)?.sportId
     || S.sports.find(s => waText(c.text).startsWith(waText(s.he) + ":"))?.id || "";
   const used = new Set();
@@ -55,11 +57,15 @@ function digestText(t = today()){
       // Results written straight into athlete history (results-assist, e.g. tri_results.py) count too; such an
       // athlete's nextDate has usually moved on to the next event already, so they are matched by the entry's date.
       const inComp = d => isDate(d) && c.start <= d && d <= end(c);
+      const sessions = sessionResults.filter(s => s.comp.id === c.id && inComp(s.day));
+      const covered = (a, d) => sessions.some(s => s.day === d && s.athletes.some(p => p.id === a.id));
       const resultsOf = a => (Array.isArray(a.history) ? a.history : []).filter(h => h && h.kind === "result" && inComp(h.at)
-        && str(h.text).trim() && safeUrl(h.source));
-      const who = S.athletes.filter(a => a.sportId === c.sportId && (inComp(a.nextDate) || resultsOf(a).length));
+        && str(h.text).trim() && safeUrl(h.source) && !covered(a, h.at));
+      const who = S.athletes.filter(a => a.sportId === c.sportId && (inComp(a.nextDate) || resultsOf(a).length
+        || sessions.some(s => s.athletes.some(p => p.id === a.id))));
       const loggedBy = who.filter(a => resultsOf(a).length);
-      const logged = loggedBy.flatMap(a => resultsOf(a).map(h => [h.at, waCut(`  – ${waText(a.name)}: ${waText(h.text)}`)]))
+      const logged = [...loggedBy.flatMap(a => resultsOf(a).map(h => [h.at, waCut(`  – ${waText(a.name)}: ${waText(h.text)}`)])),
+        ...sessions.map(s => [s.day, waCut(`  – ${names(s.athletes).join(", ")}: ${waText(s.result)}`)])]
         .sort((x, y) => x[0].localeCompare(y[0]) || heCmp(x[1], y[1])).map(([, line]) => line);
       const fromJob = resChanges.filter(x => !used.has(x) && changeSport(x) === c.sportId && day(x) >= c.start);
       fromJob.forEach(x => used.add(x));
@@ -70,7 +76,9 @@ function digestText(t = today()){
       // is dated the result's day or the morning after, when the job writes it.
       const repeats = x => loggedBy.some(a => x.athleteId ? x.athleteId === a.id
         : waText(x.text).includes(waText(a.name)) && resultsOf(a).some(h => day(x) === h.at || day(x) === addDays(h.at, 1)));
-      const about = fromJob.filter(x => !repeats(x) && !/מתקיימ(ת|ים|ות) עכשיו/.test(str(x.text)));
+      const sessionRepeat = x => sessions.some(s => day(x) === s.day && waText(x.text) === waText(s.result)
+        && (!x.athleteId || s.athletes.some(a => a.id === x.athleteId)));
+      const about = fromJob.filter(x => !repeats(x) && !sessionRepeat(x) && !/מתקיימ(ת|ים|ות) עכשיו/.test(str(x.text)));
       const lines = [...logged, ...about.map(x => waCut(`  – ${waText(x.text)}`))];
       return [waCut(`• ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))})`),
         ...(who.length ? waList("  ישראלים: ", names(who)) : []),

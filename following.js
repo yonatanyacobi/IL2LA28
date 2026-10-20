@@ -92,7 +92,7 @@ function followUpcoming(){
   const competitions = new Set(knownSessions.map(s => s.comp.id));
   const sessions = knownSessions.filter(s => ["before", "competing"].includes(sessionState(s, s.day)));
   const appearances = sessions.flatMap(s => s.athletes.filter(a => ids.has(a.id)).map(a => ({
-    k: `up|s|${s.comp.id}|${s.day}|${a.id}|${s.phase}|${s.startUtc || ""}`, d: s.day,
+    k: `up|s|${s.comp.id}|${s.day}|${a.id}|${s.phase}|${s.startUtc || ""}`, d: s.day, session: true, startUtc: s.startUtc,
     chip: s.day === t ? statusChip(sessionState(s, s.day)) : "",
     html: `<a href="#day-${esc(s.day)}">${esc(a.name)}</a><small>${esc(sportName(s.sportId))} · ${compLinkOr(s.comp)}${s.phase ? ` · ${esc(s.phase)}` : ""}${safeUrl(s.source) ? ` · ${linkOut(s.source)}` : ""}</small>`,
   })));
@@ -102,7 +102,7 @@ function followUpcoming(){
   const comps = upcoming().filter(c => S.followSports.has(c.sportId) && !competitions.has(c.id))
     .map(c => ({k: `up|c|${c.id}`, d: c.start, chip: c.start <= t ? `<span class="pill s-live">מתקיימת עכשיו</span>` : "",
       html: `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLinkOr(c)}<small>${esc(c.location)}</small>`}));
-  return [...appearances, ...athletes, ...comps].sort((x, y) => x.d.localeCompare(y.d));
+  return [...appearances, ...athletes, ...comps].sort((x, y) => x.d.localeCompare(y.d) || byStart(x.startUtc, y.startUtc));
 }
 
 const FOLLOW_UPCOMING_ROWS = 5;
@@ -114,7 +114,8 @@ function followingUpcomingContent(clockOnly = false){
   const row = x => {
       const mark = clockOnly ? followingUpcomingMarks.get(x.k) || "" : rowMark(x.k, x.d + x.html);
       if (!clockOnly) followingUpcomingMarks.set(x.k, mark);
-      return `<li><span class="d">${fmtShort(x.d)}</span><span class="t">${x.html}${mark}</span><span>${x.chip}</span></li>`;
+      const time = x.session ? `<br>${isUtc(x.startUtc) ? timeTag(x.startUtc, hhmm(x.startUtc)) : "השעה טרם פורסמה"}` : "";
+      return `<li><span class="d">${fmtShort(x.d)}${time}</span><span class="t">${x.html}${mark}</span><span>${x.chip}</span></li>`;
   };
   return next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
     <ul class="rows">${next.slice(0, FOLLOW_UPCOMING_ROWS).map(row).join("")}</ul>

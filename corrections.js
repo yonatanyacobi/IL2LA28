@@ -9,6 +9,7 @@ const FIX_STAT_MIN = 5;   // below this, a share "within 48 hours" would mislead
 const FIX_SHOWN = 100;
 // Pre-launch source audit (PM decision on #89); fixed history, not entries, so it's not derived from data.
 const PRE_LAUNCH_FIXES = 25;
+let correctionsQuery = "";
 
 const fixHours = c => {
   const hours = (Date.parse(c.at) - Date.parse(c.reportedAt)) / 36e5;
@@ -43,12 +44,15 @@ function fixEntry(c){
 }
 
 function viewCorrections(id = ""){
-  const all = S.corrections, list = id ? all.filter(c => c.target.kind === "athlete" && c.target.id === id) : all;
+  const all = S.corrections, scoped = id ? all.filter(c => c.target.kind === "athlete" && c.target.id === id) : all;
+  if (id && !scoped.length) return notFound();   // a record with no entries has no log page
+  const query = searchKey(correctionsQuery);
+  const list = query ? scoped.filter(c => searchKey([c.target.name, ...c.changes.flatMap(x =>
+    [FIELD_LABELS[x.field] || x.field, x.wrong, x.right])].join(" ")).includes(query)) : scoped;
   const V = S.athletes.filter(a => trustOf(a) === "ok").length;
   const timed = all.filter(c => !isNaN(fixHours(c)));
-  const stat = timed.length >= FIX_STAT_MIN ? ` עד עכשיו, ${timed.filter(c => fixHours(c) <= 48).length} מתוך ${timed.length} התיקונים בוצעו תוך 48 שעות.` : "";
-  if (id && !list.length) return notFound();   // a record with no entries has no log page (and no link to one)
-  const name = id && (S.athletes.find(a => a.id === id)?.name || list[0].target.name);
+  const stat = timed.length >= FIX_STAT_MIN ? ` בכל האתר: עד עכשיו, ${timed.filter(c => fixHours(c) <= 48).length} מתוך ${timed.length} התיקונים בוצעו תוך 48 שעות.` : "";
+  const name = id && (S.athletes.find(a => a.id === id)?.name || scoped[0].target.name);
   const months = {};
   list.forEach(c => (months[fixDate(c).slice(0, 7)] ??= []).push(c));
   const mail = `<span dir="ltr">${esc(CONTACT_EMAIL)}</span>`;
@@ -62,6 +66,7 @@ function viewCorrections(id = ""){
       ${open ? months[m].map(fixEntry).join("")
         : `<p><button class="btn ghost small" data-fix-month="${m}">${n === 1 ? "הצגת התיקון" : `הצגת ${n} התיקונים`} מ${monthName(m)}</button></p>`}</section>`;
   }).join("")
+    : query ? `<div class="empty"><p>לא נמצאו תיקונים שמתאימים לחיפוש.</p></div>`
     : `<div class="empty"><p>עוד אין תיקונים מאז ההשקה.</p>
       <p>מצאתם טעות? שלחו קישור ומקור ל־${mail}, והתיקון יופיע כאן.</p></div>`;
   return `${S.launchAt ? "" : `<div class="banner">תצוגה מקדימה לעורכים: היומן יתפרסם לציבור אחרי שייקבע מועד ההשקה.</div>`}
@@ -80,13 +85,28 @@ function viewCorrections(id = ""){
     <p><a href="#about-trust">איך אנחנו בודקים</a> · דיווח: ${mail}</p>
   </section>
   ${id ? `<p>מוצגים התיקונים של <b>${esc(name || id)}</b> · <a href="#corrections">לכל התיקונים</a></p>` : ""}
+  <div class="toolbar"><label for="fixSearch">חיפוש בתיקונים</label><input type="search" id="fixSearch" value="${esc(correctionsQuery)}" aria-describedby="fixSearchCount">
+    <button class="btn ghost small" type="button" id="fixSearchReset" data-fix-search-reset ${correctionsQuery ? "" : "hidden"}>איפוס החיפוש</button></div>
+  <p class="muted" id="fixSearchCount" role="status">מציגים ${list.length} מתוך ${scoped.length} תיקונים</p>
   ${body}`;
 }
 
+document.addEventListener("input", e => {
+  if (e.target?.id !== "fixSearch") return;
+  correctionsQuery = e.target.value;
+  refresh();
+});
+
 // "הצגת … התיקונים": render that month and keep focus on its heading.
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-fix-month]");
+  const t = e.target.closest("[data-fix-month],[data-fix-search-reset]");
   if (!t) return;
+  if ("fixSearchReset" in t.dataset) {
+    correctionsQuery = "";
+    refresh();
+    $("fixSearch")?.focus({preventScroll: true});
+    return;
+  }
   S.fixOpen.add(t.dataset.fixMonth);
   route();
   $("m-" + t.dataset.fixMonth)?.focus();

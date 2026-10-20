@@ -28,9 +28,17 @@ function viewQuotas(){
     return matches.length === 1 ? compLink(matches[0], esc(event.name)) : esc(event.name);
   };
   const waiting = list.map(q => [q, awaitingOf(q)]).filter(([, w]) => w).sort(([, x], [, y]) => y.end.localeCompare(x.end));
+  const earnedEvidence = q => {
+    if (qStatus(q.israelStatus) !== "earned") return "";
+    const at = q.earnedAt;
+    const valid = isDate(at) && !isNaN(new Date(at + "T12:00:00")) && addDays(at, 0) === at && at <= today();
+    const date = valid ? `<small>הושגה ב־${fmt(at)}</small>` : "";
+    const source = linkOut(q.source, "מקור למכסה");
+    return date + (source ? `<small>${source}</small>` : "");
+  };
   const row = q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
     <span class="t"><bdi>${esc(q.event)}</bdi>${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
-    <span>${nxt(q) ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
+    <span>${earnedEvidence(q)}${nxt(q) ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
   const at = str(S.quotasUpdatedAt).slice(0, 10);
   return head + `
   <div class="toolbar"><label for="quotaSport">סינון מכסות לפי ענף</label>

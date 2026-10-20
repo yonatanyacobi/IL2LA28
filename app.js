@@ -607,10 +607,13 @@ function sportUpcomingSection(id){
   </section>`;
 }
 
+const sportRosterQueries = new Map();
 function viewSport(id){
   const s = sportById(id);
   if (!s) return notFound();
   const list = athletesOf(id).sort((a, b) => stageOf(b) - stageOf(a) || heCmp(a.event, b.event) || heCmp(a.name, b.name));
+  const value = sportRosterQueries.get(id) || "", query = searchKey(value);
+  const matches = query ? list.filter(a => searchKey([a.name, a.name_en, a.event].map(str).join(" ")).includes(query)) : list;
   const ws = winStatus(s.window), w = s.window;
   const comps = upcomingIn(id);
   return `
@@ -625,9 +628,14 @@ function viewSport(id){
   ${typeof standingsPanel === "function" ? standingsPanel(id) : ""}
   ${quotaSection(id)}
   ${sportUpcomingSection(id)}
-  <section class="stack">
-    <h2>${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
-    ${list.length ? `<div class="cards">${list.map(athleteCard).join("")}</div>` : calEmpty("אין כרגע ספורטאים או נבחרות מישראל ברשימה בענף הזה.", id)}
+  <section class="stack" id="sportRoster" aria-labelledby="sportRosterH">
+    <h2 id="sportRosterH">${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
+    <div class="toolbar"><label for="sportRosterSearch">חיפוש בספורטאים ובמקצים בענף</label><input type="search" id="sportRosterSearch" value="${esc(value)}" aria-describedby="sportRosterCount">
+      <button class="btn ghost small" type="button" id="sportRosterReset" data-sport-roster-reset ${value ? "" : "hidden"}>איפוס החיפוש</button></div>
+    <p class="muted" id="sportRosterCount" role="status">מציגים ${matches.length} מתוך ${list.length} ספורטאים ונבחרות</p>
+    ${matches.length ? `<div class="cards">${matches.map(athleteCard).join("")}</div>` : query && list.length
+      ? `<div class="empty"><p>לא נמצאו ספורטאים או מקצים שמתאימים לחיפוש בענף.</p></div>`
+      : calEmpty("אין כרגע ספורטאים או נבחרות מישראל ברשימה בענף הזה.", id)}
   </section>
   <section class="stack">
     <div class="sec-head"><h2>תחרויות קרובות בענף</h2>${comps.length > 5 ? `<a href="#calendar-${esc(id)}">כל ${comps.length} התחרויות</a>` : ""}</div>
@@ -1156,6 +1164,10 @@ function refresh(){
 addEventListener("hashchange", navigate);
 document.addEventListener("input", e => {
   if (e.target.id === "q") { S.q = e.target.value; renderResults(); }
+  if (e.target.id === "sportRosterSearch" && currentRoute().startsWith("sport-")) {
+    sportRosterQueries.set(currentRoute().slice(6), e.target.value);
+    refresh();
+  }
   if (e.target.id === "cSport") { S.cal.sport = e.target.value; history.replaceState(null, "", S.cal.sport ? "#calendar-" + S.cal.sport : "#calendar"); }
   if (e.target.id === "cQual") S.cal.qual = e.target.checked;
   if (e.target.id === "cPast") S.cal.past = e.target.checked;
@@ -1166,8 +1178,13 @@ document.addEventListener("input", e => {
   }
 });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset]");
+  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-sport-roster-reset]");
   if (!t) return;
+  if ("sportRosterReset" in t.dataset && currentRoute().startsWith("sport-")) {
+    sportRosterQueries.delete(currentRoute().slice(6));
+    refresh();
+    return $("sportRosterSearch")?.focus({preventScroll: true});
+  }
   if ("calendarReset" in t.dataset) {
     S.cal = {sport: "", qual: false, past: false};
     calendarFollowedOnly = false;
