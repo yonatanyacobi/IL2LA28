@@ -126,6 +126,7 @@ function viewEvent(id){
     ${athletes.length ? `<p class="kpi">${kpi}</p>`
       : tracked ? emptyLine("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", `#sport-${c.sportId}`, `${who(tracked)} ברשימה בענף`)
         : calEmpty("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", c.sportId)}
+    ${athletes.length ? `<p class="muted" id="evCountNote">מספר המשתתפים הוא ללא כפילויות. המצבים נספרים לכל משתתף בכל הופעה, ולכן אותו משתתף עשוי להיספר בכמה מצבים. כמה טקסטי תוצאה באותה הופעה אינם מגדילים את מניין מצבי התוצאה.</p>` : ""}
     ${nextDay ? `<p>ההופעה הבאה של ישראלים: <a href="#day-${esc(nextDay)}">${esc(dayTitle(nextDay))}</a></p>` : ""}
     ${sourceLinks.length ? `<p class="foot" id="evSources">${sourceLinks.join(" · ")}</p>` : ""}
   </section>

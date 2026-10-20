@@ -60,19 +60,23 @@ function nextIsraeliDay(from){
 const calEmpty = (text, sid) => emptyLine(text, sid ? `#calendar-${sid}` : "#calendar", "לוח התחרויות");
 // "השתנה ב־HH:MM" (docs/design/changed-rows.md): a row whose signature differs from the previous render of the same
 // page, compared only on an auto-refresh render, stays marked until the next navigation. Rows that are new count too.
-// The time is the export's (as in #updateNote), kept from the refresh that first marked the row.
+// Only an advancing source time can date a change; supplementary documentation may retain the old export stamp.
 const rowSigs = new Map(), changedRows = new Map();
-let diffRender = false, newlyChanged = 0;
+const UNTIMED_CHANGE = "documentation-change"; // A string keeps game-log mark ordering compatible.
+let diffRender = false, newlyChanged = 0, diffSourceTime;
 const IL_TIME = new Intl.DateTimeFormat("he-IL", {hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem"});
 const ilTime = ts => IL_TIME.format(new Date(ts));
 function rowMark(key, sig){
-  const ts = S.generatedAt || S.lastRun;
-  if (diffRender && rowSigs.get(key) !== sig && !changedRows.has(key) && ts && !isNaN(Date.parse(ts))) { changedRows.set(key, ts); newlyChanged++; }
+  const ts = diffSourceTime ?? (S.generatedAt || S.lastRun);
+  if (diffRender && rowSigs.get(key) !== sig && (ts === UNTIMED_CHANGE || (ts && !isNaN(Date.parse(ts))))) {
+    if (!changedRows.has(key)) { changedRows.set(key, ts); newlyChanged++; }
+    else if (ts === UNTIMED_CHANGE) changedRows.set(key, ts);
+  }
   rowSigs.set(key, sig);
   const at = changedRows.get(key);
   // Out of the flow (styles.css), so visually it never touches the row's text; in the reading order it follows that text
   // directly, so an sr-only separator keeps "מקום 5" and "השתנה ב־" from running together.
-  return at ? `<span class="pill chg"><span class="sr"> · </span>השתנה ב־<time datetime="${esc(at)}">${ilTime(at)}</time></span>` : "";
+  return at ? `<span class="pill chg"><span class="sr"> · </span>${at === UNTIMED_CHANGE ? "התיעוד השתנה" : `השתנה ב־<time datetime="${esc(at)}">${ilTime(at)}</time>`}</span>` : "";
 }
 const slug = s => str(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 // Every source label goes through host(). A long host (a CDN, a news subdomain) is cut to its registrable domain:
@@ -700,7 +704,7 @@ function viewAthlete(id){
   if (!a) return notFound();
   const s = stageOf(a), sp = sportById(a.sportId), fav = S.follows.has(id);
   const upd = str(a.updatedAt).slice(0, 10), old = upd && daysSince(a.updatedAt) > 30;
-  const comps = upcomingIn(a.sportId).slice(0, 3);
+  const allComps = upcomingIn(a.sportId), comps = allComps.slice(0, 3);
   // Results the game log shows (gamelog.js) leave the timeline; it keeps the rest, including unsourced results.
   const hist = (Array.isArray(a.history) ? a.history : []).filter(h => h && typeof h === "object" && !Array.isArray(h)
     && isDate(h.at) && !(typeof inGameLog === "function" && inGameLog(h))).slice().reverse();
@@ -743,7 +747,10 @@ function viewAthlete(id){
   ${athleteSiteUpdates(a)}
   <section class="stack">
     <h2>תחרויות קרובות בענף</h2>
+    ${comps.length ? `<p class="muted">תחרויות ענף כלליות; קיום תחרות אינו אישור להשתתפות הספורטאי/ת או הנבחרת. הרשימה כאן מוצגת לפני המסננים של לוח התחרויות.</p>` : ""}
+    ${allComps.length > comps.length ? `<p class="muted">מוצגות ${comps.length} מתוך ${allComps.length} תחרויות קרובות בענף.</p>` : ""}
     ${comps.map(c => compRow(c, false)).join("") || calEmpty("אין תחרויות קרובות ידועות בענף.", a.sportId)}
+    ${comps.length ? `<p><a href="#calendar-${esc(a.sportId)}">ללוח התחרויות בענף</a></p>` : ""}
   </section>
   <section class="panel">
     <h2>שיתוף</h2>
@@ -822,7 +829,7 @@ function calendarSharePlanText(rows = calendarRows()){
 
 function calendarShareSection(rows){
   const text = calendarSharePlanText(rows);
-  return `<section class="panel" aria-labelledby="calendarShareH"><h2 id="calendarShareH">לוח התחרויות להעתקה</h2>
+  return `<section class="panel digest" aria-labelledby="calendarShareH"><h2 id="calendarShareH">לוח התחרויות להעתקה</h2>
     ${text ? `<label for="calendarSharePlan">לוח התחרויות המסונן להעתקה</label><textarea id="calendarSharePlan" readonly rows="8">${esc(text)}</textarea>
       <button class="btn ghost small" type="button" data-copy="calendarSharePlan" data-copy-msg="calendarShareMsg">העתקת לוח התחרויות</button><p class="foot" id="calendarShareMsg" aria-live="polite"></p>`
       : `<p class="muted">${calendarMonthError ? "יש לבחור חודש תקין כדי להעתיק את לוח התחרויות." : "אין תחרויות בסינון הנוכחי להעתקה."}</p>`}
@@ -1182,7 +1189,7 @@ function currentRoute(){
 }
 
 let renderedDay = "", renderedClock = "";
-function route(){
+function route({preserveFollowingVisit = false} = {}){
   const h = currentRoute();
   renderedDay = today();
   let html, nav;
@@ -1203,7 +1210,11 @@ function route(){
   }
   // Before launch only editors see the log (as a preview); visitors get not-found and no links to it.
   else if (/^corrections(-|$)/.test(h) && typeof viewCorrections === "function" && (S.launchAt || S.isAdmin)) html = viewCorrections(h.slice(12)), nav = "about";
-  else if (/^following(-|$)/.test(h) && typeof viewFollowing === "function") html = viewFollowing(h.slice(10)), nav = "following";
+  else if (/^following(-|$)/.test(h) && typeof viewFollowing === "function") {
+    const tab = h.slice(10);
+    html = preserveFollowingVisit && ["", "sports"].includes(tab) ? followingContent(tab, false) : viewFollowing(tab);
+    nav = "following";
+  }
   else if (h.startsWith("c-") && typeof viewEvent === "function") html = viewEvent(h.slice(2)), nav = "calendar";
   else if (h === "quotas" && typeof viewQuotas === "function") html = viewQuotas(), nav = "sports";
   else if (h === "digest" && typeof viewDigest === "function") html = viewDigest(), nav = "updates";
@@ -1265,16 +1276,20 @@ function focusKey(el){
   const sel = attrSel(k, el.getAttribute(k));
   return {sel, idx: Math.max(0, [...($("view").querySelectorAll?.(sel) || [])].indexOf(el))};
 }
-function refresh(){
+function refresh({preserveFollowingVisit = false} = {}){
   const el = document.activeElement, key = focusKey(el), y = window.scrollY;
-  const open = [...($("view").querySelectorAll?.("details") || [])].map((d, i) => d.open ? i : -1).filter(i => i >= 0);
+  const open = [...($("view").querySelectorAll?.("details") || [])]
+    .flatMap((d, index) => d.open ? [{index, id: preserveFollowingVisit ? d.id : ""}] : []);
   let selection = null;
   try {
     if (typeof el?.selectionStart === "number") selection = {start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection};
   } catch {}
-  route();
+  route({preserveFollowingVisit});
   const details = [...($("view").querySelectorAll?.("details") || [])];
-  open.forEach(i => { if (details[i]) details[i].open = true; });
+  open.forEach(item => {
+    const detail = item.id ? details.find(d => d.id === item.id) : details[item.index];
+    if (detail) detail.open = true;
+  });
   const again = !key ? null : key.id ? $(key.id) : (m => m[key.idx] || m[0])([...($("view").querySelectorAll?.(key.sel) || [])]);
   if (again && again !== el) {
     again.focus({preventScroll: true});
@@ -1634,34 +1649,48 @@ async function goLive(){
 // don't poll; on return the check runs at once if it's due. Editors get live DB snapshots instead.
 const REFRESH_MS = 5 * 60e3;   // acceptance item 11: at most 5 minutes
 let lastCheck = Date.now(), refreshTimer = 0;
+const stableJson = data => JSON.stringify(data, (_, value) => value && typeof value === "object" && !Array.isArray(value)
+  ? Object.fromEntries(Object.keys(value).sort().map(key => [key, value[key]])) : value);
 async function checkForUpdate(){
   lastCheck = Date.now();
   if (S.live || !S.loaded) return;
   try {
-    const prevQ = quotaFile, prevJson = JSON.stringify(quotaFile);
+    const prevQ = quotaFile, prevJson = stableJson(quotaFile);
     const [r] = await Promise.all([fetch("data.json", {cache: "no-cache"}), loadQuotas()]);
     // A failed re-read keeps the quotas already shown; a 404 is an empty list (file removed on purpose), so they go.
     if (quotaFile === null) quotaFile = prevQ;
-    const quotasChanged = JSON.stringify(quotaFile) !== prevJson;
+    const quotasChanged = stableJson(quotaFile) !== prevJson;
     if (quotasChanged) applyQuotas();
     const d = r.ok ? await r.json() : null;
-    if (S.live || !isExport(d) || (str(d.generatedAt) === S.generatedAt && str(d.lastRun) === S.lastRun)) { if (quotasChanged) refresh(); return; }
+    if (S.live || !isExport(d) || stableJson(d) === stableJson(publicSnapshot)) {
+      if (quotasChanged) refresh({preserveFollowingVisit: true});
+      return;
+    }
+    const previousTime = S.generatedAt || S.lastRun, nextTime = str(d.generatedAt) || str(d.lastRun);
+    const advanced = nextTime && !isNaN(Date.parse(nextTime))
+      && (!previousTime || isNaN(Date.parse(previousTime)) || Date.parse(nextTime) > Date.parse(previousTime));
+    const sourceTime = advanced ? nextTime : UNTIMED_CHANGE;
     publicSnapshot = d;
     applySnapshot(d);
-    diffRender = true; newlyChanged = 0;
-    try { refresh(); } finally { diffRender = false; }
-    showUpdateNote(newlyChanged);
+    let marked = 0;
+    if (/^following(-|$)/.test(currentRoute())) refresh({preserveFollowingVisit: true});
+    else {
+      diffRender = true; diffSourceTime = sourceTime; newlyChanged = 0;
+      try { refresh({preserveFollowingVisit: true}); marked = newlyChanged; }
+      finally { diffRender = false; diffSourceTime = undefined; }
+    }
+    showUpdateNote(marked, sourceTime);
   } catch { /* keep what is on screen; freshness() turns stale after 1.5 days */ }
 }
 // A small visible note (also the screen-reader announcement), shown only when the export changed; it hides itself.
 let noteTimer = 0;
-// `marked`: rows newly marked "השתנה ב־"; the note is their only announcement, so the rows themselves stay quiet.
-function showUpdateNote(marked = 0){
+// `marked` counts newly marked rows; this note announces them, so the rows themselves stay quiet.
+function showUpdateNote(marked = 0, sourceTime = S.generatedAt || S.lastRun){
   const n = $("updateNote");
   if (!n) return;
   // The export's own time (Israel), not the moment the tab noticed it.
-  const ts = S.generatedAt || S.lastRun, ok = ts && !isNaN(Date.parse(ts));
-  n.textContent = (ok ? `הנתונים עודכנו ב־${ilTime(ts)}` : "הנתונים עודכנו")
+  const ts = sourceTime, ok = ts !== UNTIMED_CHANGE && ts && !isNaN(Date.parse(ts));
+  n.textContent = (ok ? `הנתונים עודכנו ב־${ilTime(ts)}` : "התקבל תוכן נתונים מעודכן")
     + (marked ? ` · ${marked === 1 ? "פריט אחד השתנה" : `${marked} פריטים השתנו`} בדף הזה` : "");
   n.hidden = false;
   clearTimeout(noteTimer);
