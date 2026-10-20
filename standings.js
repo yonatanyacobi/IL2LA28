@@ -58,7 +58,7 @@ function standingsItem(q){
   const rows = placed.map(row);
   rows.splice(above, 0, `<li class="cutline" aria-hidden="true">קו המכסה: מקום ${c.rank}</li>`);
   return head + `${placed.length ? `<ol class="rows standings">${rows.join("")}</ol>` : ""}
-    ${other.length ? `<p class="muted">בדירוג אחר: ${other.map(({a, r}) => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>, מקום ${r.n} ב־<bdi>${esc(r.list)}</bdi>${!rankDateKnown(r) ? rankWhen(r, () => "") : ""}`).join(" · ")}</p>` : ""}
+    ${other.length ? `<p class="muted">בדירוג אחר: ${other.map(({a, r}) => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>, מקום ${r.n} ב־<bdi>${esc(r.list)}</bdi>${rankWhen(r, d => `, נכון ל־${d}`)}`).join(" · ")}</p>` : ""}
     ${none.length ? `<p class="muted">ללא דירוג: ${none.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")}</p>` : ""}
     <p class="foot">הדירוג הסופי נקבע ב־${fmt(c.final)}.</p>`;
 }
