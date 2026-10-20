@@ -129,6 +129,26 @@ function compBlock(comp, sessions, sid, d){
     <p class="foot day-sources">${[fmtRange(comp.start, comp.end), esc(comp.location), ...sourceLinks].filter(Boolean).join(" · ")}</p>`;
 }
 
+function dayGeneralCompetitions(d){
+  if (!realDate(d)) return [];
+  const rows = S.comps.filter(c => realDate(c.start) && realDate(c.end || c.start)
+    && c.start <= d && d <= (c.end || c.start) && dayNo(c.start, c.end || c.start) <= SERIES_DAYS);
+  return [...new Map(rows.map(c => [c.id, c])).values()]
+    .sort((a, b) => a.start.localeCompare(b.start) || heCmp(a.name, b.name));
+}
+
+function dayGeneralCompetitionsSection(d){
+  const rows = dayGeneralCompetitions(d), more = rows.slice(5);
+  if (!rows.length) return "";
+  return `<section class="panel" id="dayGeneralCompetitions" aria-labelledby="dayGeneralCompetitionsH">
+    <h2 id="dayGeneralCompetitionsH">תחרויות כלליות שמועדיהן כוללים את היום</h2>
+    <p class="muted">${plural(rows.length, "תחרות אחת", "תחרויות")} בלוח הכללי. הרשימה כוללת את כל הענפים ואינה מסוננת לפי המעקב שלך.</p>
+    <p class="muted">טווח התחרות כולל את התאריך שנבחר; אין בכך אישור למקצה באותו יום או להשתתפות ספורטאים מישראל. חלונות דירוג וסדרות ארוכות אינם מוצגים כאן.</p>
+    ${rows.slice(0, 5).map(c => compRow(c, true)).join("")}
+    ${more.length ? `<details id="dayGeneralCompetitionsOverflow"><summary id="dayGeneralCompetitionsMore">${more.length === 1 ? "עוד תחרות אחת" : `עוד ${more.length} תחרויות`}</summary>${more.map(c => compRow(c, true)).join("")}</details>` : ""}
+  </section>`;
+}
+
 function viewDay(d){
   if (!realDate(d)) return notFound();
   // Today aliases advance at midnight without an explicit navigation.
@@ -199,6 +219,7 @@ function viewDay(d){
       ${[...bySport.get(sid).values()].sort((x, y) => byStart(firstStart(x), firstStart(y))).map(c => compBlock(c.comp, c.list, sid, d)).join("")}
     </section>`).join("")
     : `<div class="empty"><p>${dayFollowingOnly && fullSessions.length ? "אין הופעות שמתאימות למעקב שלך ביום הזה." : "אין תחרויות ידועות של ספורטאים או נבחרות מישראל ביום הזה."}</p>${neighbourNav}</div>`}
+  ${dayGeneralCompetitionsSection(d)}
   <section class="panel" aria-labelledby="dayShareH"><h2 id="dayShareH">שיתוף היום</h2>
     <div class="share"><input id="dayShare" readonly value="${esc(SITE_URL + "#day-" + d)}" dir="ltr" aria-label="קישור ליום התחרויות"><button class="btn ghost small" type="button" data-copy="dayShare" data-copy-msg="dayShareMsg">העתקת הקישור</button></div>
     <p class="foot" id="dayShareMsg" aria-live="polite"></p>
