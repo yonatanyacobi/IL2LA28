@@ -555,6 +555,7 @@ function viewHome(){
 }
 
 const SEARCH_MAX = 24;
+const HOME_SEARCH_DETAILS = ["homeSearchAthletesOverflow", "homeSearchCompetitionsOverflow"];
 function renderResults(){
   const box = $("results");
   if (!box) return;
@@ -571,9 +572,9 @@ function renderResults(){
   box.innerHTML = `<section class="panel"><h2>תוצאות חיפוש</h2>
     ${sports.length ? `<div class="chips">${sports.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div>` : ""}
     ${hits.length ? `<div class="cards">${hits.slice(0, SEARCH_MAX).map(athleteCard).join("")}</div>
-    ${hits.length > SEARCH_MAX ? `<p class="muted">מציג ${SEARCH_MAX} מתוך ${hits.length}. אפשר לצמצם את החיפוש.</p>` : ""}` : ""}
+    ${hits.length > SEARCH_MAX ? `<details id="homeSearchAthletesOverflow"><summary id="homeSearchAthletesMore">${hits.length - SEARCH_MAX === 1 ? "עוד ספורטאי/ת או נבחרת אחת שמתאימים לחיפוש" : `עוד ${hits.length - SEARCH_MAX} ספורטאים ונבחרות שמתאימים לחיפוש`}</summary><div class="cards">${hits.slice(SEARCH_MAX).map(athleteCard).join("")}</div></details>` : ""}` : ""}
     ${competitions.length ? `<h3>תחרויות (${competitions.length})</h3>${competitions.slice(0, SEARCH_MAX).map(c => compRow(c, true)).join("")}
-      ${competitions.length > SEARCH_MAX ? `<p class="muted">מציג ${SEARCH_MAX} מתוך ${competitions.length} תחרויות. אפשר לצמצם את החיפוש.</p>` : ""}` : ""}
+      ${competitions.length > SEARCH_MAX ? `<details id="homeSearchCompetitionsOverflow"><summary id="homeSearchCompetitionsMore">${competitions.length - SEARCH_MAX === 1 ? "עוד תחרות אחת שמתאימה לחיפוש" : `עוד ${competitions.length - SEARCH_MAX} תחרויות שמתאימות לחיפוש`}</summary>${competitions.slice(SEARCH_MAX).map(c => compRow(c, true)).join("")}</details>` : ""}` : ""}
     ${!hits.length && !sports.length && !competitions.length ? emptyLine("לא נמצאו ספורטאים, נבחרות, ענפים או תחרויות שמתאימים לחיפוש.", "#calendar", "לוח התחרויות") : ""}
   </section>`;
 }
@@ -1292,7 +1293,7 @@ function focusKey(el){
 function refresh({preserveFollowingVisit = false} = {}){
   const el = document.activeElement, key = focusKey(el), y = window.scrollY;
   const open = [...($("view").querySelectorAll?.("details") || [])]
-    .flatMap((d, index) => d.open ? [{index, id: preserveFollowingVisit ? d.id : ""}] : []);
+    .flatMap((d, index) => d.open ? [{index, id: preserveFollowingVisit || (currentRoute() === "home" && HOME_SEARCH_DETAILS.includes(d.id)) ? d.id : ""}] : []);
   let selection = null;
   try {
     if (typeof el?.selectionStart === "number") selection = {start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection};

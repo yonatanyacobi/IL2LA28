@@ -5095,6 +5095,50 @@
       "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ישראלית ויום משחה אישי טרם אומתו.",
       "source": "https://www.worldaquatics.com/competitions/5719/world-aquatics-open-water-swimming-world-cup-2026-27",
       "qualifying": false
+    },
+    {
+      "id": "tennis-ao-women-main-2026",
+      "sportId": "tennis",
+      "name": "אליפות אוסטרליה הפתוחה 2026 — הגרלה ראשית לנשים",
+      "location": "מלבורן, אוסטרליה",
+      "start": "2026-01-18",
+      "end": "2026-02-01",
+      "notes": "תחרות עונה — הגרלה ראשית לנשים לפי WTA; השתתפות ספורטאיות מישראל ותוצאותיהן לא אומתו. אין כאן אישור להעפלה אולימפית.",
+      "source": "https://www.wtatennis.com/tournaments/901/australian-open/2026",
+      "qualifying": false
+    },
+    {
+      "id": "tennis-rg-women-main-2026",
+      "sportId": "tennis",
+      "name": "רולאן גארוס 2026 — הגרלה ראשית לנשים",
+      "location": "פריז, צרפת",
+      "start": "2026-05-24",
+      "end": "2026-06-07",
+      "notes": "תחרות עונה — הגרלה ראשית לנשים לפי WTA; השתתפות ספורטאיות מישראל ותוצאותיהן לא אומתו. אין כאן אישור להעפלה אולימפית.",
+      "source": "https://www.wtatennis.com/tournaments/903/roland-garros/2026",
+      "qualifying": false
+    },
+    {
+      "id": "tennis-wimbledon-women-main-2026",
+      "sportId": "tennis",
+      "name": "וימבלדון 2026 — הגרלה ראשית לנשים",
+      "location": "וימבלדון, בריטניה",
+      "start": "2026-06-29",
+      "end": "2026-07-12",
+      "notes": "תחרות עונה — הגרלה ראשית לנשים לפי WTA; השתתפות ספורטאיות מישראל ותוצאותיהן לא אומתו. אין כאן אישור להעפלה אולימפית.",
+      "source": "https://www.wtatennis.com/tournaments/904/wimbledon/2026/",
+      "qualifying": false
+    },
+    {
+      "id": "tennis-uso-women-main-2026",
+      "sportId": "tennis",
+      "name": "אליפות ארצות הברית הפתוחה 2026 — הגרלה ראשית לנשים",
+      "location": "ניו יורק, ארצות הברית",
+      "start": "2026-08-30",
+      "end": "2026-09-13",
+      "notes": "תחרות עונה — הגרלה ראשית לנשים לפי WTA; השתתפות ספורטאיות מישראל ותוצאותיהן לא אומתו. אין כאן אישור להעפלה אולימפית.",
+      "source": "https://www.wtatennis.com/tournaments/905/us-open/2026",
+      "qualifying": false
     }
   ],
   "changes": [
