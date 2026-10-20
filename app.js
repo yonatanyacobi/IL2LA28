@@ -635,6 +635,20 @@ function sportUpcomingSection(id){
 
 const sportRosterQueries = new Map();
 const sportRosterStages = new Map();
+function sportPastCompetitionsSection(id){
+  const t = today(), end = c => c.end || c.start;
+  const rows = S.comps.filter(c => c.sportId === id && end(c) < t)
+    .sort((a, b) => end(b).localeCompare(end(a)) || b.start.localeCompare(a.start) || heCmp(a.name, b.name));
+  if (!rows.length) return "";
+  const more = rows.slice(5);
+  return `<section class="stack" aria-labelledby="sportPastCompetitionsH">
+    <h2 id="sportPastCompetitionsH">תחרויות שהסתיימו בענף</h2>
+    <p class="muted">${plural(rows.length, "תחרות אחת", "תחרויות")} ברשימה. תחרות בענף אינה אישור להשתתפות הסגל או הנבחרת.</p>
+    ${rows.slice(0, 5).map(c => compRow(c, false)).join("")}
+    ${more.length ? `<details id="sportPastCompetitionsOverflow"><summary id="sportPastCompetitionsMore">${plural(more.length, "עוד תחרות אחת שהסתיימה", "תחרויות נוספות שהסתיימו")}</summary>${more.map(c => compRow(c, false)).join("")}</details>` : ""}
+  </section>`;
+}
+
 function viewSport(id){
   const s = sportById(id);
   if (!s) return notFound();
@@ -672,6 +686,7 @@ function viewSport(id){
     <div class="sec-head"><h2 id="sportCompetitionsH">תחרויות קרובות בענף</h2>${comps.length > 5 ? `<a href="#calendar-${esc(id)}">כל ${comps.length} התחרויות</a>` : ""}</div>
     ${comps.slice(0, 5).map(c => compRow(c, false)).join("") || calEmpty("אין תחרויות קרובות ידועות בענף.", id)}
   </section>
+  ${sportPastCompetitionsSection(id)}
   <section class="panel" aria-labelledby="sportShareH">
     <h2 id="sportShareH">שיתוף הענף</h2>
     <p class="muted">הקישור מציג את הענף המלא ואת שיטת ההעפלה, ללא בחירות אישיות או סינון הסגל.</p>
@@ -680,7 +695,8 @@ function viewSport(id){
     <p class="foot" id="sportShareMsg" aria-live="polite"></p>
   </section>`;
   const sections = [["sportUpcomingH", "הופעות קרובות"], ["sportRecentResultsH", "תוצאות מתועדות"],
-    ["sportRosterH", "ספורטאים ונבחרות"], ["sportCompetitionsH", "תחרויות בענף"]]
+    ["sportRosterH", "ספורטאים ונבחרות"], ["sportCompetitionsH", "תחרויות בענף"],
+    ["sportPastCompetitionsH", "תחרויות שהסתיימו"]]
     .filter(([target]) => html.includes(`<h2 id="${target}">`));
   for (const [target] of sections) html = html.replace(`<h2 id="${target}">`, `<h2 id="${target}" tabindex="-1">`);
   const navigation = `<div class="toolbar" role="group" aria-label="מעבר למקטע בענף">${sections.map(([target, label]) =>
@@ -817,9 +833,9 @@ function calendarSharePlanText(rows = calendarRows()){
     ...(calendarQuery ? [`מסנן חיפוש: ${waCut(waText(calendarQuery))}`] : [])];
   const head = ["לוח תחרויות כללי", ...scope,
     "לוח תחרויות כללי; הרשימה אינה אישור להשתתפות ספורטאים מישראל"];
-  const blocks = rows.map(c => [`• ${waText(c.name)}`, fmtRange(c.start, c.end),
+  const blocks = rows.map(c => [`• ${waText(c.name)}`, `ענף: ${waText(sportName(c.sportId))}`, fmtRange(c.start, c.end),
     ...(str(c.location).trim() ? [waText(c.location)] : []), `${SITE_URL}#c-${encodeURIComponent(c.id)}`].join("\n"));
-  const footer = ["", "הקישור אינו שומר חודש, שאילתת חיפוש או בחירות מעקב.",
+  const footer = ["", "הקישור שומר את הענף כשנבחר. הוא אינו שומר חודש, חיפוש, ענפי מעקב, בחירת העפלה בלבד או בחירה להציג תחרויות שהסתיימו.",
     `${SITE_URL}#calendar${sport ? "-" + encodeURIComponent(sport) : ""}`];
   let omitted = 0;
   const build = () => [...head, "", blocks.join("\n\n"), ...(omitted ? [`ועוד ${omitted} תחרויות בלוח`] : []), ...footer].join("\n");
@@ -1292,8 +1308,10 @@ function focusKey(el){
 }
 function refresh({preserveFollowingVisit = false} = {}){
   const el = document.activeElement, key = focusKey(el), y = window.scrollY;
+  const sportArchive = currentRoute().startsWith("sport-") && !!sportById(currentRoute().slice(6));
   const open = [...($("view").querySelectorAll?.("details") || [])]
-    .flatMap((d, index) => d.open ? [{index, id: preserveFollowingVisit || (currentRoute() === "home" && HOME_SEARCH_DETAILS.includes(d.id)) ? d.id : ""}] : []);
+    .flatMap((d, index) => d.open ? [{index, id: preserveFollowingVisit || (currentRoute() === "home" && HOME_SEARCH_DETAILS.includes(d.id))
+      || (sportArchive && d.id === "sportPastCompetitionsOverflow") ? d.id : ""}] : []);
   let selection = null;
   try {
     if (typeof el?.selectionStart === "number") selection = {start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection};
@@ -1302,7 +1320,7 @@ function refresh({preserveFollowingVisit = false} = {}){
   const details = [...($("view").querySelectorAll?.("details") || [])];
   open.forEach(item => {
     const detail = item.id ? details.find(d => d.id === item.id) : details[item.index];
-    if (detail) detail.open = true;
+    if (detail && (item.id || !sportArchive || detail.id !== "sportPastCompetitionsOverflow")) detail.open = true;
   });
   const again = !key ? null : key.id ? $(key.id) : (m => m[key.idx] || m[0])([...($("view").querySelectorAll?.(key.sel) || [])]);
   if (again && again !== el) {
@@ -1368,7 +1386,7 @@ document.addEventListener("click", e => {
   if ("sportSection" in t.dataset) {
     const route = currentRoute(), target = t.dataset.sportSection;
     if (!route.startsWith("sport-") || !sportById(route.slice(6))
-      || !["sportUpcomingH", "sportRecentResultsH", "sportRosterH", "sportCompetitionsH"].includes(target)) return;
+      || !["sportUpcomingH", "sportRecentResultsH", "sportRosterH", "sportCompetitionsH", "sportPastCompetitionsH"].includes(target)) return;
     const heading = $("view").querySelector("#" + target);
     if (!heading) return;
     heading.focus({preventScroll: true});
