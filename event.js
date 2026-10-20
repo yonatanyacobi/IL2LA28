@@ -2,6 +2,7 @@
 // near-live labels and rows it shares with #day, so both render a session identically. No live scores: results arrive with the job run, and the line under the h1 says when.
 "use strict";
 let eventFollowingOnly = false;
+const eventParticipantFilters = new Map();
 
 // Sessions of one competition, grouped by Israel day. A season-long series (> SERIES_DAYS) has no daily fallback
 // (compOn() skips it), so only its exported sessions count, grouped by month.
@@ -70,6 +71,11 @@ function viewEvent(id){
   const nextDay = flat.map(([, d]) => d).filter(d => isDate(d) && d >= t).sort()[0];
   const athletes = [...new Map(flat.flatMap(([s]) => s.athletes.map(a => [a.id, a]))).values()]
     .sort((x, y) => S.follows.has(y.id) - S.follows.has(x.id) || heCmp(x.name, y.name));
+  let participant = eventParticipantFilters.get(id) || "";
+  if (participant && !athletes.some(a => a.id === participant)) {
+    eventParticipantFilters.delete(id); participant = "";
+  }
+  const filtered = eventFollowingOnly || !!participant;
   // Counted per athlete in each session, not per session.
   const count = is => flat.reduce((n, [s, d]) => n + s.athletes.filter(a => is(athleteStatus(s, d, a))).length, 0);
   const who = n => plural(n, "ספורטאי/ת או נבחרת אחת", "ספורטאים ונבחרות");
@@ -85,10 +91,11 @@ function viewEvent(id){
   const link = `${SITE_URL}#c-${id}`;
   const dayHead = (d, only) => `<h3><a class="hlink" href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span>${only ? DATE_ONLY : ""}</h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
-  const scheduleGroups = [...groups].map(([d, list]) => [d, eventFollowingOnly ? list.filter(s => followsSport(s.sportId) || followedIn(s)) : list]);
+  const scheduleGroups = [...groups].map(([d, list]) => [d, list.filter(s => (!eventFollowingOnly || followsSport(s.sportId) || followedIn(s))
+    && (!participant || s.athletes.some(a => a.id === participant)))]);
   const shown = scheduleGroups.reduce((n, [, list]) => n + list.length, 0);
-  const schedule = eventFollowingOnly && flat.length && !shown
-    ? `<p class="muted">אין הופעות שמתאימות למעקב שלך בתחרות הזו.</p>`
+  const schedule = filtered && flat.length && !shown
+    ? `<p class="muted">${participant ? "אין הופעות שמתאימות למסננים שנבחרו בתחרות הזו." : "אין הופעות שמתאימות למעקב שלך בתחרות הזו."}</p>`
     : !flat.length
     ? calEmpty(t <= (c.end || c.start) ? "עוד אין הופעות ידועות של ישראלים בתחרות הזו." : "לא תועדו הופעות של ישראלים בתחרות הזו.", c.sportId)
     : scheduleGroups.filter(([, list]) => list.length).sort(([x], [y]) => series ? x.localeCompare(y) : 0)
@@ -97,7 +104,7 @@ function viewEvent(id){
           .map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list), series
             ? `<small><a class="hlink" href="#day-${esc(s.day)}">${esc(dayTitle(s.day))}</a></small>` : "")).join("")}</ul></div>`).join("")
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועות הופעות של ישראלים.</p>` : "")(
-        series || eventFollowingOnly ? 0 : [...groups].filter(([, list]) => !list.length).length));
+        series || filtered ? 0 : [...groups].filter(([, list]) => !list.length).length));
   return `<p class="crumb"><a href="#sport-${esc(c.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sportName(c.sportId))}</a></p>
   <div class="event-head" data-event="${esc(id)}">
     <h1 tabindex="-1">${esc(c.name)}</h1>
@@ -108,7 +115,7 @@ function viewEvent(id){
     ${!stakes && c.qualifying ? `<p>תחרות שנספרת להעפלה. <a href="#sport-${esc(c.sportId)}">שיטת ההעפלה בענף</a></p>` : ""}
   </div>
   <section class="panel" aria-labelledby="evSumH"><h2 id="evSumH">בקצרה</h2>
-    ${eventFollowingOnly ? `<p class="muted">הסיכום והסגל מציגים את כלל הישראלים בתחרות, ללא סינון המעקב.</p>` : ""}
+    ${filtered ? `<p class="muted">הסיכום והסגל מציגים את כלל הישראלים בתחרות, ללא סינון המשתתף או המעקב.</p>` : ""}
     ${athletes.length ? `<p class="kpi">${kpi}</p>`
       : tracked ? emptyLine("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", `#sport-${c.sportId}`, `${who(tracked)} ברשימה בענף`)
         : calEmpty("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", c.sportId)}
@@ -117,8 +124,10 @@ function viewEvent(id){
   <div class="event-cols">
     <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הזמנים של הישראלים</h2>
       <div class="toolbar"><label class="chk"><input type="checkbox" id="eventFollowOnly" ${eventFollowingOnly ? "checked" : ""}> רק המעקב שלי</label>
-        ${eventFollowingOnly ? `<button class="btn ghost small" type="button" data-event-show-all>הצגת כל ההופעות</button>` : ""}</div>
-      ${eventFollowingOnly ? `<p class="muted" role="status">מציגים ${shown} מתוך ${flat.length} הופעות</p>${!S.follows.size && !S.followSports.size ? `<p class="muted">עוד אין ספורטאים או ענפים במעקב שלך. <a href="#sports">לבחירת ענפים למעקב</a></p>` : ""}` : ""}
+        ${flat.length ? `<label for="eventParticipant">משתתף בלוח התחרות</label><select id="eventParticipant"><option value=""${participant ? "" : " selected"}>כל המשתתפים</option>${athletes.map(a => `<option value="${esc(a.id)}"${a.id === participant ? " selected" : ""}>${esc(a.name)}</option>`).join("")}</select>` : ""}
+        ${filtered ? `<button class="btn ghost small" type="button" data-event-show-all>הצגת כל ההופעות</button>` : ""}</div>
+      ${flat.length || filtered ? `<p class="muted" role="status">מציגים ${shown} מתוך ${flat.length} הופעות · ${participant ? `משתתף: ${esc(athletes.find(a => a.id === participant).name)}` : "כל המשתתפים"} · ${eventFollowingOnly ? "לפי המעקב שלי" : "ללא סינון מעקב"}</p>` : ""}
+      ${eventFollowingOnly && !S.follows.size && !S.followSports.size ? `<p class="muted">עוד אין ספורטאים או ענפים במעקב שלך. <a href="#sports">לבחירת ענפים למעקב</a></p>` : ""}
       ${schedule}</section>
     <div class="stack">
       ${stakes}
@@ -145,6 +154,15 @@ document.addEventListener("change", e => {
   eventFollowingOnly = e.target.checked;
   refresh();
 });
+document.addEventListener("change", e => {
+  if (e.target?.id !== "eventParticipant" || !currentRoute().startsWith("c-")) return;
+  const c = S.comps.find(comp => comp.id === currentRoute().slice(2));
+  if (!c) return;
+  const id = e.target.value;
+  if (id && ![...eventSessions(c).groups.values()].some(list => list.some(s => s.athletes.some(a => a.id === id)))) return;
+  if (id) eventParticipantFilters.set(c.id, id); else eventParticipantFilters.delete(c.id);
+  refresh();
+});
 document.addEventListener("click", e => {
   const button = e.target.closest?.("[data-event-follow],[data-event-follow-sport]");
   if (!button || !currentRoute().startsWith("c-")) return;
@@ -163,6 +181,7 @@ document.addEventListener("click", e => {
 document.addEventListener("click", e => {
   if (!e.target.closest?.("[data-event-show-all]") || !currentRoute().startsWith("c-")) return;
   eventFollowingOnly = false;
+  eventParticipantFilters.delete(currentRoute().slice(2));
   refresh();
   $("eventFollowOnly")?.focus({preventScroll: true});
 });

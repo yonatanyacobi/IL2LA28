@@ -574,9 +574,11 @@ function renderResults(){
   </section>`;
 }
 
+let sportsFollowedOnly = false;
 function viewSports(){
-  const withA = S.sports.filter(s => athletesOf(s.id).length);
-  const without = S.sports.filter(s => !athletesOf(s.id).length).sort((a, b) => heCmp(a.he, b.he));
+  const shown = s => !sportsFollowedOnly || S.followSports.has(s.id);
+  const withA = S.sports.filter(s => athletesOf(s.id).length && shown(s));
+  const without = S.sports.filter(s => !athletesOf(s.id).length && shown(s)).sort((a, b) => heCmp(a.he, b.he));
   // One pass over the upcoming competitions, not one per sort comparison.
   const firstStart = new Map();
   for (const c of upcoming()) if (!firstStart.has(c.sportId)) firstStart.set(c.sportId, c.start);
@@ -584,18 +586,23 @@ function viewSports(){
   withA.sort((a, b) => followsSport(b.id) - followsSport(a.id) || nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
   <h1 tabindex="-1">ענפים</h1>
-  <p class="muted">${withA.length === 1 ? "ענף אחד עם ספורטאים ונבחרות מישראל ברשימה." : `${withA.length} ענפים עם ספורטאים ונבחרות מישראל ברשימה, ממוינים לפי התחרות הקרובה.`}${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
+  <div class="toolbar"><label class="chk"><input type="checkbox" id="sportsFollowedOnly" ${sportsFollowedOnly ? "checked" : ""} aria-describedby="sportsLibraryCount"> רק הענפים שבמעקב שלי</label>
+    <button class="btn ghost small" type="button" data-sports-library-reset ${sportsFollowedOnly ? "" : "hidden"}>הצגת כל הענפים</button></div>
+  <p class="muted" id="sportsLibraryCount" role="status">מציגים ${withA.length + without.length} מתוך ${S.sports.length} ענפים</p>
+  <p class="muted">${withA.length === 1 ? "ענף אחד עם ספורטאים ונבחרות מישראל ברשימה." : `${withA.length} ענפים עם ספורטאים ונבחרות מישראל ברשימה.`} ברשימה עם סגל, ענפים שבמעקב שלך מופיעים תחילה; בתוך כל קבוצה המיון לפי התחרות הקרובה ושם הענף. תחרות בענף אינה אישור להשתתפות ישראלית.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
+  ${sportsFollowedOnly && !withA.length && !without.length ? `<div class="empty"><p>${S.followSports.size ? "אין ענפים מהמעקב שלך ברשימה הנוכחית." : "עוד אין ענפים במעקב שלך. אפשר לבחור מעקב בדף של ענף."} אפשר להציג את כל הענפים באמצעות הכפתור למעלה.</p></div>` : ""}
   <ul class="sports">${withA.map(s => {
     const list = athletesOf(s.id), ws = winStatus(s.window), nc = upcomingIn(s.id)[0], fresh = list.filter(isNew).length;
     return `<li><a class="sport" href="#sport-${esc(s.id)}">
       <span class="top"><h2>${esc(s.he)}</h2>${ws ? `<span class="pill ${ws[0]}">חלון העפלה ${ws[1]}</span>` : ""}</span>
+      ${S.followSports.has(s.id) ? '<span class="meta"><span aria-hidden="true">★</span> במעקב שלי</span>' : ""}
       ${stageBar(list, true).html}
       ${quotaCardSummary(s.id)}
       <span class="meta">${list.length} ברשימה${fresh ? ` · <span class="new">${fresh} עודכנו</span>` : ""}${nc ? ` · התחרות הבאה: ${esc(nc.name)} (${fmtShort(nc.start)})` : ""}</span>
     </a></li>`;
   }).join("")}</ul>
   ${without.length ? `<section class="panel"><h2>ענפים בלי ספורטאים או נבחרות מישראל ברשימה כרגע</h2>
-    <div class="chips">${without.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div></section>` : ""}`;
+    <div class="chips">${without.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}${S.followSports.has(s.id) ? ' · <span aria-hidden="true">★</span> במעקב שלי' : ""}</a>`).join("")}</div></section>` : ""}`;
 }
 
 const SPORT_UPCOMING_ROWS = 6;
@@ -661,6 +668,18 @@ function viewSport(id){
   </section>`;
 }
 
+function athleteSiteUpdates(a){
+  const changes = S.changes.filter(c => c && typeof c.athleteId === "string" && c.athleteId === a.id);
+  if (!changes.length) return "";
+  const more = changes.slice(5);
+  return `<section class="panel" aria-labelledby="athleteUpdatesH">
+    <h2 id="athleteUpdatesH">עדכוני האתר על הספורטאי/ת או הנבחרת</h2>
+    <p class="muted">עדכונים שפורסמו באתר, בנפרד מיומן התוצאות וההיסטוריה. <a href="#updates">לכל עדכוני האתר</a></p>
+    <ul class="rows">${changes.slice(0, 5).map(changeRow).join("")}</ul>
+    ${more.length ? `<details><summary>${more.length === 1 ? "עוד עדכון אחד על הרשומה" : `עוד ${more.length} עדכונים על הרשומה`}</summary><ul class="rows">${more.map(changeRow).join("")}</ul></details>` : ""}
+  </section>`;
+}
+
 function viewAthlete(id){
   const a = S.athletes.find(x => x.id === id);
   if (!a) return notFound();
@@ -671,7 +690,7 @@ function viewAthlete(id){
   const hist = (Array.isArray(a.history) ? a.history : []).filter(h => h && typeof h === "object" && !Array.isArray(h)
     && isDate(h.at) && !(typeof inGameLog === "function" && inGameLog(h))).slice().reverse();
   const link = `${SITE_URL}#a-${id}`;
-  return `
+  let html = `
   <p class="crumb"><a href="#sport-${esc(a.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sp?.he || "ענף")}</a></p>
   <div class="sec-head">
     <div><h1 tabindex="-1">${esc(a.name)}</h1>${a.name_en ? `<p class="muted" dir="ltr" style="text-align:right">${esc(a.name_en)}</p>` : ""}</div>
@@ -701,11 +720,12 @@ function viewAthlete(id){
   ${typeof athleteUpcomingSection === "function" ? athleteUpcomingSection(a) : ""}
   ${typeof gameLogSection === "function" ? gameLogSection(a) : ""}
   <section class="panel">
-    <h2>היסטוריה</h2>
+    <h2 id="athleteHistoryH">היסטוריה</h2>
     ${hist.length ? `<ol class="timeline">${hist.map(h => `<li class="k-${esc(h.kind)}"><span class="d">${fmt(h.at)}</span>
       <span>${esc(h.text)}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}${(k => rowMark(k, k))(`hist|${id}|${h.at}|${h.kind}|${h.text}`)}</span></li>`).join("")}</ol>`
       : emptyLine("עוד אין רשומות בהיסטוריה.")}
   </section>
+  ${athleteSiteUpdates(a)}
   <section class="stack">
     <h2>תחרויות קרובות בענף</h2>
     ${comps.map(c => compRow(c, false)).join("") || calEmpty("אין תחרויות קרובות ידועות בענף.", a.sportId)}
@@ -716,6 +736,12 @@ function viewAthlete(id){
     <p class="foot" id="copyMsg" aria-live="polite"></p>
   </section>
   ${reportBox(`טעות בדף: ${a.name}`, link)}`;
+  const sections = [["athleteUpcomingH", "הופעות קרובות"], ["logH", "תוצאות"], ["athleteHistoryH", "היסטוריה"]]
+    .filter(([target]) => html.includes(`<h2 id="${target}">`));
+  for (const [target] of sections) html = html.replace(`<h2 id="${target}">`, `<h2 id="${target}" tabindex="-1">`);
+  const navigation = `<div class="toolbar" role="group" aria-label="מעבר למקטעים בדף הספורטאי">${sections.map(([target, label]) =>
+    `<button class="btn ghost small" type="button" id="athleteGo-${target}" data-athlete-section="${target}">${label}</button>`).join("")}</div>`;
+  return html.replace('<section class="panel">', navigation + '<section class="panel">');
 }
 
 // Mail links often do nothing inside the artifact frame, so the address is always shown as copyable text too.
@@ -1201,6 +1227,10 @@ function refresh(){
 addEventListener("hashchange", navigate);
 document.addEventListener("input", e => {
   if (e.target.id === "q") { S.q = e.target.value; renderResults(); }
+  if (e.target.id === "sportsFollowedOnly" && currentRoute() === "sports") {
+    sportsFollowedOnly = e.target.checked;
+    refresh();
+  }
   if (e.target.id === "sportRosterSearch" && currentRoute().startsWith("sport-")) {
     sportRosterQueries.set(currentRoute().slice(6), e.target.value);
     refresh();
@@ -1235,8 +1265,20 @@ document.addEventListener("input", e => {
   }
 });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-sport-roster-reset],[data-home-search]");
+  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-sport-roster-reset],[data-home-search],[data-sports-library-reset],[data-athlete-section]");
   if (!t) return;
+  if ("athleteSection" in t.dataset) {
+    if (!currentRoute().startsWith("a-") || !["athleteUpcomingH", "logH", "athleteHistoryH"].includes(t.dataset.athleteSection)) return;
+    const heading = $("view").querySelector("#" + t.dataset.athleteSection);
+    if (!heading) return;
+    heading.focus({preventScroll: true});
+    return heading.scrollIntoView({block: "center", behavior: "auto"});
+  }
+  if ("sportsLibraryReset" in t.dataset && currentRoute() === "sports") {
+    sportsFollowedOnly = false;
+    refresh();
+    return $("sportsFollowedOnly")?.focus({preventScroll: true});
+  }
   if ("homeSearch" in t.dataset) {
     const input = $("q");
     if (!input) return;

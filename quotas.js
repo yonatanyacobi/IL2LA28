@@ -2,6 +2,7 @@
 "use strict";
 let quotaSportFilter = "";
 let quotaSearch = "";
+let quotaFollowOnly = false;
 const quotaSports = () => S.sports.filter(s => S.quotas.some(q => q.sportId === s.id)).sort((a, b) => heCmp(a.he, b.he));
 
 function viewQuotas(){
@@ -16,6 +17,7 @@ function viewQuotas(){
   const list = all.filter(q => {
     const sport = sportById(q.sportId);
     return (!quotaSportFilter || q.sportId === quotaSportFilter)
+      && (!quotaFollowOnly || S.followSports.has(q.sportId))
       && (!query || searchKey([q.event, sport?.he, sport?.en].map(str).join(" ")).includes(query));
   });
   const n = quotaCounts(list);
@@ -26,13 +28,19 @@ function viewQuotas(){
     upcoming.get(key).push(q);
   }
   const next = [...upcoming.values()]
-    .sort((a, b) => a[0].nextQuotaEvent.start.localeCompare(b[0].nextQuotaEvent.start)).slice(0, 5);
+    .sort((a, b) => a[0].nextQuotaEvent.start.localeCompare(b[0].nextQuotaEvent.start));
+  const more = next.slice(5);
   const eventLink = q => {
     const event = q.nextQuotaEvent;
     const matches = S.comps.filter(c => c.sportId === q.sportId && c.start <= event.start && event.start <= (c.end || c.start)
       && str(c.name).trim() === str(event.name).trim());
     return matches.length === 1 ? compLink(matches[0], esc(event.name)) : esc(event.name);
   };
+  const eventRow = items => { const q = items[0]; return `<li>
+      <div class="q-top"><b>${eventLink(q)}</b><span>${fmt(q.nextQuotaEvent.start)}</span></div>
+      <small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></small>
+      <ul class="qlist">${items.map(item => `<li><div class="q-top"><b><bdi>${esc(item.event)}</bdi></b><span>${quotaStatusPill(item.israelStatus)}</span></div>${stakesLine(item, "stakes", "small")}</li>`).join("")}</ul>
+    </li>`; };
   const waiting = list.map(q => [q, awaitingOf(q)]).filter(([, w]) => w).sort(([, x], [, y]) => y.end.localeCompare(x.end));
   const earnedEvidence = q => {
     if (qStatus(q.israelStatus) !== "earned") return "";
@@ -51,10 +59,13 @@ function viewQuotas(){
     <select id="quotaSport"><option value=""${quotaSportFilter ? "" : " selected"}>כל הענפים</option>${sports.map(s => `<option value="${esc(s.id)}"${s.id === quotaSportFilter ? " selected" : ""}>${esc(s.he)}</option>`).join("")}</select>
     <label for="quotaSearch">חיפוש מקצה במכסות</label>
     <input type="search" id="quotaSearch" value="${esc(quotaSearch)}">
-    ${quotaSportFilter || quotaSearch ? `<button class="btn ghost small" type="button" data-quota-reset>איפוס הסינון והחיפוש</button>` : ""}
+    <label class="chk"><input type="checkbox" id="quotaFollowOnly" ${quotaFollowOnly ? "checked" : ""}> רק ענפים שבמעקב שלי</label>
+    ${quotaSportFilter || quotaSearch || quotaFollowOnly ? `<button class="btn ghost small" type="button" data-quota-reset>איפוס כל המסננים</button>` : ""}
   </div>
-  <p class="muted" role="status">מציגים ${list.length} מתוך ${all.length} מקצים${quotaSportFilter ? ` בענף ${esc(sportName(quotaSportFilter))}` : " בכל הענפים"}.</p>
-  ${!list.length ? `<p class="muted">לא נמצאו מקצים שמתאימים לסינון. אפשר לאפס את הענף והחיפוש כדי להציג את כל המקצים.</p>` : ""}
+  <p class="muted" role="status">מציגים ${list.length} מתוך ${all.length} מקצים${quotaSportFilter ? ` בענף ${esc(sportName(quotaSportFilter))}${quotaFollowOnly ? " · לפי ענפי המעקב שלי" : ""}` : quotaFollowOnly ? " בענפים שבמעקב שלי" : " בכל הענפים"}.</p>
+  ${!list.length ? `<p class="muted">${quotaFollowOnly && !S.followSports.size
+    ? `אין ענפים במעקב שלך. <a href="#sports">לבחירת ענפים למעקב</a>`
+    : "לא נמצאו מקצים שמתאימים לסינון. אפשר לאפס את המסננים כדי להציג את כל המקצים."}</p>` : ""}
   <section class="panel" aria-label="סיכום">
     <p class="kpi">${QUOTA_STATUSES.map(k => `<b>${n[k]}</b> ${Q_LABEL[k][1]}`).join(" · ")}</p>
     <p class="foot">הספירה היא לפי מקצים, לא לפי ספורטאים. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת.${isDate(at) ? ` נכון ל־${fmt(at)}.` : ""}</p>
@@ -67,11 +78,8 @@ function viewQuotas(){
   </section>` : ""}
   ${next.length ? `<section class="panel" aria-labelledby="qNextH">
     <h2 id="qNextH">אירועי המכסה הקרובים</h2>
-    <ul class="qlist">${next.map(items => { const q = items[0]; return `<li>
-      <div class="q-top"><b>${eventLink(q)}</b><span>${fmt(q.nextQuotaEvent.start)}</span></div>
-      <small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></small>
-      <ul class="qlist">${items.map(item => `<li><div class="q-top"><b><bdi>${esc(item.event)}</bdi></b><span>${quotaStatusPill(item.israelStatus)}</span></div>${stakesLine(item, "stakes", "small")}</li>`).join("")}</ul>
-    </li>`; }).join("")}</ul>
+    <ul class="qlist">${next.slice(0, 5).map(eventRow).join("")}</ul>
+    ${more.length ? `<details><summary id="quotaNextMoreSummary">${more.length === 1 ? "עוד אירוע מכסה אחד" : `עוד ${more.length} אירועי מכסה`}</summary><ul class="qlist">${more.map(eventRow).join("")}</ul></details>` : ""}
   </section>` : ""}
   ${QUOTA_STATUSES.filter(k => n[k]).map(k => `<section class="panel" aria-labelledby="qH-${k}">
     <h2 id="qH-${k}">${quotaStatusPill(k)} <span class="muted">${n[k]}</span></h2>
@@ -91,10 +99,16 @@ document.addEventListener("input", e => {
   quotaSearch = e.target.value;
   refresh();
 });
+document.addEventListener("change", e => {
+  if (e.target?.id !== "quotaFollowOnly" || currentRoute() !== "quotas") return;
+  quotaFollowOnly = !!e.target.checked;
+  refresh();
+});
 document.addEventListener("click", e => {
   if (!e.target.closest?.("[data-quota-reset]") || currentRoute() !== "quotas") return;
   quotaSportFilter = "";
   quotaSearch = "";
+  quotaFollowOnly = false;
   refresh();
   $("quotaSport")?.focus({preventScroll: true});
 });
