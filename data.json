@@ -2564,6 +2564,12 @@
       "verifiedAt": "2026-10-18T13:19:01Z",
       "history": [
         {
+          "at": "2026-05-28",
+          "kind": "result",
+          "text": "גביע העולם במינכן 2026, מוקדמות רובה אוויר 10 מ׳ נשים: מקום 17, 632.3 נקודות.",
+          "source": "https://www.issf-sports.org/competitions/3284/results/3b3b303b4152573b303b513b493b313b303b30"
+        },
+        {
           "at": "2026-10-18",
           "kind": "start",
           "text": "נכנס/ה למעקב · במעקב · 22 בעולם (ISSF, אוק׳ 2026)",
@@ -3015,6 +3021,12 @@
           "kind": "result",
           "text": "אליפות אירופה בקליעה 10 מ׳ 2026, מוקדמות רובה אוויר גברים: מקום 42, 627.1 נקודות.",
           "source": "https://www.issf-sports.org/competitions/3458/resultstargets/53484953524d323330343139383930313b3b333435383b41524d3b313b513b493b313b303b30"
+        },
+        {
+          "at": "2026-05-26",
+          "kind": "result",
+          "text": "גביע העולם במינכן 2026, מוקדמות רובה אוויר 10 מ׳ גברים: מקום 47, 628.3 נקודות.",
+          "source": "https://www.issf-sports.org/competitions/3284/results/3b3b303b41524d3b313b513b493b313b303b30"
         },
         {
           "at": "2026-10-18",
@@ -5207,6 +5219,17 @@
       "end": "2026-04-26",
       "notes": "תחרות עונה לגברים ולנשים בוגרים. הטווח מציין ימי תחרות בלבד, ללא ימי הגעה, אימונים או יציאה. השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
       "source": "https://worldboxing.org/record-number-of-boxers-registered-to-compete-at-world-boxing-cup-brazil-2026-in-foz-do-iguacu/",
+      "qualifying": false
+    },
+    {
+      "id": "shooting-world-cup-munich-2026",
+      "sportId": "shooting",
+      "name": "גביע העולם בקליעה — מינכן 2026",
+      "location": "מינכן, גרמניה",
+      "start": "2026-05-24",
+      "end": "2026-05-31",
+      "notes": "תחרות עונה ברובה ובאקדח לפני חלון ההעפלה האולימפי. מתועדות תוצאות מוקדמות אישיות של אולגה טשצ׳ייב וסרגיי ריכטר; אין כאן אישור להשתתפות ישראלים במקצים אחרים או לזכייה במכסה.",
+      "source": "https://www.issf-sports.org/competitions/3284/results",
       "qualifying": false
     }
   ],
