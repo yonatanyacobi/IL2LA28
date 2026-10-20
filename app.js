@@ -584,6 +584,29 @@ function viewSports(){
     <div class="chips">${without.map(s => `<a href="#sport-${esc(s.id)}">${esc(s.he)}</a>`).join("")}</div></section>` : ""}`;
 }
 
+const SPORT_UPCOMING_ROWS = 6;
+function sportUpcomingSessions(id){
+  const t = today(), through = addDays(t, 13);
+  return (typeof exportedSessions === "function" ? exportedSessions() : [])
+    .filter(s => s.sportId === id && t <= s.day && s.day <= through && ["before", "competing"].includes(sessionState(s, s.day)))
+    .sort((x, y) => x.day.localeCompare(y.day) || byStart(x.startUtc, y.startUtc));
+}
+
+function sportUpcomingSection(id){
+  const sessions = sportUpcomingSessions(id), more = sessions.length - SPORT_UPCOMING_ROWS;
+  const row = s => `<li><span class="d"><a href="#day-${esc(s.day)}">${esc(fmt(s.day))}</a><br>${s.startUtc
+    ? timeTag(s.startUtc, hhmm(s.startUtc)) : "השעה טרם פורסמה"}</span>
+    <span class="t">${compLink(s.comp, esc(s.comp.name))}${s.phase ? `<small><bdi>${esc(s.phase)}</bdi></small>` : ""}
+      <small>${s.athletes.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(", ")}</small>
+      ${safeUrl(s.source) ? `<small>${linkOut(s.source, "לוח הזמנים")}</small>` : ""}</span>
+    <span>${statusChip(sessionState(s, s.day))}</span></li>`;
+  return `<section class="panel" aria-labelledby="sportUpcomingH"><h2 id="sportUpcomingH">ההופעות הקרובות בענף</h2>
+    ${sessions.length ? `<ul class="rows">${sessions.slice(0, SPORT_UPCOMING_ROWS).map(row).join("")}</ul>
+      ${more > 0 ? `<details><summary>${more === 1 ? "הצגת עוד הופעה אחת" : `הצגת עוד ${more} הופעות`}</summary><ul class="rows">${sessions.slice(SPORT_UPCOMING_ROWS).map(row).join("")}</ul></details>` : ""}`
+      : `<p class="muted">אין הופעות ידועות בענף בשבועיים הקרובים.</p><p><a href="#calendar-${esc(id)}">ללוח התחרויות בענף</a></p>`}
+  </section>`;
+}
+
 function viewSport(id){
   const s = sportById(id);
   if (!s) return notFound();
@@ -601,6 +624,7 @@ function viewSport(id){
   </section>
   ${typeof standingsPanel === "function" ? standingsPanel(id) : ""}
   ${quotaSection(id)}
+  ${sportUpcomingSection(id)}
   <section class="stack">
     <h2>${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
     ${list.length ? `<div class="cards">${list.map(athleteCard).join("")}</div>` : calEmpty("אין כרגע ספורטאים או נבחרות מישראל ברשימה בענף הזה.", id)}
@@ -683,9 +707,13 @@ function reportBox(subject, link){
 
 // The hash is the source of truth, so "#calendar" clears a filter left over from "#calendar-<id>".
 // Filters re-render only this list, so the focused control and scroll position survive.
+let calendarFollowedOnly = false;
 function calendarResults(){
   const t = today(), {sport, qual, past} = S.cal;
-  const rows = S.comps.filter(c => (!sport || c.sportId === sport) && (!qual || c.qualifying) && (past || (c.end || c.start) >= t))
+  if (calendarFollowedOnly && !S.followSports.size)
+    return emptyLine("עוד אין ענפים במעקב שלך. אפשר לבחור ענפים כדי להציג את התחרויות שלהם.", "#sports", "לבחירת ענפים למעקב");
+  const rows = S.comps.filter(c => (!sport || c.sportId === sport) && (!calendarFollowedOnly || S.followSports.has(c.sportId))
+    && (!qual || c.qualifying) && (past || (c.end || c.start) >= t))
     .sort((a, b) => a.start.localeCompare(b.start));
   const months = {};
   rows.forEach(c => (months[c.start.slice(0, 7)] ??= []).push(c));
@@ -707,7 +735,8 @@ function viewCalendar(sportFilter = ""){
     <select id="cSport" aria-label="סינון לפי ענף"><option value="">כל הענפים</option>${used.map(s => `<option value="${esc(s.id)}" ${s.id === sport ? "selected" : ""}>${esc(s.he)}</option>`).join("")}</select>
     <label class="chk"><input type="checkbox" id="cQual" ${qual ? "checked" : ""}> רק תחרויות העפלה</label>
     <label class="chk"><input type="checkbox" id="cPast" ${past ? "checked" : ""}> כולל תחרויות שהסתיימו</label>
-    <button class="btn ghost small" type="button" id="cReset" data-calendar-reset ${sport || qual || past ? "" : "hidden"}>איפוס הסינון</button>
+    <label class="chk"><input type="checkbox" id="cFollowSports" ${calendarFollowedOnly ? "checked" : ""}> רק ענפים שבמעקב שלי</label>
+    <button class="btn ghost small" type="button" id="cReset" data-calendar-reset ${sport || qual || past || calendarFollowedOnly ? "" : "hidden"}>איפוס הסינון</button>
   </div>
   <div id="calResults" class="cal-results">${calendarResults()}</div>
   <section class="panel">
@@ -1130,9 +1159,10 @@ document.addEventListener("input", e => {
   if (e.target.id === "cSport") { S.cal.sport = e.target.value; history.replaceState(null, "", S.cal.sport ? "#calendar-" + S.cal.sport : "#calendar"); }
   if (e.target.id === "cQual") S.cal.qual = e.target.checked;
   if (e.target.id === "cPast") S.cal.past = e.target.checked;
-  if (/^c(Sport|Qual|Past)$/.test(e.target.id) && $("calResults")) {
+  if (e.target.id === "cFollowSports") calendarFollowedOnly = e.target.checked;
+  if (/^c(Sport|Qual|Past|FollowSports)$/.test(e.target.id) && $("calResults")) {
     $("calResults").innerHTML = calendarResults();
-    if ($("cReset")) $("cReset").hidden = !(S.cal.sport || S.cal.qual || S.cal.past);
+    if ($("cReset")) $("cReset").hidden = !(S.cal.sport || S.cal.qual || S.cal.past || calendarFollowedOnly);
   }
 });
 document.addEventListener("click", e => {
@@ -1140,9 +1170,11 @@ document.addEventListener("click", e => {
   if (!t) return;
   if ("calendarReset" in t.dataset) {
     S.cal = {sport: "", qual: false, past: false};
+    calendarFollowedOnly = false;
     history.replaceState(null, "", "#calendar");
     $("cSport").value = "";
     $("cQual").checked = false; $("cPast").checked = false;
+    $("cFollowSports").checked = false;
     $("cReset").hidden = true;
     $("calResults").innerHTML = calendarResults();
     return $("cSport").focus({preventScroll: true});
@@ -1179,6 +1211,10 @@ function clockStatusSignature(h = currentRoute()){
     if (!realDate(d)) return "";
     sessions = daySessions(d).map(s => [s, d]);
     hasToday = d === today() && sessions.some(([s]) => !dayFollowingOnly || followsSport(s.sportId) || followedIn(s));
+  } else if (h.startsWith("sport-")) {
+    const id = h.slice(6);
+    if (!sportById(id)) return "";
+    return JSON.stringify(sportUpcomingSessions(id).map(s => [s.day, s.startUtc, s.phase, sessionState(s, s.day)]));
   } else if (h.startsWith("a-") && typeof athleteUpcomingSessions === "function") {
     const a = S.athletes.find(a => a.id === h.slice(2));
     if (!a) return "";

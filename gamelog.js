@@ -75,6 +75,7 @@ function logDays(first, last){
 function gameLogRow({comp, entries, first, last}, id){
   // One source for the whole row is shown once, on its last entry.
   const shared = entries.every(e => e.source === entries[0].source);
+  const multipleDays = new Set(entries.map(e => e.date)).size > 1;
   const src = e => linkOut(e.source, `מקור: ${host(e.source)}`);
   // Each entry is tracked for "השתנה ב־", but the row shows one mark (the latest): the marks sit out of the flow,
   // so two in one row would overlap (Gil on #268).
@@ -83,7 +84,7 @@ function gameLogRow({comp, entries, first, last}, id){
   const latest = keys.filter(k => changedRows.has(k)).sort((x, y) => changedRows.get(y).localeCompare(changedRows.get(x)))[0];
   return `<li><span class="d">${logDays(first, last)}</span>
     <span class="t">${comp ? compLink(comp, esc(comp.name)) : `<span class="muted">תחרות שאינה ברשימה</span> · <a href="#day-${esc(first)}">ליום התוצאה</a>`}${entries.map((e, i) =>
-      `<span class="res">${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${isUtc(e.resultAt) ? ` · עודכן ב־${whenIL(e.resultAt)}` : ""}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${latest && i === entries.length - 1 ? rowMark(latest, latest) : ""}</span>`).join("")}</span></li>`;
+      `<span class="res">${multipleDays ? `<a href="#day-${esc(e.date)}"><time datetime="${esc(e.date)}">${esc(fmtShortY(e.date))}</time></a> · ` : ""}${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${isUtc(e.resultAt) ? ` · עודכן ב־${whenIL(e.resultAt)}` : ""}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${latest && i === entries.length - 1 ? rowMark(latest, latest) : ""}</span>`).join("")}</span></li>`;
 }
 
 function gameLogSection(a){

@@ -1,12 +1,17 @@
 // National quota overview (#quotas). Loaded after app.js; uses its quota helpers (QUOTA_STATUSES, quotaStatusPill) and loader state (S.quotas*).
 "use strict";
+let quotaSportFilter = "";
+const quotaSports = () => S.sports.filter(s => S.quotas.some(q => q.sportId === s.id)).sort((a, b) => heCmp(a.he, b.he));
 
 function viewQuotas(){
   const head = `<p class="crumb"><a href="#sports"><span aria-hidden="true">→</span>&nbsp;כל הענפים</a></p><h1 tabindex="-1">תמונת המכסות</h1>`;
   if (S.quotasError) return head + `<p class="muted">נתוני המכסות לא נטענו כרגע. אפשר לרענן את הדף בעוד רגע.</p>`;
   if (!S.quotasLoaded) return head + `<p class="muted">טוען נתוני מכסות…</p>`;
-  const list = S.quotas.slice().sort((a, b) => heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
-  if (!list.length) return head + `<p class="muted">עוד לא נאספו נתוני מכסות.</p>`;
+  const all = S.quotas.slice().sort((a, b) => heCmp(sportName(a.sportId), sportName(b.sportId)) || heCmp(a.event, b.event));
+  const sports = quotaSports();
+  if (quotaSportFilter && !sports.some(s => s.id === quotaSportFilter)) quotaSportFilter = "";
+  if (!all.length) return head + `<p class="muted">עוד לא נאספו נתוני מכסות.</p>`;
+  const list = quotaSportFilter ? all.filter(q => q.sportId === quotaSportFilter) : all;
   const n = quotaCounts(list);
   const upcoming = new Map();
   for (const q of list.filter(q => nxt(q))) {
@@ -28,6 +33,11 @@ function viewQuotas(){
     <span>${nxt(q) ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
   const at = str(S.quotasUpdatedAt).slice(0, 10);
   return head + `
+  <div class="toolbar"><label for="quotaSport">סינון מכסות לפי ענף</label>
+    <select id="quotaSport"><option value=""${quotaSportFilter ? "" : " selected"}>כל הענפים</option>${sports.map(s => `<option value="${esc(s.id)}"${s.id === quotaSportFilter ? " selected" : ""}>${esc(s.he)}</option>`).join("")}</select>
+    ${quotaSportFilter ? `<button class="btn ghost small" type="button" data-quota-reset>איפוס הסינון</button>` : ""}
+  </div>
+  <p class="muted" role="status">מציגים ${list.length} מתוך ${all.length} מקצים${quotaSportFilter ? ` בענף ${esc(sportName(quotaSportFilter))}` : " בכל הענפים"}.</p>
   <section class="panel" aria-label="סיכום">
     <p class="kpi">${QUOTA_STATUSES.map(k => `<b>${n[k]}</b> ${Q_LABEL[k][1]}`).join(" · ")}</p>
     <p class="foot">הספירה היא לפי מקצים, לא לפי ספורטאים. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת.${isDate(at) ? ` נכון ל־${fmt(at)}.` : ""}</p>
@@ -51,3 +61,17 @@ function viewQuotas(){
     <ul class="rows">${list.filter(q => qStatus(q.israelStatus) === k).map(row).join("")}</ul>
   </section>`).join("")}`;
 }
+
+document.addEventListener("change", e => {
+  if (e.target?.id !== "quotaSport" || currentRoute() !== "quotas") return;
+  const id = e.target.value;
+  if (id && !quotaSports().some(s => s.id === id)) return;
+  quotaSportFilter = id;
+  refresh();
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest?.("[data-quota-reset]") || currentRoute() !== "quotas") return;
+  quotaSportFilter = "";
+  refresh();
+  $("quotaSport")?.focus({preventScroll: true});
+});

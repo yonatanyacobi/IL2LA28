@@ -1,6 +1,7 @@
 // Competition page #c-<id> (docs/design/event-page.md). Loaded after app.js and sessions.js, whose sessions,
 // near-live labels and rows it shares with #day, so both render a session identically. No live scores: results arrive with the job run, and the line under the h1 says when.
 "use strict";
+let eventFollowingOnly = false;
 
 // Sessions of one competition, grouped by Israel day. A season-long series (> SERIES_DAYS) has no daily fallback
 // (compOn() skips it), so only its exported sessions count, grouped by month.
@@ -83,15 +84,19 @@ function viewEvent(id){
   const link = `${SITE_URL}#c-${id}`;
   const dayHead = (d, only) => `<h3><a class="hlink" href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span>${only ? DATE_ONLY : ""}</h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
-  const schedule = !flat.length
+  const scheduleGroups = [...groups].map(([d, list]) => [d, eventFollowingOnly ? list.filter(s => followsSport(s.sportId) || followedIn(s)) : list]);
+  const shown = scheduleGroups.reduce((n, [, list]) => n + list.length, 0);
+  const schedule = eventFollowingOnly && flat.length && !shown
+    ? `<p class="muted">אין הופעות שמתאימות למעקב שלך בתחרות הזו.</p>`
+    : !flat.length
     ? calEmpty(t <= (c.end || c.start) ? "עוד אין הופעות ידועות של ישראלים בתחרות הזו." : "לא תועדו הופעות של ישראלים בתחרות הזו.", c.sportId)
-    : [...groups].filter(([, list]) => list.length).sort(([x], [y]) => series ? x.localeCompare(y) : 0)
+    : scheduleGroups.filter(([, list]) => list.length).sort(([x], [y]) => series ? x.localeCompare(y) : 0)
       .map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k, dateOnly(list))}
         <ul class="rows sess">${list.slice().sort((x, y) => (series ? x.day.localeCompare(y.day) : 0) || sessionOrder(x, y))
           .map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list), series
             ? `<small><a class="hlink" href="#day-${esc(s.day)}">${esc(dayTitle(s.day))}</a></small>` : "")).join("")}</ul></div>`).join("")
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועות הופעות של ישראלים.</p>` : "")(
-        series ? 0 : [...groups].filter(([, list]) => !list.length).length));
+        series || eventFollowingOnly ? 0 : [...groups].filter(([, list]) => !list.length).length));
   return `<p class="crumb"><a href="#sport-${esc(c.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sportName(c.sportId))}</a></p>
   <div class="event-head" data-event="${esc(id)}">
     <h1 tabindex="-1">${esc(c.name)}</h1>
@@ -101,13 +106,18 @@ function viewEvent(id){
     ${!stakes && c.qualifying ? `<p>תחרות שנספרת להעפלה. <a href="#sport-${esc(c.sportId)}">שיטת ההעפלה בענף</a></p>` : ""}
   </div>
   <section class="panel" aria-labelledby="evSumH"><h2 id="evSumH">בקצרה</h2>
+    ${eventFollowingOnly ? `<p class="muted">הסיכום והסגל מציגים את כלל הישראלים בתחרות, ללא סינון המעקב.</p>` : ""}
     ${athletes.length ? `<p class="kpi">${kpi}</p>`
       : tracked ? emptyLine("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", `#sport-${c.sportId}`, `${who(tracked)} ברשימה בענף`)
         : calEmpty("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", c.sportId)}
     ${nextDay ? `<p>ההופעה הבאה של ישראלים: <a href="#day-${esc(nextDay)}">${esc(dayTitle(nextDay))}</a></p>` : ""}
   </section>
   <div class="event-cols">
-    <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הזמנים של הישראלים</h2>${schedule}</section>
+    <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הזמנים של הישראלים</h2>
+      <div class="toolbar"><label class="chk"><input type="checkbox" id="eventFollowOnly" ${eventFollowingOnly ? "checked" : ""}> רק המעקב שלי</label>
+        ${eventFollowingOnly ? `<button class="btn ghost small" type="button" data-event-show-all>הצגת כל ההופעות</button>` : ""}</div>
+      ${eventFollowingOnly ? `<p class="muted" role="status">מציגים ${shown} מתוך ${flat.length} הופעות</p>${!S.follows.size && !S.followSports.size ? `<p class="muted">עוד אין ספורטאים או ענפים במעקב שלך. <a href="#sports">לבחירת ענפים למעקב</a></p>` : ""}` : ""}
+      ${schedule}</section>
     <div class="stack">
       ${stakes}
       ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH">הישראלים בתחרות (${athletes.length})</h2>
@@ -124,3 +134,15 @@ function viewEvent(id){
     <p class="foot" id="evShareMsg" aria-live="polite"></p>
   </section>`;
 }
+
+document.addEventListener("change", e => {
+  if (e.target?.id !== "eventFollowOnly" || !currentRoute().startsWith("c-")) return;
+  eventFollowingOnly = e.target.checked;
+  refresh();
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest?.("[data-event-show-all]") || !currentRoute().startsWith("c-")) return;
+  eventFollowingOnly = false;
+  refresh();
+  $("eventFollowOnly")?.focus({preventScroll: true});
+});

@@ -102,20 +102,23 @@ function followUpcoming(){
   const comps = upcoming().filter(c => S.followSports.has(c.sportId) && !competitions.has(c.id))
     .map(c => ({k: `up|c|${c.id}`, d: c.start, chip: c.start <= t ? `<span class="pill s-live">מתקיימת עכשיו</span>` : "",
       html: `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLinkOr(c)}<small>${esc(c.location)}</small>`}));
-  return [...appearances, ...athletes, ...comps].sort((x, y) => x.d.localeCompare(y.d)).slice(0, 5);
+  return [...appearances, ...athletes, ...comps].sort((x, y) => x.d.localeCompare(y.d));
 }
 
+const FOLLOW_UPCOMING_ROWS = 5;
 let renderedFollowingUpcoming = "";
 const followingUpcomingMarks = new Map();
 
 function followingUpcomingContent(clockOnly = false){
-  const next = followUpcoming();
-  return next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
-    <ul class="rows">${next.map(x => {
+  const next = followUpcoming(), more = next.slice(FOLLOW_UPCOMING_ROWS);
+  const row = x => {
       const mark = clockOnly ? followingUpcomingMarks.get(x.k) || "" : rowMark(x.k, x.d + x.html);
       if (!clockOnly) followingUpcomingMarks.set(x.k, mark);
       return `<li><span class="d">${fmtShort(x.d)}</span><span class="t">${x.html}${mark}</span><span>${x.chip}</span></li>`;
-    }).join("")}</ul></section>` : "";
+  };
+  return next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
+    <ul class="rows">${next.slice(0, FOLLOW_UPCOMING_ROWS).map(row).join("")}</ul>
+    ${more.length ? `<details><summary id="followingUpcomingMore">${more.length === 1 ? "עוד פריט אחד במעקב שלי" : `עוד ${more.length} פריטים במעקב שלי`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}</section>` : "";
 }
 
 function refreshFollowingUpcoming(){
@@ -124,12 +127,15 @@ function refreshFollowingUpcoming(){
   const html = followingUpcomingContent(true);
   if (html === renderedFollowingUpcoming) return;
   const active = document.activeElement, key = panel.contains?.(active) ? focusKey(active) : null, y = window.scrollY;
+  const open = [...panel.querySelectorAll("details")].map((d, i) => d.open ? i : -1).filter(i => i >= 0);
   if (key?.sel) key.idx = Math.max(0, [...panel.querySelectorAll(key.sel)].indexOf(active));
   panel.innerHTML = html;
   renderedFollowingUpcoming = html;
+  const details = [...panel.querySelectorAll("details")];
+  open.forEach(i => { if (details[i]) details[i].open = true; });
   if (key) {
     const matches = key.sel ? [...panel.querySelectorAll(key.sel)] : [];
-    const again = key.id ? $(key.id) : matches[key.idx] || matches[0];
+    const again = key.id ? panel.querySelector(attrSel("id", key.id)) : matches[key.idx] || matches[0];
     (again || panel).focus({preventScroll: true});
   }
   if (typeof y === "number") scrollTo({top: y, behavior: "auto"});
