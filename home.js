@@ -126,8 +126,13 @@ function weekWho(list){
 }
 
 // Only the sports competing that day, as #day's stakes lines: a quota event elsewhere doesn't make the day one.
-const weekQuotaDay = (list, d, t) => [...new Set(list.map(s => s.sportId))].some(sid => quotasOf(sid).some(q =>
-  q.israelStatus === "in-contention" && nxt(q, t) && q.nextQuotaEvent.start <= d && d <= quotaEventEnd(q)));
+const weekQuotaDay = (list, d, t) => [...new Set(list.map(s => s.sportId))].some(sid => quotasOf(sid).some(q => {
+  if (q.israelStatus !== "in-contention" || !nxt(q, t) || q.nextQuotaEvent.start > d || d > quotaEventEnd(q)) return false;
+  const event = q.nextQuotaEvent;
+  const matches = S.comps.filter(c => c.sportId === q.sportId && c.start <= event.start && event.start <= (c.end || c.start)
+    && str(c.name).trim() === str(event.name).trim());
+  return matches.length === 1 && list.some(s => s.sportId === q.sportId && s.comp?.id === matches[0].id);
+}));
 const WEEK_QUOTA_PILL = `<span class="pill q-in-contention"><span aria-hidden="true">◐</span> אירוע מכסה</span>`;
 const WEEK_WAIT_PILL = `<span class="pill s-wait"><span aria-hidden="true">◷</span> בהמתנה לתוצאה</span>`;
 const weekRow = (day, comps, small, pill) =>

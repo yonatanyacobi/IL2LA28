@@ -2,6 +2,9 @@
 "use strict";
 
 const DIGEST_MAX = 3500, DIGEST_LINE = 160;
+let digestSportFilter = "";
+const digestSports = () => S.sports.filter(s => S.athletes.some(a => a.sportId === s.id)
+  || S.comps.some(c => c.sportId === s.id) || S.quotas.some(q => q.sportId === s.id)).sort((a, b) => heCmp(a.he, b.he));
 // Data must not toggle WhatsApp formatting or break a bullet over lines.
 const waText = s => str(s).replace(/[*_~`]/g, "").replace(/\s+/g, " ").trim();
 const waCut = s => s.length > DIGEST_LINE ? s.slice(0, DIGEST_LINE - 1) + "…" : s;
@@ -32,26 +35,30 @@ const runningHead = c => (c.end || c.start) === c.start ? `• ${fmtShort(c.star
 const runningWhen = (c, t) => (c.end || c.start) === c.start ? "" : c.end === t ? "יום אחרון" : "בעיצומה";
 
 // Depends only on `t` and the loaded data in S, so tests can pin the week.
-function digestText(t = today()){
+function digestText(t = today(), sportId = ""){
+  const scope = digestSports().some(s => s.id === sportId) ? sportId : "";
+  const inScope = id => !scope || id === scope;
+  const comps = S.comps.filter(c => inScope(c.sportId)), athletes = S.athletes.filter(a => inScope(a.sportId));
   const from = addDays(t, -6);
   const localDay = value => isUtc(value) ? ilDate(value) : isDate(value) ? value : "";
   const dataTs = localDay(str(S.live ? S.lastRun : (S.generatedAt || S.lastRun)));
   const day = c => localDay(str(c.at));
   const end = c => c.end || c.start;
-  const weekChanges = S.changes.filter(c => isDate(day(c)) && day(c) >= from && day(c) <= t);
+  const changeSport = c => S.athletes.find(a => a.id === c.athleteId)?.sportId
+    || S.sports.find(s => waText(c.text).startsWith(waText(s.he) + ":"))?.id || "";
+  const scopedChanges = S.changes.filter(c => inScope(changeSport(c)));
+  const weekChanges = scopedChanges.filter(c => isDate(day(c)) && day(c) >= from && day(c) <= t);
   // Results: competitions in tracked sports that ended in the 7 days before today, each with all changes about its
   // sport since it started (a 9-day Worlds' first results are older than a week by the next Sunday).
   // 7 full days, not t-6, so a Sunday digest still covers last Sunday's finals.
   // Changes carry no competition id, so the sport is taken from athleteId, else from the "<sport>: " prefix the
   // daily job writes.
   const resFrom = addDays(t, -7);
-  const resChanges = S.changes.filter(c => isDate(day(c)) && day(c) <= t);
-  const sessionResults = exportedSessions().filter(s => s.result && safeUrl(s.resultSource) && isUtc(s.resultAt)
+  const resChanges = scopedChanges.filter(c => isDate(day(c)) && day(c) <= t);
+  const sessionResults = exportedSessions().filter(s => inScope(s.sportId) && s.result && safeUrl(s.resultSource) && isUtc(s.resultAt)
     && s.day <= t && ilDate(s.resultAt) <= t && Date.parse(s.resultAt) <= Date.now());
-  const changeSport = c => S.athletes.find(a => a.id === c.athleteId)?.sportId
-    || S.sports.find(s => waText(c.text).startsWith(waText(s.he) + ":"))?.id || "";
   const used = new Set();
-  const results = S.comps.filter(c => end(c) >= resFrom && end(c) < t && dayNo(c.start, end(c)) <= SERIES_DAYS && athletesOf(c.sportId).length)
+  const results = comps.filter(c => end(c) >= resFrom && end(c) < t && dayNo(c.start, end(c)) <= SERIES_DAYS && athletesOf(c.sportId).length)
     .sort((a, b) => end(b).localeCompare(end(a)) || heCmp(a.name, b.name))
     .map(c => {
       // Results written straight into athlete history (results-assist, e.g. tri_results.py) count too; such an
@@ -61,7 +68,7 @@ function digestText(t = today()){
       const covered = (a, d) => sessions.some(s => s.day === d && s.athletes.some(p => p.id === a.id));
       const resultsOf = a => (Array.isArray(a.history) ? a.history : []).filter(h => h && h.kind === "result" && inComp(h.at)
         && str(h.text).trim() && safeUrl(h.source) && !covered(a, h.at));
-      const who = S.athletes.filter(a => a.sportId === c.sportId && (inComp(a.nextDate) || resultsOf(a).length
+      const who = athletes.filter(a => a.sportId === c.sportId && (inComp(a.nextDate) || resultsOf(a).length
         || sessions.some(s => s.athletes.some(p => p.id === a.id))));
       const loggedBy = who.filter(a => resultsOf(a).length);
       const logged = [...loggedBy.flatMap(a => resultsOf(a).map(h => [h.at, waCut(`  – ${waText(a.name)}: ${waText(h.text)}`)])),
@@ -89,7 +96,7 @@ function digestText(t = today()){
     .map(c => waCut(`• ${waText(c.text)}`));
   // Competitions already under way, listed per competition with the athletes still to compete in it (nextDate from
   // today to its end): a finalist from yesterday isn't "competing this week" (PL on #351).
-  const knownSessions = exportedSessions().filter(s => s.day >= t && s.day <= addDays(t, 6));
+  const knownSessions = exportedSessions().filter(s => inScope(s.sportId) && s.day >= t && s.day <= addDays(t, 6));
   const covered = new Set(knownSessions.flatMap(s => s.athletes.map(a => JSON.stringify([a.id, s.comp.id, s.day]))));
   const coveredNext = (a, comp) => {
     const matches = comp ? [comp] : S.comps.filter(c => c.sportId === a.sportId && c.start <= a.nextDate && a.nextDate <= end(c));
@@ -99,28 +106,28 @@ function digestText(t = today()){
     .sort((a, b) => a.day.localeCompare(b.day) || byStart(a.startUtc, b.startUtc) || heCmp(a.comp.name, b.comp.name) || heCmp(a.phase, b.phase))
     .map(s => [waCut(`• ${fmtShort(s.day)} · ${waText(s.comp.name)} (${waText(sportName(s.sportId))})${s.phase ? ": " + waText(s.phase) : ""}`),
       ...waList("  ", names(s.athletes))].join("\n"));
-  const running = S.comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS)
-    .map(c => ({c, list: S.athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && a.nextDate >= t && c.start <= a.nextDate && a.nextDate <= end(c) && !coveredNext(a, c))}))
+  const running = comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS)
+    .map(c => ({c, list: athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && a.nextDate >= t && c.start <= a.nextDate && a.nextDate <= end(c) && !coveredNext(a, c))}))
     .filter(r => r.list.length);
   const inRunning = new Set(running.flatMap(r => r.list.map(a => a.id)));
   const competing = [
     ...plannedSessions,
     ...running.sort((x, y) => heCmp(sportName(x.c.sportId), sportName(y.c.sportId)))
       .map(({c, list}) => [waCut(`${runningHead(c)} · ${waText(c.name)} (${waText(sportName(c.sportId))})${(w => w ? `, ${w}` : "")(runningWhen(c, t))}`), ...waList("  ", names(list))].join("\n")),
-    ...S.athletes.filter(a => !inRunning.has(a.id) && isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6) && !coveredNext(a))
+    ...athletes.filter(a => !inRunning.has(a.id) && isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6) && !coveredNext(a))
       .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name))
       .map(a => waCut(`• ${fmtShort(a.nextDate)} · ${waText(a.name)} (${waText(sportName(a.sportId))})${a.next ? ": " + waText(a.next) : ""}`)),
   ];
   // One bullet per quota event (e.g. a Grand Slam deciding 7 weight classes), not one per class.
   const byEvent = new Map();
   for (const q of S.quotas) {
-    if (q.israelStatus === "earned" || !nxt(q, t) || q.nextQuotaEvent.start > addDays(t, 13)) continue;
+    if (!inScope(q.sportId) || q.israelStatus === "earned" || !nxt(q, t) || q.nextQuotaEvent.start > addDays(t, 13)) continue;
     const key = [q.nextQuotaEvent.start, q.sportId, q.nextQuotaEvent.name].join("|");
     byEvent.set(key, [...(byEvent.get(key) || []), q]);
   }
   const quotas = [...byEvent.keys()].sort().map(key => {
     const list = byEvent.get(key).sort((a, b) => heCmp(a.event, b.event)), q = list[0], e = q.nextQuotaEvent, last = quotaEventEnd(q);
-    const who = S.athletes.filter(a => a.sportId === q.sportId && isDate(a.nextDate) && e.start <= a.nextDate && a.nextDate <= last);
+    const who = athletes.filter(a => a.sportId === q.sportId && isDate(a.nextDate) && e.start <= a.nextDate && a.nextDate <= last);
     const stakes = israelIn(q) ? commonStakes(list) : "";
     return [
       waCut(`• ${fmtShort(e.start)} · ${waText(sportName(q.sportId))}${list.length === 1 ? `, ${waText(q.event)}` : ""}: ${waText(e.name)}`),
@@ -133,13 +140,13 @@ function digestText(t = today()){
   const sections = [["תוצאות השבוע", results], ["מה התעדכן", changes], ["ישראלים מתחרים השבוע", competing], ["אירועי מכסה בשבועיים הקרובים", quotas]]
     .filter(([, items]) => items.length).map(([title, items]) => ({title, items, cut: 0}));
   // Results always get a heading once anything else is said, so "no results" is explicit rather than missing.
-  if (sections.length && !results.length) sections.unshift({title: "תוצאות השבוע", items: [], none: "לא הסתיימו השבוע תחרויות בענפים שברשימה.", cut: 0});
-  const head = [`*הדרך ללוס אנג׳לס 28 · תקציר שבועי*`, `${fmtRange(from, t)}${isDate(dataTs) ? ` · נכון ל־${fmt(dataTs)}` : ""}`,
+  if (sections.length && !results.length) sections.unshift({title: "תוצאות השבוע", items: [], none: scope ? waCut(`לא הסתיימו השבוע תחרויות בענף ${waText(sportName(scope))}.`) : "לא הסתיימו השבוע תחרויות בענפים שברשימה.", cut: 0});
+  const head = [scope ? waCut(`*הדרך ללוס אנג׳לס 28 · תקציר שבועי · ${waText(sportName(scope))}*`) : `*הדרך ללוס אנג׳לס 28 · תקציר שבועי*`, `${fmtRange(from, t)}${isDate(dataTs) ? ` · נכון ל־${fmt(dataTs)}` : ""}`,
     ...(isDate(dataTs) && dataTs < addDays(t, -2) ? [`שימו לב: הנתונים לא עודכנו מאז ${fmt(dataTs)}.`] : [])];
   const foot = ["", `לכל הפרטים: ${SITE_URL}`, "אתר לא רשמי. הנתונים ממקורות פומביים, כדאי לבדוק מול המקור."];
   const build = () => [...head,
     ...(sections.length ? sections.flatMap(s => ["", `*${s.title}*`, ...s.items, ...(s.none ? [s.none] : []), ...(s.cut ? [`• ועוד ${s.cut} באתר`] : [])])
-      : ["", "שבוע שקט: אין עדכונים, תחרויות או אירועי מכסה ידועים."]),
+      : ["", scope ? waCut(`אין תוכן ידוע בחלון התקציר בענף ${waText(sportName(scope))}.`) : "שבוע שקט: אין עדכונים, תחרויות או אירועי מכסה ידועים."]),
     ...foot].join("\n");
   let text = build();
   while (text.length > DIGEST_MAX) {
@@ -152,10 +159,15 @@ function digestText(t = today()){
 }
 
 function viewDigest(){
-  const t = today(), text = digestText(t);
+  const sports = digestSports();
+  if (digestSportFilter && !sports.some(s => s.id === digestSportFilter)) digestSportFilter = "";
+  const t = today(), text = digestText(t, digestSportFilter);
   return `<p class="crumb"><a href="#updates"><span aria-hidden="true">→</span>&nbsp;עדכונים</a></p>
   <h1 tabindex="-1">תקציר שבועי</h1>
-  <p class="muted">טקסט מוכן להדבקה בוואטסאפ או בכל מקום אחר. ${fmtRange(addDays(t, -6), t)}.</p>
+  <div class="toolbar"><label for="digestSport">בחירת ענף לתקציר</label>
+    <select id="digestSport"><option value=""${digestSportFilter ? "" : " selected"}>כל הענפים</option>${sports.map(s => `<option value="${esc(s.id)}"${digestSportFilter === s.id ? " selected" : ""}>${esc(s.he)}</option>`).join("")}</select>
+  </div>
+  <p class="muted">טקסט מוכן להדבקה בוואטסאפ או בכל מקום אחר. ${fmtRange(addDays(t, -6), t)}.${digestSportFilter ? ` התקציר בענף ${esc(sportName(digestSportFilter))}. שינויים כלליים ללא שיוך לענף זמינים בבחירת כל הענפים.` : ""}</p>
   <section class="panel digest" aria-labelledby="dgH">
     <h2 id="dgH" class="sr">טקסט התקציר</h2>
     <textarea id="digestText" readonly rows="16" aria-labelledby="dgH" aria-describedby="dgCount">${esc(text)}</textarea>
@@ -166,3 +178,11 @@ function viewDigest(){
     <p class="foot" id="digestMsg" aria-live="polite"></p>
   </section>`;
 }
+
+document.addEventListener("change", e => {
+  if (e.target?.id !== "digestSport" || currentRoute() !== "digest") return;
+  const id = e.target.value;
+  if (id && !digestSports().some(s => s.id === id)) return;
+  digestSportFilter = id;
+  refresh();
+});

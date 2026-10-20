@@ -305,6 +305,18 @@ function compMention(text, sportId, date){
   return sameName(text, c.name) ? compLink(c, esc(text)) : `${esc(text)} · ${compLink(c, esc(c.name))}`;
 }
 const nextCompFact = a => compMention(a.next, a.sportId, a.nextDate);
+const pastNextDate = a => realDate(a.nextDate) && a.nextDate < today();
+const nextDateLabel = a => pastNextDate(a) ? "התחרות שצוינה ברשומה" : "התחרות הבאה";
+function refreshAthleteNextLabels(){
+  for (const node of $("view").querySelectorAll("[data-athlete-next]")) {
+    const a = S.athletes.find(a => a.id === node.dataset.athleteNext);
+    if (!a) continue;
+    const label = node.querySelector("[data-next-label]"), note = node.querySelector("[data-next-past]");
+    const text = nextDateLabel(a) + ": ", hidden = !pastNextDate(a);
+    if (label && label.textContent !== text) label.textContent = text;
+    if (note && note.hidden !== hidden) note.hidden = hidden;
+  }
+}
 
 function compRow(c, withSport){
   const t = today(), end = c.end || c.start, live = c.start <= t && end >= t, past = end < t;
@@ -327,7 +339,7 @@ function athleteCard(a, status = ""){
     ${a.event ? `<span class="ev">${esc(a.event)}</span>` : ""}
     <span><span class="pill st${s}">${STAGES[s]}</span> ${trustChip(a, "card")}</span>
     ${a.rank ? `<span class="ln"><span>דירוג או הישג: </span>${esc(a.rank)}</span>` : ""}
-    ${a.next ? `<span class="ln"><span>התחרות הבאה: </span>${esc(a.next)}${isDate(a.nextDate) ? ` (${fmtShort(a.nextDate)})` : ""}</span>` : ""}
+    ${a.next ? `<span class="ln" data-athlete-next="${esc(a.id)}"><span data-next-label>${nextDateLabel(a)}: </span>${esc(a.next)}${realDate(a.nextDate) ? ` (${fmtShort(a.nextDate)})` : ""}<span data-next-past ${pastNextDate(a) ? "" : "hidden"}> · המועד המתועד חלף</span></span>` : ""}
     ${status ? `<span class="ln">${status}</span>` : ""}
   </a>`;
 }
@@ -672,7 +684,7 @@ function viewAthlete(id){
       ${a.rank ? `<dt>דירוג או הישג</dt><dd>${esc(a.rank)}${rowMark(`rank|${id}`, a.rank)}</dd>` : ""}
       ${athleteQuotaFacts(a)}
       ${typeof standingsFact === "function" ? standingsFact(a) : ""}
-      ${a.next ? `<dt>התחרות הבאה</dt><dd>${nextCompFact(a)}${isDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}${rowMark(`next|${id}`, a.next + a.nextDate)}</dd>` : ""}
+      ${a.next ? `<dt>${nextDateLabel(a)}</dt><dd>${nextCompFact(a)}${realDate(a.nextDate) ? ` <span class="muted">(${fmt(a.nextDate)})</span>` : ""}${pastNextDate(a) ? ' <span class="muted">המועד המתועד חלף</span>' : ""}${rowMark(`next|${id}`, a.next + a.nextDate)}</dd>` : ""}
       <dt>בדיקה</dt><dd class="stack">${trustNote(a)}</dd>
       ${upd ? `<dt>עודכן</dt><dd class="${old ? "old" : "muted"}">${fmt(upd)}${old ? " · לא עודכן יותר מחודש" : ""}</dd>` : ""}
       ${safeUrl(a.source) ? `<dt>מקור</dt><dd>${linkOut(a.source, host(a.source))}</dd>` : ""}
@@ -1280,6 +1292,7 @@ function refreshClockStatuses(){
   // Reopening Following marks its feed read; the clock must not count as a visit.
   if (/^following(-|$)/.test(currentRoute()) && typeof refreshFollowingUpcoming === "function") {
     refreshFollowingUpcoming();
+    refreshAthleteNextLabels();
     const d = $("days"); if (d) d.textContent = daysLeft();
     return;
   }
