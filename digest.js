@@ -33,6 +33,12 @@ function commonStakes(list){
 // A one-day competition adds nothing, the last day says so, and anything else is "בעיצומה".
 const runningHead = c => (c.end || c.start) === c.start ? `• ${fmtShort(c.start)}` : `• עד ${fmtShort(c.end)}`;
 const runningWhen = (c, t) => (c.end || c.start) === c.start ? "" : c.end === t ? "יום אחרון" : "בעיצומה";
+function digestCompetitionLink(c){
+  if (typeof c?.id !== "string" || !c.id || !S.comps.some(comp => comp.id === c.id)) return "";
+  let id;
+  try { id = encodeURIComponent(c.id); } catch { return ""; }
+  return `  לפרטי התחרות: ${SITE_URL}#c-${id}`;
+}
 
 // Depends only on `t` and the loaded data in S, so tests can pin the week.
 function digestText(t = today(), sportId = ""){
@@ -89,7 +95,7 @@ function digestText(t = today(), sportId = ""){
       const lines = [...logged, ...about.map(x => waCut(`  – ${waText(x.text)}`))];
       return [waCut(`• ${fmtShort(end(c))} · ${waText(c.name)} (${waText(sportName(c.sportId))})`),
         ...(who.length ? waList("  ישראלים: ", names(who)) : []),
-        ...(lines.length ? lines : ["  התוצאות עוד לא עודכנו באתר."])].join("\n");
+        ...(lines.length ? lines : ["  התוצאות עוד לא עודכנו באתר."]), digestCompetitionLink(c)].filter(Boolean).join("\n");
     });
   const changes = weekChanges.filter(c => !used.has(c))
     .sort((a, b) => day(b).localeCompare(day(a)))
@@ -105,7 +111,7 @@ function digestText(t = today(), sportId = ""){
   const plannedSessions = knownSessions.filter(s => ["before", "competing"].includes(sessionState(s, s.day)))
     .sort((a, b) => a.day.localeCompare(b.day) || byStart(a.startUtc, b.startUtc) || heCmp(a.comp.name, b.comp.name) || heCmp(a.phase, b.phase))
     .map(s => [waCut(`• ${fmtShort(s.day)} · ${waText(s.comp.name)} (${waText(sportName(s.sportId))})${s.phase ? ": " + waText(s.phase) : ""}`),
-      ...waList("  ", names(s.athletes))].join("\n"));
+      ...waList("  ", names(s.athletes)), digestCompetitionLink(s.comp)].filter(Boolean).join("\n"));
   const running = comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS)
     .map(c => ({c, list: athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && a.nextDate >= t && c.start <= a.nextDate && a.nextDate <= end(c) && !coveredNext(a, c))}))
     .filter(r => r.list.length);
@@ -113,7 +119,7 @@ function digestText(t = today(), sportId = ""){
   const competing = [
     ...plannedSessions,
     ...running.sort((x, y) => heCmp(sportName(x.c.sportId), sportName(y.c.sportId)))
-      .map(({c, list}) => [waCut(`${runningHead(c)} · ${waText(c.name)} (${waText(sportName(c.sportId))})${(w => w ? `, ${w}` : "")(runningWhen(c, t))}`), ...waList("  ", names(list))].join("\n")),
+      .map(({c, list}) => [waCut(`${runningHead(c)} · ${waText(c.name)} (${waText(sportName(c.sportId))})${(w => w ? `, ${w}` : "")(runningWhen(c, t))}`), ...waList("  ", names(list)), digestCompetitionLink(c)].filter(Boolean).join("\n")),
     ...athletes.filter(a => !inRunning.has(a.id) && isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6) && !coveredNext(a))
       .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name))
       .map(a => waCut(`• ${fmtShort(a.nextDate)} · ${waText(a.name)} (${waText(sportName(a.sportId))})${a.next ? ": " + waText(a.next) : ""}`)),
