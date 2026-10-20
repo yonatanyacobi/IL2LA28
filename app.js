@@ -1189,8 +1189,14 @@ function currentRoute(){
 }
 
 let renderedDay = "", renderedClock = "";
-function route({preserveFollowingVisit = false} = {}){
+let documentationFamilyActive = false, documentationArrival = null;
+function route({preserveFollowingVisit = false, documentationToken = null} = {}){
   const h = currentRoute();
+  if (documentationToken && documentationToken === documentationArrival &&
+      ["following", "following-sports"].includes(h) && typeof beginFollowingDocumentationVisit === "function" && followingDocumentationReady()) {
+    documentationArrival = null;
+    beginFollowingDocumentationVisit();
+  }
   renderedDay = today();
   let html, nav;
   if (S.failed && !S.loaded) html = `<div class="empty" role="alert">${loadFailure(S.failed)}<p><button class="btn small" data-retry>נסו שוב</button></p></div>`, nav = "";
@@ -1249,11 +1255,18 @@ let lastRoute = null, focusTrust = false;
 function navigate(){
   // Filters last only while you stay on the calendar: arriving at it (from elsewhere or another sport) starts clean.
   const next = currentRoute();
+  const family = ["following", "following-sports"].includes(next);
+  if (family && !documentationFamilyActive) documentationArrival = {};
+  if (!family) {
+    documentationArrival = null;
+    if (typeof endFollowingDocumentationVisit === "function") endFollowingDocumentationVisit();
+  }
+  documentationFamilyActive = family;
   if (next !== lastRoute && /^calendar(-|$)/.test(next)) S.cal = {sport: "", qual: false, past: false};
   if (next !== lastRoute && /^corrections(-|$)/.test(next)) S.fixOpen = new Set();
   if (next !== lastRoute && next === "about-trust") focusTrust = true;
   if (next !== lastRoute) { rowSigs.clear(); changedRows.clear(); }
-  const h = route();
+  const h = route({documentationToken: documentationArrival});
   if (h === lastRoute) return;
   const first = lastRoute === null;
   lastRoute = h;

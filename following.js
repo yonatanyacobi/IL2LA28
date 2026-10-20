@@ -19,6 +19,69 @@ const shownAtLoad = Object.fromEntries(savedFollowingShown && typeof savedFollow
 let badgeSince = followSeenAtLoad;
 S.followSports = new Set(store.getArray("la28.followSports"));
 
+const DOCUMENTATION_KEY = "la28.documentationBaseline", DOCUMENTATION_MAX = 262144;
+let documentationVisit = null;
+const followingDocumentationReady = () => S.loaded && !S.live && isExport(publicSnapshot) && typeof documentedResults === "function";
+const documentationId = id => typeof id === "string" && id.length > 0 && id.length <= 128 && !/[\x00-\x1f\x7f-\x9f]/.test(id);
+function documentationRows(rows, known = null){
+  if (!Array.isArray(rows)) return {state: "invalid"};
+  if (rows.length > 2000) return {state: "unavailable"};
+  const canonical = [];
+  for (const row of rows) {
+    if (!Array.isArray(row) || row.length !== 7) return {state: "invalid"};
+    const [sport, owners, day, result, source, phase, start] = row;
+    if ((typeof result === "string" && result.length > 8192) || (typeof source === "string" && source.length > 2048) ||
+        (typeof phase === "string" && phase.length > 512) || (typeof start === "string" && start.length > 40) ||
+        (typeof sport === "string" && sport.length > 128) || (Array.isArray(owners) && (owners.length > 128 || owners.some(id => typeof id === "string" && id.length > 128)))) return {state: "unavailable"};
+    if (!documentationId(sport) || !Array.isArray(owners) || !owners.length || !owners.every(documentationId) ||
+        new Set(owners).size !== owners.length || typeof day !== "string" || !realDate(day) || typeof result !== "string" || !result.length ||
+        typeof source !== "string" || typeof phase !== "string" || (start != null && start !== "" && (!isUtc(start) || !realDate(start.slice(0, 10))))) return {state: "invalid"};
+    try { if (!/^https:\/\//i.test(source) || new URL(source).protocol !== "https:") return {state: "invalid"}; } catch { return {state: "invalid"}; }
+    if (known && (!known.sports.has(sport) || !owners.every(id => known.athletes.has(id)))) return {state: "invalid"};
+    canonical.push([sport, [...owners].sort(), day, result, source, phase, start || ""]);
+  }
+  canonical.sort((a, b) => { const x = JSON.stringify(a), y = JSON.stringify(b); return x < y ? -1 : x > y ? 1 : 0; });
+  const text = JSON.stringify({version: 1, rows: canonical});
+  return text.length > DOCUMENTATION_MAX ? {state: "unavailable"} : {state: "valid", rows: canonical, text};
+}
+function readFollowingDocumentation(){
+  let raw;
+  try { raw = localStorage.getItem(DOCUMENTATION_KEY); } catch { return {state: "unavailable"}; }
+  if (raw === null) return {state: "missing"};
+  if (typeof raw !== "string" || raw.length > DOCUMENTATION_MAX) return {state: "unavailable"};
+  let data;
+  try { data = JSON.parse(raw); } catch { return {state: "invalid"}; }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return {state: "invalid"};
+  if (Object.hasOwn(data, "version") && data.version !== 1) return {state: "unsupported"};
+  if (Object.keys(data).length !== 2 || !Object.hasOwn(data, "version") || !Object.hasOwn(data, "rows")) return {state: "invalid"};
+  return documentationRows(data.rows);
+}
+function currentFollowingDocumentation(){
+  return documentationRows(documentedResults().map(r => [r.sportId, r.athletes.map(a => a.id), r.day, r.result, r.source, r.phase, r.startUtc]), followingPreferenceIds());
+}
+function beginFollowingDocumentationVisit(){
+  if (!followingDocumentationReady()) return;
+  const prior = readFollowingDocumentation(), current = currentFollowingDocumentation();
+  // Saving this arrival must never replace the comparison base of the ongoing visit.
+  documentationVisit = {prior, unavailable: current.state !== "valid" || ["unavailable", "unsupported"].includes(prior.state), saveFailed: false};
+  if (documentationVisit.unavailable || (prior.state === "valid" && prior.text === current.text)) return;
+  try {
+    localStorage.setItem(DOCUMENTATION_KEY, current.text);
+    documentationVisit.saveFailed = localStorage.getItem(DOCUMENTATION_KEY) !== current.text;
+  } catch { documentationVisit.saveFailed = true; }
+}
+function endFollowingDocumentationVisit(){ documentationVisit = null; }
+function followingDocumentationNotice(){
+  if (!documentationVisit || !followingDocumentationReady()) return "";
+  const current = currentFollowingDocumentation(), visit = documentationVisit;
+  if (current.state !== "valid") visit.unavailable = true;
+  const scope = rows => JSON.stringify(rows.filter(r => S.followSports.has(r[0]) || r[1].some(id => S.follows.has(id))));
+  const changed = !visit.unavailable && visit.prior.state === "valid" && scope(visit.prior.rows) !== scope(current.rows);
+  return `${changed ? `<p class="muted" id="followingDocumentationChanged" role="status">תיעוד התוצאות במעקב שלי השתנה מאז הביקור הקודם.</p>` : ""}
+    ${visit.unavailable ? `<p class="muted" id="followingDocumentationUnavailable">ההשוואה המקומית של תיעוד התוצאות אינה זמינה בביקור הזה.</p>` : ""}
+    ${visit.saveFailed ? `<p class="muted" id="followingDocumentationStorage">לא ניתן לשמור את בסיס ההשוואה המקומי לביקור הבא בדפדפן הזה.</p>` : ""}`;
+}
+
 function toggleFollowSport(id){
   S.followSports.has(id) ? S.followSports.delete(id) : S.followSports.add(id);
   saveFollows("la28.followSports", [...S.followSports]);
@@ -275,7 +338,7 @@ function followingDocumentedResultsSection(){
 function followingContent(tab = "", recordMarks = true){
   const athletes = explicitFollowing(false), sports = explicitFollowing(true);
   const management = followingManagement(!!tab, tab ? sports : athletes);
-  const head = `<h1 tabindex="-1">במעקב שלי</h1>
+  const head = `<h1 tabindex="-1">במעקב שלי</h1>${followingDocumentationNotice()}
   <nav class="chips" aria-label="סוג המעקב">
     <a href="#following" ${tab ? "" : `aria-current="page"`}>ספורטאים ונבחרות (${athletes.length})</a>
     <a href="#following-sports" ${tab ? `aria-current="page"` : ""}>ענפים (${sports.length})</a></nav>`;
