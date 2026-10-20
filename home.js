@@ -80,9 +80,11 @@ function recentResults(){
   for (const d of [t, addDays(t, -1)]) for (const a of S.athletes) {
     const h = historyResult(a, d);
     if (!h || seen.has(`${a.id}|${d}`)) continue;
+    const results = a.history.filter(h => h && typeof h === "object" && !Array.isArray(h) && h.kind === "result"
+      && h.at === d && str(h.text).trim() && safeUrl(h.source)).map(h => ({text: str(h.text), source: h.source}));
     seen.add(`${a.id}|${d}`);
     rows.push({athletes: [a], comp: compOn(a.sportId, d), sportId: a.sportId, phase: "", startUtc: null, day: d,
-      result: str(h.text).slice(0, 120), resultSource: h.source, resultAt: ""});
+      result: str(h.text).slice(0, 120), resultSource: h.source, resultAt: "", ...(results.length > 1 ? {historyResults: results} : {})});
   }
   const fav = r => followsSport(r.sportId) || r.athletes.some(a => S.follows.has(a.id)) ? 0 : 1, key = r => r.resultAt || r.day + "T00:00:00Z";
   return rows.sort((x, y) => fav(x) - fav(y) || key(y).localeCompare(key(x)) || heCmp(x.athletes[0].name, y.athletes[0].name));

@@ -71,14 +71,17 @@ const followFeed = since => allFollowFeed(since).slice(0, FEED_MAX);
 
 // Athletes followed only through their sport have no star, so their feed rows say why they're there.
 const viaSport = a => S.follows.has(a.id) ? "" : `<small>ענף במעקב: ${esc(sportName(a.sportId))}</small>`;
+const followingFeedMarks = new Map();
 
-function followingFeedRow({type, q, a, h, session}){
+function followingFeedRow({type, q, a, h, session}, recordMarks = true){
   const quota = type === "quota";
   const href = quota ? `#sport-${esc(q.sportId)}` : session ? `#day-${esc(h.at)}` : `#a-${esc(a.id)}`;
   const label = quota ? sportName(q.sportId) : a.name;
   const text = quota ? `<bdi>${esc(q.event)}</bdi>: ${esc(h.text)}` : esc(h.text);
   const key = quota ? `feed|quota|${JSON.stringify([q.sportId, q.event, h.at, h.text])}` : `feed|${a.id}|${h.at}|${h.text}`;
-  return `<li><span class="d">${fmt(h.at)}</span><span class="t"><a href="${href}">${esc(label)}</a><small>${text}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small>${quota ? "" : viaSport(a)}${rowMark(key, key)}</span><span></span></li>`;
+  const mark = recordMarks ? rowMark(key, key) : followingFeedMarks.get(key) || "";
+  if (recordMarks) followingFeedMarks.set(key, mark);
+  return `<li><span class="d">${fmt(h.at)}</span><span class="t"><a href="${href}">${esc(label)}</a><small>${text}${safeUrl(h.source) ? ` · ${linkOut(h.source)}` : ""}</small>${quota ? "" : viaSport(a)}${mark}</span><span></span></li>`;
 }
 
 const compLinkOr = c => typeof compLink === "function" ? compLink(c, esc(c.name)) : esc(c.name);
@@ -120,7 +123,7 @@ function followingUpcomingContent(clockOnly = false){
   };
   return next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
     <ul class="rows">${next.slice(0, FOLLOW_UPCOMING_ROWS).map(row).join("")}</ul>
-    ${more.length ? `<details><summary id="followingUpcomingMore">${more.length === 1 ? "עוד פריט אחד במעקב שלי" : `עוד ${more.length} פריטים במעקב שלי`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}</section>` : "";
+    ${more.length ? `<details id="followingUpcomingOverflow"><summary id="followingUpcomingMore">${more.length === 1 ? "עוד פריט אחד במעקב שלי" : `עוד ${more.length} פריטים במעקב שלי`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}</section>` : "";
 }
 
 function refreshFollowingUpcoming(){
@@ -156,12 +159,108 @@ function followingManagement(sports, items){
   </details>`;
 }
 
+const FOLLOWING_CODE_MAX = 20000;
+let followingImportDraft = "", followingImportNotice = "", followingImportInvalid = false;
+const followingPreferenceIds = () => {
+  const data = typeof publicSnapshot !== "undefined" ? publicSnapshot : null;
+  const ids = list => new Set((Array.isArray(list) ? list : []).map(x => x?.id).filter(id => typeof id === "string"));
+  return {athletes: ids(data?.athletes), sports: ids(data?.sports)};
+};
+function followingPreferencesCode(){
+  const known = followingPreferenceIds();
+  return JSON.stringify({version: 1, athletes: [...S.follows].filter(id => known.athletes.has(id)).sort(),
+    sports: [...S.followSports].filter(id => known.sports.has(id)).sort()});
+}
+
+function parseFollowingPreferences(text){
+  if (typeof text !== "string" || text.length > FOLLOWING_CODE_MAX) throw new Error("הקוד חייב להכיל עד 20,000 תווים.");
+  let data;
+  try { data = JSON.parse(text); } catch { throw new Error("הקוד אינו JSON תקין."); }
+  const fields = ["version", "athletes", "sports"], known = followingPreferenceIds();
+  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).length !== fields.length
+    || Object.keys(data).some(key => !fields.includes(key)) || data.version !== 1)
+    throw new Error("מבנה הקוד או הגרסה אינם נתמכים.");
+  for (const key of ["athletes", "sports"]) {
+    if (!Array.isArray(data[key]) || data[key].length > known[key].size
+      || data[key].some(id => typeof id !== "string" || !known[key].has(id)))
+      throw new Error("הקוד מכיל בחירות שאינן מוכרות באתר הזה.");
+  }
+  return {athletes: [...new Set(data.athletes)], sports: [...new Set(data.sports)]};
+}
+
+function followingTransferSection(){
+  return `<details class="panel" id="followingTransfer"><summary id="followingTransferSummary">העברת המעקב לדפדפן אחר</summary>
+    <p>העברה ידנית באמצעות העתקה והדבקה, ללא סנכרון אוטומטי. הקוד כולל בחירות מעקב בלבד, בלי היסטוריית ביקורים.</p>
+    <div class="digest"><label for="followingExport">קוד המעקב להעתקה</label>
+      <textarea id="followingExport" readonly dir="ltr" rows="4" spellcheck="false">${esc(followingPreferencesCode())}</textarea>
+      <button class="btn ghost small" type="button" data-copy="followingExport" data-copy-msg="followingExportMsg">העתקת הבחירות</button>
+      <p class="foot" id="followingExportMsg" aria-live="polite"></p>
+      <label for="followingImport">קוד להוספת בחירות מעקב</label>
+      <textarea id="followingImport" dir="ltr" rows="4" spellcheck="false" aria-describedby="followingImportMsg"${followingImportInvalid ? ` aria-invalid="true"` : ""}>${esc(followingImportDraft)}</textarea>
+      <button class="btn ghost small" type="button" id="followingImportApply" data-import-following>הוספת הבחירות למעקב שלי</button>
+      <p class="${followingImportInvalid ? "err" : "foot"}" id="followingImportMsg" role="${followingImportInvalid ? "alert" : "status"}">${esc(followingImportNotice)}</p>
+    </div></details>`;
+}
+
+function followingImportMessage(text, invalid = false){
+  followingImportNotice = text; followingImportInvalid = invalid;
+  const msg = $("followingImportMsg"), input = $("followingImport");
+  msg.className = invalid ? "err" : "foot";
+  msg.setAttribute("role", invalid ? "alert" : "status");
+  msg.textContent = text;
+  if (invalid) input.setAttribute("aria-invalid", "true"); else input.removeAttribute("aria-invalid");
+}
+
+function renderFollowingImport(){
+  const route = currentRoute(), view = $("view"), active = document.activeElement, key = focusKey(active), y = window.scrollY;
+  const open = [...view.querySelectorAll("details")].filter(d => d.open)
+    .map(d => ({id: d.id, summary: d.querySelector?.("summary")?.id}));
+  let selection = null;
+  try { if (typeof active?.selectionStart === "number") selection = [active.selectionStart, active.selectionEnd, active.selectionDirection]; } catch {}
+  // Import changes preferences, never the visit baseline or data-change signatures.
+  view.innerHTML = followingDecorate(route, followingContent(route === "following-sports" ? "sports" : "", false));
+  for (const item of open) {
+    const detail = item.id ? $(item.id) : item.summary ? $(item.summary)?.closest("details") : null;
+    if (detail) detail.open = true;
+  }
+  const again = key?.id ? $(key.id) : key?.sel ? [...view.querySelectorAll(key.sel)][key.idx] : null;
+  const target = again || $("followingImportApply");
+  target?.focus({preventScroll: true});
+  if (selection && again) try { again.setSelectionRange(...selection); } catch {}
+  if (typeof y === "number") scrollTo({top: y, behavior: "auto"});
+}
+
+function importFollowingPreferences(text){
+  if (!["following", "following-sports"].includes(currentRoute())) return;
+  let data;
+  try { data = parseFollowingPreferences(text); }
+  catch (error) { followingImportMessage(`לא ניתן לייבא: ${error.message}`, true); return; }
+  const athletes = new Set([...S.follows, ...data.athletes]), sports = new Set([...S.followSports, ...data.sports]);
+  const addedAthletes = athletes.size - S.follows.size, addedSports = sports.size - S.followSports.size;
+  if (!addedAthletes && !addedSports) {
+    followingImportMessage(data.athletes.length || data.sports.length ? "לא נוספו בחירות חדשות; הבחירות כבר במעקב שלך." : "הקוד תקין וללא בחירות. לא נעשה שינוי במעקב.");
+    return;
+  }
+  S.follows = athletes; S.followSports = sports;
+  if (addedAthletes) saveFollows("la28.follows", [...athletes]);
+  if (addedSports) saveFollows("la28.followSports", [...sports]);
+  const saved = (!addedAthletes || JSON.stringify(store.get("la28.follows", null)) === JSON.stringify([...athletes]))
+    && (!addedSports || JSON.stringify(store.get("la28.followSports", null)) === JSON.stringify([...sports]));
+  const existing = data.athletes.length + data.sports.length - addedAthletes - addedSports;
+  followingImportMessage(`נוספו ${addedAthletes + addedSports} בחירות למעקב שלך (${addedAthletes} ספורטאים ונבחרות, ${addedSports} ענפים); ${existing} כבר היו במעקב שלך. ${saved ? "הבחירות החדשות נשמרו בדפדפן הזה." : "הבחירות פעילות כעת בזיכרון. ייתכן שרק חלק נשמרו; רענון או סגירת הדף עלולים לאבד בחירות."}`);
+  renderFollowingImport();
+}
+
 function viewFollowing(tab = ""){
   if (tab && tab !== "sports") return notFound();
   // Opening the page is the "visit": the badge clears, and the feed keeps showing what was new on arrival.
   badgeSince = new Date().toISOString();
   store.set("la28.followingSeen", badgeSince);
   store.set("la28.followingShown", Object.fromEntries(followedAthletes().map(a => [a.id, shownOf(a)])));
+  return followingContent(tab);
+}
+
+function followingContent(tab = "", recordMarks = true){
   const athletes = explicitFollowing(false), sports = explicitFollowing(true);
   const management = followingManagement(!!tab, tab ? sports : athletes);
   const head = `<h1 tabindex="-1">במעקב שלי</h1>
@@ -180,17 +279,17 @@ function viewFollowing(tab = ""){
   if (!athletes.length && !sports.length) {
     const t = today(), seen = new Set(), picks = [];
     for (const g of closestGroups(todayRows(), t)) for (const {as} of g.items) for (const a of as) if (!seen.has(a.id) && picks.length < 3) { seen.add(a.id); picks.push(a); }
-    return `${head}${management}${empty}
+    return `${head}${management}${followingTransferSection()}${empty}
     ${picks.length ? `<section class="panel"><h2>הצעות למעקב</h2><div class="cards">${picks.map(athleteCard).join("")}</div></section>` : ""}`;
   }
   const feed = allFollowFeed(followSeenAtLoad), moreFeed = feed.slice(FEED_MAX);
-  followingUpcomingMarks.clear();
-  renderedFollowingUpcoming = followingUpcomingContent();
-  return `${head}${management}
+  if (recordMarks) { followingUpcomingMarks.clear(); followingFeedMarks.clear(); }
+  renderedFollowingUpcoming = followingUpcomingContent(!recordMarks);
+  return `${head}${management}${followingTransferSection()}
   <section class="panel" aria-labelledby="feedH">
     <h2 id="feedH">מאז הביקור הקודם (${feed.length})</h2>
-    ${feed.length ? `<ul class="rows">${feed.slice(0, FEED_MAX).map(followingFeedRow).join("")}</ul>
-      ${moreFeed.length ? `<details><summary id="followingFeedMore">${moreFeed.length === 1 ? "עוד עדכון אחד" : `עוד ${moreFeed.length} עדכונים`}</summary><ul class="rows">${moreFeed.map(followingFeedRow).join("")}</ul></details>` : ""}`
+    ${feed.length ? `<ul class="rows">${feed.slice(0, FEED_MAX).map(item => followingFeedRow(item, recordMarks)).join("")}</ul>
+      ${moreFeed.length ? `<details><summary id="followingFeedMore">${moreFeed.length === 1 ? "עוד עדכון אחד" : `עוד ${moreFeed.length} עדכונים`}</summary><ul class="rows">${moreFeed.map(item => followingFeedRow(item, recordMarks)).join("")}</ul></details>` : ""}`
       : `<p class="muted">${followSeenAtLoad ? "אין עדכונים חדשים מאז הביקור הקודם." : "עדכונים על מי שבמעקב שלך יופיעו כאן מהביקור הבא."}</p>`}
   </section>
   <div id="followingUpcoming" tabindex="-1">${renderedFollowingUpcoming}</div>
@@ -217,6 +316,15 @@ function followingDecorate(h, html){
   if (sr) sr.textContent = !n ? "" : n === 1 ? ", עדכון חדש אחד" : `, ${n} עדכונים חדשים`;
   return html;
 }
+
+document.addEventListener("input", e => {
+  if (e.target?.id === "followingImport" && ["following", "following-sports"].includes(currentRoute())) followingImportDraft = e.target.value;
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest?.("[data-import-following]") || !["following", "following-sports"].includes(currentRoute())) return;
+  followingImportDraft = $("followingImport").value;
+  importFollowingPreferences(followingImportDraft);
+});
 
 document.addEventListener("click", e => {
   const remove = e.target.closest?.("[data-remove-follow]");
