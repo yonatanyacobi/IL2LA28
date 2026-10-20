@@ -108,22 +108,38 @@ function digestText(t = today(), sportId = ""){
     const matches = comp ? [comp] : S.comps.filter(c => c.sportId === a.sportId && c.start <= a.nextDate && a.nextDate <= end(c));
     return matches.length === 1 && covered.has(JSON.stringify([a.id, matches[0].id, a.nextDate]));
   };
-  const plannedSessions = knownSessions.filter(s => ["before", "competing"].includes(sessionState(s, s.day)))
-    .sort((a, b) => a.day.localeCompare(b.day) || byStart(a.startUtc, b.startUtc) || heCmp(a.comp.name, b.comp.name) || heCmp(a.phase, b.phase))
+  const planned = knownSessions.filter(s => ["before", "competing"].includes(sessionState(s, s.day)))
+    .sort((a, b) => a.day.localeCompare(b.day) || byStart(a.startUtc, b.startUtc) || heCmp(a.comp.name, b.comp.name) || heCmp(a.phase, b.phase));
+  const plannedSessions = planned
     .map(s => [waCut(`• ${fmtShort(s.day)} · ${waText(s.comp.name)} (${waText(sportName(s.sportId))})${s.phase ? ": " + waText(s.phase) : ""}`),
       ...waList("  ", names(s.athletes)), digestCompetitionLink(s.comp)].filter(Boolean).join("\n"));
   const running = comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS)
     .map(c => ({c, list: athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && a.nextDate >= t && c.start <= a.nextDate && a.nextDate <= end(c) && !coveredNext(a, c))}))
     .filter(r => r.list.length);
   const inRunning = new Set(running.flatMap(r => r.list.map(a => a.id)));
+  const upcomingAthletes = athletes.filter(a => !inRunning.has(a.id) && isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6) && !coveredNext(a))
+    .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name));
   const competing = [
     ...plannedSessions,
     ...running.sort((x, y) => heCmp(sportName(x.c.sportId), sportName(y.c.sportId)))
       .map(({c, list}) => [waCut(`${runningHead(c)} · ${waText(c.name)} (${waText(sportName(c.sportId))})${(w => w ? `, ${w}` : "")(runningWhen(c, t))}`), ...waList("  ", names(list)), digestCompetitionLink(c)].filter(Boolean).join("\n")),
-    ...athletes.filter(a => !inRunning.has(a.id) && isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6) && !coveredNext(a))
-      .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name))
+    ...upcomingAthletes
       .map(a => waCut(`• ${fmtShort(a.nextDate)} · ${waText(a.name)} (${waText(sportName(a.sportId))})${a.next ? ": " + waText(a.next) : ""}`)),
   ];
+  const represented = new Set([...planned.map(s => s.comp.id), ...running.map(r => r.c.id)]);
+  // A personal date identifies a competition only when no other event overlaps it.
+  for (const a of upcomingAthletes) {
+    const matches = S.comps.filter(c => c.sportId === a.sportId && c.start <= a.nextDate && a.nextDate <= end(c));
+    if (matches.length === 1) represented.add(matches[0].id);
+  }
+  const weekEnd = addDays(t, 6);
+  const seasonEvents = comps.filter(c => c.qualifying === false && isDate(c.start) && isDate(end(c))
+    && c.start <= end(c) && c.start <= weekEnd && end(c) >= t && dayNo(c.start, end(c)) <= SERIES_DAYS && !represented.has(c.id))
+    .sort((a, b) => a.start.localeCompare(b.start) || heCmp(a.name, b.name))
+    .map(c => [waCut(`• ${waText(c.name)} (${waText(sportName(c.sportId))})`),
+      `  ${fmtRange(c.start, end(c))}`,
+      ...(c.start < t || end(c) > weekEnd ? ["  התחרות חופפת לשבוע הקרוב; מוצג הטווח המלא."] : []),
+      ...(waText(c.location) ? [waCut(`  מיקום: ${waText(c.location)}`)] : []), digestCompetitionLink(c)].filter(Boolean).join("\n"));
   // One bullet per quota event (e.g. a Grand Slam deciding 7 weight classes), not one per class.
   const byEvent = new Map();
   for (const q of S.quotas) {
@@ -143,15 +159,16 @@ function digestText(t = today(), sportId = ""){
       ...(stakes ? [waCut(`  מה זה אומר: ${stakes}`)] : []),
     ].join("\n");
   });
-  const sections = [["תוצאות השבוע", results], ["מה התעדכן", changes], ["ישראלים מתחרים השבוע", competing], ["אירועי מכסה בשבועיים הקרובים", quotas]]
-    .filter(([, items]) => items.length).map(([title, items]) => ({title, items, cut: 0}));
+  const sections = [["תוצאות השבוע", results], ["מה התעדכן", changes], ["ישראלים מתחרים השבוע", competing],
+    ["תחרויות עונה כלליות בשבוע הקרוב", seasonEvents, "לוח תחרויות כללי; השתתפות ספורטאים מישראל טרם אומתה"], ["אירועי מכסה בשבועיים הקרובים", quotas]]
+    .filter(([, items]) => items.length).map(([title, items, note]) => ({title, items, note, cut: 0}));
   // Results always get a heading once anything else is said, so "no results" is explicit rather than missing.
   if (sections.length && !results.length) sections.unshift({title: "תוצאות השבוע", items: [], none: scope ? waCut(`לא הסתיימו השבוע תחרויות בענף ${waText(sportName(scope))}.`) : "לא הסתיימו השבוע תחרויות בענפים שברשימה.", cut: 0});
   const head = [scope ? waCut(`*הדרך ללוס אנג׳לס 28 · תקציר שבועי · ${waText(sportName(scope))}*`) : `*הדרך ללוס אנג׳לס 28 · תקציר שבועי*`, `${fmtRange(from, t)}${isDate(dataTs) ? ` · נכון ל־${fmt(dataTs)}` : ""}`,
     ...(isDate(dataTs) && dataTs < addDays(t, -2) ? [`שימו לב: הנתונים לא עודכנו מאז ${fmt(dataTs)}.`] : [])];
   const foot = ["", `לכל הפרטים: ${SITE_URL}`, "אתר לא רשמי. הנתונים ממקורות פומביים, כדאי לבדוק מול המקור."];
   const build = () => [...head,
-    ...(sections.length ? sections.flatMap(s => ["", `*${s.title}*`, ...s.items, ...(s.none ? [s.none] : []), ...(s.cut ? [`• ועוד ${s.cut} באתר`] : [])])
+    ...(sections.length ? sections.flatMap(s => ["", `*${s.title}*`, ...(s.note ? [s.note] : []), ...s.items, ...(s.none ? [s.none] : []), ...(s.cut ? [`• ועוד ${s.cut} באתר`] : [])])
       : ["", scope ? waCut(`אין תוכן ידוע בחלון התקציר בענף ${waText(sportName(scope))}.`) : "שבוע שקט: אין עדכונים, תחרויות או אירועי מכסה ידועים."]),
     ...foot].join("\n");
   let text = build();

@@ -87,7 +87,11 @@ function viewEvent(id){
   const sportFollowed = followsSport(c.sportId), sportLabel = sportName(c.sportId);
   // Stale-aware only while something happens today; a season-long series isn't "running" on every day of it.
   const hasToday = series ? flat.some(([, d]) => d === t) : c.start <= t && t <= (c.end || c.start);
-  const schedSrc = flat.map(([s]) => s.source).find(Boolean) || c.source;
+  const schedSrc = flat.map(([s]) => s.source).find(Boolean);
+  const eventSrc = safeUrl(c.source), scheduleSrc = safeUrl(schedSrc);
+  const sourceLinks = eventSrc && eventSrc === scheduleSrc
+    ? [hostLink(eventSrc, "מקור פרטי התחרות ולוח הזמנים")]
+    : [hostLink(eventSrc, "מקור פרטי התחרות"), hostLink(scheduleSrc, "לוח הזמנים")].filter(Boolean);
   const link = `${SITE_URL}#c-${id}`;
   const dayHead = (d, only) => `<h3><a class="hlink" href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span>${only ? DATE_ONLY : ""}</h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
@@ -121,6 +125,7 @@ function viewEvent(id){
       : tracked ? emptyLine("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", `#sport-${c.sportId}`, `${who(tracked)} ברשימה בענף`)
         : calEmpty("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", c.sportId)}
     ${nextDay ? `<p>ההופעה הבאה של ישראלים: <a href="#day-${esc(nextDay)}">${esc(dayTitle(nextDay))}</a></p>` : ""}
+    ${sourceLinks.length ? `<p class="foot" id="evSources">${sourceLinks.join(" · ")}</p>` : ""}
   </section>
   <div class="event-cols">
     <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הזמנים של הישראלים</h2>
@@ -142,7 +147,6 @@ function viewEvent(id){
           return athleteRow(a, `<span class="actions">${isResult(st) ? `<span class="muted">תוצאה בלוח הזמנים</span>` : statusChip(st)}${button}</span>`); }).join("")}</ul></section>` : ""}
     </div>
   </div>
-  ${safeUrl(schedSrc) ? `<p class="foot">${hostLink(schedSrc, "לוח הזמנים")}</p>` : ""}
   <section class="panel" aria-labelledby="evShareH"><h2 id="evShareH">שיתוף</h2>
     <div class="share"><input id="evShare" readonly value="${esc(link)}" dir="ltr" aria-label="קישור לתחרות"><button class="btn ghost small" data-copy="evShare" data-copy-msg="evShareMsg">העתקה</button></div>
     <p class="foot" id="evShareMsg" aria-live="polite"></p>
