@@ -1565,6 +1565,12 @@
       "verifiedAt": "2026-10-18T16:27:00Z",
       "history": [
         {
+          "at": "2026-03-09",
+          "kind": "result",
+          "text": "World Baseball Classic 2026, בית ד׳: ישראל הפסידה לרפובליקה הדומיניקנית (10:1).",
+          "source": "https://www.mlb.com/news/how-to-watch-the-2026-world-baseball-classic"
+        },
+        {
           "at": "2026-10-18",
           "kind": "start",
           "text": "נכנס/ה למעקב · בחלון ההעפלה · 21 בעולם, 6 באירופה (WBSC, 26.3.2026)",
@@ -5150,6 +5156,28 @@
       "notes": "תחרות עונה לפני פתיחת חלון ההעפלה המתועד בענף; הטווח הוא ימי הגמר בקפיצות בלבד. השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
       "source": "https://www.fei.org/events/fei-world-cup-finals-2026/discipline/jumping",
       "qualifying": false
+    },
+    {
+      "id": "equestrian-jumping-worlds-aachen-2026",
+      "sportId": "equestrian",
+      "name": "אליפות העולם בקפיצות 2026 — אאכן",
+      "location": "אאכן, גרמניה",
+      "start": "2026-08-19",
+      "end": "2026-08-23",
+      "notes": "תחרות קפיצות במסגרת אליפות העולם באאכן. האירוע משמש להעפלה האולימפית; הסיווג אינו מעיד על מכסה לישראל. השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://www.fei.org/events/fei-world-championships-aachen-2026/discipline/jumping",
+      "qualifying": true
+    },
+    {
+      "id": "baseball-wbc-2026",
+      "sportId": "baseball",
+      "name": "World Baseball Classic 2026",
+      "location": "מיאמי, יוסטון, טוקיו וסן חואן",
+      "start": "2026-03-05",
+      "end": "2026-03-17",
+      "notes": "טורניר רב־ערים; ישראל שיחקה בבית ד׳ במיאמי (6–11 במרץ). מסלול ההעפלה האולימפי בטורניר זה מיועד לנבחרות מאמריקה; הסיווג אינו מעיד על מכסה לישראל או על השתתפותה בכל שלבי הטורניר.",
+      "source": "https://img.mlbstatic.com/mlb-images/image/upload/mlb/qfgxpjy8fqpwo6mzaxpx.pdf",
+      "qualifying": true
     }
   ],
   "changes": [
