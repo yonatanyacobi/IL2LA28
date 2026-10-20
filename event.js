@@ -90,10 +90,21 @@ function viewEvent(id){
   // Stale-aware only while something happens today; a season-long series isn't "running" on every day of it.
   const hasToday = series ? flat.some(([, d]) => d === t) : c.start <= t && t <= (c.end || c.start);
   const schedSrc = flat.map(([s]) => s.source).find(Boolean);
-  const eventSrc = safeUrl(c.source), scheduleSrc = safeUrl(schedSrc);
-  const sourceLinks = eventSrc && eventSrc === scheduleSrc
-    ? [hostLink(eventSrc, "מקור פרטי התחרות ולוח הזמנים")]
-    : [hostLink(eventSrc, "מקור פרטי התחרות"), hostLink(scheduleSrc, "לוח הזמנים")].filter(Boolean);
+  let qualificationSrc = "";
+  if (c.qualifying === true && typeof c.qualificationSource === "string" && safeUrl(c.qualificationSource)) {
+    try {
+      const url = new URL(c.qualificationSource);
+      if (url.protocol === "https:" && url.hostname && !url.username && !url.password
+          && !/[\s\\\u0000-\u001f\u007f-\u009f]/.test(c.qualificationSource)
+          && !c.qualificationSource.slice(8).split(/[/?#]/)[0].includes("@"))
+        qualificationSrc = c.qualificationSource;
+    } catch {}
+  }
+  const sources = new Map();
+  for (const [url, role] of [[safeUrl(c.source), "מקור פרטי התחרות"], [safeUrl(schedSrc), "לוח הזמנים"], [qualificationSrc, "מקור סיווג ההעפלה"]]) {
+    if (url) sources.set(url, [...(sources.get(url) || []), role]);
+  }
+  const sourceLinks = [...sources].map(([url, roles]) => hostLink(url, roles.join(" ו")));
   const link = `${SITE_URL}#c-${id}`;
   const dayHead = (d, only) => `<h3><a class="hlink" href="#day-${d}"${d === t ? ` aria-current="date"` : ""}>${dayTitle(d)}</a> <span class="muted">(יום ${dayNo(c.start, d)})</span>${only ? DATE_ONLY : ""}</h3>`;
   const monthHead = m => `<h3>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month: "long", year: "numeric"})}</h3>`;
