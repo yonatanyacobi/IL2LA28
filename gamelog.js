@@ -129,6 +129,40 @@ function gameLogRow({comp, entries, first, last}, id){
       `<span class="res">${multipleDays ? `<a href="#day-${esc(e.date)}"><time datetime="${esc(e.date)}">${esc(fmtShortY(e.date))}</time></a> · ` : ""}${e.phase ? `<bdi>${esc(e.phase)}</bdi>: ` : ""}${esc(e.result)}${isUtc(e.resultAt) ? ` · עודכן ב־${whenIL(e.resultAt)}` : ""}${!shared || i === entries.length - 1 ? ` · ${src(e)}` : ""}${latest && i === entries.length - 1 ? rowMark(latest, latest) : ""}</span>`).join("")}</span></li>`;
 }
 
+function athleteResultsShareText(a){
+  const athlete = S.athletes.find(p => p.id === a?.id);
+  if (!athlete) return "";
+  const rows = documentedResults(athlete.sportId).filter(r => r.athletes.some(p => p.id === athlete.id));
+  if (!rows.length) return "";
+  const plain = value => str(value).replace(/\s+/g, " ").trim();
+  const canonical = (type, id) => {
+    try { return `${SITE_URL}#${type}-${encodeURIComponent(id)}`; } catch { return ""; }
+  };
+  const blocks = rows.map(r => [`• ${fmt(r.day)} · ${r.athletes.map(p => plain(p.name)).join(" · ")}`,
+    plain(r.result), `מקור: ${r.source}`,
+    ...(r.comp ? [plain(r.comp.name), canonical("c", r.comp.id)] : [])].filter(Boolean).join("\n"));
+  const head = [`תוצאות שמתועדות באתר · ${plain(athlete.name)}`,
+    "סיכום התוצאות שתועדו באתר; אינו רשימה מלאה של הישגי הקריירה או עדכונים חדשים."];
+  const foot = [`לרשומה: ${canonical("a", athlete.id)}`];
+  let keep = blocks.length;
+  const build = () => [...head, "", ...blocks.slice(0, keep),
+    ...(keep < blocks.length ? [`ועוד ${plural(blocks.length - keep, "תוצאה אחת", "תוצאות")} באתר.`] : []), "", ...foot].join("\n");
+  let text = build();
+  while (text.length > 3500 && keep) { keep--; text = build(); }
+  return text;
+}
+
+function athleteResultsShareSection(a){
+  const text = athleteResultsShareText(a);
+  return `<details id="athleteResultsShare" class="digest"><summary>תוצאות מתועדות להעתקה</summary>
+    ${text ? `<label for="athleteResultsText">התוצאות המתועדות של ${esc(a.name)} להעתקה</label>
+      <textarea id="athleteResultsText" readonly rows="8">${esc(text)}</textarea>
+      <div class="actions"><button class="btn" data-copy="athleteResultsText" data-copy-msg="athleteResultsMsg">העתקת התוצאות</button></div>
+      <p class="foot" id="athleteResultsMsg" aria-live="polite"></p>`
+      : `<p class="muted">עוד לא תועדו ברשומה זו תוצאות שאפשר להעתיק.</p>`}
+  </details>`;
+}
+
 function gameLogSection(a){
   const rows = gameLogRows(a), n = rows.reduce((k, r) => k + r.entries.length, 0);
   const nextDay = !n ? exportedSessions().filter(s => s.athletes.includes(a) && isDate(s.day) && s.day >= today())
@@ -140,5 +174,6 @@ function gameLogSection(a){
     ${more.length ? `<details><summary>${k === 1 ? "הצגת עוד תוצאה אחת" : `הצגת עוד ${k} תוצאות`}</summary><ul class="rows game-log">${more.map(r => gameLogRow(r, a.id)).join("")}</ul></details>` : ""}
     <p class="foot">כל תוצאה מופיעה עם המקור שלה · ${CADENCE}</p>`
     : `<p class="muted">עוד לא תועדו תוצאות של ${esc(a.name)} בתחרויות.</p>${nextDay ? `<p><a href="#day-${esc(nextDay)}">להופעה הבאה הידועה: ${esc(dayTitle(nextDay))}</a></p>` : ""}`}
+    ${athleteResultsShareSection(a)}
   </section>`;
 }

@@ -640,7 +640,7 @@ function viewSport(id){
     && (!query || searchKey([a.name, a.name_en, a.event].map(str).join(" ")).includes(query)));
   const ws = winStatus(s.window), w = s.window;
   const comps = upcomingIn(id);
-  return `
+  let html = `
   <p class="crumb"><a href="#sports"><span aria-hidden="true">→</span>&nbsp;כל הענפים</a></p>
   <div class="sec-head"><h1 tabindex="-1">${esc(s.he)}</h1>${S.isAdmin ? `<button class="btn small" data-add="${esc(id)}">+ הוספת ספורטאי/ת</button>` : ""}</div>
   <section class="panel">
@@ -664,7 +664,7 @@ function viewSport(id){
       : calEmpty("אין כרגע ספורטאים או נבחרות מישראל ברשימה בענף הזה.", id)}
   </section>
   <section class="stack">
-    <div class="sec-head"><h2>תחרויות קרובות בענף</h2>${comps.length > 5 ? `<a href="#calendar-${esc(id)}">כל ${comps.length} התחרויות</a>` : ""}</div>
+    <div class="sec-head"><h2 id="sportCompetitionsH">תחרויות קרובות בענף</h2>${comps.length > 5 ? `<a href="#calendar-${esc(id)}">כל ${comps.length} התחרויות</a>` : ""}</div>
     ${comps.slice(0, 5).map(c => compRow(c, false)).join("") || calEmpty("אין תחרויות קרובות ידועות בענף.", id)}
   </section>
   <section class="panel" aria-labelledby="sportShareH">
@@ -674,6 +674,13 @@ function viewSport(id){
     <div class="share"><input id="sportShareUrl" readonly value="${esc(`${SITE_URL}#sport-${encodeURIComponent(id)}`)}" dir="ltr"><button class="btn ghost small" type="button" data-copy="sportShareUrl" data-copy-msg="sportShareMsg">העתקת הקישור</button></div>
     <p class="foot" id="sportShareMsg" aria-live="polite"></p>
   </section>`;
+  const sections = [["sportUpcomingH", "הופעות קרובות"], ["sportRecentResultsH", "תוצאות מתועדות"],
+    ["sportRosterH", "ספורטאים ונבחרות"], ["sportCompetitionsH", "תחרויות בענף"]]
+    .filter(([target]) => html.includes(`<h2 id="${target}">`));
+  for (const [target] of sections) html = html.replace(`<h2 id="${target}">`, `<h2 id="${target}" tabindex="-1">`);
+  const navigation = `<div class="toolbar" role="group" aria-label="מעבר למקטע בענף">${sections.map(([target, label]) =>
+    `<button class="btn ghost small" type="button" id="sportGo-${target}" data-sport-section="${target}">${label}</button>`).join("")}</div>`;
+  return html.replace('<section class="panel">', navigation + '<section class="panel">');
 }
 
 function athleteSiteUpdates(a){
@@ -1309,8 +1316,17 @@ document.addEventListener("input", e => {
   }
 });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-sport-roster-reset],[data-home-search],[data-sports-library-reset],[data-athlete-section]");
+  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-sport-roster-reset],[data-home-search],[data-sports-library-reset],[data-athlete-section],[data-sport-section]");
   if (!t) return;
+  if ("sportSection" in t.dataset) {
+    const route = currentRoute(), target = t.dataset.sportSection;
+    if (!route.startsWith("sport-") || !sportById(route.slice(6))
+      || !["sportUpcomingH", "sportRecentResultsH", "sportRosterH", "sportCompetitionsH"].includes(target)) return;
+    const heading = $("view").querySelector("#" + target);
+    if (!heading) return;
+    heading.focus({preventScroll: true});
+    return heading.scrollIntoView({block: "center", behavior: "auto"});
+  }
   if ("athleteSection" in t.dataset) {
     if (!currentRoute().startsWith("a-") || !["athleteUpcomingH", "logH", "athleteHistoryH"].includes(t.dataset.athleteSection)) return;
     const heading = $("view").querySelector("#" + t.dataset.athleteSection);
