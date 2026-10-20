@@ -62,7 +62,12 @@ function fallbackSessions(d){
     const res = historyResult(a, d);
     if (!res && a.nextDate !== d) continue;   // most athletes have nothing that day: skip compOn() (docs/perf/2026-10.md)
     const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null};
-    if (res) out.set(a.id, {...base, result: str(res.text).slice(0, 120), resultSource: res.source, resultAt: ""});
+    if (res) {
+      const results = a.history.filter(h => h && typeof h === "object" && !Array.isArray(h) && h.kind === "result"
+        && h.at === d && str(h.text).trim() && safeUrl(h.source)).map(h => ({text: str(h.text), source: h.source}));
+      out.set(a.id, {...base, result: str(res.text).slice(0, 120), resultSource: res.source, resultAt: "",
+        ...(results.length > 1 ? {historyResults: results} : {})});
+    }
     else if (a.nextDate === d) out.set(a.id, {...base, result: ""});
   }
   return [...out.values()];
@@ -129,6 +134,10 @@ function sessionDetail(s, state){
   const line = html => `<span class="res">${html}</span>`;
   const src = hostLink(s.resultSource, "מקור");
   if (state === "result") return line(`<b>תוצאה:</b> ${esc(s.result)} · עודכן ב־${whenIL(s.resultAt)} · ${src}`);
+  if (state === "resultDate" && s.athletes.length === 1 && Array.isArray(s.historyResults)) {
+    const results = s.historyResults.filter(h => h && str(h.text).trim() && safeUrl(h.source));
+    if (results.length > 1) return results.map(h => line(`<b>תוצאה:</b> ${esc(h.text)} · ${hostLink(h.source, "מקור")}`)).join("");
+  }
   if (state === "resultDate") return line(`<b>תוצאה:</b> ${esc(s.result)} · ${src}`);
   if (state === "awaitFresh") return line(NEXT_CHECK);
   if (state === "awaitChecked") return line(`נבדק לאחרונה ב־${whenIL(s.checkedAt)} · התוצאה עוד לא נמצאה במקור הרשמי`);
@@ -165,7 +174,8 @@ function sessionRow(s, d, groupDateOnly = false, extra = ""){
   // Keyed by day, competition and athletes, so the same session on #day and #c- is one row. The signature leaves out
   // what changes with the clock or a run without news (the status chip, checkedAt).
   const mark = rowMark(`sess|${d}|${s.comp?.id || ""}|${s.athletes.map(a => a.id).join(",")}|${s.phase}`,
-    [s.result, s.resultSource, s.resultAt, s.startUtc, s.athletes.map(a => a.name).join(",")].join("\u241f"));
+    [s.result, s.resultSource, s.resultAt, s.startUtc, s.athletes.map(a => a.name).join(","),
+      ...(Array.isArray(s.historyResults) ? [JSON.stringify(s.historyResults)] : [])].join("\u241f"));
   return `<li><span class="d">${when}</span>
     <span class="t">${names}${s.phase ? ` · <bdi>${esc(s.phase)}</bdi>` : ""}${extra}${sessionDetail(s, state)}${mark}</span>
     <span>${statusChip(state)}</span></li>`;

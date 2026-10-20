@@ -115,6 +115,7 @@ function viewEvent(id){
     ${!stakes && c.qualifying ? `<p>תחרות שנספרת להעפלה. <a href="#sport-${esc(c.sportId)}">שיטת ההעפלה בענף</a></p>` : ""}
   </div>
   <section class="panel" aria-labelledby="evSumH"><h2 id="evSumH">בקצרה</h2>
+    ${typeof c.notes === "string" && c.notes.trim() ? `<p class="muted" id="evNotes"><b>הערות מהנתונים:</b> ${esc(c.notes)}</p>` : ""}
     ${filtered ? `<p class="muted">הסיכום והסגל מציגים את כלל הישראלים בתחרות, ללא סינון המשתתף או המעקב.</p>` : ""}
     ${athletes.length ? `<p class="kpi">${kpi}</p>`
       : tracked ? emptyLine("לא ידוע על ספורטאים או נבחרות מישראל בתחרות הזו.", `#sport-${c.sportId}`, `${who(tracked)} ברשימה בענף`)

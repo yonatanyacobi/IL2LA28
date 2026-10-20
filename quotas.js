@@ -42,17 +42,17 @@ function viewQuotas(){
       <ul class="qlist">${items.map(item => `<li><div class="q-top"><b><bdi>${esc(item.event)}</bdi></b><span>${quotaStatusPill(item.israelStatus)}</span></div>${stakesLine(item, "stakes", "small")}</li>`).join("")}</ul>
     </li>`; };
   const waiting = list.map(q => [q, awaitingOf(q)]).filter(([, w]) => w).sort(([, x], [, y]) => y.end.localeCompare(x.end));
-  const earnedEvidence = q => {
-    if (qStatus(q.israelStatus) !== "earned") return "";
+  const quotaEvidence = q => {
+    const earned = qStatus(q.israelStatus) === "earned";
     const at = q.earnedAt;
-    const valid = isDate(at) && !isNaN(new Date(at + "T12:00:00")) && addDays(at, 0) === at && at <= today();
+    const valid = earned && isDate(at) && !isNaN(new Date(at + "T12:00:00")) && addDays(at, 0) === at && at <= today();
     const date = valid ? `<small>הושגה ב־${fmt(at)}</small>` : "";
-    const source = linkOut(q.source, "מקור למכסה");
+    const source = linkOut(q.source, earned ? "מקור למכסה" : "מקור לפרטי המכסה");
     return date + (source ? `<small>${source}</small>` : "");
   };
   const row = q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
     <span class="t"><bdi>${esc(q.event)}</bdi>${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
-    <span>${earnedEvidence(q)}${nxt(q) ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
+    <span>${quotaEvidence(q)}${nxt(q) ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
   const at = str(S.quotasUpdatedAt).slice(0, 10);
   return head + `
   <div class="toolbar"><label for="quotaSport">סינון מכסות לפי ענף</label>
