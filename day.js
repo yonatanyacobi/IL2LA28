@@ -97,6 +97,20 @@ function compBlock(comp, sessions, sid, d){
   // An athlete's "next" names day d only when nextDate is d: a history result's athlete has usually moved on.
   const nexts = new Set(sessions.flatMap(s => s.athletes.map(a => a.nextDate === d ? str(a.next).trim() : "")));
   if (!comp) return `<h3>${esc(nexts.size === 1 && [...nexts][0] || sportName(sid))}${tail}</h3>${list}`;
+  const schedules = new Map();
+  for (const s of sessions) {
+    const source = safeUrl(s.source);
+    if (!source) continue;
+    if (!schedules.has(source)) schedules.set(source, new Set());
+    if (s.phase) schedules.get(source).add(s.phase);
+  }
+  const context = phases => [comp.name, d, ...phases].filter(Boolean).join(" · ");
+  const eventSource = safeUrl(comp.source), sourceLinks = [];
+  if (eventSource) sourceLinks.push(hostLink(eventSource, schedules.has(eventSource)
+    ? "מקור פרטי התחרות ולוח ההופעות" : "מקור פרטי התחרות", context(schedules.get(eventSource) || [])));
+  for (const [source, phases] of schedules) {
+    if (source !== eventSource) sourceLinks.push(hostLink(source, "מקור לוח ההופעות", context(phases)));
+  }
   const total = dayNo(comp.start, comp.end || comp.start);
   const now = comp.start <= t && t <= (comp.end || comp.start) && d === t;
   // Stakes: in-contention items whose quota event covers this day (an earned item mustn't show pre-event stakes).
@@ -112,7 +126,7 @@ function compBlock(comp, sessions, sid, d){
     ${now ? `<p><span class="pill s-live">מתקיימת עכשיו${total > 1 ? ` · יום ${dayNo(comp.start, d)} מתוך ${total}` : ""}</span></p>` : ""}
     ${list}
     ${stakes.map(q => `<p class="stakes"><b>מה זה אומר:</b> <bdi>${esc(q.event)}</bdi>: ${esc(q.stakes)}</p>`).join("")}
-    <p class="foot">${[fmtRange(comp.start, comp.end), esc(comp.location), linkOut(comp.source)].filter(Boolean).join(" · ")}</p>`;
+    <p class="foot day-sources">${[fmtRange(comp.start, comp.end), esc(comp.location), ...sourceLinks].filter(Boolean).join(" · ")}</p>`;
 }
 
 function viewDay(d){

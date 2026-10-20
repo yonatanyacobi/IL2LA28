@@ -784,8 +784,8 @@ function calendarMonthBounds(value){
   const last = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
   return {start: value + "-01", end: value + "-" + last};
 }
-function calendarRows(){
-  const t = today(), {sport, qual, past} = S.cal;
+function calendarRows(past = S.cal.past){
+  const t = today(), {sport, qual} = S.cal;
   const month = calendarMonthBounds(calendarMonth);
   const query = searchKey(calendarQuery);
   return S.comps.filter(c => (!sport || c.sportId === sport) && (!calendarFollowedOnly || S.followSports.has(c.sportId))
@@ -793,6 +793,10 @@ function calendarRows(){
     && (!query || searchKey([c.name, c.location].map(str).join(" ")).includes(query))
     && (!month || c.start <= month.end && (c.end || c.start) >= month.start))
     .sort((a, b) => a.start.localeCompare(b.start));
+}
+
+function calendarHiddenPastCount(rows = calendarRows()){
+  return !rows.length && !S.cal.past && !calendarMonthError ? calendarRows(true).length : 0;
 }
 
 function calendarSharePlanText(rows = calendarRows()){
@@ -830,13 +834,16 @@ function calendarResults(){
   const count = `<p class="muted" id="calCount" role="status">מציגים ${rows.length} מתוך ${S.comps.length} תחרויות</p>`;
   if (calendarFollowedOnly && !S.followSports.size)
     return count + emptyLine("עוד אין ענפים במעקב שלך. אפשר לבחור ענפים כדי להציג את התחרויות שלהם.", "#sports", "לבחירת ענפים למעקב");
+  const hiddenPast = calendarHiddenPastCount(rows);
   const months = {};
   rows.forEach(c => (months[c.start.slice(0, 7)] ??= []).push(c));
   const disclosure = month ? `<p class="muted">מוצגות תחרויות שחופפות לחודש שנבחר; חלקן התחילו קודם.</p>` : "";
   return count + disclosure + (rows.length ? Object.keys(months).sort().map(m => `<section class="month">
       <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}<span class="sr"> ${months[m].length === 1 ? "תחרות" : "תחרויות"}</span></span></h2>
       ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
-    : emptyLine("אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה.")) + calendarShareSection(rows);
+    : emptyLine("אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה.")
+      + (hiddenPast ? `<p class="muted">${hiddenPast === 1 ? "תחרות אחת שהסתיימה מוסתרת בסינון הזה." : `${hiddenPast} תחרויות שהסתיימו מוסתרות בסינון הזה.`}</p>
+        <button class="btn ghost small" type="button" id="calShowPast" data-calendar-show-past>הצגת התחרויות שהסתיימו</button>` : "")) + calendarShareSection(rows);
 }
 
 function viewCalendar(sportFilter = ""){
@@ -1318,8 +1325,17 @@ document.addEventListener("input", e => {
   }
 });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-sport-roster-reset],[data-home-search],[data-sports-library-reset],[data-athlete-section],[data-sport-section]");
+  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-calendar-show-past],[data-sport-roster-reset],[data-home-search],[data-sports-library-reset],[data-athlete-section],[data-sport-section]");
   if (!t) return;
+  if ("calendarShowPast" in t.dataset) {
+    const route = currentRoute();
+    if (!(route === "calendar" || (route.startsWith("calendar-") && sportById(route.slice(9)))) || !calendarHiddenPastCount()) return;
+    S.cal.past = true;
+    $("cPast").checked = true;
+    $("calResults").innerHTML = calendarResults();
+    $("cReset").hidden = false;
+    return $("cPast").focus({preventScroll: true});
+  }
   if ("sportSection" in t.dataset) {
     const route = currentRoute(), target = t.dataset.sportSection;
     if (!route.startsWith("sport-") || !sportById(route.slice(6))
