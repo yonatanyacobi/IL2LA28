@@ -341,7 +341,8 @@ function athleteRow(a, status = ""){
 function changeRow(c){
   const txt = esc(c.text);
   const body = c.athleteId && S.athletes.some(a => a.id === c.athleteId) ? `<a href="#a-${esc(c.athleteId)}">${txt}</a>` : txt;
-  return `<li><span class="d">${fmt(str(c.at).slice(0, 10))}</span><span class="t">${body}</span><span></span></li>`;
+  const date = typeof c.at !== "string" ? "" : isUtc(c.at) && realDate(c.at.slice(0, 10)) ? ilDate(c.at) : realDate(c.at) ? c.at : "";
+  return `<li><span class="d">${fmt(date)}</span><span class="t">${body}</span><span></span></li>`;
 }
 
 const TODAY_MAX = 6, SERIES_DAYS = 31, STAKES_MAX = 2;   // STAKES_MAX: quota lines per competition on #day
@@ -716,19 +717,30 @@ function reportBox(subject, link){
 // The hash is the source of truth, so "#calendar" clears a filter left over from "#calendar-<id>".
 // Filters re-render only this list, so the focused control and scroll position survive.
 let calendarFollowedOnly = false;
+let calendarMonth = "", calendarMonthDraft = "", calendarMonthError = "";
+function calendarMonthBounds(value){
+  if (typeof value !== "string" || value.length !== 7 || !/^\d{4}-(0[1-9]|1[0-2])$/.test(value) || value.startsWith("0000")) return null;
+  const [year, month] = value.split("-").map(Number);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const last = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  return {start: value + "-01", end: value + "-" + last};
+}
 function calendarResults(){
   const t = today(), {sport, qual, past} = S.cal;
+  const month = calendarMonthBounds(calendarMonth);
   if (calendarFollowedOnly && !S.followSports.size)
     return emptyLine("עוד אין ענפים במעקב שלך. אפשר לבחור ענפים כדי להציג את התחרויות שלהם.", "#sports", "לבחירת ענפים למעקב");
   const rows = S.comps.filter(c => (!sport || c.sportId === sport) && (!calendarFollowedOnly || S.followSports.has(c.sportId))
-    && (!qual || c.qualifying) && (past || (c.end || c.start) >= t))
+    && (!qual || c.qualifying) && (past || (c.end || c.start) >= t)
+    && (!month || c.start <= month.end && (c.end || c.start) >= month.start))
     .sort((a, b) => a.start.localeCompare(b.start));
   const months = {};
   rows.forEach(c => (months[c.start.slice(0, 7)] ??= []).push(c));
-  return rows.length ? Object.keys(months).sort().map(m => `<section class="month">
+  const disclosure = month ? `<p class="muted">מוצגות תחרויות שחופפות לחודש שנבחר; חלקן התחילו קודם.</p>` : "";
+  return disclosure + (rows.length ? Object.keys(months).sort().map(m => `<section class="month">
       <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}<span class="sr"> ${months[m].length === 1 ? "תחרות" : "תחרויות"}</span></span></h2>
       ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
-    : emptyLine("אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה.");
+    : emptyLine("אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה."));
 }
 
 function viewCalendar(sportFilter = ""){
@@ -741,10 +753,12 @@ function viewCalendar(sportFilter = ""){
   <h1 tabindex="-1">לוח תחרויות</h1>
   <div class="toolbar">
     <select id="cSport" aria-label="סינון לפי ענף"><option value="">כל הענפים</option>${used.map(s => `<option value="${esc(s.id)}" ${s.id === sport ? "selected" : ""}>${esc(s.he)}</option>`).join("")}</select>
+    <label for="cMonth">חודש התחרויות</label><input type="month" id="cMonth" min="0001-01" max="9999-12" value="${esc(calendarMonthDraft)}" aria-describedby="cMonthError" ${calendarMonthError ? 'aria-invalid="true"' : ""}>
+    <p class="error" id="cMonthError" role="alert" ${calendarMonthError ? "" : "hidden"}>${esc(calendarMonthError)}</p>
     <label class="chk"><input type="checkbox" id="cQual" ${qual ? "checked" : ""}> רק תחרויות העפלה</label>
     <label class="chk"><input type="checkbox" id="cPast" ${past ? "checked" : ""}> כולל תחרויות שהסתיימו</label>
     <label class="chk"><input type="checkbox" id="cFollowSports" ${calendarFollowedOnly ? "checked" : ""}> רק ענפים שבמעקב שלי</label>
-    <button class="btn ghost small" type="button" id="cReset" data-calendar-reset ${sport || qual || past || calendarFollowedOnly ? "" : "hidden"}>איפוס הסינון</button>
+    <button class="btn ghost small" type="button" id="cReset" data-calendar-reset ${sport || qual || past || calendarFollowedOnly || calendarMonth || calendarMonthError ? "" : "hidden"}>איפוס הסינון</button>
   </div>
   <div id="calResults" class="cal-results">${calendarResults()}</div>
   <section class="panel">
@@ -1172,9 +1186,19 @@ document.addEventListener("input", e => {
   if (e.target.id === "cQual") S.cal.qual = e.target.checked;
   if (e.target.id === "cPast") S.cal.past = e.target.checked;
   if (e.target.id === "cFollowSports") calendarFollowedOnly = e.target.checked;
-  if (/^c(Sport|Qual|Past|FollowSports)$/.test(e.target.id) && $("calResults")) {
+  if (e.target.id === "cMonth") {
+    calendarMonthDraft = e.target.value;
+    const valid = !e.target.validity?.badInput && (!calendarMonthDraft || calendarMonthBounds(calendarMonthDraft));
+    calendarMonthError = valid ? "" : "יש לבחור חודש תקין בתבנית YYYY-MM.";
+    if (valid) calendarMonth = calendarMonthDraft;
+    $("cMonthError").textContent = calendarMonthError;
+    $("cMonthError").hidden = !calendarMonthError;
+    if (valid) e.target.removeAttribute("aria-invalid");
+    else e.target.setAttribute("aria-invalid", "true");
+  }
+  if (/^c(Sport|Qual|Past|FollowSports|Month)$/.test(e.target.id) && $("calResults")) {
     $("calResults").innerHTML = calendarResults();
-    if ($("cReset")) $("cReset").hidden = !(S.cal.sport || S.cal.qual || S.cal.past || calendarFollowedOnly);
+    if ($("cReset")) $("cReset").hidden = !(S.cal.sport || S.cal.qual || S.cal.past || calendarFollowedOnly || calendarMonth || calendarMonthError);
   }
 });
 document.addEventListener("click", e => {
@@ -1188,10 +1212,13 @@ document.addEventListener("click", e => {
   if ("calendarReset" in t.dataset) {
     S.cal = {sport: "", qual: false, past: false};
     calendarFollowedOnly = false;
+    calendarMonth = calendarMonthDraft = calendarMonthError = "";
     history.replaceState(null, "", "#calendar");
     $("cSport").value = "";
     $("cQual").checked = false; $("cPast").checked = false;
     $("cFollowSports").checked = false;
+    $("cMonth").value = ""; $("cMonth").removeAttribute("aria-invalid");
+    $("cMonthError").textContent = ""; $("cMonthError").hidden = true;
     $("cReset").hidden = true;
     $("calResults").innerHTML = calendarResults();
     return $("cSport").focus({preventScroll: true});

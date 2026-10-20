@@ -1,7 +1,7 @@
 'use strict';
 
 (() => {
-  const statuses = new Map([['backlog', 'בתכנון'], ['in_progress', 'בעבודה'], ['review', 'בבדיקה'], ['done', 'הושלם'], ['blocked', 'ממתין לפתרון']]);
+  const statuses = new Map([['backlog', 'בתכנון'], ['in_progress', 'בפיתוח'], ['review', 'בסקירה ובפרסום'], ['done', 'הושלם'], ['blocked', 'ממתין לפתרון']]);
   const priorities = new Map([['P0', 'דחוף'], ['P1', 'גבוהה'], ['P2', 'רגילה']]);
   const formatter = new Intl.DateTimeFormat('he-IL', {timeZone: 'Asia/Jerusalem', dateStyle: 'short', timeStyle: 'short'});
   const el = id => document.getElementById(id);
@@ -102,9 +102,9 @@
     }
     if (people.has(previousOwner)) ownerSelect.value = previousOwner;
     const done = board.tasks.filter(task => task.status === 'done').length;
-    el('summary').replaceChildren(...[[board.tasks.length, 'משימות בלוח'], [board.tasks.filter(task => task.status === 'in_progress').length, 'בעבודה לפי הדיווח האחרון'], [done, 'משימות שהושלמו'], [board.team.length, 'תפקידים בצוות']].map(([value, label]) => {
+    el('summary').replaceChildren(...[['in_progress', 'כרטיסים בפיתוח'], ['review', 'בסקירה ובפרסום'], ['backlog', 'כרטיסים בתכנון'], ['done', 'משימות שהושלמו']].map(([status, label]) => {
       const stat = node('div', undefined, 'stat');
-      stat.append(node('strong', String(value)), node('span', label));
+      stat.append(node('strong', String(status === 'done' ? done : board.tasks.filter(task => task.status === status).length)), node('span', label));
       return stat;
     }));
     const visibleTasks = board.tasks.filter(task => (!ownerSelect.value || task.assignee === ownerSelect.value) && (!el('status').value || task.status === el('status').value));

@@ -42,6 +42,12 @@ function homeToday(){
     && athletesOf(c.sportId).length && !withComp.has(c.id)).sort((x, y) => heCmp(x.name, y.name));
   const next = sessions.length ? "" : homeNextDay(t);
   const shown = sessions.slice(0, TODAY_MAX), nextSessions = next ? daySessions(next).sort(sessionOrder) : [];
+  const watchable = s => ["before", "competing"].includes(sessionState(s, t));
+  if (more > 0 && !shown.some(watchable)) {
+    const candidate = sessions.slice(TODAY_MAX).filter(watchable)
+      .sort((a, b) => (sessionState(b, t) === "competing") - (sessionState(a, t) === "competing") || sessionOrder(a, b))[0];
+    if (candidate) shown[shown.length - 1] = candidate;
+  }
   const nextList = nextSessions.slice(0, HOME_NEXT_ROWS), nextMore = nextSessions.length - nextList.length;
   // PM on #171: an empty day shows the next session day's first rows, so the home still opens on sessions.
   const nextBlock = () => `<h3>הבא בתור: ${homeDayTitle(next)}${dateOnly(nextList) ? DATE_ONLY : ""}</h3>

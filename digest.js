@@ -89,14 +89,25 @@ function digestText(t = today()){
     .map(c => waCut(`• ${waText(c.text)}`));
   // Competitions already under way, listed per competition with the athletes still to compete in it (nextDate from
   // today to its end): a finalist from yesterday isn't "competing this week" (PL on #351).
+  const knownSessions = exportedSessions().filter(s => s.day >= t && s.day <= addDays(t, 6));
+  const covered = new Set(knownSessions.flatMap(s => s.athletes.map(a => JSON.stringify([a.id, s.comp.id, s.day]))));
+  const coveredNext = (a, comp) => {
+    const matches = comp ? [comp] : S.comps.filter(c => c.sportId === a.sportId && c.start <= a.nextDate && a.nextDate <= end(c));
+    return matches.length === 1 && covered.has(JSON.stringify([a.id, matches[0].id, a.nextDate]));
+  };
+  const plannedSessions = knownSessions.filter(s => ["before", "competing"].includes(sessionState(s, s.day)))
+    .sort((a, b) => a.day.localeCompare(b.day) || byStart(a.startUtc, b.startUtc) || heCmp(a.comp.name, b.comp.name) || heCmp(a.phase, b.phase))
+    .map(s => [waCut(`• ${fmtShort(s.day)} · ${waText(s.comp.name)} (${waText(sportName(s.sportId))})${s.phase ? ": " + waText(s.phase) : ""}`),
+      ...waList("  ", names(s.athletes))].join("\n"));
   const running = S.comps.filter(c => c.start <= t && t <= end(c) && dayNo(c.start, end(c)) <= SERIES_DAYS)
-    .map(c => ({c, list: S.athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && a.nextDate >= t && c.start <= a.nextDate && a.nextDate <= end(c))}))
+    .map(c => ({c, list: S.athletes.filter(a => a.sportId === c.sportId && isDate(a.nextDate) && a.nextDate >= t && c.start <= a.nextDate && a.nextDate <= end(c) && !coveredNext(a, c))}))
     .filter(r => r.list.length);
   const inRunning = new Set(running.flatMap(r => r.list.map(a => a.id)));
   const competing = [
+    ...plannedSessions,
     ...running.sort((x, y) => heCmp(sportName(x.c.sportId), sportName(y.c.sportId)))
       .map(({c, list}) => [waCut(`${runningHead(c)} · ${waText(c.name)} (${waText(sportName(c.sportId))})${(w => w ? `, ${w}` : "")(runningWhen(c, t))}`), ...waList("  ", names(list))].join("\n")),
-    ...S.athletes.filter(a => !inRunning.has(a.id) && isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6))
+    ...S.athletes.filter(a => !inRunning.has(a.id) && isDate(a.nextDate) && a.nextDate >= t && a.nextDate <= addDays(t, 6) && !coveredNext(a))
       .sort((a, b) => a.nextDate.localeCompare(b.nextDate) || heCmp(a.name, b.name))
       .map(a => waCut(`• ${fmtShort(a.nextDate)} · ${waText(a.name)} (${waText(sportName(a.sportId))})${a.next ? ": " + waText(a.next) : ""}`)),
   ];
