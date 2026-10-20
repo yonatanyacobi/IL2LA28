@@ -1169,12 +1169,16 @@ $("archBtn").addEventListener("click", archive);
 $("cancelBtn").addEventListener("click", () => $("dlg").close());
 function clockStatusSignature(h = currentRoute()){
   if (!S.loaded || typeof sessionState !== "function") return "";
-  let sessions;
-  if (h === "home") sessions = daySessions(today()).map(s => [s, today()]);
+  let sessions, hasToday = false;
+  if (h === "home") {
+    sessions = daySessions(today()).map(s => [s, today()]);
+    hasToday = sessions.length > 0;
+  }
   else if (h === "today" || h === "day" || /^day-/.test(h)) {
     const d = h === "today" || h === "day" ? today() : h.slice(4);
     if (!realDate(d)) return "";
     sessions = daySessions(d).map(s => [s, d]);
+    hasToday = d === today() && sessions.some(([s]) => !dayFollowingOnly || followsSport(s.sportId) || followedIn(s));
   } else if (h.startsWith("a-") && typeof athleteUpcomingSessions === "function") {
     const a = S.athletes.find(a => a.id === h.slice(2));
     if (!a) return "";
@@ -1184,9 +1188,11 @@ function clockStatusSignature(h = currentRoute()){
     if (!c) return "";
     const {series, groups} = eventSessions(c);
     sessions = [...groups].flatMap(([d, list]) => list.map(s => [s, series ? s.day : d]));
+    hasToday = series ? sessions.some(([, d]) => d === today()) : c.start <= today() && today() <= (c.end || c.start);
   } else return "";
-  return JSON.stringify(sessions.map(([s, d]) => [sessionState(s, d),
-    ...(h.startsWith("c-") ? s.athletes.map(a => athleteStatus(s, d, a)) : [])]));
+  const ts = checkTime(), stale = !!(hasToday && ts && Date.now() - Date.parse(ts) > STALE_H * 36e5);
+  return JSON.stringify([stale, sessions.map(([s, d]) => [sessionState(s, d),
+    ...(h.startsWith("c-") ? s.athletes.map(a => athleteStatus(s, d, a)) : [])])]);
 }
 
 function refreshClockStatuses(){
