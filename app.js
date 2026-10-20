@@ -652,6 +652,7 @@ function viewSport(id){
   ${typeof standingsPanel === "function" ? standingsPanel(id) : ""}
   ${quotaSection(id)}
   ${sportUpcomingSection(id)}
+  ${typeof sportRecentResultsSection === "function" ? sportRecentResultsSection(id) : ""}
   <section class="stack" id="sportRoster" aria-labelledby="sportRosterH">
     <h2 id="sportRosterH">${list.length ? `ספורטאים ונבחרות (${list.length})` : "ספורטאים ונבחרות"}</h2>
     <div class="toolbar"><label for="sportRosterSearch">חיפוש בספורטאים ובמקצים בענף</label><input type="search" id="sportRosterSearch" value="${esc(value)}" aria-describedby="sportRosterCount">
@@ -776,15 +777,49 @@ function calendarMonthBounds(value){
   const last = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
   return {start: value + "-01", end: value + "-" + last};
 }
-function calendarResults(){
+function calendarRows(){
   const t = today(), {sport, qual, past} = S.cal;
   const month = calendarMonthBounds(calendarMonth);
   const query = searchKey(calendarQuery);
-  const rows = S.comps.filter(c => (!sport || c.sportId === sport) && (!calendarFollowedOnly || S.followSports.has(c.sportId))
+  return S.comps.filter(c => (!sport || c.sportId === sport) && (!calendarFollowedOnly || S.followSports.has(c.sportId))
     && (!qual || c.qualifying) && (past || (c.end || c.start) >= t)
     && (!query || searchKey([c.name, c.location].map(str).join(" ")).includes(query))
     && (!month || c.start <= month.end && (c.end || c.start) >= month.start))
     .sort((a, b) => a.start.localeCompare(b.start));
+}
+
+function calendarSharePlanText(rows = calendarRows()){
+  if (!rows.length || calendarMonthError) return "";
+  const {sport, qual, past} = S.cal;
+  const scope = [sport ? `ענף: ${waCut(waText(sportName(sport)))}` : "כל הענפים",
+    ...(calendarMonth ? [`חודש: ${calendarMonth}`, "מוצגות תחרויות שחופפות לחודש שנבחר; חלקן התחילו קודם."] : []),
+    ...(qual ? ["העפלה בלבד"] : []), ...(past ? ["כולל תחרויות שהסתיימו"] : []),
+    ...(calendarFollowedOnly ? ["לפי ענפי המעקב שלי"] : []),
+    ...(calendarQuery ? [`מסנן חיפוש: ${waCut(waText(calendarQuery))}`] : [])];
+  const head = ["לוח תחרויות כללי", ...scope,
+    "לוח תחרויות כללי; הרשימה אינה אישור להשתתפות ספורטאים מישראל"];
+  const blocks = rows.map(c => [`• ${waText(c.name)}`, fmtRange(c.start, c.end),
+    ...(str(c.location).trim() ? [waText(c.location)] : []), `${SITE_URL}#c-${encodeURIComponent(c.id)}`].join("\n"));
+  const footer = ["", "הקישור אינו שומר חודש, שאילתת חיפוש או בחירות מעקב.",
+    `${SITE_URL}#calendar${sport ? "-" + encodeURIComponent(sport) : ""}`];
+  let omitted = 0;
+  const build = () => [...head, "", blocks.join("\n\n"), ...(omitted ? [`ועוד ${omitted} תחרויות בלוח`] : []), ...footer].join("\n");
+  let text = build();
+  while (text.length > 3500 && blocks.length) {blocks.pop(); omitted++; text = build();}
+  return text;
+}
+
+function calendarShareSection(rows){
+  const text = calendarSharePlanText(rows);
+  return `<section class="panel" aria-labelledby="calendarShareH"><h2 id="calendarShareH">לוח התחרויות להעתקה</h2>
+    ${text ? `<label for="calendarSharePlan">לוח התחרויות המסונן להעתקה</label><textarea id="calendarSharePlan" readonly rows="8">${esc(text)}</textarea>
+      <button class="btn ghost small" type="button" data-copy="calendarSharePlan" data-copy-msg="calendarShareMsg">העתקת לוח התחרויות</button><p class="foot" id="calendarShareMsg" aria-live="polite"></p>`
+      : `<p class="muted">${calendarMonthError ? "יש לבחור חודש תקין כדי להעתיק את לוח התחרויות." : "אין תחרויות בסינון הנוכחי להעתקה."}</p>`}
+  </section>`;
+}
+
+function calendarResults(){
+  const {sport} = S.cal, month = calendarMonthBounds(calendarMonth), rows = calendarRows();
   const count = `<p class="muted" id="calCount" role="status">מציגים ${rows.length} מתוך ${S.comps.length} תחרויות</p>`;
   if (calendarFollowedOnly && !S.followSports.size)
     return count + emptyLine("עוד אין ענפים במעקב שלך. אפשר לבחור ענפים כדי להציג את התחרויות שלהם.", "#sports", "לבחירת ענפים למעקב");
@@ -794,7 +829,7 @@ function calendarResults(){
   return count + disclosure + (rows.length ? Object.keys(months).sort().map(m => `<section class="month">
       <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}<span class="sr"> ${months[m].length === 1 ? "תחרות" : "תחרויות"}</span></span></h2>
       ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
-    : emptyLine("אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה."));
+    : emptyLine("אין תחרויות שמתאימות לסינון. אפשר לבטל את אחת האפשרויות למעלה.")) + calendarShareSection(rows);
 }
 
 function viewCalendar(sportFilter = ""){
@@ -833,7 +868,7 @@ function viewUpdates(){
   return `<h1 tabindex="-1">מה התעדכן</h1>
   ${typeof viewDigest === "function" ? `<p><a href="#digest">תקציר שבועי לשיתוף</a></p>` : ""}
   <section class="panel">${S.changes.length ? `<ul class="rows">${S.changes.map(changeRow).join("")}</ul>` : calEmpty("עוד אין עדכונים.")}</section>
-  <p class="foot">העדכונים נאספים פעם ביום ממקורות רשמיים ומכלי תקשורת. שינוי שלב (מכסה או בחירה לנבחרת) מתפרסם רק אחרי בדיקה ידנית.</p>`;
+  <p class="foot">העדכונים נאספים ממקורות רשמיים ומכלי תקשורת. תוצאות ותחרויות עשויות להתווסף גם אחרי בדיקת מקור רשמי בידי הצוות. שינוי שלב (מכסה או בחירה לנבחרת) מתפרסם רק אחרי בדיקה ידנית.</p>`;
 }
 
 function viewAbout(){
@@ -882,9 +917,11 @@ function trustBlock(){
     <dl class="facts trust-legend">${legend.map(([a, text]) => `<dt>${trustChip(a)}</dt><dd>${text}</dd>`).join("")}</dl>
     <h3>מה אוטומטי ומה לא</h3>
     <ul>
-      <li><b>אוטומטי, פעם ביום:</b> דירוגים, תוצאות אחרונות, תחרויות קרובות.</li>
+      <li><b>עדכונים אוטומטיים:</b> דירוגים, תוצאות אחרונות ותחרויות קרובות. תוצאות ותחרויות עשויות להתווסף גם אחרי בדיקת מקור רשמי בידי הצוות.</li>
       <li><b>רק אחרי בדיקה ידנית:</b> שינוי שלב, ספורטאי/ת חדש/ה, הסרה מהרשימה, וכל נתוני המכסות.</li>
     </ul>
+    <p>לכל תוצאה מתועדת מופיע המקור שלה. תאריך הבדיקה של פרופיל ספורטאי/ת אינו תאריך הבדיקה של כל תוצאה בפרופיל.</p>
+    <p>תחרויות עונה עשויות להופיע גם לפני פתיחת חלון ההעפלה. הופעת תחרות בלוח אינה כשלעצמה אישור להשגת מכסה או להשתתפות ספורטאים מישראל.</p>
     <h3>תיקונים</h3>
     <p>כל דיווח נבדק מול מקור לפני שהוא מתפרסם.${typeof fixLogLive === "function" && fixLogLive() ? ` כל תיקון נרשם ב<a href="#corrections">יומן התיקונים</a>.` : ""} אין לנו גישה למידע שאינו פומבי.</p>
   </section>`;

@@ -97,6 +97,18 @@ function resultGroups(list){
   return [...days].map(([d, g]) => `<h3><a class="hlink" href="#day-${esc(d)}">${esc(homeDayTitle(d))}</a>${dateOnly(g) ? DATE_ONLY : ""}</h3>${homeRows(g, d)}`).join("");
 }
 
+function homeArchivedResults(){
+  const rows = typeof documentedResults === "function" ? documentedResults().slice(0, 3) : [];
+  if (!rows.length) return "";
+  return `<section aria-labelledby="homeArchivedResultsH"><h3 id="homeArchivedResultsH">תוצאות קודמות שמתועדות באתר</h3>
+    <p class="muted">מידע היסטורי מתועד, שאינו חלק מרשימת 48 השעות האחרונות. בקישור הענף אפשר לעיין בתוצאות נוספות.</p>
+    <ul class="rows">${rows.map(r => `<li><span class="d"><a href="#day-${esc(r.day)}">${esc(fmt(r.day))}</a>${r.startUtc ? `<br>${timeTag(r.startUtc, hhmm(r.startUtc))}` : ""}</span>
+      <span class="t">${r.athletes.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(" · ")}
+        ${r.comp ? `<small>${compLink(r.comp, esc(r.comp.name))}</small>` : ""}${r.phase ? `<small><bdi>${esc(r.phase)}</bdi></small>` : ""}
+        <span class="res">${esc(r.result)} · ${hostLink(r.source, "מקור")}</span><small>${sportLink(r.sportId)}</small></span></li>`).join("")}</ul>
+  </section>`;
+}
+
 function homeResults(){
   const rows = recentResults();
   const more = rows.length - HOME_RESULTS_MAX;
@@ -107,6 +119,7 @@ function homeResults(){
     ${more > 0 ? `<details><summary>${more === 1 ? "ועוד תוצאה אחת" : `ועוד ${more} תוצאות`} ב־48 השעות האחרונות</summary>
       ${resultGroups(rows.slice(HOME_RESULTS_MAX))}</details>` : ""}
     <p class="foot">ב־48 השעות האחרונות · ${CADENCE} · <a href="#updates">לכל העדכונים באתר</a></p>
+    ${!rows.length ? homeArchivedResults() : ""}
   </section>`;
 }
 

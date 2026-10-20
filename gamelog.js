@@ -5,6 +5,48 @@
 const GAMELOG_ROWS = 10;
 const ATHLETE_UPCOMING_ROWS = 6;
 
+function documentedResults(sportId = ""){
+  const t = today(), now = Date.now(), rows = [];
+  for (const s of exportedSessions()) {
+    if ((sportId && s.sportId !== sportId) || !realDate(s.day) || s.day > t || !s.result
+      || !safeUrl(s.resultSource) || !isUtc(s.resultAt) || Date.parse(s.resultAt) > now) continue;
+    rows.push({day: s.day, sportId: s.sportId, athletes: s.athletes, comp: s.comp, phase: s.phase,
+      result: s.result, source: s.resultSource, resultAt: s.resultAt, startUtc: s.startUtc});
+  }
+  const sessionRows = rows.slice();
+  for (const a of S.athletes) {
+    if (sportId && a.sportId !== sportId) continue;
+    for (const h of Array.isArray(a.history) ? a.history : []) {
+      if (!inGameLog(h) || !realDate(h.at) || h.at > t || (h.resultAt && (!isUtc(h.resultAt) || Date.parse(h.resultAt) > now))) continue;
+      const result = str(h.text).trim();
+      // A different individual result on the same day must survive a shared session result.
+      if (sessionRows.some(s => s.day === h.at && s.athletes.includes(a) && s.result.trim() === result && s.source === h.source)) continue;
+      const matches = (IDX.compsBySport().get(a.sportId) || []).filter(c => c.start <= h.at && h.at <= (c.end || c.start)
+        && dayNo(c.start, c.end || c.start) <= SERIES_DAYS);
+      rows.push({day: h.at, sportId: a.sportId, athletes: [a], comp: matches.length === 1 ? matches[0] : null,
+        phase: "", result, source: h.source, resultAt: h.resultAt || "", startUtc: null});
+    }
+  }
+  return rows.sort((a, b) => b.day.localeCompare(a.day)
+    || (a.startUtc && b.startUtc ? byStart(b.startUtc, a.startUtc) : byStart(a.startUtc, b.startUtc)));
+}
+
+function documentedResultRow(r){
+  return `<li><span class="d"><a href="#day-${esc(r.day)}">${esc(fmtShortY(r.day))}</a>${r.startUtc ? `<br>${timeTag(r.startUtc, hhmm(r.startUtc))}` : ""}</span>
+    <span class="t">${r.athletes.map(a => `<a href="#a-${esc(a.id)}">${esc(a.name)}</a>`).join(" · ")}
+      ${r.comp ? `<small>${compLink(r.comp, esc(r.comp.name))}</small>` : ""}${r.phase ? `<small><bdi>${esc(r.phase)}</bdi></small>` : ""}
+      <span class="res">${esc(r.result)} · ${linkOut(r.source, `מקור: ${host(r.source)}`)}</span></span></li>`;
+}
+
+function sportRecentResultsSection(id){
+  const rows = documentedResults(id), more = rows.slice(6);
+  return `<section class="panel" aria-labelledby="sportRecentResultsH"><h2 id="sportRecentResultsH">תוצאות מתועדות אחרונות בענף</h2>
+    ${rows.length ? `<ul class="rows">${rows.slice(0, 6).map(documentedResultRow).join("")}</ul>
+      ${more.length ? `<details><summary>${more.length === 1 ? "עוד תוצאה אחת" : `עוד ${more.length} תוצאות`}</summary><ul class="rows">${more.map(documentedResultRow).join("")}</ul></details>` : ""}`
+      : `<p class="muted">עוד לא תועדו תוצאות בענף באתר</p>`}
+  </section>`;
+}
+
 function athleteUpcomingSessions(a){
   const t = today(), through = addDays(t, 13);
   return exportedSessions().filter(s => s.athletes.includes(a) && t <= s.day && s.day <= through

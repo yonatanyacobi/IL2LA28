@@ -39,6 +39,57 @@ function dayWatchPlanText(d){
   return text;
 }
 
+const DAY_RESULTS_MAX = 3500;
+const dayResultsScope = () => dayFollowingOnly ? "תוצאות מתועדות — לפי המעקב שלי" : "תוצאות מתועדות — כל ההופעות";
+
+function dayResultsShareText(d, fullSessions = null){
+  if (!realDate(d) || d > today()) return "";
+  const plain = value => str(value).replace(/\s+/g, " ").trim();
+  const official = exportedSessions().filter(s => s.day === d);
+  const rows = [], seenHistory = new Set();
+  for (const s of (fullSessions ?? daySessions(d)).filter(s => !dayFollowingOnly || followsSport(s.sportId) || followedIn(s)).sort(sessionOrder)) {
+    if (!str(s.result).trim() || !safeUrl(s.resultSource)
+      || (s.resultAt && (!isUtc(s.resultAt) || Date.parse(s.resultAt) > Date.now()))) continue;
+    const candidates = official.filter(x => x.comp.id === s.comp?.id && x.startUtc === s.startUtc && x.phase === s.phase
+      && x.athletes.length === s.athletes.length && x.athletes.every((a, i) => a.id === s.athletes[i].id));
+    const original = candidates.find(x => x.result && x.result === s.result && x.resultSource === s.resultSource && x.resultAt === s.resultAt)
+      || candidates.find(x => !x.result);
+    const matches = S.comps.filter(c => c.sportId === s.sportId && c.start <= d && d <= (c.end || c.start)
+      && dayNo(c.start, c.end || c.start) <= SERIES_DAYS);
+    const comp = s.comp && (original?.result || (matches.length === 1 && matches[0].id === s.comp.id)) ? s.comp : null;
+    // The daily row may merge personal history into an otherwise result-less shared session.
+    const results = original?.result ? [{athletes: s.athletes, text: original.result, source: original.resultSource}]
+      : s.athletes.flatMap(a => (Array.isArray(a.history) ? a.history : [])
+        .filter(h => h && h.kind === "result" && h.at === d && str(h.text).trim() && safeUrl(h.source))
+        .filter(h => {
+          const key = JSON.stringify([a.id, d, h.text, h.source]);
+          if (seenHistory.has(key)) return false;
+          seenHistory.add(key);
+          return true;
+        })
+        .map(h => ({athletes: [a], text: h.text, source: h.source})));
+    for (const result of results) {
+      rows.push([`• ${result.athletes.map(a => plain(a.name)).join(", ")}${comp ? " · " + plain(comp.name) : ""}`,
+        plain(result.text), result.source].join("\n"));
+    }
+  }
+  if (!rows.length) return "";
+  const at = typeof publicSnapshot !== "undefined" ? publicSnapshot?.generatedAt : "";
+  const stamp = isUtc(at) ? `${fmt(ilDate(at))}, ${hhmm(at)}` : realDate(at) ? fmt(at) : "";
+  const head = [`תוצאות מתועדות · ${fmt(d)}`, dayResultsScope(),
+    "תיעוד שפורסם באתר, בעדכונים תקופתיים.",
+    stamp ? `תמונת הנתונים הכללית מ־${stamp}; לכל תוצאה המקור שלה.` : "תאריך תמונת הנתונים הכללית אינו זמין; לכל תוצאה המקור שלה."];
+  const foot = ["", "הקישור מציג את היום המלא; סינון המעקב אישי לדפדפן.", `${SITE_URL}#day-${d}`];
+  let omitted = 0;
+  const build = () => [...head, "", ...rows, ...(omitted ? [omitted === 1 ? "ועוד תוצאה אחת בקישור" : `ועוד ${omitted} תוצאות בקישור`] : []), ...foot].join("\n");
+  let text = build();
+  while (text.length > DAY_RESULTS_MAX && rows.length) {
+    rows.pop(); omitted++;
+    text = build();
+  }
+  return text;
+}
+
 function compBlock(comp, sessions, sid, d){
   const t = today();
   const only = dateOnly(sessions), tail = only ? DATE_ONLY : "";
@@ -98,7 +149,7 @@ function viewDay(d){
     if (!after && hasRelevantDay(addDays(d, i))) after = addDays(d, i);
   }
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
-  const watchPlan = dayWatchPlanText(d);
+  const watchPlan = dayWatchPlanText(d), resultsText = dayResultsShareText(d, fullSessions);
   return `<div class="day-nav">
       <h1 tabindex="-1">${isToday ? `היום, ${dayTitle(d)}` : dayTitle(d)}</h1>
       <a class="day-prev" href="#day-${prev}"><span aria-hidden="true">→</span>&nbsp;${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
@@ -132,6 +183,13 @@ function viewDay(d){
         <button class="btn ghost small" type="button" data-copy="dayPlan" data-copy-msg="dayPlanMsg">העתקת התכנון</button>
         <p class="foot" id="dayPlanMsg" aria-live="polite"></p>`
         : `<p class="muted">${dayFollowingOnly ? "אין הופעות מיוצאות שמתאימות למעקב שלך ביום הזה." : "אין הופעות מיוצאות ביום הזה להכנת תכנון."}</p>`}
+    </div>
+    <div class="digest" aria-labelledby="dayResultsH"><h3 id="dayResultsH">תוצאות היום להעתקה</h3>
+      <p class="muted" id="dayResultsScope">${dayResultsScope()}. הקישור מציג את היום המלא; סינון המעקב אישי לדפדפן.</p>
+      ${resultsText ? `<textarea id="dayResults" readonly rows="8" aria-labelledby="dayResultsH" aria-describedby="dayResultsScope">${esc(resultsText)}</textarea>
+        <button class="btn ghost small" type="button" data-copy="dayResults" data-copy-msg="dayResultsMsg">העתקת התוצאות</button>
+        <p class="foot" id="dayResultsMsg" aria-live="polite"></p>`
+        : `<p class="muted">${dayFollowingOnly ? "אין תוצאות מתועדות שמתאימות למעקב שלך ביום הזה." : "אין תוצאות מתועדות ביום הזה להעתקה."}</p>`}
     </div>
   </section>`;
 }
