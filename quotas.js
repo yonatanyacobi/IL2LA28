@@ -52,7 +52,7 @@ function viewQuotas(){
   };
   const row = q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>
     <span class="t"><bdi>${esc(q.event)}</bdi>${q.israelNote ? `<small>${esc(q.israelNote)}</small>` : ""}</span>
-    <span>${quotaEvidence(q)}${nxt(q) ? `<small class="muted">${fmtShort(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
+    <span>${quotaEvidence(q)}${nxt(q) ? `<small class="muted">${fmtShortY(q.nextQuotaEvent.start)}</small>` : ""}</span></li>`;
   const at = str(S.quotasUpdatedAt).slice(0, 10);
   return head + `
   <div class="toolbar"><label for="quotaSport">סינון מכסות לפי ענף</label>
@@ -72,7 +72,7 @@ function viewQuotas(){
   </section>
   ${waiting.length ? `<section class="panel" aria-labelledby="qWaitH">
     <h2 id="qWaitH">בהמתנה לתוצאות</h2>
-    <ul class="rows">${waiting.map(([q, w]) => `<li><span class="d">${fmtShort(w.end)}</span>
+    <ul class="rows">${waiting.map(([q, w]) => `<li><span class="d">${fmtShortY(w.end)}</span>
       <span class="t"><bdi>${esc(w.name)}</bdi><small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · <bdi>${esc(q.event)}</bdi></small></span>
       <span>${quotaStatusPill(q.israelStatus)}</span></li>`).join("")}</ul>
   </section>` : ""}

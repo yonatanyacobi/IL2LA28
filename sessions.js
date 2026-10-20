@@ -61,7 +61,7 @@ function fallbackSessions(d){
   for (const a of athletesByDay().get(d) || []) {
     const res = historyResult(a, d);
     if (!res && a.nextDate !== d) continue;   // most athletes have nothing that day: skip compOn() (docs/perf/2026-10.md)
-    const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: a.event || "", startUtc: null};
+    const base = {athletes: [a], sportId: a.sportId, comp: compOn(a.sportId, d), phase: res ? "" : a.event || "", startUtc: null};
     if (res) {
       const results = a.history.filter(h => h && typeof h === "object" && !Array.isArray(h) && h.kind === "result"
         && h.at === d && str(h.text).trim() && safeUrl(h.source)).map(h => ({text: str(h.text), source: h.source}));

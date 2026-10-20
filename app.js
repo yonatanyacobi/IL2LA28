@@ -665,6 +665,13 @@ function viewSport(id){
   <section class="stack">
     <div class="sec-head"><h2>תחרויות קרובות בענף</h2>${comps.length > 5 ? `<a href="#calendar-${esc(id)}">כל ${comps.length} התחרויות</a>` : ""}</div>
     ${comps.slice(0, 5).map(c => compRow(c, false)).join("") || calEmpty("אין תחרויות קרובות ידועות בענף.", id)}
+  </section>
+  <section class="panel" aria-labelledby="sportShareH">
+    <h2 id="sportShareH">שיתוף הענף</h2>
+    <p class="muted">הקישור מציג את הענף המלא ואת שיטת ההעפלה, ללא בחירות אישיות או סינון הסגל.</p>
+    <label for="sportShareUrl">קישור לענף ולשיטת ההעפלה</label>
+    <div class="share"><input id="sportShareUrl" readonly value="${esc(`${SITE_URL}#sport-${encodeURIComponent(id)}`)}" dir="ltr"><button class="btn ghost small" type="button" data-copy="sportShareUrl" data-copy-msg="sportShareMsg">העתקת הקישור</button></div>
+    <p class="foot" id="sportShareMsg" aria-live="polite"></p>
   </section>`;
 }
 
