@@ -14,6 +14,30 @@ const chipText = d => `${asDate(d).toLocaleDateString("he-IL", {weekday: "narrow
 const chipName = d => asDate(d).toLocaleDateString("he-IL", {weekday: "long", day: "numeric", month: "long"});
 
 const hasIsraelis = d => daySessions(d).length > 0;
+const DAY_PLAN_MAX = 3500;
+const dayPlanScope = () => dayFollowingOnly ? "הופעות מיוצאות — לפי המעקב שלי" : "הופעות מיוצאות — כל ההופעות";
+
+function dayWatchPlanText(d){
+  if (!realDate(d) || typeof exportedSessions !== "function") return "";
+  const sessions = exportedSessions().filter(s => s.day === d && (!dayFollowingOnly || followsSport(s.sportId) || followedIn(s)))
+    .sort((a, b) => byStart(a.startUtc, b.startUtc));
+  if (!sessions.length) return "";
+  const at = typeof publicSnapshot !== "undefined" ? publicSnapshot?.generatedAt : "";
+  const stamp = isUtc(at) ? `${fmt(ilDate(at))}, ${hhmm(at)}` : realDate(at) ? fmt(at) : "";
+  const head = [`תכנון יום צפייה · ${fmt(d)}`, dayPlanScope(),
+    stamp ? `נכון לייצוא מ־${stamp}` : "חותמת הייצוא אינה זמינה."];
+  const rows = sessions.map(s => `• ${isUtc(s.startUtc) ? hhmm(s.startUtc) : "השעה טרם פורסמה"} · ${waText(s.comp.name)}${s.phase ? " · " + waText(s.phase) : ""} · ${s.athletes.map(a => waText(a.name)).join(", ")}`);
+  const foot = ["", "הקישור מציג את היום המלא; סינון המעקב אישי לדפדפן.",
+    `${SITE_URL}#day-${d}`, "השעות לפי ישראל; כדאי לבדוק מול המקור."];
+  let omitted = 0;
+  const build = () => [...head, "", ...rows, ...(omitted ? [omitted === 1 ? "ועוד הופעה אחת בקישור" : `ועוד ${omitted} הופעות בקישור`] : []), ...foot].join("\n");
+  let text = build();
+  while (text.length > DAY_PLAN_MAX && rows.length) {
+    rows.pop(); omitted++;
+    text = build();
+  }
+  return text;
+}
 
 function compBlock(comp, sessions, sid, d){
   const t = today();
@@ -72,6 +96,7 @@ function viewDay(d){
     if (!after && hasIsraelis(addDays(d, i))) after = addDays(d, i);
   }
   const chips = Array.from({length: DAY_STRIP * 2 + 1}, (_, i) => addDays(d, i - DAY_STRIP));
+  const watchPlan = dayWatchPlanText(d);
   return `<div class="day-nav">
       <h1 tabindex="-1">${isToday ? `היום, ${dayTitle(d)}` : dayTitle(d)}</h1>
       <a class="day-prev" href="#day-${prev}"><span aria-hidden="true">→</span>&nbsp;${isToday ? "אתמול" : "היום הקודם"}<span class="sr">, ${chipName(prev)}</span></a>
@@ -99,6 +124,13 @@ function viewDay(d){
   <section class="panel" aria-labelledby="dayShareH"><h2 id="dayShareH">שיתוף היום</h2>
     <div class="share"><input id="dayShare" readonly value="${esc(SITE_URL + "#day-" + d)}" dir="ltr" aria-label="קישור ליום התחרויות"><button class="btn ghost small" type="button" data-copy="dayShare" data-copy-msg="dayShareMsg">העתקת הקישור</button></div>
     <p class="foot" id="dayShareMsg" aria-live="polite"></p>
+    <div class="digest" aria-labelledby="dayPlanH"><h3 id="dayPlanH">תכנון יום להעתקה</h3>
+      <p class="muted" id="dayPlanScope">${dayPlanScope()}. הקישור מציג את היום המלא; סינון המעקב אישי לדפדפן.</p>
+      ${watchPlan ? `<textarea id="dayPlan" readonly rows="8" aria-labelledby="dayPlanH" aria-describedby="dayPlanScope">${esc(watchPlan)}</textarea>
+        <button class="btn ghost small" type="button" data-copy="dayPlan" data-copy-msg="dayPlanMsg">העתקת התכנון</button>
+        <p class="foot" id="dayPlanMsg" aria-live="polite"></p>`
+        : `<p class="muted">${dayFollowingOnly ? "אין הופעות מיוצאות שמתאימות למעקב שלך ביום הזה." : "אין הופעות מיוצאות ביום הזה להכנת תכנון."}</p>`}
+    </div>
   </section>`;
 }
 

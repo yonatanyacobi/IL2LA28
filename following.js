@@ -115,7 +115,7 @@ function followingUpcomingContent(clockOnly = false){
       const mark = clockOnly ? followingUpcomingMarks.get(x.k) || "" : rowMark(x.k, x.d + x.html);
       if (!clockOnly) followingUpcomingMarks.set(x.k, mark);
       const time = x.session ? `<br>${isUtc(x.startUtc) ? timeTag(x.startUtc, hhmm(x.startUtc)) : "השעה טרם פורסמה"}` : "";
-      return `<li><span class="d">${fmtShort(x.d)}${time}</span><span class="t">${x.html}${mark}</span><span>${x.chip}</span></li>`;
+      return `<li><span class="d">${fmtShortY(x.d)}${time}</span><span class="t">${x.html}${mark}</span><span>${x.chip}</span></li>`;
   };
   return next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
     <ul class="rows">${next.slice(0, FOLLOW_UPCOMING_ROWS).map(row).join("")}</ul>
