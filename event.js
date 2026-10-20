@@ -78,6 +78,7 @@ function viewEvent(id){
     .map(([is, label]) => (n => n ? `${label}: ${n}` : "")(count(is)))].filter(Boolean).join(" · ");
   const stakes = eventStakes(c);
   const tracked = athletesOf(c.sportId).length;
+  const sportFollowed = followsSport(c.sportId), sportLabel = sportName(c.sportId);
   // Stale-aware only while something happens today; a season-long series isn't "running" on every day of it.
   const hasToday = series ? flat.some(([, d]) => d === t) : c.start <= t && t <= (c.end || c.start);
   const schedSrc = flat.map(([s]) => s.source).find(Boolean) || c.source;
@@ -100,6 +101,7 @@ function viewEvent(id){
   return `<p class="crumb"><a href="#sport-${esc(c.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sportName(c.sportId))}</a></p>
   <div class="event-head" data-event="${esc(id)}">
     <h1 tabindex="-1">${esc(c.name)}</h1>
+    <button class="btn ghost follow" type="button" id="evFollowSport" data-event-follow-sport="${esc(c.sportId)}" aria-pressed="${sportFollowed}" aria-label="${esc(sportFollowed ? `הסרת הענף ${sportLabel} מהמעקב` : `מעקב אחרי ${sportLabel}`)}">${sportFollowed ? "★ הענף במעקב שלך" : `☆ מעקב אחרי ${esc(sportLabel)}`}</button>
     ${freshLine(hasToday)}
     <p class="muted">${[fmtRange(c.start, c.end), esc(c.location)].filter(Boolean).join(" · ")}</p>
     <div class="pills">${eventStatus(c, flat)}${c.qualifying ? `<span class="pill open">העפלה</span>` : ""}${series ? `<span class="pill ended">סדרה עונתית</span>` : ""}</div>
@@ -124,8 +126,10 @@ function viewEvent(id){
         <ul class="rows">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a))
           .sort(([x, xd], [y, yd]) => xd.localeCompare(yd) || byStart(x.startUtc, y.startUtc)), last = mine[mine.length - 1];
           const st = last ? athleteStatus(last[0], last[1], a) : "";
+          const followed = S.follows.has(a.id);
+          const button = `<button class="btn ghost small follow" type="button" id="evFollow-${esc(a.id)}" data-event-follow="${esc(a.id)}" aria-pressed="${followed}" aria-label="${esc(followed ? `הסרת ${a.name} מהמעקב` : `מעקב אחרי ${a.name}`)}">${followed ? "★ במעקב שלך" : "☆ מעקב"}</button>`;
           // A result is shown only in the schedule row, next to its source; components.md §6 row.
-          return athleteRow(a, isResult(st) ? `<span class="muted">תוצאה בלוח הזמנים</span>` : statusChip(st)); }).join("")}</ul></section>` : ""}
+          return athleteRow(a, `<span class="actions">${isResult(st) ? `<span class="muted">תוצאה בלוח הזמנים</span>` : statusChip(st)}${button}</span>`); }).join("")}</ul></section>` : ""}
     </div>
   </div>
   ${safeUrl(schedSrc) ? `<p class="foot">${hostLink(schedSrc, "לוח הזמנים")}</p>` : ""}
@@ -138,6 +142,21 @@ function viewEvent(id){
 document.addEventListener("change", e => {
   if (e.target?.id !== "eventFollowOnly" || !currentRoute().startsWith("c-")) return;
   eventFollowingOnly = e.target.checked;
+  refresh();
+});
+document.addEventListener("click", e => {
+  const button = e.target.closest?.("[data-event-follow],[data-event-follow-sport]");
+  if (!button || !currentRoute().startsWith("c-")) return;
+  const c = S.comps.find(comp => comp.id === currentRoute().slice(2));
+  if (!c) return;
+  if (button.dataset.eventFollowSport !== undefined) {
+    if (button.dataset.eventFollowSport !== c.sportId || !sportById(c.sportId)) return;
+    toggleFollowSport(c.sportId);
+  } else {
+    const id = button.dataset.eventFollow;
+    if (![...eventSessions(c).groups.values()].some(list => list.some(s => s.athletes.some(a => a.id === id)))) return;
+    toggleFollow(id);
+  }
   refresh();
 });
 document.addEventListener("click", e => {
