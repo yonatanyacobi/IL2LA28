@@ -5197,6 +5197,17 @@
       "notes": "תחרות עונה לפני חלון ההעפלה האולימפי. תוצאת מוקדמות אישית של סרגיי ריכטר מתועדת באתר; אין כאן קביעה על מכסה או על השתתפות ישראלים במקצים אחרים.",
       "source": "https://www.issf-sports.org/competitions/3458/results",
       "qualifying": false
+    },
+    {
+      "id": "boxing-world-cup-brazil-2026",
+      "sportId": "boxing",
+      "name": "גביע העולם באגרוף — ברזיל 2026",
+      "location": "פוז דו איגואסו, ברזיל",
+      "start": "2026-04-20",
+      "end": "2026-04-26",
+      "notes": "תחרות עונה לגברים ולנשים בוגרים. הטווח מציין ימי תחרות בלבד, ללא ימי הגעה, אימונים או יציאה. השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://worldboxing.org/record-number-of-boxers-registered-to-compete-at-world-boxing-cup-brazil-2026-in-foz-do-iguacu/",
+      "qualifying": false
     }
   ],
   "changes": [
