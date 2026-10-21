@@ -137,15 +137,43 @@ function dayGeneralCompetitions(d){
     .sort((a, b) => a.start.localeCompare(b.start) || heCmp(a.name, b.name));
 }
 
+function dayGeneralCompetitionsShareText(d, rows = dayGeneralCompetitions(d)){
+  if (!realDate(d) || !rows.length) return "";
+  const plain = value => str(value).replace(/\s+/g, " ").trim();
+  const canonical = (type, id) => {
+    try { return `${SITE_URL}#${type}-${encodeURIComponent(id)}`; } catch { return ""; }
+  };
+  const blocks = rows.map(c => [`• ${plain(sportName(c.sportId))} · ${plain(c.name)}`,
+    c.start === (c.end || c.start) ? fmt(c.start) : `${fmt(c.start)} – ${fmt(c.end || c.start)}`,
+    plain(c.location), canonical("c", c.id), safeUrl(c.source) ? `מקור: ${c.source}` : ""].filter(Boolean).join("\n"));
+  const head = [`תחרויות כלליות ליום · ${fmt(d)}`, "כל הענפים, ללא סינון לפי המעקב.",
+    "טווח התחרות כולל את התאריך שנבחר; אין בכך אישור למקצה באותו יום או להשתתפות ספורטאים מישראל."];
+  const foot = ["זהו לוח תחרויות כללי, ללא אישור להופעה ישראלית או למקצה ביום שנבחר.", canonical("day", d)];
+  let keep = blocks.length;
+  const build = () => [...head, "", ...blocks.slice(0, keep),
+    ...(keep < blocks.length ? [`${blocks.length - keep === 1 ? "הושמטה תחרות אחת" : `הושמטו ${blocks.length - keep} תחרויות`} מהטקסט; הרשימה זמינה ביום שבקישור.`] : []),
+    "", ...foot].join("\n");
+  let text = build();
+  while (text.length > 3500 && keep) { keep--; text = build(); }
+  return text;
+}
+
 function dayGeneralCompetitionsSection(d){
   const rows = dayGeneralCompetitions(d), more = rows.slice(5);
   if (!rows.length) return "";
+  const text = dayGeneralCompetitionsShareText(d, rows);
   return `<section class="panel" id="dayGeneralCompetitions" aria-labelledby="dayGeneralCompetitionsH">
     <h2 id="dayGeneralCompetitionsH">תחרויות כלליות שמועדיהן כוללים את היום</h2>
     <p class="muted">${plural(rows.length, "תחרות אחת", "תחרויות")} בלוח הכללי. הרשימה כוללת את כל הענפים ואינה מסוננת לפי המעקב שלך.</p>
     <p class="muted">טווח התחרות כולל את התאריך שנבחר; אין בכך אישור למקצה באותו יום או להשתתפות ספורטאים מישראל. חלונות דירוג וסדרות ארוכות אינם מוצגים כאן.</p>
     ${rows.slice(0, 5).map(c => compRow(c, true)).join("")}
     ${more.length ? `<details id="dayGeneralCompetitionsOverflow"><summary id="dayGeneralCompetitionsMore">${more.length === 1 ? "עוד תחרות אחת" : `עוד ${more.length} תחרויות`}</summary>${more.map(c => compRow(c, true)).join("")}</details>` : ""}
+    <div class="digest"><label for="dayGeneralCopyText">תחרויות כלליות ליום להעתקה</label>
+      <textarea id="dayGeneralCopyText" readonly rows="8" aria-describedby="dayGeneralCopyHelp">${esc(text)}</textarea>
+      <p class="foot" id="dayGeneralCopyHelp">אפשר לבחור את הטקסט ולהעתיק ידנית. הרשימה כללית ואינה מסוננת לפי המעקב שלך.</p>
+      <button class="btn ghost small" type="button" data-copy="dayGeneralCopyText" data-copy-msg="dayGeneralCopyMsg">העתקת התחרויות הכלליות</button>
+      <p class="foot" id="dayGeneralCopyMsg" aria-live="polite"></p>
+    </div>
   </section>`;
 }
 

@@ -1310,10 +1310,12 @@ function refresh({preserveFollowingVisit = false} = {}){
   const el = document.activeElement, key = focusKey(el), y = window.scrollY;
   const sportArchive = currentRoute().startsWith("sport-") && !!sportById(currentRoute().slice(6));
   const dayGeneral = /^(today|day(?:-\d{4}-\d{2}-\d{2})?)$/.test(currentRoute());
+  const athleteFuture = currentRoute().startsWith("a-") && !!athleteById(currentRoute().slice(2));
   const open = [...($("view").querySelectorAll?.("details") || [])]
     .flatMap((d, index) => d.open ? [{index, id: preserveFollowingVisit || (currentRoute() === "home" && HOME_SEARCH_DETAILS.includes(d.id))
       || (sportArchive && d.id === "sportPastCompetitionsOverflow")
-      || (dayGeneral && d.id === "dayGeneralCompetitionsOverflow") ? d.id : ""}] : []);
+      || (dayGeneral && d.id === "dayGeneralCompetitionsOverflow")
+      || (athleteFuture && d.id === "athleteFutureSessionsOverflow") ? d.id : ""}] : []);
   let selection = null;
   try {
     if (typeof el?.selectionStart === "number") selection = {start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection};
@@ -1323,7 +1325,8 @@ function refresh({preserveFollowingVisit = false} = {}){
   open.forEach(item => {
     const detail = item.id ? details.find(d => d.id === item.id) : details[item.index];
     if (detail && (item.id || ((!sportArchive || detail.id !== "sportPastCompetitionsOverflow")
-      && (!dayGeneral || detail.id !== "dayGeneralCompetitionsOverflow")))) detail.open = true;
+      && (!dayGeneral || detail.id !== "dayGeneralCompetitionsOverflow")
+      && (!athleteFuture || detail.id !== "athleteFutureSessionsOverflow")))) detail.open = true;
   });
   const again = !key ? null : key.id ? $(key.id) : (m => m[key.idx] || m[0])([...($("view").querySelectorAll?.(key.sel) || [])]);
   if (again && again !== el) {

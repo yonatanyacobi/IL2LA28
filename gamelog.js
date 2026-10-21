@@ -114,17 +114,30 @@ function athleteUpcomingSessions(a){
     .sort((x, y) => x.day.localeCompare(y.day) || byStart(x.startUtc, y.startUtc));
 }
 
-function athleteUpcomingSection(a){
-  const sessions = athleteUpcomingSessions(a), more = sessions.length - ATHLETE_UPCOMING_ROWS;
-  const row = s => `<li><span class="d"><a href="#day-${esc(s.day)}">${esc(fmt(s.day))}</a><br>${s.startUtc
+function athleteFutureSessions(a){
+  const through = addDays(today(), 13);
+  return exportedSessions().filter(s => s.athletes.includes(a) && s.day > through
+    && ["before", "competing"].includes(athleteStatus(s, s.day, a)))
+    .sort((x, y) => x.day.localeCompare(y.day) || byStart(x.startUtc, y.startUtc));
+}
+
+function athleteUpcomingRow(s, a){
+  return `<li><span class="d"><a href="#day-${esc(s.day)}">${esc(fmt(s.day))}</a><br>${s.startUtc
     ? timeTag(s.startUtc, hhmm(s.startUtc)) : "השעה טרם פורסמה"}</span>
     <span class="t">${compLink(s.comp, esc(s.comp.name))}${s.phase ? `<small><bdi>${esc(s.phase)}</bdi></small>` : ""}${safeUrl(s.source) ? `<small>${linkOut(s.source, "לוח הזמנים")}</small>` : ""}</span>
     <span>${statusChip(athleteStatus(s, s.day, a))}</span></li>`;
+}
+
+function athleteUpcomingSection(a){
+  const sessions = athleteUpcomingSessions(a), more = sessions.length - ATHLETE_UPCOMING_ROWS;
+  const future = athleteFutureSessions(a), row = s => athleteUpcomingRow(s, a);
   return `<section class="panel" aria-labelledby="athleteUpcomingH"><h2 id="athleteUpcomingH">ההופעות הקרובות</h2>
     ${sessions.length ? `<ul class="rows">${sessions.slice(0, ATHLETE_UPCOMING_ROWS).map(row).join("")}</ul>
       ${more > 0 ? `<details><summary>${more === 1 ? "הצגת עוד הופעה אחת" : `הצגת עוד ${more} הופעות`}</summary><ul class="rows">${sessions.slice(ATHLETE_UPCOMING_ROWS).map(row).join("")}</ul></details>` : ""}`
       : `<p class="muted">אין הופעות ידועות של ${esc(a.name)} בשבועיים הקרובים.</p><p><a href="#calendar-${esc(a.sportId)}">ללוח התחרויות בענף</a></p>`}
-  </section>`;
+  </section>${future.length ? `<details class="panel" id="athleteFutureSessionsOverflow"><summary id="athleteFutureSessionsMore">עוד הופעות אישיות ידועות בהמשך</summary>
+    <p class="muted">${plural(future.length, "הופעה אישית אחת", "הופעות אישיות")} מעבר לשבועיים הקרובים, לפי המידע שתועד באתר.</p>
+    <ul class="rows">${future.map(row).join("")}</ul></details>` : ""}`;
 }
 
 // A history result the log shows: it needs an https source, since every log line names one. Any other result stays
