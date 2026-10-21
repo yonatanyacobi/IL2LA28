@@ -815,13 +815,20 @@ function viewAthlete(id){
 
 // Mail links often do nothing inside the artifact frame, so the address is always shown as copyable text too.
 function reportBox(subject, link){
-  const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent("קישור: " + link + "\n\nמה לא נכון ומה המקור הנכון:\n")}`;
+  const body = "קישור: " + link + "\n\nמה לא נכון ומה המקור הנכון:\n";
+  const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const draft = `אל: ${CONTACT_EMAIL}\nנושא: ${subject}\n\n${body}`;
   return `<section class="panel">
     <h2>מצאתם טעות?</h2>
     <p>שלחו מייל עם קישור לדף ועם מקור לנתון הנכון. כל תיקון נבדק לפני שהוא מתפרסם.</p>
     <div class="share"><input id="mailAddr" readonly value="${esc(CONTACT_EMAIL)}" dir="ltr" aria-label="כתובת לדיווח"><button class="btn ghost small" data-copy="mailAddr">העתקת הכתובת</button>
       <a class="btn ghost small" href="${esc(mailto)}">פתיחת מייל</a></div>
     <p class="foot" id="copyMsg2" aria-live="polite"></p>
+    <div class="digest"><label for="reportDraftText">טיוטת הדיווח להעתקה</label>
+      <textarea id="reportDraftText" readonly rows="7" aria-describedby="reportDraftHelp">${esc(draft)}</textarea>
+      <p class="foot" id="reportDraftHelp">אפשר לבחור את הטקסט ולהעתיק ידנית למייל, ולהוסיף את הטעות ואת המקור הנכון. הטיוטה אינה נשלחת מכאן.</p>
+      <button class="btn ghost small" type="button" data-copy="reportDraftText" data-copy-msg="reportDraftMsg">העתקת טיוטת הדיווח</button>
+      <p class="foot" id="reportDraftMsg" aria-live="polite"></p></div>
     ${fixLogLive() ? `<p class="foot">כל התיקונים מתפרסמים ב<a href="#corrections">יומן התיקונים</a>, והיעד הוא תוך 48 שעות.</p>` : ""}
   </section>`;
 }
