@@ -14,11 +14,13 @@ function viewQuotas(){
   if (quotaSportFilter && !sports.some(s => s.id === quotaSportFilter)) quotaSportFilter = "";
   if (!all.length) return head + `<p class="muted">עוד לא נאספו נתוני מכסות.</p>`;
   const query = searchKey(quotaSearch);
+  const terms = query ? query.split(" ") : [];
   const list = all.filter(q => {
     const sport = sportById(q.sportId);
+    const text = searchKey([q.event, sport?.he, sport?.en].map(str).join(" "));
     return (!quotaSportFilter || q.sportId === quotaSportFilter)
       && (!quotaFollowOnly || S.followSports.has(q.sportId))
-      && (!query || searchKey([q.event, sport?.he, sport?.en].map(str).join(" ")).includes(query));
+      && terms.every(term => text.includes(term));
   });
   const n = quotaCounts(list);
   const upcoming = new Map();

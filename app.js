@@ -879,10 +879,10 @@ function calendarMonthBounds(value){
 function calendarRows(past = S.cal.past){
   const t = today(), {sport, qual} = S.cal;
   const month = calendarMonthBounds(calendarMonth);
-  const query = searchKey(calendarQuery);
+  const terms = searchKey(calendarQuery).split(" ").filter(Boolean);
   return S.comps.filter(c => (!sport || c.sportId === sport) && (!calendarFollowedOnly || S.followSports.has(c.sportId))
     && (!qual || c.qualifying) && (past || (c.end || c.start) >= t)
-    && (!query || searchKey([c.name, c.location].map(str).join(" ")).includes(query))
+    && terms.every(term => searchKey([c.name, c.location].map(str).join(" ")).includes(term))
     && (!month || c.start <= month.end && (c.end || c.start) >= month.start))
     .sort((a, b) => a.start.localeCompare(b.start));
 }
