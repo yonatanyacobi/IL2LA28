@@ -5578,6 +5578,50 @@
       "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
       "source": "https://www.worldaquatics.com/competitions/5019/world-aquatics-diving-world-cup-2026-super-final",
       "qualifying": false
+    },
+    {
+      "id": "uww-european-senior-tirana-2026",
+      "sportId": "wrestling",
+      "name": "אליפות אירופה בהיאבקות לבוגרים – טירנה 2026",
+      "location": "טירנה, אלבניה",
+      "start": "2026-04-20",
+      "end": "2026-04-26",
+      "notes": "תחרות עונה לבוגרים; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://uww.org/events/senior-european-championships-0",
+      "qualifying": false
+    },
+    {
+      "id": "uww-world-senior-astana-2026",
+      "sportId": "wrestling",
+      "name": "אליפות העולם בהיאבקות לבוגרים – אסטנה 2026",
+      "location": "אסטנה, קזחסטן",
+      "start": "2026-10-24",
+      "end": "2026-11-01",
+      "notes": "תחרות עונה לבוגרים; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://uww.org/articles/astana-announced-replacement-host-2026-world-championships",
+      "qualifying": false
+    },
+    {
+      "id": "rg-world-cup-sofia-2026",
+      "sportId": "rhythmic-gymnastics",
+      "name": "גביע העולם בהתעמלות אמנותית – סופיה 2026",
+      "location": "סופיה, בולגריה",
+      "start": "2026-03-28",
+      "end": "2026-03-30",
+      "notes": "תחנת עונה לבוגרות, המפורטת בנפרד מרשומת סדרת גביעי העולם הכללית. אין כאן אישור לסיווג העפלה אולימפית; השתתפות ספורטאיות מישראל ותוצאותיהן לא אומתו.",
+      "source": "https://www.gymnastics.sport/site/events/detail.php?id=17924&type=sport",
+      "qualifying": false
+    },
+    {
+      "id": "rg-world-cup-tashkent-2026",
+      "sportId": "rhythmic-gymnastics",
+      "name": "גביע העולם בהתעמלות אמנותית – טשקנט 2026",
+      "location": "טשקנט, אוזבקיסטן",
+      "start": "2026-04-10",
+      "end": "2026-04-12",
+      "notes": "תחנת עונה לבוגרות, המפורטת בנפרד מרשומת סדרת גביעי העולם הכללית. אין כאן אישור לסיווג העפלה אולימפית; השתתפות ספורטאיות מישראל ותוצאותיהן לא אומתו.",
+      "source": "https://www.gymnastics.sport/site/events/detail.php?id=17922&type=sport",
+      "qualifying": false
     }
   ],
   "changes": [
