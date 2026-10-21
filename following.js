@@ -323,15 +323,46 @@ function viewFollowing(tab = ""){
   return followingContent(tab);
 }
 
+function followingDocumentedResults(){
+  return documentedResults().filter(r => S.followSports.has(r.sportId) || r.athletes.some(a => S.follows.has(a.id)));
+}
+
+function followingResultsShareText(rows = followingDocumentedResults()){
+  if (!rows.length) return "";
+  const plain = value => str(value).replace(/\s+/g, " ").trim();
+  const canonical = (type, id) => {
+    try { return `${SITE_URL}#${type}-${encodeURIComponent(id)}`; } catch { return ""; }
+  };
+  const blocks = rows.map(r => [`• ${fmt(r.day)} · ${plain(sportName(r.sportId))}`,
+    `${r.athletes.length > 1 ? "תוצאה משותפת: " : ""}${r.athletes.map(a => plain(a.name)).join(" · ")}`,
+    [plain(r.phase), plain(r.result)].filter(Boolean).join(": "), `מקור: ${r.source}`,
+    ...(r.comp ? [plain(r.comp.name), canonical("c", r.comp.id)]
+      : [...r.athletes.map(a => canonical("a", a.id)), canonical("day", r.day)])].filter(Boolean).join("\n"));
+  const head = ["תוצאות מתועדות במעקב שלי",
+    "תיעוד היסטורי חלקי שפורסם באתר; אינו רשימת חדשות או כלל ההישגים."];
+  const foot = ["הקישור מציג את כלל התוצאות באתר; העדפות המעקב שלי אינן מועברות לנמען.", `${SITE_URL}#results`];
+  let keep = blocks.length;
+  const build = () => [...head, "", ...blocks.slice(0, keep),
+    ...(keep < blocks.length ? [`${blocks.length - keep === 1 ? "הושמטה שורת תוצאה אחת" : `הושמטו ${blocks.length - keep} שורות תוצאה`} מהטקסט; התוצאות זמינות באתר.`] : []),
+    "", ...foot].join("\n");
+  let text = build();
+  while (text.length > 3500 && keep) { keep--; text = build(); }
+  return text;
+}
+
 function followingDocumentedResultsSection(){
   if (!S.follows.size && !S.followSports.size) return "";
-  const rows = documentedResults().filter(r => S.followSports.has(r.sportId) || r.athletes.some(a => S.follows.has(a.id)));
-  const more = rows.slice(5);
+  const rows = followingDocumentedResults(), more = rows.slice(5), text = followingResultsShareText(rows);
   return `<section class="panel" aria-labelledby="followingResultsH"><h2 id="followingResultsH">תוצאות מתועדות אחרונות במעקב שלי</h2>
     <p class="muted">מידע היסטורי שתועד באתר, בנפרד מעדכונים מאז הביקור הקודם.</p>
     ${rows.length ? `<ul class="rows">${rows.slice(0, 5).map(documentedResultRow).join("")}</ul>
       ${more.length ? `<details id="followingResultsOverflow"><summary id="followingResultsMore">${more.length === 1 ? "עוד תוצאה אחת במעקב שלי" : `עוד ${more.length} תוצאות במעקב שלי`}</summary><ul class="rows">${more.map(documentedResultRow).join("")}</ul></details>` : ""}`
       : `<p class="muted">לא תועדו תוצאות במעקב שלי. <a href="#sports">לענפים ולרשומות באתר</a></p>`}
+    ${text ? `<div class="digest"><label for="followingResultsCopyText">תוצאות מתועדות במעקב שלי להעתקה</label>
+      <textarea id="followingResultsCopyText" readonly rows="8" aria-describedby="followingResultsCopyHelp">${esc(text)}</textarea>
+      <p class="foot" id="followingResultsCopyHelp">אפשר לבחור את הטקסט ולהעתיק ידנית. העדפות המעקב אינן מועברות לנמען.</p>
+      <button class="btn ghost small" type="button" data-copy="followingResultsCopyText" data-copy-msg="followingResultsCopyMsg">העתקת תוצאות המעקב</button>
+      <p class="foot" id="followingResultsCopyMsg" aria-live="polite"></p></div>` : ""}
   </section>`;
 }
 
