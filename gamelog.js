@@ -50,20 +50,64 @@ function sportRecentResultsSection(id){
 let resultsSearchQuery = "", resultsMonth = "";
 const resultsMonths = rows => [...new Set(rows.filter(r => realDate(r.day)).map(r => r.day.slice(0, 7)))].sort().reverse();
 
-function resultsSearchContent(preserveOverflow = false, all = documentedResults()){
+function filteredDocumentedResults(all = documentedResults()){
   if (resultsMonth && !resultsMonths(all).includes(resultsMonth)) resultsMonth = "";
-  const query = searchKey(resultsSearchQuery);
-  const rows = all.filter(r => (!resultsMonth || r.day.slice(0, 7) === resultsMonth) && (!query || searchKey([
-    ...r.athletes.flatMap(a => [a.name, a.name_en]), sportById(r.sportId)?.he, sportById(r.sportId)?.en,
-    r.comp?.name, r.result
-  ].map(str).join(" ")).includes(query))), more = rows.slice(10);
+  const terms = searchKey(resultsSearchQuery).split(" ").filter(Boolean);
+  return all.filter(r => {
+    if (resultsMonth && r.day.slice(0, 7) !== resultsMonth) return false;
+    const key = searchKey([
+      ...r.athletes.flatMap(a => [a.name, a.name_en]), sportById(r.sportId)?.he, sportById(r.sportId)?.en,
+      r.comp?.name, r.result
+    ].map(str).join(" "));
+    return terms.every(term => key.includes(term));
+  });
+}
+
+function resultsFilteredCopyText(rows = filteredDocumentedResults()){
+  if (!rows.length) return "";
+  const plain = value => str(value).replace(/\s+/g, " ").trim();
+  const canonical = (type, id) => {
+    try { return `${SITE_URL}#${type}-${encodeURIComponent(id)}`; } catch { return ""; }
+  };
+  const query = plain(resultsSearchQuery);
+  const head = ["תוצאות מתועדות לפי הסינון הנוכחי",
+    "תיעוד היסטורי חלקי שפורסם באתר; אינו רשימת חדשות או כלל הישגי ישראל.",
+    ...(query ? [`חיפוש: ${query.length > 160 ? query.slice(0, 160) + "… (תיאור החיפוש מקוצר)" : query}`] : []),
+    ...(resultsMonth ? [`חודש: ${resultsMonth}`] : [])];
+  const foot = ["הקישור מציג את דף התוצאות ואינו שומר חיפוש או חודש.", `${SITE_URL}#results`];
+  const blocks = rows.map(r => [`• ${fmt(r.day)} · ${plain(sportName(r.sportId))}`,
+    `${r.athletes.length > 1 ? "תוצאה משותפת: " : ""}${r.athletes.map(a => plain(a.name)).join(" · ")}`,
+    [plain(r.phase), plain(r.result)].filter(Boolean).join(": "), `מקור: ${r.source}`,
+    ...(r.comp ? [plain(r.comp.name), canonical("c", r.comp.id)]
+      : [...r.athletes.map(a => canonical("a", a.id)), canonical("day", r.day)])].filter(Boolean).join("\n"));
+  let keep = blocks.length;
+  const build = () => [...head, "", ...blocks.slice(0, keep),
+    ...(keep < blocks.length ? [`${blocks.length - keep === 1 ? "הושמטה שורת תוצאה אחת" : `הושמטו ${blocks.length - keep} שורות תוצאה`} מהטקסט; התוצאות זמינות באתר.`] : []),
+    "", ...foot].join("\n");
+  let text = build();
+  while (text.length > 3500 && keep) { keep--; text = build(); }
+  return text;
+}
+
+function resultsFilteredCopySection(rows){
+  const text = resultsFilteredCopyText(rows);
+  return text ? `<div class="digest"><label for="resultsFilteredCopyText">התוצאות לפי הסינון הנוכחי להעתקה</label>
+    <textarea id="resultsFilteredCopyText" readonly rows="8" aria-describedby="resultsFilteredCopyHelp">${esc(text)}</textarea>
+    <p class="foot" id="resultsFilteredCopyHelp">אפשר לבחור את הטקסט ולהעתיק ידנית. הקישור אינו שומר חיפוש או חודש.</p>
+    <button class="btn ghost small" type="button" data-copy="resultsFilteredCopyText" data-copy-msg="resultsFilteredCopyMsg">העתקת התוצאות המסוננות</button>
+    <p class="foot" id="resultsFilteredCopyMsg" aria-live="polite"></p></div>` : "";
+}
+
+function resultsSearchContent(preserveOverflow = false, all = documentedResults()){
+  const rows = filteredDocumentedResults(all), more = rows.slice(10);
   const open = preserveOverflow && $("resultsOverflow")?.open;
   const row = r => documentedResultRow(r).replace(/<\/span><\/li>$/, `<small><a href="#sport-${esc(r.sportId)}">${esc(sportName(r.sportId))}</a></small></span></li>`);
   return `<p class="muted" id="resultsSearchCount" role="status">נמצאו ${rows.length} מתוך ${all.length} שורות תוצאה מתועדות באתר.</p>
     ${rows.length ? `<ul class="rows">${rows.slice(0, 10).map(row).join("")}</ul>
       ${more.length ? `<details id="resultsOverflow"${open ? " open" : ""}><summary id="resultsMore">${more.length === 1 ? "עוד שורת תוצאה מתועדת אחת" : `עוד ${more.length} שורות תוצאה מתועדות`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}`
       : all.length ? `<div class="empty"><p>אין תוצאות מתועדות שמתאימות לחיפוש ולחודש שנבחרו. אפשר לאפס את הסינון כדי להציג את כל התוצאות המתועדות.</p></div>`
-      : `<div class="empty"><p>עוד לא תועדו תוצאות באתר.</p><p><a href="#sports">לענפים באתר</a> · <a href="#calendar">ללוח התחרויות</a></p></div>`}`;
+      : `<div class="empty"><p>עוד לא תועדו תוצאות באתר.</p><p><a href="#sports">לענפים באתר</a> · <a href="#calendar">ללוח התחרויות</a></p></div>`}
+    ${resultsFilteredCopySection(rows)}`;
 }
 
 function viewResults(){
@@ -80,8 +124,14 @@ function viewResults(){
 }
 
 function updateResultsSearch(){
-  const y = window.scrollY;
+  const y = window.scrollY, active = document.activeElement;
+  const selection = active?.id === "resultsFilteredCopyText" ? [active.selectionStart, active.selectionEnd, active.selectionDirection] : null;
   $("resultsSearchContent").innerHTML = resultsSearchContent();
+  if (selection && filteredDocumentedResults().length) {
+    const input = $("resultsFilteredCopyText");
+    input?.focus({preventScroll: true});
+    try { input?.setSelectionRange(...selection); } catch {}
+  }
   if (typeof y === "number") scrollTo({top: y, behavior: "auto"});
 }
 
