@@ -5534,6 +5534,50 @@
       "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
       "source": "https://worldrowing.com/2026/08/21/how-to-follow-the-2026-world-rowing-championships-in-amsterdam-the-netherlands/",
       "qualifying": false
+    },
+    {
+      "id": "icf-slalom-wc-tacen-2026",
+      "sportId": "canoe",
+      "name": "גביע העולם בקאנו סלאלום – טאצן 2026",
+      "location": "לובליאנה–טאצן, סלובניה",
+      "start": "2026-05-29",
+      "end": "2026-05-31",
+      "notes": "תחרות עונה בקאנו סלאלום; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://paddleworldwide.com/competitions/2026-icf-canoe-slalom-world-cup-tacen-2491",
+      "qualifying": false
+    },
+    {
+      "id": "icf-slalom-wc-prague-2026",
+      "sportId": "canoe",
+      "name": "גביע העולם בקאנו סלאלום – פראג 2026",
+      "location": "פראג, צ׳כיה",
+      "start": "2026-06-05",
+      "end": "2026-06-07",
+      "notes": "תחרות עונה בקאנו סלאלום; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://paddleworldwide.com/competitions/2026-icf-canoe-slalom-world-cup-prague-2490",
+      "qualifying": false
+    },
+    {
+      "id": "diving-world-cup-montreal-2026",
+      "sportId": "diving",
+      "name": "גביע העולם בקפיצות למים – מונטריאול 2026",
+      "location": "מונטריאול, קנדה",
+      "start": "2026-02-26",
+      "end": "2026-03-01",
+      "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://www.worldaquatics.com/competitions/5018/world-aquatics-diving-world-cup-2026",
+      "qualifying": false
+    },
+    {
+      "id": "diving-world-cup-super-final-beijing-2026",
+      "sportId": "diving",
+      "name": "גמר העל של גביע העולם בקפיצות למים – בייג׳ינג 2026",
+      "location": "בייג׳ינג, סין",
+      "start": "2026-05-01",
+      "end": "2026-05-03",
+      "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://www.worldaquatics.com/competitions/5019/world-aquatics-diving-world-cup-2026-super-final",
+      "qualifying": false
     }
   ],
   "changes": [
