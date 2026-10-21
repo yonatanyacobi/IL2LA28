@@ -5456,6 +5456,28 @@
       "notes": "תחרות עונה לפני חלון ההעפלה האולימפי בענף. אין כאן קביעה על מכסה או שינוי בשלב ההעפלה.",
       "source": "https://results.worldtaekwondo.org/resultbooks/2026-austrian-open-result-book-698f242a0e5b4.pdf",
       "qualifying": false
+    },
+    {
+      "id": "tri-world-cup-lanzarote-2026",
+      "sportId": "triathlon",
+      "name": "גביע העולם בטריאתלון לנזרוטה",
+      "location": "קוסטה טגיסה, לנזרוטה, ספרד",
+      "start": "2026-03-14",
+      "end": "2026-03-14",
+      "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://triathlon.org/events/2026-world-triathlon-cup-lanzarote/results",
+      "qualifying": false
+    },
+    {
+      "id": "wtcs-samarkand-2026",
+      "sportId": "triathlon",
+      "name": "סבב האליפות העולמית בטריאתלון (WTCS) סמרקנד",
+      "location": "סמרקנד, אוזבקיסטן",
+      "start": "2026-04-25",
+      "end": "2026-04-25",
+      "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://triathlon.org/events/2026-wtcs-samarkand/results",
+      "qualifying": false
     }
   ],
   "changes": [

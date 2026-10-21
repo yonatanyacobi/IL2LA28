@@ -540,7 +540,7 @@ function viewHome(){
   ${closestPanel(rows)}
   ${reviewPanel()}
   <section class="panel" aria-label="התקדמות בהעפלה">
-    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} ברשימה · <b>${counts[1]}</b> בחלון העפלה פתוח · <b>${quota}</b> עם מכסה</p>
+    <p class="kpi">${S.athletes.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `<b>${S.athletes.length}</b> ספורטאים ונבחרות`} ברשימה · <a href="#athletes-open"><b>${counts[1]}</b> בחלון העפלה פתוח</a> · <b>${quota}</b> עם מכסה</p>
     ${quotaKpi()}
     ${bar}
     <ul class="legend">${STAGES.map((s, i) => `<li><i style="background:${colors[i]}"></i>${s} <b>${counts[i]}</b></li>`).join("")}</ul>
@@ -554,6 +554,18 @@ function viewHome(){
   ${S.seenBefore && !mine.length && !mineSports.length ? `<p class="foot">טיפ: לחצו על ☆ בדף של ספורטאי/ת, נבחרת או ענף כדי לעקוב, והמעקב שלכם יופיע כאן. הוא נשמר רק בדפדפן הזה.</p>` : ""}`;
 }
 
+const OPEN_ATHLETES_MAX = 24;
+function viewOpenAthletes(){
+  const list = S.athletes.filter(a => stageOf(a) === 1)
+    .sort((a, b) => heCmp(a.name, b.name) || heCmp(a.id, b.id));
+  return `<h1 tabindex="-1">בחלון העפלה פתוח</h1>
+    <p class="muted" id="openAthletesCount">${list.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${list.length} ספורטאים ונבחרות`} ברשימה בשלב זה.</p>
+    <p class="muted">הרשימה מבוססת על שלב ההעפלה המתועד של כל ספורטאי/ת או נבחרת. שלב זה אינו אישור להשתתפות בתחרות או באולימפיאדה.</p>
+    ${list.length ? `<div class="cards">${list.slice(0, OPEN_ATHLETES_MAX).map(a => athleteCard(a)).join("")}</div>
+      ${list.length > OPEN_ATHLETES_MAX ? `<details id="openAthletesOverflow"><summary id="openAthletesMore">${list.length - OPEN_ATHLETES_MAX === 1 ? "עוד ספורטאי/ת או נבחרת אחת בשלב זה" : `עוד ${list.length - OPEN_ATHLETES_MAX} ספורטאים ונבחרות בשלב זה`}</summary><div class="cards">${list.slice(OPEN_ATHLETES_MAX).map(a => athleteCard(a)).join("")}</div></details>` : ""}`
+      : `<div class="empty"><p>כרגע אין ברשימה ספורטאים או נבחרות בשלב חלון העפלה פתוח.</p></div>`}`;
+}
+
 const SEARCH_MAX = 24;
 const HOME_SEARCH_DETAILS = ["homeSearchAthletesOverflow", "homeSearchCompetitionsOverflow"];
 function renderResults(){
@@ -561,11 +573,16 @@ function renderResults(){
   if (!box) return;
   const q = searchKey(S.q);
   if (!q) { box.innerHTML = ""; $("qCount").textContent = ""; return; }
+  const terms = q.split(" ");
+  const matches = value => {
+    const key = searchKey(value);
+    return terms.every(term => key.includes(term));
+  };
   const sportKey = s => [s.id, s.he, s.en].map(str).join(" ");
-  const sports = S.sports.filter(s => searchKey(sportKey(s)).includes(q));
-  const hits = S.athletes.filter(a => searchKey([a.name, a.name_en, a.event, sportKey(sportById(a.sportId) || {id: a.sportId})].map(str).join(" ")).includes(q));
+  const sports = S.sports.filter(s => matches(sportKey(s)));
+  const hits = S.athletes.filter(a => matches([a.name, a.name_en, a.event, sportKey(sportById(a.sportId) || {id: a.sportId})].map(str).join(" ")));
   const t = today(), end = c => c.end || c.start;
-  const competitions = S.comps.filter(c => searchKey([c.name, c.location, sportKey(sportById(c.sportId) || {id: c.sportId})].map(str).join(" ")).includes(q))
+  const competitions = S.comps.filter(c => matches([c.name, c.location, sportKey(sportById(c.sportId) || {id: c.sportId})].map(str).join(" ")))
     .sort((a, b) => (end(a) < t) - (end(b) < t)
       || (end(a) < t ? end(b).localeCompare(end(a)) : a.start.localeCompare(b.start)) || heCmp(a.name, b.name));
   $("qCount").textContent = `נמצאו ${hits.length === 1 ? "ספורטאי/ת או נבחרת אחת" : `${hits.length} ספורטאים ונבחרות`} ${sports.length === 1 ? "וענף אחד" : `ו־${sports.length} ענפים`} ${competitions.length === 1 ? "ותחרות אחת" : `ו־${competitions.length} תחרויות`}`;
@@ -579,9 +596,25 @@ function renderResults(){
   </section>`;
 }
 
-let sportsFollowedOnly = false;
+let sportsFollowedOnly = false, sportsLibraryQuery = "";
 function viewSports(){
-  const shown = s => !sportsFollowedOnly || S.followSports.has(s.id);
+  return `<h1 tabindex="-1">ענפים</h1>
+  <div class="toolbar"><label for="sportsLibrarySearch">חיפוש ענף בשם בעברית או באנגלית</label>
+    <input type="search" id="sportsLibrarySearch" value="${esc(sportsLibraryQuery)}" aria-describedby="sportsLibraryCount" autocomplete="off">
+    <button class="btn ghost small" type="button" id="sportsLibrarySearchReset" data-sports-search-reset ${sportsLibraryQuery ? "" : "hidden"}>ניקוי החיפוש</button></div>
+  <div class="toolbar"><label class="chk"><input type="checkbox" id="sportsFollowedOnly" ${sportsFollowedOnly ? "checked" : ""} aria-describedby="sportsLibraryCount"> רק הענפים שבמעקב שלי</label>
+    <button class="btn ghost small" type="button" data-sports-library-reset ${sportsFollowedOnly ? "" : "hidden"}>הצגת כל הענפים</button></div>
+  <div id="sportsLibraryResults">${sportsLibraryResults()}</div>`;
+}
+function renderSportsLibraryResults(){
+  const box = $("sportsLibraryResults");
+  if (box) box.innerHTML = sportsLibraryResults();
+  if ($("sportsLibrarySearchReset")) $("sportsLibrarySearchReset").hidden = !sportsLibraryQuery;
+}
+function sportsLibraryResults(){
+  const query = searchKey(sportsLibraryQuery);
+  const shown = s => (!sportsFollowedOnly || S.followSports.has(s.id))
+    && (!query || searchKey([s.id, s.he, s.en].map(str).join(" ")).includes(query));
   const withA = S.sports.filter(s => athletesOf(s.id).length && shown(s));
   const without = S.sports.filter(s => !athletesOf(s.id).length && shown(s)).sort((a, b) => heCmp(a.he, b.he));
   // One pass over the upcoming competitions, not one per sort comparison.
@@ -590,12 +623,9 @@ function viewSports(){
   const nextStart = s => firstStart.get(s.id) || "9999";
   withA.sort((a, b) => followsSport(b.id) - followsSport(a.id) || nextStart(a).localeCompare(nextStart(b)) || heCmp(a.he, b.he));
   return `
-  <h1 tabindex="-1">ענפים</h1>
-  <div class="toolbar"><label class="chk"><input type="checkbox" id="sportsFollowedOnly" ${sportsFollowedOnly ? "checked" : ""} aria-describedby="sportsLibraryCount"> רק הענפים שבמעקב שלי</label>
-    <button class="btn ghost small" type="button" data-sports-library-reset ${sportsFollowedOnly ? "" : "hidden"}>הצגת כל הענפים</button></div>
   <p class="muted" id="sportsLibraryCount" role="status">מציגים ${withA.length + without.length} מתוך ${S.sports.length} ענפים</p>
   <p class="muted">${withA.length === 1 ? "ענף אחד עם ספורטאים ונבחרות מישראל ברשימה." : `${withA.length} ענפים עם ספורטאים ונבחרות מישראל ברשימה.`} ברשימה עם סגל, ענפים שבמעקב שלך מופיעים תחילה; בתוך כל קבוצה המיון לפי התחרות הקרובה ושם הענף. תחרות בענף אינה אישור להשתתפות ישראלית.${S.quotas.length ? ` <a href="#quotas">תמונת המכסות</a>` : ""}</p>
-  ${sportsFollowedOnly && !withA.length && !without.length ? `<div class="empty"><p>${S.followSports.size ? "אין ענפים מהמעקב שלך ברשימה הנוכחית." : "עוד אין ענפים במעקב שלך. אפשר לבחור מעקב בדף של ענף."} אפשר להציג את כל הענפים באמצעות הכפתור למעלה.</p></div>` : ""}
+  ${!withA.length && !without.length ? `<div class="empty"><p>${sportsFollowedOnly && !S.followSports.size ? "עוד אין ענפים במעקב שלך. אפשר לבחור מעקב בדף של ענף." : query ? "אין ענפים שמתאימים לחיפוש ולסינון הנוכחיים. אפשר לנקות את החיפוש באמצעות הכפתור למעלה." : sportsFollowedOnly ? "אין ענפים מהמעקב שלך ברשימה הנוכחית. אפשר להציג את כל הענפים באמצעות הכפתור למעלה." : "עוד אין ענפים ברשימה."}</p></div>` : ""}
   <ul class="sports">${withA.map(s => {
     const list = athletesOf(s.id), ws = winStatus(s.window), nc = upcomingIn(s.id)[0], fresh = list.filter(isNew).length;
     return `<li><a class="sport" href="#sport-${esc(s.id)}">
@@ -1252,6 +1282,7 @@ function route({preserveFollowingVisit = false, documentationToken = null} = {})
   else if (!S.loaded) html = `<div class="skeleton" aria-busy="true"><span></span><span></span><span></span></div>`, nav = "home";
   else if (h === "home") html = viewHome(), nav = "home";
   else if (h === "sports") html = viewSports(), nav = "sports";
+  else if (h === "athletes-open") html = viewOpenAthletes(), nav = "sports";
   else if (h.startsWith("sport-")) html = viewSport(h.slice(6)), nav = "sports";
   else if (h.startsWith("a-")) html = viewAthlete(h.slice(2)), nav = "sports";
   else if (h === "calendar") html = viewCalendar(), nav = "calendar";
@@ -1354,12 +1385,14 @@ function refresh({preserveFollowingVisit = false} = {}){
   const el = document.activeElement, key = focusKey(el), y = window.scrollY;
   const sportArchive = currentRoute().startsWith("sport-") && !!sportById(currentRoute().slice(6));
   const dayGeneral = /^(today|day(?:-\d{4}-\d{2}-\d{2})?)$/.test(currentRoute());
+  const openAthletes = currentRoute() === "athletes-open";
   const athleteFuture = currentRoute().startsWith("a-") && !!athleteById(currentRoute().slice(2));
   const open = [...($("view").querySelectorAll?.("details") || [])]
     .flatMap((d, index) => d.open ? [{index, id: preserveFollowingVisit || (currentRoute() === "home" && HOME_SEARCH_DETAILS.includes(d.id))
       || (sportArchive && d.id === "sportPastCompetitionsOverflow")
       || (dayGeneral && d.id === "dayGeneralCompetitionsOverflow")
-      || (athleteFuture && d.id === "athleteFutureSessionsOverflow") ? d.id : ""}] : []);
+      || (athleteFuture && d.id === "athleteFutureSessionsOverflow")
+      || (openAthletes && d.id === "openAthletesOverflow") ? d.id : ""}] : []);
   let selection = null;
   try {
     if (typeof el?.selectionStart === "number") selection = {start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection};
@@ -1370,7 +1403,8 @@ function refresh({preserveFollowingVisit = false} = {}){
     const detail = item.id ? details.find(d => d.id === item.id) : details[item.index];
     if (detail && (item.id || ((!sportArchive || detail.id !== "sportPastCompetitionsOverflow")
       && (!dayGeneral || detail.id !== "dayGeneralCompetitionsOverflow")
-      && (!athleteFuture || detail.id !== "athleteFutureSessionsOverflow")))) detail.open = true;
+      && (!athleteFuture || detail.id !== "athleteFutureSessionsOverflow")
+      && (!openAthletes || detail.id !== "openAthletesOverflow")))) detail.open = true;
   });
   const again = !key ? null : key.id ? $(key.id) : (m => m[key.idx] || m[0])([...($("view").querySelectorAll?.(key.sel) || [])]);
   if (again && again !== el) {
@@ -1384,6 +1418,10 @@ function refresh({preserveFollowingVisit = false} = {}){
 addEventListener("hashchange", navigate);
 document.addEventListener("input", e => {
   if (e.target.id === "q") { S.q = e.target.value; renderResults(); }
+  if (e.target.id === "sportsLibrarySearch" && currentRoute() === "sports") {
+    sportsLibraryQuery = e.target.value;
+    renderSportsLibraryResults();
+  }
   if (e.target.id === "sportsFollowedOnly" && currentRoute() === "sports") {
     sportsFollowedOnly = e.target.checked;
     refresh();
@@ -1422,7 +1460,7 @@ document.addEventListener("input", e => {
   }
 });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-calendar-show-past],[data-sport-roster-reset],[data-home-search],[data-sports-library-reset],[data-athlete-section],[data-sport-section]");
+  const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-calendar-show-past],[data-sport-roster-reset],[data-home-search],[data-sports-library-reset],[data-sports-search-reset],[data-athlete-section],[data-sport-section]");
   if (!t) return;
   if ("calendarShowPast" in t.dataset) {
     const route = currentRoute();
@@ -1448,6 +1486,13 @@ document.addEventListener("click", e => {
     if (!heading) return;
     heading.focus({preventScroll: true});
     return heading.scrollIntoView({block: "center", behavior: "auto"});
+  }
+  if ("sportsSearchReset" in t.dataset && currentRoute() === "sports") {
+    sportsLibraryQuery = "";
+    const input = $("sportsLibrarySearch");
+    if (input) input.value = "";
+    renderSportsLibraryResults();
+    return input?.focus({preventScroll: true});
   }
   if ("sportsLibraryReset" in t.dataset && currentRoute() === "sports") {
     sportsFollowedOnly = false;
