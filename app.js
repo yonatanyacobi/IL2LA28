@@ -801,6 +801,37 @@ function reportBox(subject, link){
 let calendarFollowedOnly = false;
 let calendarMonth = "", calendarMonthDraft = "", calendarMonthError = "";
 let calendarQuery = "";
+let calendarReturnContext = null, calendarReturnRestore = null;
+const calendarRouteValid = h => h === "calendar" || (h.startsWith("calendar-") && !!sportById(h.slice(9)));
+function calendarHashRoute(hash){
+  try { return decodeURIComponent(hash.slice(1)); } catch { return ""; }
+}
+function calendarReturnClick(e){
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || (e.button != null && e.button !== 0)) return;
+  const anchor = e.target.closest?.("a[href]");
+  if (!anchor || (anchor.getAttribute?.("target") && anchor.getAttribute("target") !== "_self") || anchor.hasAttribute?.("download")) return;
+  const h = currentRoute(), href = anchor.getAttribute?.("href");
+  if (anchor.dataset && "calendarReturn" in anchor.dataset) {
+    const context = calendarReturnContext;
+    if (!context || h !== "c-" + context.id || href !== context.hash || !$("view").contains?.(anchor)
+      || !calendarRouteValid(calendarHashRoute(context.hash))) return;
+    e.preventDefault?.();
+    calendarReturnRestore = context;
+    calendarReturnContext = null;
+    location.hash = context.hash;
+    return;
+  }
+  if (!calendarRouteValid(h) || !$("calResults").contains?.(anchor) || typeof href !== "string" || !href.startsWith("#c-")) return;
+  calendarReturnContext = null;
+  let id;
+  try { id = decodeURIComponent(href.slice(3)); } catch { return; }
+  if (h !== (S.cal.sport ? "calendar-" + S.cal.sport : "calendar")
+      || (calendarMonth && !calendarMonthBounds(calendarMonth)) || !calendarRows().some(c => c.id === id)) return;
+  calendarReturnContext = {id, hash: location.hash, sport: S.cal.sport, qual: S.cal.qual, past: S.cal.past,
+    month: calendarMonth, monthDraft: calendarMonthDraft, monthInvalid: !!calendarMonthError,
+    query: calendarQuery, followedOnly: calendarFollowedOnly};
+}
+document.addEventListener("click", calendarReturnClick);
 function calendarMonthBounds(value){
   if (typeof value !== "string" || value.length !== 7 || !/^\d{4}-(0[1-9]|1[0-2])$/.test(value) || value.startsWith("0000")) return null;
   const [year, month] = value.split("-").map(Number);
@@ -1209,6 +1240,7 @@ let renderedDay = "", renderedClock = "";
 let documentationFamilyActive = false, documentationArrival = null;
 function route({preserveFollowingVisit = false, documentationToken = null} = {}){
   const h = currentRoute();
+  if (calendarReturnContext && (h !== "c-" + calendarReturnContext.id || !calendarRouteValid(calendarHashRoute(calendarReturnContext.hash)))) calendarReturnContext = null;
   if (documentationToken && documentationToken === documentationArrival &&
       ["following", "following-sports"].includes(h) && typeof beginFollowingDocumentationVisit === "function" && followingDocumentationReady()) {
     documentationArrival = null;
@@ -1244,6 +1276,8 @@ function route({preserveFollowingVisit = false, documentationToken = null} = {})
   else if (/^admin(-|$)/.test(h) && S.isAdmin && S.live && typeof viewAdmin === "function") html = viewAdmin(h.slice(6)), nav = "admin";
   else html = notFound();
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
+  if (calendarReturnContext && calendarRouteValid(calendarHashRoute(calendarReturnContext.hash)))
+    html = `<p class="crumb"><a id="calendarReturn" data-calendar-return href="${esc(calendarReturnContext.hash)}">חזרה ללוח המסונן</a></p>` + html;
   if (typeof followingDecorate === "function") html = followingDecorate(h, html);
   const b = banner();
   $("view").innerHTML = b + html;
@@ -1272,6 +1306,8 @@ let lastRoute = null, focusTrust = false;
 function navigate(){
   // Filters last only while you stay on the calendar: arriving at it (from elsewhere or another sport) starts clean.
   const next = currentRoute();
+  const calendarRestore = calendarReturnRestore;
+  calendarReturnRestore = null;
   const family = ["following", "following-sports"].includes(next);
   if (family && !documentationFamilyActive) documentationArrival = {};
   if (!family) {
@@ -1280,6 +1316,14 @@ function navigate(){
   }
   documentationFamilyActive = family;
   if (next !== lastRoute && /^calendar(-|$)/.test(next)) S.cal = {sport: "", qual: false, past: false};
+  if (calendarRestore && next === calendarHashRoute(calendarRestore.hash) && calendarRouteValid(next)) {
+    S.cal = {sport: calendarRestore.sport, qual: calendarRestore.qual, past: calendarRestore.past};
+    calendarMonth = calendarRestore.month;
+    calendarMonthDraft = calendarRestore.monthDraft;
+    calendarMonthError = calendarRestore.monthInvalid || (calendarMonthDraft && !calendarMonthBounds(calendarMonthDraft)) ? "יש לבחור חודש תקין בתבנית YYYY-MM." : "";
+    calendarQuery = calendarRestore.query;
+    calendarFollowedOnly = calendarRestore.followedOnly;
+  }
   if (next !== lastRoute && /^corrections(-|$)/.test(next)) S.fixOpen = new Set();
   if (next !== lastRoute && next === "about-trust") focusTrust = true;
   if (next !== lastRoute) { rowSigs.clear(); changedRows.clear(); }
