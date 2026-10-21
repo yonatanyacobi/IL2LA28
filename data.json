@@ -2380,6 +2380,12 @@
           "source": "https://www.ianseo.net/TourData/2026/26689/BOOK.pdf"
         },
         {
+          "at": "2026-04-09",
+          "kind": "result",
+          "text": "גביע העולם פואבלה 2026, רקרב נשים, סיבוב 1/24: ניצחון על קרלוטה נאבאס מספרד 6:4 בנקודות מערכה.",
+          "source": "https://extranet.worldarchery.sport/documents/index.php/Events/World_Cup/2026/1_Puebla_WC_MEX/BOOK.pdf"
+        },
+        {
           "at": "2026-10-18",
           "kind": "start",
           "text": "נכנס/ה למעקב · במעקב · 74 בעולם (World Archery, אוק׳ 2026)",
@@ -2885,6 +2891,12 @@
           "kind": "result",
           "text": "זהב בזוגות מעורבים בריקרב באליפות אירופה באולם, עם מיכאלה משה; ניצחון 5:4 על צרפת בגמר (20:19 בשובר השוויון).",
           "source": "https://www.ianseo.net/TourData/2026/26689/BOOK.pdf"
+        },
+        {
+          "at": "2026-04-10",
+          "kind": "result",
+          "text": "גביע העולם פואבלה 2026, רקרב גברים, שמינית הגמר: הפסד לוואנג יאן מסין 3:7 בנקודות מערכה.",
+          "source": "https://extranet.worldarchery.sport/documents/index.php/Events/World_Cup/2026/1_Puebla_WC_MEX/BOOK.pdf"
         },
         {
           "at": "2026-10-18",
@@ -5477,6 +5489,50 @@
       "end": "2026-04-25",
       "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
       "source": "https://triathlon.org/events/2026-wtcs-samarkand/results",
+      "qualifying": false
+    },
+    {
+      "id": "arch-puebla-wc-2026",
+      "sportId": "archery",
+      "name": "גביע העולם בחץ וקשת – פואבלה 2026",
+      "location": "פואבלה, מקסיקו",
+      "start": "2026-04-07",
+      "end": "2026-04-12",
+      "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; התוצאות הישראליות המתועדות הן חלקיות ואינן קובעות העפלה.",
+      "source": "https://www.worldarchery.sport/news/202393/how-it-works-beginners-guide-2026-hyundai-archery-world-cup",
+      "qualifying": false
+    },
+    {
+      "id": "arch-shanghai-wc-2026",
+      "sportId": "archery",
+      "name": "גביע העולם בחץ וקשת – שנגחאי 2026",
+      "location": "שנגחאי, סין",
+      "start": "2026-05-05",
+      "end": "2026-05-10",
+      "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם באירוע זה לא אומתו.",
+      "source": "https://www.worldarchery.sport/news/202409/big-participation-expected-shanghai-hosts-stage-two-once-again",
+      "qualifying": false
+    },
+    {
+      "id": "rowing-world-cup-iii-lucerne-2026",
+      "sportId": "rowing",
+      "name": "גביע העולם בחתירה III – לוצרן",
+      "location": "לוצרן, שווייץ",
+      "start": "2026-06-26",
+      "end": "2026-06-28",
+      "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://worldrowing.com/2026/06/17/world-rowing-cup-iii-2026-heads-to-lucerne-for-season-finale/",
+      "qualifying": false
+    },
+    {
+      "id": "world-rowing-ch-amsterdam-2026",
+      "sportId": "rowing",
+      "name": "אליפות העולם בחתירה – אמסטרדם",
+      "location": "אמסטרדם, הולנד",
+      "start": "2026-08-24",
+      "end": "2026-08-30",
+      "notes": "תחרות עונה לפני פתיחת חלון ההעפלה האולימפי; השתתפות ספורטאים מישראל ותוצאותיהם לא אומתו.",
+      "source": "https://worldrowing.com/2026/08/21/how-to-follow-the-2026-world-rowing-championships-in-amsterdam-the-netherlands/",
       "qualifying": false
     }
   ],
