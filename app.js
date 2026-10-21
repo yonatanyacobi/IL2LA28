@@ -1295,7 +1295,7 @@ function route({preserveFollowingVisit = false, documentationToken = null} = {})
   else if (h === "calendar") html = viewCalendar(), nav = "calendar";
   else if (h.startsWith("calendar-")) html = viewCalendar(h.slice(9)), nav = "calendar";
   else if (h === "updates") html = viewUpdates(), nav = "updates";
-  else if (h === "results" && typeof viewResults === "function") html = viewResults(), nav = "updates";
+  else if (h === "results" && typeof viewResults === "function") html = viewResults(), nav = "results";
   else if (h === "about" || h === "about-trust") html = viewAbout(), nav = "about";
   else if ((h === "today" || /^day(-|$)/.test(h)) && typeof viewDay === "function") {
     const d = h === "today" || h === "day" ? today() : h.slice(4);

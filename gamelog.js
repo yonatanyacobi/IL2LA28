@@ -178,6 +178,40 @@ function athleteUpcomingRow(s, a){
     <span>${statusChip(athleteStatus(s, s.day, a))}</span></li>`;
 }
 
+function athleteUpcomingCopyText(a, sessions){
+  const athlete = S.athletes.find(p => p.id === a?.id);
+  if (!athlete) return "";
+  const rows = [...new Set(sessions || [...athleteUpcomingSessions(athlete), ...athleteFutureSessions(athlete)])]
+    .sort((x, y) => x.day.localeCompare(y.day) || byStart(x.startUtc, y.startUtc));
+  if (!rows.length) return "";
+  const plain = value => str(value).replace(/\s+/g, " ").trim();
+  const canonical = (type, id) => {
+    try { return `${SITE_URL}#${type}-${encodeURIComponent(id)}`; } catch { return ""; }
+  };
+  const head = [`הופעות אישיות ידועות להעתקה · ${plain(athlete.name)}`,
+    "תכנון חלקי לפי המידע שתועד באתר; אינו לוח מלא או עדכון חי. ההופעות מתייחסות לרשומה שבפרופיל, ולא לרשימת כל המשתתפים.",
+    "השעות לפי ישראל. יש לבדוק את המקור לפני ההופעה."];
+  const foot = [`לרשומה: ${canonical("a", athlete.id)}`];
+  const blocks = rows.map(s => [`• ${fmt(s.day)} · ${s.startUtc ? hhmm(s.startUtc) + " (ישראל)" : "השעה טרם פורסמה"}`,
+    plain(s.comp.name), plain(s.phase), canonical("day", s.day), canonical("c", s.comp.id),
+    ...(safeUrl(s.source) ? [`מקור לוח: ${safeUrl(s.source)}`] : [])].filter(Boolean).join("\n"));
+  let keep = blocks.length;
+  const build = () => [...head, "", ...blocks.slice(0, keep),
+    ...(keep < blocks.length ? [`${blocks.length - keep === 1 ? "הושמטה הופעה אחת" : `הושמטו ${blocks.length - keep} הופעות`} מהטקסט; התכנון הידוע זמין בפרופיל.`] : []), "", ...foot].join("\n");
+  let text = build();
+  while (text.length > 3500 && keep) { keep--; text = build(); }
+  return text.length <= 3500 ? text : "";
+}
+
+function athleteUpcomingCopySection(a, sessions){
+  const text = athleteUpcomingCopyText(a, sessions);
+  return text ? `<section class="panel digest" aria-labelledby="athleteUpcomingCopyLabel"><label id="athleteUpcomingCopyLabel" for="athleteUpcomingCopyText">הופעות אישיות ידועות להעתקה · ${esc(a.name)}</label>
+    <textarea id="athleteUpcomingCopyText" readonly rows="6" aria-describedby="athleteUpcomingCopyHelp">${esc(text)}</textarea>
+    <p class="foot" id="athleteUpcomingCopyHelp">כיסוי חלקי לפי האתר, שעות בישראל; יש לבדוק את המקור. אפשר לבחור את הטקסט ולהעתיק ידנית.</p>
+    <button class="btn ghost small" type="button" data-copy="athleteUpcomingCopyText" data-copy-msg="athleteUpcomingCopyMsg">העתקת ההופעות האישיות</button>
+    <p class="foot" id="athleteUpcomingCopyMsg" aria-live="polite"></p></section>` : "";
+}
+
 function athleteUpcomingSection(a){
   const sessions = athleteUpcomingSessions(a), more = sessions.length - ATHLETE_UPCOMING_ROWS;
   const future = athleteFutureSessions(a), row = s => athleteUpcomingRow(s, a);
@@ -187,7 +221,7 @@ function athleteUpcomingSection(a){
       : `<p class="muted">אין הופעות ידועות של ${esc(a.name)} בשבועיים הקרובים.</p><p><a href="#calendar-${esc(a.sportId)}">ללוח התחרויות בענף</a></p>`}
   </section>${future.length ? `<details class="panel" id="athleteFutureSessionsOverflow"><summary id="athleteFutureSessionsMore">עוד הופעות אישיות ידועות בהמשך</summary>
     <p class="muted">${plural(future.length, "הופעה אישית אחת", "הופעות אישיות")} מעבר לשבועיים הקרובים, לפי המידע שתועד באתר.</p>
-    <ul class="rows">${future.map(row).join("")}</ul></details>` : ""}`;
+    <ul class="rows">${future.map(row).join("")}</ul></details>` : ""}${athleteUpcomingCopySection(a, [...sessions, ...future])}`;
 }
 
 // A history result the log shows: it needs an https source, since every log line names one. Any other result stays
