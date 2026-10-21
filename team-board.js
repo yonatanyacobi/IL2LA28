@@ -2,7 +2,7 @@
 
 (() => {
   const statuses = new Map([['backlog', 'בתכנון'], ['in_progress', 'בביצוע'], ['review', 'בסקירה ובפרסום'], ['done', 'הושלם'], ['blocked', 'ממתין לפתרון']]);
-  const priorities = new Map([['P0', 'דחוף'], ['P1', 'גבוהה'], ['P2', 'רגילה']]);
+  const priorities = new Map([['P0', 'דחוף'], ['P1', 'גבוהה'], ['P2', 'רגילה'], ['P3', 'נמוכה']]);
   const formatter = new Intl.DateTimeFormat('he-IL', {timeZone: 'Asia/Jerusalem', dateStyle: 'short', timeStyle: 'short'});
   const el = id => document.getElementById(id);
   let board = null;
