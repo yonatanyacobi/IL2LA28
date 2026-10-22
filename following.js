@@ -149,6 +149,22 @@ function followingFeedRow({type, q, a, h, session}, recordMarks = true){
 
 const compLinkOr = c => typeof compLink === "function" ? compLink(c, esc(c.name)) : esc(c.name);
 
+function followingFutureSessions(){
+  const through = addDays(today(), 13), ids = new Set(followedAthletes().map(a => a.id)), rows = new Map();
+  for (const s of typeof exportedSessions === "function" ? exportedSessions() : []) {
+    if (s.day <= through) continue;
+    for (const a of s.athletes.filter(a => ids.has(a.id))) {
+      if (!["before", "competing"].includes(athleteStatus(s, s.day, a))) continue;
+      const k = `up|far|${JSON.stringify([s.comp.id, s.day, a.id, s.phase, s.startUtc || ""])}`;
+      if (rows.has(k)) continue;
+      const prefix = `followingFuture-${encodeURIComponent(k)}`;
+      const html = `<a id="${esc(prefix)}-day" href="#day-${esc(s.day)}">${esc(a.name)}</a><small>${esc(sportName(s.sportId))} · ${compLinkOr(s.comp).replace('<a ', `<a id="${esc(prefix)}-event" `)}${s.phase ? ` · ${esc(s.phase)}` : ""}${safeUrl(s.source) ? ` · ${linkOut(s.source, "מקור לוח ההופעות").replace('<a ', `<a id="${esc(prefix)}-source" `)}` : ""}</small>`;
+      rows.set(k, {k, aId: a.id, d: s.day, session: true, startUtc: s.startUtc, chip: "", html});
+    }
+  }
+  return [...rows.values()].sort((x, y) => x.d.localeCompare(y.d) || byStart(x.startUtc, y.startUtc));
+}
+
 function followUpcoming(){
   const t = today(), through = addDays(t, 13), followed = followedAthletes();
   const ids = new Set(followed.map(a => a.id));
@@ -156,6 +172,9 @@ function followUpcoming(){
     .filter(s => t <= s.day && s.day <= through && s.athletes.some(a => ids.has(a.id)));
   // Completed known appearances must not return through an older nextDate fallback.
   const represented = new Set(knownSessions.flatMap(s => s.athletes.filter(a => ids.has(a.id)).map(a => `${a.id}|${s.day}`)));
+  for (const s of typeof exportedSessions === "function" ? exportedSessions() : []) {
+    if (s.day > through) for (const a of s.athletes.filter(a => ids.has(a.id))) represented.add(`${a.id}|${s.day}`);
+  }
   const competitions = new Set(knownSessions.map(s => s.comp.id));
   const sessions = knownSessions.filter(s => ["before", "competing"].includes(sessionState(s, s.day)));
   const appearances = sessions.flatMap(s => s.athletes.filter(a => ids.has(a.id)).map(a => ({
@@ -177,16 +196,17 @@ let renderedFollowingUpcoming = "";
 const followingUpcomingMarks = new Map();
 
 function followingUpcomingContent(clockOnly = false){
-  const next = followUpcoming(), more = next.slice(FOLLOW_UPCOMING_ROWS);
+  const next = followUpcoming(), more = next.slice(FOLLOW_UPCOMING_ROWS), future = followingFutureSessions();
   const row = x => {
       const mark = clockOnly ? followingUpcomingMarks.get(x.k) || "" : rowMark(x.k, x.d + x.html);
       if (!clockOnly) followingUpcomingMarks.set(x.k, mark);
       const time = x.session ? `<br>${isUtc(x.startUtc) ? timeTag(x.startUtc, hhmm(x.startUtc)) : "השעה טרם פורסמה"}` : "";
       return `<li><span class="d">${fmtShortY(x.d)}${time}</span><span class="t">${x.html}${mark}</span><span>${x.chip}</span></li>`;
   };
-  return next.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
-    <ul class="rows">${next.slice(0, FOLLOW_UPCOMING_ROWS).map(row).join("")}</ul>
-    ${more.length ? `<details id="followingUpcomingOverflow"><summary id="followingUpcomingMore">${more.length === 1 ? "עוד פריט אחד במעקב שלי" : `עוד ${more.length} פריטים במעקב שלי`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}</section>` : "";
+  return next.length || future.length ? `<section class="panel" aria-labelledby="nextH"><h2 id="nextH">הבא בתור במעקב שלי</h2>
+    ${next.length ? `<ul class="rows">${next.slice(0, FOLLOW_UPCOMING_ROWS).map(row).join("")}</ul>` : ""}
+    ${more.length ? `<details id="followingUpcomingOverflow"><summary id="followingUpcomingMore">${more.length === 1 ? "עוד פריט אחד במעקב שלי" : `עוד ${more.length} פריטים במעקב שלי`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}
+    ${future.length ? `<details id="followingFutureSessions"><summary id="followingFutureSessionsMore">הופעות אישיות ידועות מעבר לשבועיים (${future.length})</summary><p class="muted">רק הופעות אישיות שנאספו לספורטאים ולנבחרות במעקב שלך, ישירות או דרך ענף. הכיסוי חלקי; תחרות כללית אינה אישור להשתתפות. המועדים עשויים להשתנות.</p><ul class="rows">${future.map(row).join("")}</ul></details>` : ""}</section>` : "";
 }
 
 function refreshFollowingUpcoming(){
@@ -195,12 +215,12 @@ function refreshFollowingUpcoming(){
   const html = followingUpcomingContent(true);
   if (html === renderedFollowingUpcoming) return;
   const active = document.activeElement, key = panel.contains?.(active) ? focusKey(active) : null, y = window.scrollY;
-  const open = [...panel.querySelectorAll("details")].map((d, i) => d.open ? i : -1).filter(i => i >= 0);
+  const open = [...panel.querySelectorAll("details")].filter(d => d.open && d.id).map(d => d.id);
   if (key?.sel) key.idx = Math.max(0, [...panel.querySelectorAll(key.sel)].indexOf(active));
   panel.innerHTML = html;
   renderedFollowingUpcoming = html;
   const details = [...panel.querySelectorAll("details")];
-  open.forEach(i => { if (details[i]) details[i].open = true; });
+  open.forEach(id => { const detail = details.find(d => d.id === id); if (detail) detail.open = true; });
   if (key) {
     const matches = key.sel ? [...panel.querySelectorAll(key.sel)] : [];
     const again = key.id ? panel.querySelector(attrSel("id", key.id)) : matches[key.idx] || matches[0];

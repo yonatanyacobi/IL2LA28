@@ -131,6 +131,11 @@ function viewEvent(id){
     <div class="pills">${eventStatus(c, flat)}${c.qualifying ? `<span class="pill open">העפלה</span>` : ""}${series ? `<span class="pill ended">סדרה עונתית</span>` : ""}</div>
     ${!stakes && c.qualifying ? `<p>תחרות שנספרת להעפלה. <a href="#sport-${esc(c.sportId)}">שיטת ההעפלה בענף</a></p>` : ""}
   </div>
+  <div class="toolbar" role="group" aria-label="מעבר למקטע בתחרות">
+    <button class="btn ghost small" type="button" id="evGo-evSchedH" data-event-section="evSchedH">לוח הזמנים</button>
+    ${athletes.length ? `<button class="btn ghost small" type="button" id="evGo-evAthH" data-event-section="evAthH">הישראלים בתחרות</button>` : ""}
+    <button class="btn ghost small" type="button" id="evGo-evShareH" data-event-section="evShareH">שיתוף</button>
+  </div>
   <section class="panel" aria-labelledby="evSumH"><h2 id="evSumH">בקצרה</h2>
     ${typeof c.notes === "string" && c.notes.trim() ? `<p class="muted" id="evNotes"><b>הערות מהנתונים:</b> ${esc(c.notes)}</p>` : ""}
     ${filtered ? `<p class="muted">הסיכום והסגל מציגים את כלל הישראלים בתחרות, ללא סינון המשתתף או המעקב.</p>` : ""}
@@ -142,7 +147,7 @@ function viewEvent(id){
     ${sourceLinks.length ? `<p class="foot" id="evSources">${sourceLinks.join(" · ")}</p>` : ""}
   </section>
   <div class="event-cols">
-    <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH">לוח הזמנים של הישראלים</h2>
+    <section class="panel" aria-labelledby="evSchedH"><h2 id="evSchedH" tabindex="-1">לוח הזמנים של הישראלים</h2>
       <div class="toolbar"><label class="chk"><input type="checkbox" id="eventFollowOnly" ${eventFollowingOnly ? "checked" : ""}> רק המעקב שלי</label>
         ${flat.length ? `<label for="eventParticipant">משתתף בלוח התחרות</label><select id="eventParticipant"><option value=""${participant ? "" : " selected"}>כל המשתתפים</option>${athletes.map(a => `<option value="${esc(a.id)}"${a.id === participant ? " selected" : ""}>${esc(a.name)}</option>`).join("")}</select>` : ""}
         ${filtered ? `<button class="btn ghost small" type="button" data-event-show-all>הצגת כל ההופעות</button>` : ""}</div>
@@ -151,7 +156,7 @@ function viewEvent(id){
       ${schedule}</section>
     <div class="stack">
       ${stakes}
-      ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH">הישראלים בתחרות (${athletes.length})</h2>
+      ${athletes.length ? `<section class="panel" aria-labelledby="evAthH"><h2 id="evAthH" tabindex="-1">הישראלים בתחרות (${athletes.length})</h2>
         <ul class="rows">${athletes.map(a => { const mine = flat.filter(([s]) => s.athletes.includes(a))
           .sort(([x, xd], [y, yd]) => xd.localeCompare(yd) || byStart(x.startUtc, y.startUtc)), last = mine[mine.length - 1];
           const st = last ? athleteStatus(last[0], last[1], a) : "";
@@ -161,13 +166,25 @@ function viewEvent(id){
           return athleteRow(a, `<span class="actions">${isResult(st) ? `<span class="muted">תוצאה בלוח הזמנים</span>` : statusChip(st)}${button}</span>`); }).join("")}</ul></section>` : ""}
     </div>
   </div>
-  <section class="panel" aria-labelledby="evShareH"><h2 id="evShareH">שיתוף</h2>
+  <section class="panel" aria-labelledby="evShareH"><h2 id="evShareH" tabindex="-1">שיתוף</h2>
     <div class="share"><input id="evShare" readonly value="${esc(link)}" dir="ltr" aria-label="קישור לתחרות" aria-describedby="evShareScope"><button class="btn ghost small" data-copy="evShare" data-copy-msg="evShareMsg">העתקה</button></div>
     <p class="foot" id="evShareScope">הקישור אינו מעביר את סינון המשתתף או המעקב שלך. מי שיפתחו אותו יראו את התחרות בהתאם להגדרות שלהם.</p>
     <p class="foot" id="evShareMsg" aria-live="polite"></p>
   </section>
   ${reportBox(`טעות בדף תחרות: ${c.name}`, link)}`;
 }
+
+document.addEventListener("click", e => {
+  const button = e.target.closest?.("[data-event-section]"), route = currentRoute();
+  if (!button || !route.startsWith("c-") || !S.comps.some(c => c.id === route.slice(2))
+    || !["evSchedH", "evAthH", "evShareH"].includes(button.dataset.eventSection)) return;
+  const view = $("view");
+  if (!view?.contains(button)) return;
+  const heading = view.querySelector("#" + button.dataset.eventSection);
+  if (!heading) return;
+  heading.focus({preventScroll: true});
+  heading.scrollIntoView({block: "center", behavior: "auto"});
+});
 
 document.addEventListener("change", e => {
   if (e.target?.id !== "eventFollowOnly" || !currentRoute().startsWith("c-")) return;

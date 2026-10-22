@@ -683,10 +683,10 @@ function viewSport(id){
   const s = sportById(id);
   if (!s) return notFound();
   const list = athletesOf(id).sort((a, b) => stageOf(b) - stageOf(a) || heCmp(a.event, b.event) || heCmp(a.name, b.name));
-  const value = sportRosterQueries.get(id) || "", query = searchKey(value);
+  const value = sportRosterQueries.get(id) || "", query = searchKey(value), terms = query.split(" ").filter(Boolean);
   const stage = sportRosterStages.get(id) ?? "";
   const matches = list.filter(a => (stage === "" || stageOf(a) === Number(stage))
-    && (!query || searchKey([a.name, a.name_en, a.event].map(str).join(" ")).includes(query)));
+    && terms.every(term => searchKey([a.name, a.name_en, a.event].map(str).join(" ")).includes(term)));
   const ws = winStatus(s.window), w = s.window;
   const comps = upcomingIn(id);
   let html = `

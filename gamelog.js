@@ -47,13 +47,14 @@ function sportRecentResultsSection(id){
   </section>`;
 }
 
-let resultsSearchQuery = "", resultsMonth = "";
+let resultsSearchQuery = "", resultsMonth = "", resultsFollowedOnly = false;
 const resultsMonths = rows => [...new Set(rows.filter(r => realDate(r.day)).map(r => r.day.slice(0, 7)))].sort().reverse();
 
 function filteredDocumentedResults(all = documentedResults()){
   if (resultsMonth && !resultsMonths(all).includes(resultsMonth)) resultsMonth = "";
   const terms = searchKey(resultsSearchQuery).split(" ").filter(Boolean);
   return all.filter(r => {
+    if (resultsFollowedOnly && !S.followSports.has(r.sportId) && !r.athletes.some(a => S.follows.has(a.id))) return false;
     if (resultsMonth && r.day.slice(0, 7) !== resultsMonth) return false;
     const key = searchKey([
       ...r.athletes.flatMap(a => [a.name, a.name_en]), sportById(r.sportId)?.he, sportById(r.sportId)?.en,
@@ -73,8 +74,9 @@ function resultsFilteredCopyText(rows = filteredDocumentedResults()){
   const head = ["תוצאות מתועדות לפי הסינון הנוכחי",
     "תיעוד היסטורי חלקי שפורסם באתר; אינו רשימת חדשות או כלל הישגי ישראל.",
     ...(query ? [`חיפוש: ${query.length > 160 ? query.slice(0, 160) + "… (תיאור החיפוש מקוצר)" : query}`] : []),
-    ...(resultsMonth ? [`חודש: ${resultsMonth}`] : [])];
-  const foot = ["הקישור מציג את דף התוצאות ואינו שומר חיפוש או חודש.", `${SITE_URL}#results`];
+    ...(resultsMonth ? [`חודש: ${resultsMonth}`] : []),
+    ...(resultsFollowedOnly ? ["רק במעקב שלי, לפי הבחירות בדפדפן הזה."] : [])];
+  const foot = ["הקישור מציג את דף התוצאות ואינו שומר חיפוש או חודש, ואינו מעביר העדפות מעקב.", `${SITE_URL}#results`];
   const blocks = rows.map(r => [`• ${fmt(r.day)} · ${plain(sportName(r.sportId))}`,
     `${r.athletes.length > 1 ? "תוצאה משותפת: " : ""}${r.athletes.map(a => plain(a.name)).join(" · ")}`,
     [plain(r.phase), plain(r.result)].filter(Boolean).join(": "), `מקור: ${r.source}`,
@@ -93,7 +95,7 @@ function resultsFilteredCopySection(rows){
   const text = resultsFilteredCopyText(rows);
   return text ? `<div class="digest"><label for="resultsFilteredCopyText">התוצאות לפי הסינון הנוכחי להעתקה</label>
     <textarea id="resultsFilteredCopyText" readonly rows="8" aria-describedby="resultsFilteredCopyHelp">${esc(text)}</textarea>
-    <p class="foot" id="resultsFilteredCopyHelp">אפשר לבחור את הטקסט ולהעתיק ידנית. הקישור אינו שומר חיפוש או חודש.</p>
+    <p class="foot" id="resultsFilteredCopyHelp">אפשר לבחור את הטקסט ולהעתיק ידנית. הקישור אינו שומר חיפוש או חודש, ואינו מעביר העדפות מעקב.</p>
     <button class="btn ghost small" type="button" data-copy="resultsFilteredCopyText" data-copy-msg="resultsFilteredCopyMsg">העתקת התוצאות המסוננות</button>
     <p class="foot" id="resultsFilteredCopyMsg" aria-live="polite"></p></div>` : "";
 }
@@ -105,7 +107,9 @@ function resultsSearchContent(preserveOverflow = false, all = documentedResults(
   return `<p class="muted" id="resultsSearchCount" role="status">נמצאו ${rows.length} מתוך ${all.length} שורות תוצאה מתועדות באתר.</p>
     ${rows.length ? `<ul class="rows">${rows.slice(0, 10).map(row).join("")}</ul>
       ${more.length ? `<details id="resultsOverflow"${open ? " open" : ""}><summary id="resultsMore">${more.length === 1 ? "עוד שורת תוצאה מתועדת אחת" : `עוד ${more.length} שורות תוצאה מתועדות`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}`
-      : all.length ? `<div class="empty"><p>אין תוצאות מתועדות שמתאימות לחיפוש ולחודש שנבחרו. אפשר לאפס את הסינון כדי להציג את כל התוצאות המתועדות.</p></div>`
+      : resultsFollowedOnly && !S.athletes.some(a => S.follows.has(a.id)) && !S.sports.some(s => S.followSports.has(s.id))
+        ? `<div class="empty"><p>לא נבחרו ספורטאים או ענפים במעקב שלי. אפשר להגדיר מעקב או לבטל את הסינון ״רק במעקב שלי״ כדי לחזור לתוצאות הכלליות.</p><p><a href="#following">להגדרת המעקב שלי</a> · <a href="#sports">לבחירת ענפים</a></p></div>`
+      : all.length ? `<div class="empty"><p>אין תוצאות מתועדות שמתאימות לחיפוש ולחודש שנבחרו${resultsFollowedOnly ? " ולבחירות המעקב שלי" : ""}. אפשר לאפס את הסינון כדי להציג את כל התוצאות המתועדות.</p></div>`
       : `<div class="empty"><p>עוד לא תועדו תוצאות באתר.</p><p><a href="#sports">לענפים באתר</a> · <a href="#calendar">ללוח התחרויות</a></p></div>`}
     ${resultsFilteredCopySection(rows)}`;
 }
@@ -119,6 +123,7 @@ function viewResults(){
     <label for="resultsSearch">חיפוש בתוצאות המתועדות</label>
     <div class="toolbar"><input type="search" id="resultsSearch" value="${esc(resultsSearchQuery)}" class="search" aria-describedby="resultsSearchCount">
       <label for="resultsMonth">חודש ושנה</label><select id="resultsMonth" aria-describedby="resultsSearchCount"><option value="">כל החודשים</option>${months.map(month => `<option value="${month}" ${month === resultsMonth ? "selected" : ""}>${esc(new Date(month + "-15T12:00:00Z").toLocaleDateString("he-IL", {month: "long", year: "numeric", timeZone: "Asia/Jerusalem"}))}</option>`).join("")}</select>
+      <label for="resultsFollowedOnly"><input type="checkbox" id="resultsFollowedOnly"${resultsFollowedOnly ? " checked" : ""} aria-describedby="resultsSearchCount"> רק במעקב שלי</label>
       <button class="btn ghost" id="resultsSearchReset" type="button" data-results-search-reset>איפוס הסינון</button></div>
     <div id="resultsSearchContent">${content}</div>`;
 }
@@ -137,6 +142,11 @@ function updateResultsSearch(){
 
 document.addEventListener("input", e => {
   if (currentRoute() !== "results") return;
+  if (e.target?.id === "resultsFollowedOnly") {
+    resultsFollowedOnly = !!e.target.checked;
+    updateResultsSearch();
+    return;
+  }
   if (e.target?.id === "resultsMonth") {
     if (e.target.value && !resultsMonths(documentedResults()).includes(e.target.value)) { e.target.value = resultsMonth; return; }
     resultsMonth = e.target.value;
@@ -151,8 +161,10 @@ document.addEventListener("click", e => {
   if (currentRoute() !== "results" || !e.target.closest?.("[data-results-search-reset]")) return;
   resultsSearchQuery = "";
   resultsMonth = "";
+  resultsFollowedOnly = false;
   $("resultsSearch").value = "";
   $("resultsMonth").value = "";
+  $("resultsFollowedOnly").checked = false;
   updateResultsSearch();
   $("resultsSearch")?.focus({preventScroll: true});
 });
