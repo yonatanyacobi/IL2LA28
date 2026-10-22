@@ -2,7 +2,14 @@
 "use strict";
 
 const DIGEST_MAX = 3500, DIGEST_LINE = 160;
-let digestSportFilter = "";
+let digestSportFilter = "", digestReferenceDraft = "", digestReferenceBadInput = false;
+const DIGEST_SNAPSHOT_NOTE = "התקציר נוצר מנתוני האתר הזמינים כעת; הוא אינו שחזור המידע שהיה זמין בתאריך שנבחר.";
+function digestReferenceValid(value, now = today()){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value < "0001-01-08" || value > "9999-12-18" || value > now) return false;
+  const parsed = new Date(value + "T12:00:00Z");
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+const digestReferenceInvalid = () => digestReferenceBadInput || !!digestReferenceDraft && !digestReferenceValid(digestReferenceDraft);
 const digestSports = () => S.sports.filter(s => S.athletes.some(a => a.sportId === s.id)
   || S.comps.some(c => c.sportId === s.id) || S.quotas.some(q => q.sportId === s.id)).sort((a, b) => heCmp(a.he, b.he));
 // Data must not toggle WhatsApp formatting or break a bullet over lines.
@@ -41,7 +48,7 @@ function digestCompetitionLink(c){
 }
 
 // Depends only on `t` and the loaded data in S, so tests can pin the week.
-function digestText(t = today(), sportId = ""){
+function digestText(t = today(), sportId = "", retrospective = false){
   const scope = digestSports().some(s => s.id === sportId) ? sportId : "";
   const inScope = id => !scope || id === scope;
   const comps = S.comps.filter(c => inScope(c.sportId)), athletes = S.athletes.filter(a => inScope(a.sportId));
@@ -166,6 +173,7 @@ function digestText(t = today(), sportId = ""){
   if (sections.length && !results.length) sections.unshift({title: "תוצאות השבוע", items: [], none: scope ? waCut(`לא הסתיימו השבוע תחרויות בענף ${waText(sportName(scope))}.`) : "לא הסתיימו השבוע תחרויות בענפים שברשימה.", cut: 0});
   const head = [scope ? waCut(`*הדרך ללוס אנג׳לס 28 · תקציר שבועי · ${waText(sportName(scope))}*`) : `*הדרך ללוס אנג׳לס 28 · תקציר שבועי*`, `${fmtRange(from, t)}${isDate(dataTs) ? ` · נכון ל־${fmt(dataTs)}` : ""}`,
     ...(isDate(dataTs) && dataTs < addDays(t, -2) ? [`שימו לב: הנתונים לא עודכנו מאז ${fmt(dataTs)}.`] : [])];
+  if (retrospective) head.push(DIGEST_SNAPSHOT_NOTE);
   const foot = ["", `לכל הפרטים: ${SITE_URL}`, "אתר לא רשמי. הנתונים ממקורות פומביים, כדאי לבדוק מול המקור."];
   const build = () => [...head,
     ...(sections.length ? sections.flatMap(s => ["", `*${s.title}*`, ...(s.note ? [s.note] : []), ...s.items, ...(s.none ? [s.none] : []), ...(s.cut ? [`• ועוד ${s.cut} באתר`] : [])])
@@ -184,12 +192,25 @@ function digestText(t = today(), sportId = ""){
 function viewDigest(){
   const sports = digestSports();
   if (digestSportFilter && !sports.some(s => s.id === digestSportFilter)) digestSportFilter = "";
-  const t = today(), text = digestText(t, digestSportFilter);
+  const now = today(), invalid = digestReferenceInvalid();
   return `<p class="crumb"><a href="#updates"><span aria-hidden="true">→</span>&nbsp;עדכונים</a></p>
   <h1 tabindex="-1">תקציר שבועי</h1>
   <div class="toolbar"><label for="digestSport">בחירת ענף לתקציר</label>
     <select id="digestSport"><option value=""${digestSportFilter ? "" : " selected"}>כל הענפים</option>${sports.map(s => `<option value="${esc(s.id)}"${digestSportFilter === s.id ? " selected" : ""}>${esc(s.he)}</option>`).join("")}</select>
   </div>
+  <div class="toolbar"><label for="digestReferenceDate">יום סיום התקציר</label>
+    <input id="digestReferenceDate" type="date" min="0001-01-08" max="${esc(now)}" value="${esc(digestReferenceDraft)}" aria-describedby="digestReferenceHelp${invalid ? " digestReferenceError" : ""}"${invalid ? ' aria-invalid="true"' : ""}>
+    <button class="btn" id="digestReferenceReset">חזרה לתקציר הנוכחי</button>
+  </div>
+  <p class="muted" id="digestReferenceHelp">תוצאות תחרויות שהסתיימו בשבעת הימים הקודמים, שינויים עד היום שנבחר, תכנון לשבעת הימים המתחילים בו ואירועי מכסה בשבועיים המתחילים בו. ללא בחירה מוצג התקציר הנוכחי בישראל.</p>
+  <div id="digestReferenceOutput">${digestReferenceOutput()}</div>`;
+}
+
+function digestReferenceOutput(){
+  const now = today(), invalid = digestReferenceInvalid(), t = digestReferenceDraft || now;
+  const retrospective = !invalid && t < now;
+  const text = invalid ? "" : digestText(t, digestSportFilter, retrospective);
+  return invalid ? `<p id="digestReferenceError" role="alert">יש לבחור יום סיום תקין שאינו בעתיד ומתאים לטווח המותר בשדה.${digestReferenceDraft ? ` הקלט: ${esc(digestReferenceDraft)}.` : ""}</p>` : `${retrospective ? `<p class="muted">${DIGEST_SNAPSHOT_NOTE}</p>` : ""}
   <p class="muted">טקסט מוכן להדבקה בוואטסאפ או בכל מקום אחר. ${fmtRange(addDays(t, -6), t)}.${digestSportFilter ? ` התקציר בענף ${esc(sportName(digestSportFilter))}. שינויים כלליים ללא שיוך לענף זמינים בבחירת כל הענפים.` : ""}</p>
   <section class="panel digest" aria-labelledby="dgH">
     <h2 id="dgH" class="sr">טקסט התקציר</h2>
@@ -208,4 +229,24 @@ document.addEventListener("change", e => {
   if (id && !digestSports().some(s => s.id === id)) return;
   digestSportFilter = id;
   refresh();
+});
+
+function digestReferenceChange(e){
+  if (e.target?.id !== "digestReferenceDate" || currentRoute() !== "digest") return;
+  digestReferenceDraft = str(e.target.value);
+  digestReferenceBadInput = !!e.target.validity?.badInput;
+  // Keep native date segments while a person is still typing an incomplete date.
+  if (e.type === "input" && digestReferenceInvalid()) {
+    e.target.setAttribute("aria-invalid", "true");
+    e.target.setAttribute("aria-describedby", "digestReferenceHelp digestReferenceError");
+    $("digestReferenceOutput").innerHTML = digestReferenceOutput();
+  } else refresh();
+}
+document.addEventListener("input", digestReferenceChange);
+document.addEventListener("change", digestReferenceChange);
+document.addEventListener("click", e => {
+  if (e.target?.id !== "digestReferenceReset" || currentRoute() !== "digest") return;
+  digestReferenceDraft = ""; digestReferenceBadInput = false;
+  refresh();
+  $("digestReferenceDate")?.focus({preventScroll: true});
 });

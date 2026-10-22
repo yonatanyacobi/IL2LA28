@@ -665,6 +665,52 @@ function sportUpcomingSection(id){
 
 const sportRosterQueries = new Map();
 const sportRosterStages = new Map();
+let sportRosterReturnContext = null, sportRosterReturnRestore = null;
+let sportRosterOwnedLinks = new WeakMap();
+function sportRosterRows(id){
+  const list = athletesOf(id).sort((a, b) => stageOf(b) - stageOf(a) || heCmp(a.event, b.event) || heCmp(a.name, b.name));
+  const value = sportRosterQueries.get(id) || "", query = searchKey(value), terms = query.split(" ").filter(Boolean);
+  const stage = sportRosterStages.get(id) ?? "";
+  const matches = list.filter(a => (stage === "" || stageOf(a) === Number(stage))
+    && terms.every(term => searchKey([a.name, a.name_en, a.event].map(str).join(" ")).includes(term)));
+  return {list, value, query, stage, matches};
+}
+function bindSportRosterReturnLinks(id){
+  sportRosterOwnedLinks = new WeakMap();
+  const matches = sportRosterRows(id).matches;
+  $("sportRoster")?.querySelectorAll("a.card").forEach(anchor => {
+    const athlete = matches.find(a => anchor.getAttribute("href") === "#a-" + a.id);
+    if (athlete) sportRosterOwnedLinks.set(anchor, athlete.id);
+  });
+}
+function sportRosterReturnClick(e){
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || (e.button != null && e.button !== 0)) return;
+  const anchor = e.target.closest?.("a[href]");
+  if (!anchor || (anchor.getAttribute?.("target") && anchor.getAttribute("target") !== "_self") || anchor.hasAttribute?.("download")) return;
+  const context = sportRosterReturnContext, h = currentRoute();
+  if (anchor === $("sportRosterReturn") && context && h === "a-" + context.athleteId && sportById(context.sportId)
+      && anchor.getAttribute("href") === "#sport-" + context.sportId && $("view").contains?.(anchor)) {
+    e.preventDefault?.();
+    sportRosterReturnRestore = context;
+    sportRosterReturnContext = null;
+    location.hash = "#sport-" + context.sportId;
+    return;
+  }
+  if (!h.startsWith("sport-") || !sportById(h.slice(6))) return;
+  sportRosterReturnContext = null;
+  const id = sportRosterOwnedLinks.get(anchor), sportId = h.slice(6), roster = sportRosterRows(sportId);
+  if (!id || !$("sportRoster")?.contains?.(anchor) || anchor.getAttribute("href") !== "#a-" + id
+      || !["", "0", "1", "2", "3"].includes(roster.stage) || !roster.matches.some(a => a.id === id)) return;
+  sportRosterReturnContext = {sportId, athleteId: id, query: roster.value, stage: roster.stage};
+}
+document.addEventListener("click", sportRosterReturnClick);
+function restoreSportRosterReturn(context){
+  const anchor = [...($("sportRoster")?.querySelectorAll("a.card") || [])]
+    .find(a => sportRosterOwnedLinks.get(a) === context.athleteId);
+  const target = anchor || $("sportRosterSearch");
+  target?.focus({preventScroll: true});
+  target?.scrollIntoView({block: "center", behavior: "auto"});
+}
 function sportPastCompetitionsSection(id){
   const t = today(), end = c => c.end || c.start;
   const rows = S.comps.filter(c => c.sportId === id && end(c) < t)
@@ -682,11 +728,7 @@ function sportPastCompetitionsSection(id){
 function viewSport(id){
   const s = sportById(id);
   if (!s) return notFound();
-  const list = athletesOf(id).sort((a, b) => stageOf(b) - stageOf(a) || heCmp(a.event, b.event) || heCmp(a.name, b.name));
-  const value = sportRosterQueries.get(id) || "", query = searchKey(value), terms = query.split(" ").filter(Boolean);
-  const stage = sportRosterStages.get(id) ?? "";
-  const matches = list.filter(a => (stage === "" || stageOf(a) === Number(stage))
-    && terms.every(term => searchKey([a.name, a.name_en, a.event].map(str).join(" ")).includes(term)));
+  const {list, value, query, stage, matches} = sportRosterRows(id);
   const ws = winStatus(s.window), w = s.window;
   const comps = upcomingIn(id);
   let html = `
@@ -1301,6 +1343,7 @@ let renderedDay = "", renderedClock = "";
 let documentationFamilyActive = false, documentationArrival = null;
 function route({preserveFollowingVisit = false, documentationToken = null} = {}){
   const h = currentRoute();
+  if (sportRosterReturnContext && (h !== "a-" + sportRosterReturnContext.athleteId || !sportById(sportRosterReturnContext.sportId))) sportRosterReturnContext = null;
   if (typeof resultsReturnContext !== "undefined" && resultsReturnContext && h !== "a-" + resultsReturnContext.id) resultsReturnContext = null;
   if (calendarReturnContext && (h !== "c-" + calendarReturnContext.id || !calendarRouteValid(calendarHashRoute(calendarReturnContext.hash)))) calendarReturnContext = null;
   if (documentationToken && documentationToken === documentationArrival &&
@@ -1343,9 +1386,12 @@ function route({preserveFollowingVisit = false, documentationToken = null} = {})
     html = `<p class="crumb"><a id="calendarReturn" data-calendar-return href="${esc(calendarReturnContext.hash)}">חזרה ללוח המסונן</a></p>` + html;
   if (typeof resultsReturnContext !== "undefined" && resultsReturnContext)
     html = `<p class="crumb"><a id="resultsReturn" href="#results">חזרה לתוצאות שבהן צפית</a></p>` + html;
+  if (sportRosterReturnContext)
+    html = `<p class="crumb"><a id="sportRosterReturn" href="#sport-${esc(sportRosterReturnContext.sportId)}">חזרה לסגל שבו צפית</a></p>` + html;
   if (typeof followingDecorate === "function") html = followingDecorate(h, html);
   const b = banner();
   $("view").innerHTML = b + html;
+  if (h.startsWith("sport-") && sportById(h.slice(6))) bindSportRosterReturnLinks(h.slice(6));
   if (h === "results" && typeof bindResultsReturnLinks === "function") bindResultsReturnLinks();
   renderedClock = clockStatusSignature(h);
   // The banner is rebuilt on every render; announce it through one persistent status only when its text changes.
@@ -1373,6 +1419,12 @@ function navigate(){
   // Filters last only while you stay on the calendar: arriving at it (from elsewhere or another sport) starts clean.
   const next = currentRoute();
   if (next !== lastRoute) copyAttempts.clear();
+  const rosterRestore = sportRosterReturnRestore;
+  sportRosterReturnRestore = null;
+  if (rosterRestore && next === "sport-" + rosterRestore.sportId && sportById(rosterRestore.sportId)) {
+    sportRosterQueries.set(rosterRestore.sportId, rosterRestore.query);
+    sportRosterStages.set(rosterRestore.sportId, rosterRestore.stage);
+  }
   const resultsRestore = typeof resultsReturnRestore !== "undefined" ? resultsReturnRestore : null;
   if (typeof resultsReturnRestore !== "undefined") resultsReturnRestore = null;
   if (resultsRestore && next === "results") {
@@ -1406,6 +1458,11 @@ function navigate(){
   if (h === lastRoute) return;
   const first = lastRoute === null;
   lastRoute = h;
+  if (rosterRestore && h === "sport-" + rosterRestore.sportId && sportById(rosterRestore.sportId)) {
+    $("routeStatus").textContent = document.querySelector("#view h1")?.textContent || "";
+    restoreSportRosterReturn(rosterRestore);
+    return;
+  }
   scrollTo({top: 0, behavior: "auto"});
   // Move focus to the new page's heading so screen readers announce the page, not the whole view.
   if (!first && h !== "about-trust") document.querySelector("#view h1")?.focus({preventScroll: true});
