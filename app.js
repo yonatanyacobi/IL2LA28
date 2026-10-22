@@ -612,9 +612,9 @@ function renderSportsLibraryResults(){
   if ($("sportsLibrarySearchReset")) $("sportsLibrarySearchReset").hidden = !sportsLibraryQuery;
 }
 function sportsLibraryResults(){
-  const query = searchKey(sportsLibraryQuery);
+  const query = searchKey(sportsLibraryQuery), terms = query.split(" ").filter(Boolean);
   const shown = s => (!sportsFollowedOnly || S.followSports.has(s.id))
-    && (!query || searchKey([s.id, s.he, s.en].map(str).join(" ")).includes(query));
+    && terms.every(term => searchKey([s.id, s.he, s.en].map(str).join(" ")).includes(term));
   const withA = S.sports.filter(s => athletesOf(s.id).length && shown(s));
   const without = S.sports.filter(s => !athletesOf(s.id).length && shown(s)).sort((a, b) => heCmp(a.he, b.he));
   // One pass over the upcoming competitions, not one per sort comparison.
