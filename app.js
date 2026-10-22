@@ -837,6 +837,7 @@ function reportBox(subject, link){
 // Filters re-render only this list, so the focused control and scroll position survive.
 let calendarFollowedOnly = false;
 let calendarMonth = "", calendarMonthDraft = "", calendarMonthError = "";
+let calendarYear = "";
 let calendarQuery = "";
 let calendarReturnContext = null, calendarReturnRestore = null;
 const calendarRouteValid = h => h === "calendar" || (h.startsWith("calendar-") && !!sportById(h.slice(9)));
@@ -865,7 +866,7 @@ function calendarReturnClick(e){
   if (h !== (S.cal.sport ? "calendar-" + S.cal.sport : "calendar")
       || (calendarMonth && !calendarMonthBounds(calendarMonth)) || !calendarRows().some(c => c.id === id)) return;
   calendarReturnContext = {id, hash: location.hash, sport: S.cal.sport, qual: S.cal.qual, past: S.cal.past,
-    month: calendarMonth, monthDraft: calendarMonthDraft, monthInvalid: !!calendarMonthError,
+    year: calendarYear, month: calendarMonth, monthDraft: calendarMonthDraft, monthInvalid: !!calendarMonthError,
     query: calendarQuery, followedOnly: calendarFollowedOnly};
 }
 document.addEventListener("click", calendarReturnClick);
@@ -876,6 +877,23 @@ function calendarMonthBounds(value){
   const last = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
   return {start: value + "-01", end: value + "-" + last};
 }
+function calendarInterval(c){
+  const valid = d => {
+    if (typeof d !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+    const month = calendarMonthBounds(d.slice(0, 7));
+    return !!month && d >= month.start && d <= month.end;
+  };
+  const end = c.end == null || c.end === "" ? c.start : c.end;
+  return valid(c.start) && valid(end) && end >= c.start ? {start: c.start, end} : null;
+}
+function calendarYears(){
+  const years = new Set();
+  for (const c of S.comps) {
+    const interval = calendarInterval(c);
+    if (interval) for (let y = Number(interval.start.slice(0, 4)); y <= Number(interval.end.slice(0, 4)); y++) years.add(String(y).padStart(4, "0"));
+  }
+  return [...years].sort();
+}
 function calendarRows(past = S.cal.past){
   const t = today(), {sport, qual} = S.cal;
   const month = calendarMonthBounds(calendarMonth);
@@ -883,6 +901,7 @@ function calendarRows(past = S.cal.past){
   return S.comps.filter(c => (!sport || c.sportId === sport) && (!calendarFollowedOnly || S.followSports.has(c.sportId))
     && (!qual || c.qualifying) && (past || (c.end || c.start) >= t)
     && terms.every(term => searchKey([c.name, c.location].map(str).join(" ")).includes(term))
+    && (!calendarYear || (range => range && range.start <= calendarYear + "-12-31" && range.end >= calendarYear + "-01-01")(calendarInterval(c)))
     && (!month || c.start <= month.end && (c.end || c.start) >= month.start))
     .sort((a, b) => a.start.localeCompare(b.start));
 }
@@ -895,6 +914,7 @@ function calendarSharePlanText(rows = calendarRows()){
   if (!rows.length || calendarMonthError) return "";
   const {sport, qual, past} = S.cal;
   const scope = [sport ? `ענף: ${waCut(waText(sportName(sport)))}` : "כל הענפים",
+    ...(calendarYear ? [`שנה: ${calendarYear}`, "מוצגות תחרויות שחופפות לשנה שנבחרה; חלקן התחילו קודם."] : []),
     ...(calendarMonth ? [`חודש: ${calendarMonth}`, "מוצגות תחרויות שחופפות לחודש שנבחר; חלקן התחילו קודם."] : []),
     ...(qual ? ["העפלה בלבד"] : []), ...(past ? ["כולל תחרויות שהסתיימו"] : []),
     ...(calendarFollowedOnly ? ["לפי ענפי המעקב שלי"] : []),
@@ -903,7 +923,7 @@ function calendarSharePlanText(rows = calendarRows()){
     "לוח תחרויות כללי; הרשימה אינה אישור להשתתפות ספורטאים מישראל"];
   const blocks = rows.map(c => [`• ${waText(c.name)}`, `ענף: ${waText(sportName(c.sportId))}`, fmtRange(c.start, c.end),
     ...(str(c.location).trim() ? [waText(c.location)] : []), `${SITE_URL}#c-${encodeURIComponent(c.id)}`].join("\n"));
-  const footer = ["", "הקישור שומר את הענף כשנבחר. הוא אינו שומר חודש, חיפוש, ענפי מעקב, בחירת העפלה בלבד או בחירה להציג תחרויות שהסתיימו.",
+  const footer = ["", "הקישור שומר את הענף כשנבחר. הוא אינו שומר חודש, חיפוש, ענפי מעקב, בחירת העפלה בלבד או בחירה להציג תחרויות שהסתיימו. גם שנת התחרויות אינה נשמרת בקישור.",
     `${SITE_URL}#calendar${sport ? "-" + encodeURIComponent(sport) : ""}`];
   let omitted = 0;
   const build = () => [...head, "", blocks.join("\n\n"), ...(omitted ? [`ועוד ${omitted} תחרויות בלוח`] : []), ...footer].join("\n");
@@ -929,7 +949,8 @@ function calendarResults(){
   const hiddenPast = calendarHiddenPastCount(rows);
   const months = {};
   rows.forEach(c => (months[c.start.slice(0, 7)] ??= []).push(c));
-  const disclosure = month ? `<p class="muted">מוצגות תחרויות שחופפות לחודש שנבחר; חלקן התחילו קודם.</p>` : "";
+  const disclosure = (calendarYear ? `<p class="muted">מוצגות תחרויות שחופפות לשנה שנבחרה; חלקן התחילו קודם.</p>` : "")
+    + (month ? `<p class="muted">מוצגות תחרויות שחופפות לחודש שנבחר; חלקן התחילו קודם.</p>` : "");
   return count + disclosure + (rows.length ? Object.keys(months).sort().map(m => `<section class="month">
       <h2>${new Date(m + "-15T12:00:00").toLocaleDateString("he-IL", {month:"long", year:"numeric"})} <span>${months[m].length}<span class="sr"> ${months[m].length === 1 ? "תחרות" : "תחרויות"}</span></span></h2>
       ${months[m].map(c => compRow(c, !sport)).join("")}</section>`).join("")
@@ -940,6 +961,8 @@ function calendarResults(){
 
 function viewCalendar(sportFilter = ""){
   if (sportFilter && !sportById(sportFilter)) return notFound();
+  const years = calendarYears();
+  if (calendarYear && !years.includes(calendarYear)) calendarYear = "";
   S.cal.sport = sportFilter;
   const {sport, qual, past} = S.cal;
   const used = [...new Set([...S.comps.map(c => c.sportId), ...(sport ? [sport] : [])])].map(sportById).filter(Boolean).sort((a, b) => heCmp(a.he, b.he));
@@ -949,12 +972,13 @@ function viewCalendar(sportFilter = ""){
   <div class="toolbar">
     <label for="cSearch">חיפוש תחרות או מקום</label><input type="search" id="cSearch" value="${esc(calendarQuery)}" aria-describedby="calCount">
     <select id="cSport" aria-label="סינון לפי ענף"><option value="">כל הענפים</option>${used.map(s => `<option value="${esc(s.id)}" ${s.id === sport ? "selected" : ""}>${esc(s.he)}</option>`).join("")}</select>
+    <label for="cYear">שנת התחרויות</label><select id="cYear" aria-describedby="calCount"><option value="">כל השנים</option>${years.map(y => `<option value="${esc(y)}" ${y === calendarYear ? "selected" : ""}>${esc(y)}</option>`).join("")}</select>
     <label for="cMonth">חודש התחרויות</label><input type="month" id="cMonth" min="0001-01" max="9999-12" value="${esc(calendarMonthDraft)}" aria-describedby="cMonthError" ${calendarMonthError ? 'aria-invalid="true"' : ""}>
     <p class="error" id="cMonthError" role="alert" ${calendarMonthError ? "" : "hidden"}>${esc(calendarMonthError)}</p>
     <label class="chk"><input type="checkbox" id="cQual" ${qual ? "checked" : ""}> רק תחרויות העפלה</label>
     <label class="chk"><input type="checkbox" id="cPast" ${past ? "checked" : ""}> כולל תחרויות שהסתיימו</label>
     <label class="chk"><input type="checkbox" id="cFollowSports" ${calendarFollowedOnly ? "checked" : ""}> רק ענפים שבמעקב שלי</label>
-    <button class="btn ghost small" type="button" id="cReset" data-calendar-reset ${sport || qual || past || calendarFollowedOnly || calendarMonth || calendarMonthError || calendarQuery ? "" : "hidden"}>איפוס הסינון</button>
+    <button class="btn ghost small" type="button" id="cReset" data-calendar-reset ${sport || qual || past || calendarFollowedOnly || calendarYear || calendarMonth || calendarMonthError || calendarQuery ? "" : "hidden"}>איפוס הסינון</button>
   </div>
   <div id="calResults" class="cal-results">${calendarResults()}</div>
   <section class="panel">
@@ -1348,6 +1372,7 @@ let lastRoute = null, focusTrust = false;
 function navigate(){
   // Filters last only while you stay on the calendar: arriving at it (from elsewhere or another sport) starts clean.
   const next = currentRoute();
+  if (next !== lastRoute) copyAttempts.clear();
   const resultsRestore = typeof resultsReturnRestore !== "undefined" ? resultsReturnRestore : null;
   if (typeof resultsReturnRestore !== "undefined") resultsReturnRestore = null;
   if (resultsRestore && next === "results") {
@@ -1364,9 +1389,10 @@ function navigate(){
     if (typeof endFollowingDocumentationVisit === "function") endFollowingDocumentationVisit();
   }
   documentationFamilyActive = family;
-  if (next !== lastRoute && /^calendar(-|$)/.test(next)) S.cal = {sport: "", qual: false, past: false};
+  if (next !== lastRoute && /^calendar(-|$)/.test(next)) { S.cal = {sport: "", qual: false, past: false}; calendarYear = ""; }
   if (calendarRestore && next === calendarHashRoute(calendarRestore.hash) && calendarRouteValid(next)) {
     S.cal = {sport: calendarRestore.sport, qual: calendarRestore.qual, past: calendarRestore.past};
+    calendarYear = calendarRestore.year || "";
     calendarMonth = calendarRestore.month;
     calendarMonthDraft = calendarRestore.monthDraft;
     calendarMonthError = calendarRestore.monthInvalid || (calendarMonthDraft && !calendarMonthBounds(calendarMonthDraft)) ? "יש לבחור חודש תקין בתבנית YYYY-MM." : "";
@@ -1463,6 +1489,10 @@ document.addEventListener("input", e => {
   if (e.target.id === "cPast") S.cal.past = e.target.checked;
   if (e.target.id === "cFollowSports") calendarFollowedOnly = e.target.checked;
   if (e.target.id === "cSearch") calendarQuery = e.target.value;
+  if (e.target.id === "cYear") {
+    if (e.target.value && !calendarYears().includes(e.target.value)) { e.target.value = calendarYear; return; }
+    calendarYear = e.target.value;
+  }
   if (e.target.id === "cMonth") {
     calendarMonthDraft = e.target.value;
     const valid = !e.target.validity?.badInput && (!calendarMonthDraft || calendarMonthBounds(calendarMonthDraft));
@@ -1473,11 +1503,12 @@ document.addEventListener("input", e => {
     if (valid) e.target.removeAttribute("aria-invalid");
     else e.target.setAttribute("aria-invalid", "true");
   }
-  if (/^c(Sport|Qual|Past|FollowSports|Month|Search)$/.test(e.target.id) && $("calResults")) {
+  if (/^c(Sport|Qual|Past|FollowSports|Year|Month|Search)$/.test(e.target.id) && $("calResults")) {
     $("calResults").innerHTML = calendarResults();
-    if ($("cReset")) $("cReset").hidden = !(S.cal.sport || S.cal.qual || S.cal.past || calendarFollowedOnly || calendarMonth || calendarMonthError || calendarQuery);
+    if ($("cReset")) $("cReset").hidden = !(S.cal.sport || S.cal.qual || S.cal.past || calendarFollowedOnly || calendarYear || calendarMonth || calendarMonthError || calendarQuery);
   }
 });
+const copyAttempts = new Map();
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-edit],[data-add],[data-act],[data-verify],[data-follow],[data-copy],[data-retry],[data-calendar-reset],[data-calendar-show-past],[data-sport-roster-reset],[data-home-search],[data-sports-library-reset],[data-sports-search-reset],[data-athlete-section],[data-sport-section]");
   if (!t) return;
@@ -1538,6 +1569,7 @@ document.addEventListener("click", e => {
   if ("calendarReset" in t.dataset) {
     S.cal = {sport: "", qual: false, past: false};
     calendarFollowedOnly = false;
+    calendarYear = "";
     calendarMonth = calendarMonthDraft = calendarMonthError = "";
     calendarQuery = "";
     history.replaceState(null, "", "#calendar");
@@ -1545,6 +1577,7 @@ document.addEventListener("click", e => {
     $("cQual").checked = false; $("cPast").checked = false;
     $("cFollowSports").checked = false;
     $("cSearch").value = "";
+    $("cYear").value = "";
     $("cMonth").value = ""; $("cMonth").removeAttribute("aria-invalid");
     $("cMonthError").textContent = ""; $("cMonthError").hidden = true;
     $("cReset").hidden = true;
@@ -1558,10 +1591,20 @@ document.addEventListener("click", e => {
   if (t.dataset.follow) { toggleFollow(t.dataset.follow); route(); return $("view").querySelector("[data-follow]")?.focus(); }
   if ("retry" in t.dataset) { S.failed = false; route(); $("view").focus({preventScroll: true}); return loadPublic(); }
   if (t.dataset.copy) {
-    const input = $(t.dataset.copy);
-    const msg = $(t.dataset.copyMsg || (t.dataset.copy === "mailAddr" ? "copyMsg2" : "copyMsg"));
-    const done = ok => { msg.textContent = ok ? "הועתק." : "לא ניתן להעתיק אוטומטית. הטקסט מסומן, אפשר להעתיק ידנית."; if (!ok) input.select(); };
-    try { navigator.clipboard.writeText(input.value).then(() => done(true), () => done(false)); } catch { done(false); }
+    const id = t.dataset.copy, msgId = t.dataset.copyMsg || (id === "mailAddr" ? "copyMsg2" : "copyMsg");
+    const input = $(id), route = currentRoute(), attempt = {};
+    copyAttempts.set(id, attempt);
+    if (!input || !$(msgId) || input.isConnected === false) return;
+    const value = input.value;
+    const done = ok => {
+      if (currentRoute() !== route || copyAttempts.get(id) !== attempt) return;
+      // A refresh can replace both nodes while clipboard permission is pending.
+      const current = $(id), msg = $(msgId);
+      if (!current || !msg || current.isConnected === false || msg.isConnected === false || current.value !== value) return;
+      msg.textContent = ok ? "הועתק." : "לא ניתן להעתיק אוטומטית. הטקסט מסומן, אפשר להעתיק ידנית.";
+      if (!ok) current.select();
+    };
+    try { navigator.clipboard.writeText(value).then(() => done(true), () => done(false)); } catch { done(false); }
   }
 });
 $("frm").addEventListener("submit", saveForm);
