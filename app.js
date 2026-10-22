@@ -1277,6 +1277,7 @@ let renderedDay = "", renderedClock = "";
 let documentationFamilyActive = false, documentationArrival = null;
 function route({preserveFollowingVisit = false, documentationToken = null} = {}){
   const h = currentRoute();
+  if (typeof resultsReturnContext !== "undefined" && resultsReturnContext && h !== "a-" + resultsReturnContext.id) resultsReturnContext = null;
   if (calendarReturnContext && (h !== "c-" + calendarReturnContext.id || !calendarRouteValid(calendarHashRoute(calendarReturnContext.hash)))) calendarReturnContext = null;
   if (documentationToken && documentationToken === documentationArrival &&
       ["following", "following-sports"].includes(h) && typeof beginFollowingDocumentationVisit === "function" && followingDocumentationReady()) {
@@ -1316,9 +1317,12 @@ function route({preserveFollowingVisit = false, documentationToken = null} = {})
   if (html === notFound()) nav = "";   // sub-views (#sport-nope, #a-nope) return it too
   if (calendarReturnContext && calendarRouteValid(calendarHashRoute(calendarReturnContext.hash)))
     html = `<p class="crumb"><a id="calendarReturn" data-calendar-return href="${esc(calendarReturnContext.hash)}">חזרה ללוח המסונן</a></p>` + html;
+  if (typeof resultsReturnContext !== "undefined" && resultsReturnContext)
+    html = `<p class="crumb"><a id="resultsReturn" href="#results">חזרה לתוצאות שבהן צפית</a></p>` + html;
   if (typeof followingDecorate === "function") html = followingDecorate(h, html);
   const b = banner();
   $("view").innerHTML = b + html;
+  if (h === "results" && typeof bindResultsReturnLinks === "function") bindResultsReturnLinks();
   renderedClock = clockStatusSignature(h);
   // The banner is rebuilt on every render; announce it through one persistent status only when its text changes.
   const bt = b.replace(/<[^>]*>/g, "");
@@ -1344,6 +1348,13 @@ let lastRoute = null, focusTrust = false;
 function navigate(){
   // Filters last only while you stay on the calendar: arriving at it (from elsewhere or another sport) starts clean.
   const next = currentRoute();
+  const resultsRestore = typeof resultsReturnRestore !== "undefined" ? resultsReturnRestore : null;
+  if (typeof resultsReturnRestore !== "undefined") resultsReturnRestore = null;
+  if (resultsRestore && next === "results") {
+    resultsSearchQuery = resultsRestore.query;
+    resultsMonth = resultsRestore.month;
+    resultsFollowedOnly = resultsRestore.followedOnly;
+  }
   const calendarRestore = calendarReturnRestore;
   calendarReturnRestore = null;
   const family = ["following", "following-sports"].includes(next);
@@ -1373,6 +1384,7 @@ function navigate(){
   // Move focus to the new page's heading so screen readers announce the page, not the whole view.
   if (!first && h !== "about-trust") document.querySelector("#view h1")?.focus({preventScroll: true});
   $("routeStatus").textContent = document.querySelector("#view h1")?.textContent || "";
+  if (resultsRestore && h === "results") restoreResultsReturn(resultsRestore);
 }
 // Data refreshes re-render in place without jumping the scroll position or losing search focus.
 // Focus is restored by id (search box, filters, buttons with ids); the scroll position is kept explicitly.

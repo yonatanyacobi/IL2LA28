@@ -48,6 +48,62 @@ function sportRecentResultsSection(id){
 }
 
 let resultsSearchQuery = "", resultsMonth = "", resultsFollowedOnly = false;
+let resultsReturnContext = null, resultsReturnRestore = null;
+let resultsOwnedLinks = new WeakMap();
+const resultIdentity = r => JSON.stringify([r.day, r.sportId, r.athletes.map(a => a.id).sort(), r.comp?.id || "", r.phase, r.result, r.source, r.resultAt, r.startUtc]);
+
+function bindResultsReturnLinks(){
+  resultsOwnedLinks = new WeakMap();
+  const rows = new Map(filteredDocumentedResults().map(r => [resultIdentity(r), r]));
+  $("resultsSearchContent")?.querySelectorAll("a[data-results-athlete]").forEach(anchor => {
+    const key = anchor.closest("[data-results-row]")?.getAttribute("data-results-row"), row = rows.get(key);
+    const athlete = row?.athletes.find(a => anchor.getAttribute("href") === "#a-" + a.id);
+    if (athlete) resultsOwnedLinks.set(anchor, {key, id: athlete.id});
+  });
+}
+
+function resultsReturnClick(e){
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || (e.button != null && e.button !== 0)) return;
+  const anchor = e.target.closest?.("a[href]");
+  if (!anchor || (anchor.getAttribute?.("target") && anchor.getAttribute("target") !== "_self") || anchor.hasAttribute?.("download")) return;
+  if (anchor === $("resultsReturn") && resultsReturnContext && currentRoute() === "a-" + resultsReturnContext.id
+      && anchor.getAttribute("href") === "#results" && $("view").contains(anchor)) {
+    e.preventDefault?.();
+    resultsReturnRestore = resultsReturnContext;
+    resultsReturnContext = null;
+    location.hash = "#results";
+    return;
+  }
+  if (currentRoute() !== "results") return;
+  resultsReturnContext = null;
+  const owned = resultsOwnedLinks.get(anchor);
+  if (!owned || !$("resultsSearchContent")?.contains?.(anchor) || anchor.getAttribute("href") !== "#a-" + owned.id
+      || (anchor.closest("details") && !anchor.closest("details").open)
+      || !filteredDocumentedResults().some(r => resultIdentity(r) === owned.key && r.athletes.some(a => a.id === owned.id))) return;
+  resultsReturnContext = {...owned, query: resultsSearchQuery, month: resultsMonth, followedOnly: resultsFollowedOnly,
+    open: !!$("resultsOverflow")?.open, y: window.scrollY};
+}
+document.addEventListener("click", resultsReturnClick);
+
+function restoreResultsReturn(context){
+  if ($("resultsOverflow")) $("resultsOverflow").open = context.open;
+  const anchor = [...($("resultsSearchContent")?.querySelectorAll("a[data-results-athlete]") || [])]
+    .find(a => { const owned = resultsOwnedLinks.get(a); return owned?.key === context.key && owned.id === context.id; });
+  if (anchor) {
+    const details = anchor.closest("details");
+    if (details) details.open = true;
+    scrollTo({top: context.y, behavior: "auto"});
+    anchor.focus({preventScroll: true});
+    const rect = anchor.getBoundingClientRect();
+    const top = document.querySelector(".nav")?.getBoundingClientRect().bottom || 0;
+    if (rect.top < top || rect.bottom > window.innerHeight) anchor.scrollIntoView({block: "center", behavior: "auto"});
+  } else {
+    const count = $("resultsSearchCount");
+    count.textContent += " התוצאות השתנו מאז פתיחת הפרופיל; מוצג הסינון העדכני.";
+    count.focus({preventScroll: false});
+    count.scrollIntoView({block: "center", behavior: "auto"});
+  }
+}
 const resultsMonths = rows => [...new Set(rows.filter(r => realDate(r.day)).map(r => r.day.slice(0, 7)))].sort().reverse();
 
 function filteredDocumentedResults(all = documentedResults()){
@@ -103,8 +159,10 @@ function resultsFilteredCopySection(rows){
 function resultsSearchContent(preserveOverflow = false, all = documentedResults()){
   const rows = filteredDocumentedResults(all), more = rows.slice(10);
   const open = preserveOverflow && $("resultsOverflow")?.open;
-  const row = r => documentedResultRow(r).replace(/<\/span><\/li>$/, `<small><a href="#sport-${esc(r.sportId)}">${esc(sportName(r.sportId))}</a></small></span></li>`);
-  return `<p class="muted" id="resultsSearchCount" role="status">נמצאו ${rows.length} מתוך ${all.length} שורות תוצאה מתועדות באתר.</p>
+  const row = r => documentedResultRow(r).replace('<span class="t">', `<span class="t" data-results-row="${esc(resultIdentity(r))}">`)
+    .replaceAll('<a href="#a-', '<a data-results-athlete href="#a-')
+    .replace(/<\/span><\/li>$/, `<small><a href="#sport-${esc(r.sportId)}">${esc(sportName(r.sportId))}</a></small></span></li>`);
+  return `<p class="muted" id="resultsSearchCount" tabindex="-1" role="status">נמצאו ${rows.length} מתוך ${all.length} שורות תוצאה מתועדות באתר.</p>
     ${rows.length ? `<ul class="rows">${rows.slice(0, 10).map(row).join("")}</ul>
       ${more.length ? `<details id="resultsOverflow"${open ? " open" : ""}><summary id="resultsMore">${more.length === 1 ? "עוד שורת תוצאה מתועדת אחת" : `עוד ${more.length} שורות תוצאה מתועדות`}</summary><ul class="rows">${more.map(row).join("")}</ul></details>` : ""}`
       : resultsFollowedOnly && !S.athletes.some(a => S.follows.has(a.id)) && !S.sports.some(s => S.followSports.has(s.id))
@@ -132,6 +190,7 @@ function updateResultsSearch(){
   const y = window.scrollY, active = document.activeElement;
   const selection = active?.id === "resultsFilteredCopyText" ? [active.selectionStart, active.selectionEnd, active.selectionDirection] : null;
   $("resultsSearchContent").innerHTML = resultsSearchContent();
+  bindResultsReturnLinks();
   if (selection && filteredDocumentedResults().length) {
     const input = $("resultsFilteredCopyText");
     input?.focus({preventScroll: true});
