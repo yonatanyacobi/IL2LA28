@@ -320,17 +320,28 @@ function importFollowingPreferences(text){
   catch (error) { followingImportMessage(`לא ניתן לייבא: ${error.message}`, true); return; }
   const athletes = new Set([...S.follows, ...data.athletes]), sports = new Set([...S.followSports, ...data.sports]);
   const addedAthletes = athletes.size - S.follows.size, addedSports = sports.size - S.followSports.size;
-  if (!addedAthletes && !addedSports) {
+  const matches = (key, choices) => {
+    const saved = store.get(key, null);
+    return Array.isArray(saved) && saved.length === choices.size && new Set(saved).size === choices.size
+      && saved.every(id => choices.has(id));
+  };
+  const saveAthletes = data.athletes.length > 0 && !matches("la28.follows", athletes);
+  const saveSports = data.sports.length > 0 && !matches("la28.followSports", sports);
+  if (!addedAthletes && !addedSports && !saveAthletes && !saveSports) {
     followingImportMessage(data.athletes.length || data.sports.length ? "לא נוספו בחירות חדשות; הבחירות כבר במעקב שלך." : "הקוד תקין וללא בחירות. לא נעשה שינוי במעקב.");
     return;
   }
   S.follows = athletes; S.followSports = sports;
-  if (addedAthletes) saveFollows("la28.follows", [...athletes]);
-  if (addedSports) saveFollows("la28.followSports", [...sports]);
-  const saved = (!addedAthletes || JSON.stringify(store.get("la28.follows", null)) === JSON.stringify([...athletes]))
-    && (!addedSports || JSON.stringify(store.get("la28.followSports", null)) === JSON.stringify([...sports]));
+  if (saveAthletes) saveFollows("la28.follows", [...athletes]);
+  if (saveSports) saveFollows("la28.followSports", [...sports]);
+  const saved = (!data.athletes.length || matches("la28.follows", athletes))
+    && (!data.sports.length || matches("la28.followSports", sports));
   const existing = data.athletes.length + data.sports.length - addedAthletes - addedSports;
-  followingImportMessage(`נוספו ${addedAthletes + addedSports} בחירות למעקב שלך (${addedAthletes} ספורטאים ונבחרות, ${addedSports} ענפים); ${existing} כבר היו במעקב שלך. ${saved ? "הבחירות החדשות נשמרו בדפדפן הזה." : "הבחירות פעילות כעת בזיכרון. ייתכן שרק חלק נשמרו; רענון או סגירת הדף עלולים לאבד בחירות."}`);
+  const summary = addedAthletes || addedSports
+    ? `נוספו ${addedAthletes + addedSports} בחירות למעקב שלך (${addedAthletes} ספורטאים ונבחרות, ${addedSports} ענפים); ${existing} כבר היו במעקב שלך.`
+    : "לא נוספו בחירות חדשות; נעשה ניסיון שמירה חוזר של הבחירות שכבר במעקב שלך.";
+  const success = addedAthletes || addedSports ? "הבחירות החדשות נשמרו בדפדפן הזה." : "הבחירות שבמעקב שלך נשמרו בדפדפן הזה.";
+  followingImportMessage(`${summary} ${saved ? success : "הבחירות פעילות כעת בזיכרון. ייתכן שרק חלק נשמרו; רענון או סגירת הדף עלולים לאבד בחירות."}`);
   renderFollowingImport();
 }
 

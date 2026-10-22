@@ -44,6 +44,11 @@ function viewQuotas(){
       <ul class="qlist">${items.map(item => `<li><div class="q-top"><b><bdi>${esc(item.event)}</bdi></b><span>${quotaStatusPill(item.israelStatus)}</span></div>${stakesLine(item, "stakes", "small")}</li>`).join("")}</ul>
     </li>`; };
   const waiting = list.map(q => [q, awaitingOf(q)]).filter(([, w]) => w).sort(([, x], [, y]) => y.end.localeCompare(x.end));
+  const sections = [
+    ...(waiting.length ? [["qWaitH", "בהמתנה לתוצאות"]] : []),
+    ...(next.length ? [["qNextH", "אירועי המכסה הקרובים"]] : []),
+    ...QUOTA_STATUSES.filter(k => n[k]).map(k => [`qH-${k}`, Q_LABEL[k][1]])
+  ];
   const quotaEvidence = q => {
     const earned = qStatus(q.israelStatus) === "earned";
     const at = q.earnedAt;
@@ -72,22 +77,35 @@ function viewQuotas(){
     <p class="kpi">${QUOTA_STATUSES.map(k => `<b>${n[k]}</b> ${Q_LABEL[k][1]}`).join(" · ")}</p>
     <p class="foot">הספירה היא לפי מקצים, לא לפי ספורטאים. ברוב הענפים המכסה שייכת למדינה ולא לספורטאי/ת.${isDate(at) ? ` נכון ל־${fmt(at)}.` : ""}</p>
   </section>
+  ${sections.length ? `<div class="toolbar" role="group" aria-label="מעבר למקטעים בתמונת המכסות">${sections.map(([id, label]) => `<button class="btn ghost small" type="button" id="qGo-${id}" data-quota-section="${id}">${esc(label)}</button>`).join("")}</div>` : ""}
   ${waiting.length ? `<section class="panel" aria-labelledby="qWaitH">
-    <h2 id="qWaitH">בהמתנה לתוצאות</h2>
+    <h2 id="qWaitH" tabindex="-1">בהמתנה לתוצאות</h2>
     <ul class="rows">${waiting.map(([q, w]) => `<li><span class="d">${fmtShortY(w.end)}</span>
       <span class="t"><bdi>${eventLink(q)}</bdi><small><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a> · <bdi>${esc(q.event)}</bdi></small></span>
       <span>${quotaStatusPill(q.israelStatus)}</span></li>`).join("")}</ul>
   </section>` : ""}
   ${next.length ? `<section class="panel" aria-labelledby="qNextH">
-    <h2 id="qNextH">אירועי המכסה הקרובים</h2>
+    <h2 id="qNextH" tabindex="-1">אירועי המכסה הקרובים</h2>
     <ul class="qlist">${next.slice(0, 5).map(eventRow).join("")}</ul>
     ${more.length ? `<details><summary id="quotaNextMoreSummary">${more.length === 1 ? "עוד אירוע מכסה אחד" : `עוד ${more.length} אירועי מכסה`}</summary><ul class="qlist">${more.map(eventRow).join("")}</ul></details>` : ""}
   </section>` : ""}
   ${QUOTA_STATUSES.filter(k => n[k]).map(k => `<section class="panel" aria-labelledby="qH-${k}">
-    <h2 id="qH-${k}">${quotaStatusPill(k)} <span class="muted">${n[k]}</span></h2>
+    <h2 id="qH-${k}" tabindex="-1">${quotaStatusPill(k)} <span class="muted">${n[k]}</span></h2>
     <ul class="rows">${list.filter(q => qStatus(q.israelStatus) === k).map(row).join("")}</ul>
   </section>`).join("")}`;
 }
+
+document.addEventListener("click", e => {
+  const button = e.target.closest?.("[data-quota-section]");
+  const view = $("view");
+  if (!button || currentRoute() !== "quotas" || !view?.contains(button)) return;
+  const id = button.dataset.quotaSection;
+  if (!["qWaitH", "qNextH", "qH-earned", "qH-in-contention", "qH-outside", "qH-unknown"].includes(id)) return;
+  const heading = view.querySelector(`#${id}`);
+  if (!heading || !view.contains(heading)) return;
+  heading.focus({preventScroll: true});
+  heading.scrollIntoView({block: "center", behavior: "auto"});
+});
 
 document.addEventListener("change", e => {
   if (e.target?.id !== "quotaSport" || currentRoute() !== "quotas") return;
