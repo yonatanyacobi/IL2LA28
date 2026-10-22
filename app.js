@@ -1116,7 +1116,7 @@ function freshness(){
   const ts = S.live ? S.lastRun : (S.generatedAt || S.lastRun);
   if (!ts) return "";
   const stale = daysSince(ts) > 1.5;
-  const when = new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
+  const when = new Date(ts).toLocaleString("he-IL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit", timeZone:"Asia/Jerusalem"});
   return `<span class="fresh ${stale ? "stale" : ""}"><i></i><span>נכון ל־${when}</span></span>`;
 }
 const daysLeft = () => Math.max(0, Math.ceil((OPENING - Date.now()) / 864e5)).toLocaleString("he-IL");
