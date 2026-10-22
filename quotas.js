@@ -54,7 +54,9 @@ function viewQuotas(){
     const at = q.earnedAt;
     const valid = earned && isDate(at) && !isNaN(new Date(at + "T12:00:00")) && addDays(at, 0) === at && at <= today();
     const date = valid ? `<small>הושגה ב־${fmt(at)}</small>` : "";
-    const source = linkOut(q.source, earned ? "מקור למכסה" : "מקור לפרטי המכסה");
+    const label = earned ? "מקור למכסה" : "מקור לפרטי המכסה";
+    const source = linkOut(q.source, label).replace("<a ",
+      `<a aria-label="${esc(`${label}: ${sportName(q.sportId)} · ${q.event} (נפתח בחלון חדש)`)}" `);
     return date + (source ? `<small>${source}</small>` : "");
   };
   const row = q => `<li><span class="d"><a href="#sport-${esc(q.sportId)}">${esc(sportName(q.sportId))}</a></span>

@@ -187,7 +187,7 @@ function followUpcoming(){
       html: `<a href="#a-${esc(a.id)}">${esc(a.name)}</a><small>${esc(sportName(a.sportId))}${a.next ? ` · ${nextCompFact(a)}` : ""}</small>`}));
   const comps = upcoming().filter(c => S.followSports.has(c.sportId) && !competitions.has(c.id))
     .map(c => ({k: `up|c|${c.id}`, d: c.start, chip: c.start <= t ? `<span class="pill s-live">מתקיימת עכשיו</span>` : "",
-      html: `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLinkOr(c)}<small>${esc(c.location)}</small>`}));
+      html: `<a href="#sport-${esc(c.sportId)}">${esc(sportName(c.sportId))}</a> · ${compLinkOr(c)}<small>${esc(c.location)}${c.location ? " · " : ""}תחרות כללית בענף; אינה אישור להשתתפות ספורטאי/ת או נבחרת.</small>`}));
   return [...appearances, ...athletes, ...comps].sort((x, y) => x.d.localeCompare(y.d) || byStart(x.startUtc, y.startUtc));
 }
 
