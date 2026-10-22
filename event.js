@@ -3,6 +3,59 @@
 "use strict";
 let eventFollowingOnly = false;
 const eventParticipantFilters = new Map();
+let eventAppearanceOwnedLinks = new WeakMap();
+const eventAppearanceKey = (compId, s, day) => realDate(day) ? JSON.stringify([compId, day, str(s.phase),
+  [...new Set(s.athletes.map(a => a.id))].sort()]) : "";
+function eventAppearanceRows(id){
+  const c = S.comps.find(c => c.id === id);
+  if (!c) return [];
+  const {series, groups} = eventSessions(c), participant = eventParticipantFilters.get(id) || "";
+  return [...groups].flatMap(([d, list]) => list.filter(s => (!eventFollowingOnly || followsSport(s.sportId) || followedIn(s))
+    && (!participant || s.athletes.some(a => a.id === participant))).map(s => ({s, key: eventAppearanceKey(id, s, series ? s.day : d)})));
+}
+function bindEventAppearanceReturnLinks(id){
+  eventAppearanceOwnedLinks = new WeakMap();
+  const rows = eventAppearanceRows(id);
+  $("view").querySelectorAll("[data-event-appearance] a[href]").forEach(anchor => {
+    const key = anchor.closest("[data-event-appearance]")?.getAttribute("data-event-appearance");
+    const matches = rows.filter(row => row.key && row.key === key);
+    if (matches.length !== 1) return;
+    const athlete = matches[0].s.athletes.find(a => anchor.getAttribute("href") === "#a-" + a.id);
+    if (athlete) eventAppearanceOwnedLinks.set(anchor, {compId: id, key, athleteId: athlete.id});
+  });
+}
+function eventAppearanceReturnClick(e){
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || (e.button != null && e.button !== 0)) return;
+  const anchor = e.target.closest?.("a[href]"), h = currentRoute();
+  if (!anchor || (anchor.getAttribute?.("target") && anchor.getAttribute("target") !== "_self") || anchor.hasAttribute?.("download")) return;
+  const context = eventAppearanceReturnContext;
+  if (anchor === $("eventAppearanceReturn") && context && h === "a-" + context.athleteId
+      && anchor.getAttribute("href") === "#c-" + context.compId && $("view").contains?.(anchor)) {
+    e.preventDefault?.();
+    eventAppearanceReturnRestore = context;
+    eventAppearanceReturnContext = null;
+    location.hash = "#c-" + context.compId;
+    return;
+  }
+  if (!h.startsWith("c-")) return;
+  eventAppearanceReturnContext = null;
+  const owned = eventAppearanceOwnedLinks.get(anchor);
+  if (!owned || h !== "c-" + owned.compId || !$("view").contains?.(anchor)
+      || anchor.getAttribute("href") !== "#a-" + owned.athleteId) return;
+  const matches = eventAppearanceRows(owned.compId).filter(row => row.key === owned.key);
+  if (matches.length !== 1 || !matches[0].s.athletes.some(a => a.id === owned.athleteId)) return;
+  eventAppearanceReturnContext = {...owned, participant: eventParticipantFilters.get(owned.compId) || "", followedOnly: eventFollowingOnly};
+}
+document.addEventListener("click", eventAppearanceReturnClick);
+function restoreEventAppearanceReturn(context){
+  const links = [...$("view").querySelectorAll("[data-event-appearance] a[href]")].filter(anchor => {
+    const owned = eventAppearanceOwnedLinks.get(anchor);
+    return owned && owned.compId === context.compId && owned.key === context.key && owned.athleteId === context.athleteId;
+  });
+  const target = links.length === 1 ? links[0] : $("view").querySelector("#evSchedH") || document.querySelector("#view h1");
+  target?.focus({preventScroll: true});
+  target?.scrollIntoView({block: "center", behavior: "auto"});
+}
 
 // Sessions of one competition, grouped by Israel day. A season-long series (> SERIES_DAYS) has no daily fallback
 // (compOn() skips it), so only its exported sessions count, grouped by month.
@@ -65,7 +118,7 @@ function scrollToTodayOnArrival(id){
 function viewEvent(id){
   const c = S.comps.find(x => x.id === id);
   if (!c) return notFound();
-  scrollToTodayOnArrival(id);
+  if (eventAppearanceReturnRestore?.compId !== id) scrollToTodayOnArrival(id);
   const t = today(), {series, groups} = eventSessions(c);
   const flat = [...groups].flatMap(([d, list]) => list.map(s => [s, series ? s.day : d]));
   const nextDay = flat.filter(([s, d]) => isDate(d) && d >= t
@@ -119,7 +172,8 @@ function viewEvent(id){
       .map(([k, list]) => `<div class="sess-day">${series ? monthHead(k) : dayHead(k, dateOnly(list))}
         <ul class="rows sess">${list.slice().sort((x, y) => (series ? x.day.localeCompare(y.day) : 0) || sessionOrder(x, y))
           .map(s => sessionRow(s, series ? s.day : k, !series && dateOnly(list), series
-            ? `<small><a class="hlink" href="#day-${esc(s.day)}">${esc(dayTitle(s.day))}</a></small>` : "")).join("")}</ul></div>`).join("")
+            ? `<small><a class="hlink" href="#day-${esc(s.day)}">${esc(dayTitle(s.day))}</a></small>` : "")
+            .replace("<li", `<li data-event-appearance="${esc(eventAppearanceKey(id, s, series ? s.day : k))}"`)).join("")}</ul></div>`).join("")
       + ((n => n ? `<p class="muted">${n === 1 ? "ביום נוסף בתחרות" : `ב־${n} ימים נוספים בתחרות`} לא ידועות הופעות של ישראלים.</p>` : "")(
         series || filtered ? 0 : [...groups].filter(([, list]) => !list.length).length));
   return `<p class="crumb"><a href="#sport-${esc(c.sportId)}"><span aria-hidden="true">→</span>&nbsp;${esc(sportName(c.sportId))}</a></p>

@@ -356,7 +356,16 @@ function athleteRow(a, status = ""){
 
 function changeRow(c){
   const txt = esc(c.text);
-  const body = c.athleteId && S.athletes.some(a => a.id === c.athleteId) ? `<a href="#a-${esc(c.athleteId)}">${txt}</a>` : txt;
+  let body = txt;
+  if (c.athleteId && S.athletes.some(a => a.id === c.athleteId)) body = `<a href="#a-${esc(c.athleteId)}">${txt}</a>`;
+  else if (typeof c.text === "string") {
+    const text = c.text.trim();
+    const sports = S.sports.filter(s => typeof s.he === "string" && s.he.trim() && text.startsWith(s.he.trim() + ":"));
+    if (sports.length === 1 && typeof sports[0].id === "string" && sports[0].id.trim()) {
+      const sport = sports[0];
+      body = `<a href="#sport-${esc(sport.id)}" aria-label="${esc(c.text + " — פרטי הענף: " + sport.he)}">${txt}</a>`;
+    }
+  }
   const date = typeof c.at !== "string" ? "" : isUtc(c.at) && realDate(c.at.slice(0, 10)) ? ilDate(c.at) : realDate(c.at) ? c.at : "";
   return `<li><span class="d">${fmt(date)}</span><span class="t">${body}</span><span></span></li>`;
 }
@@ -666,6 +675,7 @@ function sportUpcomingSection(id){
 const sportRosterQueries = new Map();
 const sportRosterStages = new Map();
 let sportRosterReturnContext = null, sportRosterReturnRestore = null;
+let eventAppearanceReturnContext = null, eventAppearanceReturnRestore = null;
 let sportRosterOwnedLinks = new WeakMap();
 function sportRosterRows(id){
   const list = athletesOf(id).sort((a, b) => stageOf(b) - stageOf(a) || heCmp(a.event, b.event) || heCmp(a.name, b.name));
@@ -1343,6 +1353,7 @@ let renderedDay = "", renderedClock = "";
 let documentationFamilyActive = false, documentationArrival = null;
 function route({preserveFollowingVisit = false, documentationToken = null} = {}){
   const h = currentRoute();
+  if (eventAppearanceReturnContext && h !== "a-" + eventAppearanceReturnContext.athleteId) eventAppearanceReturnContext = null;
   if (sportRosterReturnContext && (h !== "a-" + sportRosterReturnContext.athleteId || !sportById(sportRosterReturnContext.sportId))) sportRosterReturnContext = null;
   if (typeof resultsReturnContext !== "undefined" && resultsReturnContext && h !== "a-" + resultsReturnContext.id) resultsReturnContext = null;
   if (calendarReturnContext && (h !== "c-" + calendarReturnContext.id || !calendarRouteValid(calendarHashRoute(calendarReturnContext.hash)))) calendarReturnContext = null;
@@ -1388,11 +1399,14 @@ function route({preserveFollowingVisit = false, documentationToken = null} = {})
     html = `<p class="crumb"><a id="resultsReturn" href="#results">חזרה לתוצאות שבהן צפית</a></p>` + html;
   if (sportRosterReturnContext)
     html = `<p class="crumb"><a id="sportRosterReturn" href="#sport-${esc(sportRosterReturnContext.sportId)}">חזרה לסגל שבו צפית</a></p>` + html;
+  if (eventAppearanceReturnContext)
+    html = `<p class="crumb"><a id="eventAppearanceReturn" href="#c-${esc(eventAppearanceReturnContext.compId)}">חזרה להופעה בתחרות</a></p>` + html;
   if (typeof followingDecorate === "function") html = followingDecorate(h, html);
   const b = banner();
   $("view").innerHTML = b + html;
   if (h.startsWith("sport-") && sportById(h.slice(6))) bindSportRosterReturnLinks(h.slice(6));
   if (h === "results" && typeof bindResultsReturnLinks === "function") bindResultsReturnLinks();
+  if (h.startsWith("c-") && typeof bindEventAppearanceReturnLinks === "function") bindEventAppearanceReturnLinks(h.slice(2));
   renderedClock = clockStatusSignature(h);
   // The banner is rebuilt on every render; announce it through one persistent status only when its text changes.
   const bt = b.replace(/<[^>]*>/g, "");
@@ -1419,6 +1433,12 @@ function navigate(){
   // Filters last only while you stay on the calendar: arriving at it (from elsewhere or another sport) starts clean.
   const next = currentRoute();
   if (next !== lastRoute) copyAttempts.clear();
+  const appearanceRestore = eventAppearanceReturnRestore;
+  if (appearanceRestore && next === "c-" + appearanceRestore.compId && S.comps.some(c => c.id === appearanceRestore.compId)) {
+    eventFollowingOnly = appearanceRestore.followedOnly;
+    if (appearanceRestore.participant) eventParticipantFilters.set(appearanceRestore.compId, appearanceRestore.participant);
+    else eventParticipantFilters.delete(appearanceRestore.compId);
+  }
   const rosterRestore = sportRosterReturnRestore;
   sportRosterReturnRestore = null;
   if (rosterRestore && next === "sport-" + rosterRestore.sportId && sportById(rosterRestore.sportId)) {
@@ -1455,9 +1475,15 @@ function navigate(){
   if (next !== lastRoute && next === "about-trust") focusTrust = true;
   if (next !== lastRoute) { rowSigs.clear(); changedRows.clear(); }
   const h = route({documentationToken: documentationArrival});
+  eventAppearanceReturnRestore = null;
   if (h === lastRoute) return;
   const first = lastRoute === null;
   lastRoute = h;
+  if (appearanceRestore && h === "c-" + appearanceRestore.compId && S.comps.some(c => c.id === appearanceRestore.compId)) {
+    $("routeStatus").textContent = document.querySelector("#view h1")?.textContent || "";
+    restoreEventAppearanceReturn(appearanceRestore);
+    return;
+  }
   if (rosterRestore && h === "sport-" + rosterRestore.sportId && sportById(rosterRestore.sportId)) {
     $("routeStatus").textContent = document.querySelector("#view h1")?.textContent || "";
     restoreSportRosterReturn(rosterRestore);
