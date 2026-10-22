@@ -1671,8 +1671,9 @@ async function loadQuotas(){
   try {
     const r = await withDeadline(fetch("quotas.json", {cache: "no-cache"}));
     // 404 = not published yet (an empty list); anything else unusable is an error.
-    quotaFile = r.status === 404 ? {items: []} : r.ok ? await r.json() : null;
-  } catch { quotaFile = null; }
+    const file = r.status === 404 ? {items: []} : r.ok ? await r.json() : null;
+    return Array.isArray(file?.items) ? file : null;
+  } catch { return null; }
 }
 
 // A host that never answers must end in the error view, not an endless skeleton.
@@ -1715,7 +1716,9 @@ async function loadPublic(){
       applySnapshot(d); navigate();
     }, () => {});
   }
-  await quotas;
+  const file = await quotas;
+  if (S.live) return;
+  quotaFile = file;
   applyQuotas();
   S.quotasLoaded = true; S.quotasError = !Array.isArray(quotaFile?.items);
   if (S.loaded) refresh();
@@ -1789,14 +1792,22 @@ async function checkForUpdate(){
   lastCheck = Date.now();
   if (S.live || !S.loaded) return;
   try {
-    const prevQ = quotaFile, prevJson = stableJson(quotaFile);
-    const [r] = await Promise.all([fetch("data.json", {cache: "no-cache"}), loadQuotas()]);
+    // Each read settles before committing either result; one failed file must not discard the other.
+    const [d, file] = await Promise.all([(async () => {
+      try {
+        const r = await fetch("data.json", {cache: "no-cache"});
+        return r.ok ? await r.json() : null;
+      } catch { return null; }
+    })(), loadQuotas()]);
+    if (S.live) return;
     // A failed re-read keeps the quotas already shown; a 404 is an empty list (file removed on purpose), so they go.
-    if (quotaFile === null) quotaFile = prevQ;
-    const quotasChanged = stableJson(quotaFile) !== prevJson;
-    if (quotasChanged) applyQuotas();
-    const d = r.ok ? await r.json() : null;
-    if (S.live || !isExport(d) || stableJson(d) === stableJson(publicSnapshot)) {
+    const quotasChanged = file !== null && (stableJson(file) !== stableJson(quotaFile) || S.quotasError || !S.quotasLoaded);
+    if (quotasChanged) {
+      quotaFile = file;
+      S.quotasLoaded = true; S.quotasError = false;
+      applyQuotas();
+    }
+    if (!isExport(d) || stableJson(d) === stableJson(publicSnapshot)) {
       if (quotasChanged) refresh({preserveFollowingVisit: true});
       return;
     }
