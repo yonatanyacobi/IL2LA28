@@ -474,7 +474,7 @@ document.addEventListener("click", e => {
     const next = items[index + 1] || items[index - 1], open = $("followingManage")?.open;
     if (sports) toggleFollowSport(items[index].id);
     else toggleFollow(items[index].id);
-    refresh();
+    refresh({preserveFollowingVisit: true});
     if (open) $("followingManage").open = true;
     $(next ? followingRemoveId(sports, next.id) : "followingManageSummary")?.focus({preventScroll: true});
     return;
