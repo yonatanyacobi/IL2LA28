@@ -1462,7 +1462,12 @@ function navigate(){
     if (typeof endFollowingDocumentationVisit === "function") endFollowingDocumentationVisit();
   }
   documentationFamilyActive = family;
-  if (next !== lastRoute && /^calendar(-|$)/.test(next)) { S.cal = {sport: "", qual: false, past: false}; calendarYear = ""; }
+  if (next !== lastRoute && calendarRouteValid(next)) {
+    S.cal = {sport: "", qual: false, past: false};
+    calendarYear = calendarQuery = "";
+    calendarMonth = calendarMonthDraft = calendarMonthError = "";
+    calendarFollowedOnly = false;
+  }
   if (calendarRestore && next === calendarHashRoute(calendarRestore.hash) && calendarRouteValid(next)) {
     S.cal = {sport: calendarRestore.sport, qual: calendarRestore.qual, past: calendarRestore.past};
     calendarYear = calendarRestore.year || "";
